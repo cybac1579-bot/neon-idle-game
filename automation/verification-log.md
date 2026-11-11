@@ -57,3 +57,10 @@
 - Deployment: public Pages JS fetch was inaccessible through web reader; published version and deployment success **not verified**.
 - Remaining risks: untrusted non-plain objects, other malformed nested save fields, visibility lifecycle double settlement, combat UI on real portrait screen.
 - Next focus: create runnable save fixture harness with corrupted skill maps and legacy migration cases, then visibility resume double-settlement tests. Do not treat the source inspection as runtime proof.
+
+## 2026-11-12 06:54 KST — automated run 7
+- Base: latest inspected gameplay blob `site/game.js` SHA `1fcade4250058e0c66cbbedf98168a74d18e152d`; resulting test-only commit `1b5a70e5547126c3b2d860d2788ae24013cd06f6` (no gameplay code changed).
+- Focus: address repeated lack of executable evidence by adding a dependency-free Node.js regression harness `automation/save-regression.test.cjs` for invalid saved timestamps, corrupted nested skill maps with legacy migration and inherited skill, offline auto-rebirth prevention, and hidden-tab resume double settlement.
+- Evidence: reviewed actual `site/game.js` boot/load/visibility code and committed four test cases through GitHub. **Tests were authored but NOT executed**: GitHub was inaccessible from local container (DNS failure), and GitHub connector does not execute Node. Therefore all four are **unverified**, not passing. Manual development README is empty; manual files untouched.
+- Deployment: no authoritative GitHub Pages build/run or deployed asset confirmation; **deployment not verified**. Test-only change does not require a site release.
+- Risks: fake DOM harness may require adjustment when first run; saved-game runtime compatibility and hidden-tab lifecycle remain unproven until `node --test automation/save-regression.test.cjs` succeeds. Next: execute harness in a checkout/CI, fix harness or gameplay failures, then broaden tests to combat/skill integration and portrait UI.
