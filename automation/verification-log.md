@@ -17,3 +17,13 @@
 - Evidence: exact-match source transformation assertions (3 unique replacements), GitHub update_file accepted the change. **No browser runtime test, actual save migration fixture test, real-device play, or deployed Pages verification**; runtime correctness and published version remain unconfirmed.
 - Risks: other offline mechanics (skill timers, auto-purchase, cache caps), malformed save data, double-counted hidden-tab time; need targeted runtime tests and mobile/browser checks.
 - Next focus: load normalization and offline/visibility lifecycle tests with reproducible fixtures, followed by combat/UI regression and deployment verification.
+
+## 2026-11-12 02:56 KST — automated run 3
+- Base gameplay commit: `6cae13a`; resulting gameplay commit: `a31c57b55cb7a92de1ad20486ee7467699af28cf`.
+- Focus: saved-game normalization and offline elapsed-time calculation, distinct from prior auto-rebirth guard review.
+- Finding (source-level): for older or malformed saves missing a finite positive `lastSaved`, `safeNumber(s.lastSaved,0,Date.now())` fell back to zero; this incorrectly granted the full 7,200-second offline settlement. New-save defaults were overwritten by the loaded object spread, so the case was reachable.
+- Fix: calculate offline elapsed only from a finite positive saved timestamp; otherwise use current time, resulting in no phantom offline earnings. Future timestamps remain clamped to zero elapsed. Save key and schema unchanged.
+- Evidence: fetched exact GitHub file and SHA; asserted the target replacement was unique and the previous `step(dt,false)` offline auto-rebirth guard remained; GitHub update_file returned commit. **No browser runtime fixture test, mobile device test, or Pages deployment success was verified.** Attempt to fetch the published game.js through the web reader was inaccessible.
+- Manual records: repository search for manual handoff/development notes yielded no matches; previous conversation feedback and the automated policy were used. No manual file was edited.
+- Remaining risks: malformed nested saves, non-finite numeric fields not yet covered by runtime fixtures, hidden-tab/double settlement behavior, and published Pages state.
+- Next focus: reproducible save fixture and visibility/offline lifecycle tests, followed by combat UI regression and deployment status check.
