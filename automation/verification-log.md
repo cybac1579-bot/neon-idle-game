@@ -47,3 +47,13 @@
 - Deployment: attempted public GitHub Pages URL `https://cybac1579-bot.github.io/neon-idle-game/`, inaccessible through web reader; **deployed version not verified**.
 - Remaining risks: malicious/malformed skillLevels object shape, save restoration with corrupted nested traits, visibility resume double settlement, real portrait combat rendering. The order fix has not been runtime-proven.
 - Next focus: executable malformed-save fixtures (traits/skills and visibility lifecycle), then combat skill/enemy integration and mobile portrait verification.
+
+## 2026-11-12 05:57 KST — automated run 6
+- Base: `ab5609f818038b9ce12387cc0f7dcf382a2c9d5e` (latest commit before this run); gameplay commit: `f4a3e07c7202d3be9675b3f89fdc710ba80bdbde`.
+- Focus: malformed nested skill-map restoration, continuing the outstanding high-risk save compatibility investigation; reviewed automation policy/log/matrix and root README (empty). No manual handoff file was identified in the inspected paths; manual records left untouched.
+- Finding (source-level): `normalizeGearSkills()` accessed and assigned properties of `s.skillLevels` / `s.skillXp` before validating their shapes. A truthy primitive such as `skillLevels:'corrupt'` with legacy `hasteSkill` migration could throw in strict mode; malformed nested data could force `load()` to reset the entire save.
+- Fix: normalize both skill maps to plain empty objects when missing, primitive or array before legacy skill migration and per-skill normalization. Valid object maps and save schema remain unchanged.
+- Evidence: fetched exact `site/game.js` blob, checked unique insertion anchor and trait-before-skill normalization order, GitHub accepted code commit. **No executable malformed-save fixture, browser runtime test, or real-device test performed**; code-level validation only.
+- Deployment: public Pages JS fetch was inaccessible through web reader; published version and deployment success **not verified**.
+- Remaining risks: untrusted non-plain objects, other malformed nested save fields, visibility lifecycle double settlement, combat UI on real portrait screen.
+- Next focus: create runnable save fixture harness with corrupted skill maps and legacy migration cases, then visibility resume double-settlement tests. Do not treat the source inspection as runtime proof.
