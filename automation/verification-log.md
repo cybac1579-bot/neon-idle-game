@@ -81,3 +81,12 @@
 - Deployment: Pages run 43115936201 on prior `613887b2` succeeded. Latest `ec66c1d5` Pages deployment was still running when this entry was drafted; deployed asset/version not independently checked.
 - Remaining risks: real-browser saved-game migration, mobile portrait UI, combat functionality, economy/balance, and latest published asset version remain unverified.
 - Next: confirm Pages deployment for current head; expand save fixtures with real DOM/browser and verify combat/portrait layout.
+
+## 2026-11-12 — automated run 9 (combat and periodic-credit rotation)
+- Base main: `90068658a94ef3d999d6b09dc83f7d5f9338451e`; resulting gameplay/test commit: `aee1d89741256af77565607a0eb046e669b57e12`. No gameplay code changed; only automated test fixtures added.
+- Startup review: automation README, verification log, coverage matrix, current site/game.js and site/index.html; repository tree contained no separate manual handoff/development file (root README empty in previous review). Manual files left unchanged.
+- Focus: neglected combat boss art/trait damage, skill damage/cooldown, and periodic credit cache cap/one-time claim. Added three executable tests to existing Node harness, preserving prior four save/offline cases.
+- Evidence: GitHub Actions run 43123215199 on `aee1d897` completed **success** (seven tests total, including previous four). This is fake-DOM Node execution, not real-browser/device testing. Previous CI failures were fixed in run 8.
+- Deployment: prior head `90068658` Pages run 43117968333 succeeded. Pages run 43123215232 for new test commit was still in progress at time of inspection; do not claim deployed version.
+- Remaining risks: actual combat visuals and enemy interactions on mobile, boss-stage skipping under high rebirth stage jumps, balance of credits/rewards, real browser save migration, Pages asset verification.
+- Next: inspect portrait combat on browser/device and test stage-jump boss progression and cost/reward balance; confirm Pages result.
