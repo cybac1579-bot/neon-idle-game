@@ -64,3 +64,11 @@
 - Evidence: reviewed actual `site/game.js` boot/load/visibility code and committed four test cases through GitHub. **Tests were authored but NOT executed**: GitHub was inaccessible from local container (DNS failure), and GitHub connector does not execute Node. Therefore all four are **unverified**, not passing. Manual development README is empty; manual files untouched.
 - Deployment: no authoritative GitHub Pages build/run or deployed asset confirmation; **deployment not verified**. Test-only change does not require a site release.
 - Risks: fake DOM harness may require adjustment when first run; saved-game runtime compatibility and hidden-tab lifecycle remain unproven until `node --test automation/save-regression.test.cjs` succeeds. Next: execute harness in a checkout/CI, fix harness or gameplay failures, then broaden tests to combat/skill integration and portrait UI.
+
+## 2026-11-12 07:56 KST — automated run 8
+- Base: latest previously recorded test commit `1b5a70e`; resulting CI-workflow commit `e337fbd56db0fe2012afca1baf2b1fffba3c6b8a`. Gameplay code unchanged.
+- Focus: make the previously authored four save/visibility regression tests executable in CI rather than repeating source-only inspection. Read automation policy, prior log, coverage matrix, root README (empty), actual test harness, and `site/game.js`. Manual development records were not edited.
+- Change: created `.github/workflows/save-regression.yml` using Node.js 22 to run `node --test automation/save-regression.test.cjs` on gameplay/test/workflow changes and on manual dispatch.
+- Evidence: GitHub create_file returned commit `e337fbd`. Local `git ls-remote` failed with DNS resolution error for github.com. **No tests executed, no green GitHub Actions run observed, no browser/device test completed, and no Pages deployment verified**. This commit only adds CI infrastructure.
+- Risks: fake-DOM harness might fail on first execution; no passing evidence for saved-game recovery or hidden-tab accounting; GitHub Actions configuration/permissions and Pages publishing status require inspection.
+- Next: inspect actual Actions job status/logs; if failing, repair harness or game behavior and rerun. Once green, rotate focus to combat skills/enemy interaction and mobile portrait verification.
