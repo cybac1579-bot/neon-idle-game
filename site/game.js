@@ -24,6 +24,8 @@ const SKILLS={overload:['과부하 사격','기본 공격 3배 피해',9],chain:
 const WEAPON_TIERS=[['일반',1.12],['희귀',1.28],['영웅',1.55]];
 function normalizeGearSkills(){
  s.weapon=s.weapon&&typeof s.weapon==='object'&&Number.isInteger(s.weapon.tier)&&s.weapon.tier>=0&&s.weapon.tier<3&&Number.isInteger(s.weapon.stage)&&s.weapon.stage>=1?{tier:s.weapon.tier,stage:Math.min(10000,s.weapon.stage)}:null;
+ // 저장 데이터의 중첩 스킬 맵이 배열·문자열·null이어도 복원을 중단하지 않는다.
+ for(const key of ['skillLevels','skillXp'])if(!s[key]||typeof s[key]!=='object'||Array.isArray(s[key]))s[key]={};
  // 기존 가속 스킬은 현상금 추적 스킬로 변환해 보유/계승을 유지한다.
  for(const key of ['skillsOwned','skillsEquipped','skillsInherited'])if(Array.isArray(s[key]))s[key]=s[key].map(id=>id==='hasteSkill'?'bountySkill':id);
  if(s.skillLevels?.hasteSkill){s.skillLevels.bountySkill=Math.max(s.skillLevels.bountySkill||1,s.skillLevels.hasteSkill);delete s.skillLevels.hasteSkill;}
