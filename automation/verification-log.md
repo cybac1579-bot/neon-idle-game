@@ -27,3 +27,13 @@
 - Manual records: repository search for manual handoff/development notes yielded no matches; previous conversation feedback and the automated policy were used. No manual file was edited.
 - Remaining risks: malformed nested saves, non-finite numeric fields not yet covered by runtime fixtures, hidden-tab/double settlement behavior, and published Pages state.
 - Next focus: reproducible save fixture and visibility/offline lifecycle tests, followed by combat UI regression and deployment status check.
+
+## 2026-11-12 03:58 KST — automated run 4
+- Base: `803e5550655c50c14fe49f4e979110f1d3b9147d`; gameplay change: `1c3dc67f285e404d8dfd85e56ed3d0cbad2f3fc1`.
+- Focus: malformed saved cooldown timers and auto-purchase timer, extending save compatibility checks rather than repeating prior timestamp tests.
+- Finding (source-level): persisted `cd_overload`, `cd_chain`, `cd_bountySkill`, and `autoPurchaseClock` were not normalized during load. If a save contains string or non-finite values, `(s[key]||0)+dt` may concatenate strings or propagate invalid values and permanently prevent skill activations or auto purchases.
+- Fix: normalize each skill cooldown to finite range [0, its base cooldown] and auto-purchase clock to [0,30] in `normalizeGearSkills()`. Does not alter save key or normal valid save behavior.
+- Evidence: inspected complete `site/game.js` from GitHub; verified unique source replacement and presence of prior offline auto-rebirth/timestamp guards; GitHub returned gameplay commit. **No executable browser/Node fixture tests or real-device play performed**. Published Pages JS URLs could not be fetched with web reader, so deployment is **not verified**.
+- Manual notes: root README empty; no separate manual handoff found in files inspected. Preserved manual records without edits.
+- Risks: other malformed nested save fields, timer progression across visibility transitions, offline settlement performance, and device UI remain untested.
+- Next focus: executable save fixtures and lifecycle tests, then mobile portrait combat visuals and skill/combat integration.
