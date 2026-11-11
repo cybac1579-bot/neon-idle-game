@@ -1,0 +1,28 @@
+name: Save regression checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/game.js'
+      - 'automation/*.test.cjs'
+      - '.github/workflows/save-regression.yml'
+  pull_request:
+    paths:
+      - 'site/game.js'
+      - 'automation/*.test.cjs'
+      - '.github/workflows/save-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  save-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run saved-game regression tests
+        run: node --test automation/save-regression.test.cjs
