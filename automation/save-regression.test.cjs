@@ -61,3 +61,33 @@ test('hidden-tab resume settles elapsed time once and remains stable on immediat
   b.listeners.visibilitychange();
   assert.equal(b.get('s.energy'),first);
 });
+
+test('boss stage selects boss art and increases boss-trait damage',()=>{
+  const b=boot({stage:10,best:10,heroLevel:30,traitPointsEarned:29,traits:{boss:2},lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
+  const withTrait=b.get('power()');
+  b.get('s.traits.boss=0');
+  const withoutTrait=b.get('power()');
+  assert.ok(withTrait>withoutTrait,'boss trait must increase damage on stage 10');
+  b.get('s.stage=11;spawn()');
+  assert.notEqual(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
+});
+test('combat skill damages enemy and respects cooldown',()=>{
+  const b=boot({stage:20,best:20,skillsOwned:['overload'],skillsEquipped:['overload'],skillLevels:{overload:1},lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  const before=b.get('enemyHp');
+  b.get('skillTick(9)');
+  assert.ok(b.get('enemyHp')<before,'overload should damage enemy');
+  const after=b.get('enemyHp');
+  b.get('skillTick(1)');
+  assert.equal(b.get('enemyHp'),after,'skill must not fire again before cooldown');
+});
+test('periodic credit cache accumulates at most five payouts and claims once',()=>{
+  const b=boot({stage:1,best:1,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  b.get('step(360,false)');
+  const payout=b.get('cachePayout()');
+  assert.equal(b.get('s.cacheCredits'),payout*5);
+  const before=b.get('s.credits');
+  assert.equal(b.get('transferCacheCredits()'),payout*5);
+  assert.equal(b.get('s.credits'),before+payout*5);
+  assert.equal(b.get('transferCacheCredits()'),0);
+});
