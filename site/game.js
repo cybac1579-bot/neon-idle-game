@@ -34,6 +34,9 @@ function normalizeGearSkills(){
  s.skillLevels=s.skillLevels&&typeof s.skillLevels==='object'?Object.fromEntries(s.skillsOwned.map(k=>[k,Math.max(1,Math.min(100,Math.floor(safeNumber(s.skillLevels[k],1,100))))])):{};
  s.skillXp=Object.fromEntries(s.skillsOwned.map(k=>[k,safeNumber(s.skillXp&&s.skillXp[k],0,1e9)]));
  s.skillClock=safeNumber(s.skillClock,0,100);s.skillBuffBounty=safeNumber(s.skillBuffBounty,0,12);s.skillBuffHaste=0;
+ // Legacy/corrupted cooldown fields must never become strings or NaN during += dt.
+ for(const id of Object.keys(SKILLS))s['cd_'+id]=safeNumber(s['cd_'+id],0,SKILLS[id][2]);
+ s.autoPurchaseClock=safeNumber(s.autoPurchaseClock,0,30);
 }
 const weaponScore=w=>w?WEAPON_TIERS[w.tier][1]*(1+Math.min(100,w.stage)*.003):1;
 const weaponMultiplier=()=>weaponScore(s.weapon);
