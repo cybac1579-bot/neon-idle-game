@@ -15,7 +15,7 @@ function boot(saved,now=Date.UTC(2026,10,12,0,0,0)){
     return {style:{},dataset:{},children:[],classList:{toggle(){}},addEventListener(){},
       querySelectorAll(){return []},appendChild(n){this.children.push(n)},
       remove(){},
-      set innerHTML(html){this.children=[...String(html).matchAll(/<(strong|small|button)\\b[^>]*>/g)].map(()=>element())},
+      set innerHTML(html){this.children=[...String(html).matchAll(/<(strong|small|button)\b[^>]*>/g)].map(()=>element())},
       get firstElementChild(){return this.children[0]||null},
       get lastElementChild(){return this.children[this.children.length-1]||null},
       set textContent(v){this._text=v},get textContent(){return this._text||''}};
