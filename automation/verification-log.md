@@ -37,3 +37,13 @@
 - Manual notes: root README empty; no separate manual handoff found in files inspected. Preserved manual records without edits.
 - Risks: other malformed nested save fields, timer progression across visibility transitions, offline settlement performance, and device UI remain untested.
 - Next focus: executable save fixtures and lifecycle tests, then mobile portrait combat visuals and skill/combat integration.
+
+## 2026-11-12 04:52 KST — automated run 5
+- Base: `6362831a4cecc3b554849db903a8741b306d4cc3`; gameplay change: `59858a62c0e3d4ec0e8f178bc89893385fc3c4d7`.
+- Focus: save-load initialization order, inherited skills and trait-dependent slots; reviewed previous automation logs, coverage matrix, latest commits and empty root README (no separate manual handoff discovered in inspected paths).
+- Finding (source-level): `load()` called `normalizeGearSkills()` before `normalizeTraits()`. The inherited-skill filter invokes `inheritanceSlots()` -> `traitLevel('inherit')` on untrusted saved traits, potentially yielding NaN or excessive slots and dropping inherited skills before trait normalization; skill ownership can be silently lost from equip/inheritance selection in malformed saves.
+- Fix: compute earned trait points and normalize traits before normalizing gear/skills; no save schema changes. Existing offline rebirth guard and cooldown normalization preserved.
+- Evidence: fetched full `site/game.js` and blob SHA; unique exact replacement; five source-level assertions including unchanged file length and existing safeguards; GitHub accepted gameplay commit. **No executable browser fixture, real-device play or end-to-end load regression was run.**
+- Deployment: attempted public GitHub Pages URL `https://cybac1579-bot.github.io/neon-idle-game/`, inaccessible through web reader; **deployed version not verified**.
+- Remaining risks: malicious/malformed skillLevels object shape, save restoration with corrupted nested traits, visibility resume double settlement, real portrait combat rendering. The order fix has not been runtime-proven.
+- Next focus: executable malformed-save fixtures (traits/skills and visibility lifecycle), then combat skill/enemy integration and mobile portrait verification.
