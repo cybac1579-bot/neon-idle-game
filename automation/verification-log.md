@@ -72,3 +72,12 @@
 - Evidence: GitHub create_file returned commit `e337fbd`. Local `git ls-remote` failed with DNS resolution error for github.com. **No tests executed, no green GitHub Actions run observed, no browser/device test completed, and no Pages deployment verified**. This commit only adds CI infrastructure.
 - Risks: fake-DOM harness might fail on first execution; no passing evidence for saved-game recovery or hidden-tab accounting; GitHub Actions configuration/permissions and Pages publishing status require inspection.
 - Next: inspect actual Actions job status/logs; if failing, repair harness or game behavior and rerun. Once green, rotate focus to combat skills/enemy interaction and mobile portrait verification.
+
+## 2026-11-12 08:11 KST — interactive CI failure repair (separate from scheduled runs)
+- Base main: `613887b277ac89ba95de692cad78d38634de7ba6`; resulting test fix: `ec66c1d5a1cd7bb66e07046ff6aab752fe6b0b36` (intermediate `d71ef100` had an incorrectly escaped regex and failed CI).
+- Focus: investigate previously unverified Node save regression workflow, not new gameplay features. Manual development/handoff files unchanged.
+- Evidence: GitHub Actions run 43115895400 on `e337fbd` failed 1/4; logs showed TypeError at `renderGearSkills` when fake DOM lacked children for innerHTML-created strong/button nodes. Updated only `automation/save-regression.test.cjs` to construct stub child elements for those tags, then corrected regex escaping.
+- Result: GitHub Actions save regression run 43117916982 on `ec66c1d5` completed **success** (4 cases, 0 failures); checkout/setup and test step succeeded. No game logic/save schema changed. This validates the four fixture scenarios only, not full browser compatibility.
+- Deployment: Pages run 43115936201 on prior `613887b2` succeeded. Latest `ec66c1d5` Pages deployment was still running when this entry was drafted; deployed asset/version not independently checked.
+- Remaining risks: real-browser saved-game migration, mobile portrait UI, combat functionality, economy/balance, and latest published asset version remain unverified.
+- Next: confirm Pages deployment for current head; expand save fixtures with real DOM/browser and verify combat/portrait layout.
