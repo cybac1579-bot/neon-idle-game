@@ -41,6 +41,7 @@ const server = createServer((req,res)=>{
     });
     assert.ok(composition.arena.height>=280,'portrait arena must be tall enough');
     assert.ok(composition.hero.height>composition.enemy.height,'hero art must dominate composition');
+    assert.ok(composition.hero.width/composition.arena.width>.60,'legacy max-width must not shrink hero art');
     assert.ok(composition.hero.x>=composition.arena.x-1&&composition.enemy.x+composition.enemy.width<=composition.arena.x+composition.arena.width+1,'art must fit inside arena');
 
     await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img')].every(img=>img.complete&&img.naturalWidth>0));
