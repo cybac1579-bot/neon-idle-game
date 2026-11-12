@@ -56,3 +56,15 @@ Sources: community wiki combat overview https://melvor-idle.fandom.com/ru/wiki/%
 **Estimated Neon cost / expected effect:** low for auditing current auto-buy/auto-rebirth eligibility consistency and adding regression fixtures; medium for a compact optional pre-battle preference in the existing growth/details surface; high for multi-target enemy AI and gear-counter systems. Potentially high agency/clarity benefit, unproven until tested.
 
 **Decision:** **apply audit principle now, defer new mechanics**. Keep default fully automatic combat and existing boss stops. Before any target-selection feature, test shared eligibility and save compatibility; do not introduce tap attacks, mandatory manual targeting, or a dense combat toolbar. Next research should examine a different game's clear offline-return summary rather than repeat combat automation.
+
+## 2026-11-12 23:57 KST — Idle Champions: offline simulation transparency and reset automation
+
+Sources: https://idlechampions.fandom.com/wiki/Modron_Automation ; https://steamcommunity.com/app/627690/discussions/0/3609015230786416930/ ; https://www.reddit.com/r/idlechampions/comments/1k73byy/ . These describe documented/community-reported behavior, not a current hands-on build.
+
+**Transferable principle:** distinguish foreground and offline progression, clearly summarize offline rewards and stopping conditions, and avoid hidden reset/automation surprises. Idle Champions' saved formations and area-based reset loops show the value of transparent configuration, but also the setup burden and divergence between offline and foreground mechanics.
+
+**Advantages (impact):** (1) return summary can explain time, credits, stages, and capped rewards without requiring taps (high); (2) explicit offline automation exclusions prevent unexpected rebirths (high); (3) a shared summary model aids regression testing (medium-high).
+**Drawbacks (impact):** (1) detailed return overlays interrupt mobile play (high); (2) promising offline/foreground parity where algorithms differ misleads users (high); (3) multi-party or formation automation is excessive scope and UI cost (high).
+**Cost / expected value:** low-medium for a compact optional return summary from existing settlement values; medium for accurate before/after snapshots and fixture coverage; high for parity guarantees or multi-party automation. Potential clarity benefit, not yet player-validated.
+**Decision:** **defer UI until offline lifecycle fixture coverage and real mobile view are checked**; prioritize accurate accounting and a nonmodal summary in an existing detail/status surface. No active tap mechanics, forced manual decisions, or automatic offline rebirth. Avoid copying formations, currencies, or formulas.
+**Next verification:** test 7,200-second cap, offline no-rebirth, and visible/hidden resume without duplicate rewards; verify that the current log message communicates actual credited time, not elapsed wall time.
