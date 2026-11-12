@@ -128,7 +128,7 @@ test('rebirth stage jumps stop at each boss instead of skipping encounters',()=>
   assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
   b.get('enemyHp=0;resolveEnemyDefeat()');
   assert.equal(b.get('s.stage'),20,'next boss must be visited');
-  assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
+  assert.equal(b.document.getElementById('enemyImage').src,'boss_overheat.webp');
 });
 test('jump landing on a boss still grants crossed milestone once',()=>{
   const b=boot({stage:8,best:8,rebirths:3,credits:0,lastSaved:Date.UTC(2026,10,12,0,0,0)});
