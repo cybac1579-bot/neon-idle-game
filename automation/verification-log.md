@@ -138,3 +138,13 @@
 - Follow-up test commit `7fc043890d42cc0b6d053c6156bb57a276af1a89` now records 1/5/15/30-minute stage and credit checkpoints; its CI and deployment status were pending when authored. Priority: inspect those checkpoints and correct verified progression overspeed while keeping idle waiting meaningful.
 
 - Checkpoint follow-up: Actions run 43151665234 on `7fc04389` completed **success (14/14)**. Simulated auto-buy (autoLevel 1) from 30 credits: STAGE 12 at 1 min, 48 at 5 min, 239 at 15 min, 682 at 30 min; credits ~2.83e53 at 30 min. Prior run reached STAGE 713, so outcomes vary with random combat. This indicates an overly fast growth curve in this specific **already-unlocked auto-buy** fixture, not necessarily a first-ever run (autoLevel 1 is normally a permanent upgrade). Do not present it as first-run balance evidence. Need separate baseline fresh-start, and distinguish offline from active play before tuning.
+
+
+## 2026-11-12 — automated run 14 (fresh-save passive baseline)
+- Base main: `d0e2eb094`; test commit `5b6865a611f37bbbdb329e45e9d2d03c8eefa194`. No gameplay code changed.
+- Startup: reviewed automation README, previous verification log, coverage matrix, latest main/Actions, current game.js/index.html, and repository root README (empty). No repository manual handoff document found; manual records untouched. Prior interactive user feedback distinguishes a genuine first run from already-unlocked auto-buy and permits idle purchase gaps.
+- Focus: 30-minute fresh-save passive simulation with autoLevel=0, no auto-buy or player purchases, checkpoints at 1/5/15/30 minutes. Explicitly records whether stage 100 becomes eligible, and ensures no hidden upgrades/rebirths, finite metrics. This is a baseline for comparison, not an estimate of active human play.
+- Evidence: GitHub accepted test-file change; prior 14-test CI run 43151665234 passed. New 15-test CI run 43158314770 queued at first inspection; **do not claim pass or derive baseline results until CI logs obtained**.
+- Deployment: previous head `d0e2eb09` Pages run 43151725191 completed success. New test commit Pages run 43158314740 queued at first inspection; published asset parity not established.
+- Risks: actual fresh active/manual purchase path not simulated; passive offline progression may be very different from active play; real mobile visuals/performance and browser save migration unverified.
+- Next: inspect new CI output and stage checkpoints, repair any failure, compare passive vs unlocked-auto-buy baselines before deciding on balance changes; verify latest Pages.
