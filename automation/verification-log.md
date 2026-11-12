@@ -133,3 +133,6 @@
 - Deployment: base main Pages run 43144690587 completed success. New test/documentation head deployment pending confirmation; published asset parity not checked.
 - Risks: new fixture may fail, short-screen combat appearance, real browser migration, auto-buy purchase efficiency and perceived pacing. A simulation with fixed starting state cannot establish 30-minute player experience.
 - Next: inspect CI logs and metrics, fix failures, then evaluate progression pacing and UI on an actual portrait browser.
+
+- Follow-up: Actions run 43151620080 on `aebd0d2c` completed **success (14/14)**. Its Node VM 1,800-second auto-buy fixture reported STAGE 713, credits ~5.19e55, 712 kills, 0 rebirths (disabled). This is a **balance warning**: reaching stage 713 in simulated 30 minutes is far beyond the intended first-rebirth pacing; cannot infer exact stage-100 time from this aggregate alone. No gameplay balance changes made without checkpoint evidence.
+- Follow-up test commit `7fc043890d42cc0b6d053c6156bb57a276af1a89` now records 1/5/15/30-minute stage and credit checkpoints; its CI and deployment status were pending when authored. Priority: inspect those checkpoints and correct verified progression overspeed while keeping idle waiting meaningful.
