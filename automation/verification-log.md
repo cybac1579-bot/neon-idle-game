@@ -170,3 +170,5 @@
 - Evidence: exact GitHub Actions failed job log and GitHub file update commit. Workflow execution 43171848321 was queued/waiting at initial inspection; **do not claim deployment success until completed**. No real-browser visual or gameplay test performed. Prior 16-case Node test success: 43165049886 on `f6e8475b`; workflow-only change did not modify tested game code.
 - Risks: GitHub artifact API may remain inconsistent beyond 60 seconds; polling requires GitHub CLI and token with actions read access; test in real Actions job. Published asset parity, short-screen battle feel, and human-paced 30-minute growth remain unverified.
 - Next: inspect workflow run 43171848321 logs and fix any permission/polling issue; then prioritize actual mobile portrait/browser verification and player-feasible purchase cadence.
+
+- Follow-up: Pages run **43171848321 completed success** on workflow fix `31fd45b1`; the new artifact visibility gate and deployment steps succeeded. Later `automation/**` documentation commits do not trigger Pages under the new path filter, so latest game assets match the workflow's deployed site source; independent HTTP/browser parity not checked.
