@@ -232,3 +232,13 @@ test('portrait combat motion emphasizes boss and respects reduced-motion prefere
   assert.match(html,/img\[src="boss_guardian\.webp"\]\{animation:boss-presence/);
   assert.doesNotMatch(html,/@media\(prefers-reduced-motion:reduce\)[\s\S]*animation:/);
 });
+
+
+test('foreground hit feedback is throttled and never called from offline settlement',()=>{
+  const game=fs.readFileSync(path.join(__dirname,'../site/game.js'),'utf8');
+  assert.match(game,/function combatImpact\(now\)/);
+  assert.match(game,/now-lastImpact<180/);
+  assert.match(game,/prefers-reduced-motion: reduce/);
+  assert.match(game,/if\(enemyHp<before\)combatImpact\(now\)/);
+  assert.doesNotMatch(game,/function settleElapsed\([^]*?\{[^]*?combatImpact\(/);
+});
