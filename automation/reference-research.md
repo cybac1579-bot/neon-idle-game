@@ -90,3 +90,16 @@ Reference: original browser game https://www.decisionproblem.com/paperclips/ (ga
 **Drawbacks / impact:** (1) copying the original's clicking and micromanagement violates Neon's low-input rule (critical); (2) abrupt phase transitions may obscure ongoing combat and boss progression (high); (3) adding more resource conversion layers could amplify balance and tutorial cost (high).
 **Estimated cost / expected value:** low for read-only next-phase copy and tests, medium for UI presentation and localization, high for a new economic phase. Benefit to real-player comprehension is plausible but not measured.
 **Decision:** **apply only as a future clarity audit**, not a mechanic. Keep automatic battle and existing boss stops, defer new resource layers and any rapid-tap loop. First obtain executable evidence for the 24-case suite and actual mobile portrait usability; then test whether existing phase unlock text already communicates the next objective.
+
+
+## 2026-11-13 02:58 KST — Cookie Clicker: milestones versus attention demand
+
+Source: original game https://orteil.dashnet.org/cookieclicker/ (design comparison; no hands-on run in this check).
+
+**Transferable principle:** recognizable milestone/achievement cues and a persistent progression ladder can make otherwise passive accumulation legible. This does **not** justify importing click-to-progress or timed golden-cookie reactions.
+
+**Benefits (impact):** (1) milestone visibility makes idle waiting purposeful (high); (2) compact next-goal indicator can reuse existing phase/rebirth state (medium-high); (3) optional history of milestones provides a sense of progress after reset (medium).
+
+**Costs/risks (impact):** (1) click-driven primary loop violates Neon’s no-repeated-tapping constraint (critical); (2) event popups compete with combat readability on portrait displays (high); (3) achievement sprawl and extra unlocks require balancing and save migration (medium-high).
+
+**Cost / decision:** low for a read-only milestone summary on the existing growth/detail surface; medium-high for new unlock effects. **Apply only the clarity principle; defer implementation** until actual phone viewport and current phase-goal wording are tested. No extra combat buttons, timed taps or currency layers. No gameplay changes this run.
