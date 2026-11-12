@@ -27,7 +27,7 @@ const server = createServer((req,res)=>{
     const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
-    page.on('response',response=>{if(response.status()>=400)errors.push('HTTP '+response.status()+' '+response.url())});
+    page.on('response',response=>{if(response.status()>=400&&!response.url().endsWith('/favicon.ico'))errors.push('HTTP '+response.status()+' '+response.url())});
     await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'load'});
     await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
     assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1);
