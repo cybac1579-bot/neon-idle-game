@@ -32,6 +32,7 @@ const server = createServer((req,res)=>{
     await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
     assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1);
     assert.equal(await page.locator('#combatStage img').count(),2);
+    assert.equal(await page.locator('#heroImage').count(),1,'stable hero art slot');
     await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img')].every(img=>img.complete&&img.naturalWidth>0));
     const assets=await page.locator('#combatStage img').evaluateAll(images=>images.map(img=>({src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight})));
     assert.ok(assets.every(img=>img.width>0&&img.height>0),'combat art must decode: '+JSON.stringify(assets));
@@ -40,7 +41,7 @@ const server = createServer((req,res)=>{
     assert.equal(await page.locator('#heroAttackArc').count(),1,'sword arc layer exists');
     const animation=await page.evaluate(()=>{
       const arc=document.getElementById('heroAttackArc');
-      const hero=document.querySelector('#combatStage img:first-of-type');
+      const hero=document.querySelector('#heroImage');
       const before={stage:s.stage,credits:s.credits,kills:s.kills};
       lastImpact=-Infinity;
       combatImpact(performance.now());
