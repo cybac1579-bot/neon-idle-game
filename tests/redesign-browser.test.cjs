@@ -22,9 +22,11 @@ const server = createServer((req,res)=>{
 (async()=>{
   server.listen(0,'127.0.0.1');await once(server,'listening');
   const port=server.address().port;
-  const browser=await chromium.launch({headless:true});
+  const browser=await chromium.launch({headless:true,timeout:20000});
+  let page;
   try{
-    const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});
+    page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});
+    page.setDefaultTimeout(12000);
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     page.on('response',response=>{if(response.status()>=400&&!response.url().endsWith('/favicon.ico'))errors.push('HTTP '+response.status()+' '+response.url())});
@@ -108,5 +110,9 @@ const server = createServer((req,res)=>{
     fs.writeFileSync('test-results/browser-errors.json',JSON.stringify(errors,null,2));
     assert.deepEqual(errors,[],'browser runtime errors');
     console.log('PASS browser startup, auto battle, 4 tabs, sprites, goal, mobile width, no runtime errors');
+  } catch(error){
+    fs.writeFileSync('test-results/browser-failure.txt',String(error?.stack||error));
+    if(page){try{await page.screenshot({path:'test-results/browser-failure.png',fullPage:true,timeout:5000})}catch(e){fs.writeFileSync('test-results/screenshot-failure.txt',String(e))}}
+    throw error;
   } finally {await browser.close()}
 })().catch(error=>{console.error(error);process.exitCode=1}).finally(()=>server.close());
