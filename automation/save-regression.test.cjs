@@ -215,3 +215,10 @@ test('fresh active-play proxy: manual purchases every five seconds over 30 minut
   assert.ok(checkpoints.every(p=>Number.isFinite(p.credits)&&Number.isFinite(p.kills)&&p.stage>=1));
   console.log('30-minute fresh active manual-purchase proxy:',JSON.stringify({purchases,firstRebirthEligibleAt,checkpoints}));
 });
+
+test('keyboard navigation and toggle controls have visible focus treatment',()=>{
+  const html=fs.readFileSync(path.join(__dirname,'../site/index.html'),'utf8');
+  assert.match(html,/button:focus-visible,input:focus-visible\\{outline:3px solid #ffe17e;outline-offset:3px\\}/);
+  assert.match(html,/<nav class="nav" aria-label="화면 이동">/);
+  assert.match(html,/setAttribute\\('aria-pressed',String\\(b.dataset.view===view\\)\\)/);
+});
