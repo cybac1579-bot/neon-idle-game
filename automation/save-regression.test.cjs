@@ -120,3 +120,19 @@ test('rebirth requires stage 100 and preserves permanent upgrades',()=>{
   assert.equal(b.get('s.corePower'),2);
   assert.equal(b.get('s.atk'),0);
 });
+
+test('rebirth stage jumps stop at each boss instead of skipping encounters',()=>{
+  const b=boot({stage:8,best:8,rebirths:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),10,'stage 10 boss must not be skipped');
+  assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),20,'next boss must be visited');
+  assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
+});
+test('jump landing on a boss still grants crossed milestone once',()=>{
+  const b=boot({stage:8,best:8,rebirths:3,credits:0,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.knownUnlocks.filter(k=>k==="milestone-10").length'),1);
+  assert.equal(b.get('s.best'),10);
+});
