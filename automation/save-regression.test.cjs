@@ -316,3 +316,18 @@ test('visibility resume settles hidden time once without duplicate cache payout'
   assert.equal(b.get('s.cacheCredits'),first,'duplicate visible event must not credit cache twice');
   assert.equal(b.get('s.lastSaved'),savedAt);
 });
+
+
+test('repeated hidden events preserve original background start for offline settlement',()=>{
+  const start=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:1,cacheClock:0,cacheCredits:0,lastSaved:start},start);
+  b.document.hidden=true;
+  b.listeners.visibilitychange();
+  b.setNow(start+30000);
+  b.listeners.visibilitychange();
+  b.setNow(start+60000);
+  b.document.hidden=false;
+  b.listeners.visibilitychange();
+  assert.ok(b.get('s.cacheCredits')>0,'two hidden events must not discard the first 30 seconds');
+  assert.equal(b.get('s.lastSaved'),start+60000);
+});
