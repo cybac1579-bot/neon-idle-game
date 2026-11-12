@@ -116,6 +116,16 @@ main{max-width:520px;padding-top:10px}main>h1{font-size:20px;letter-spacing:.025
 #heroAttackArc.active{animation:heroArcSweep .38s cubic-bezier(.2,.7,.2,1) both}
 @keyframes heroArcSweep{0%,22%{opacity:0;transform:rotate(-65deg) scale(.35)}40%{opacity:.95;transform:rotate(-20deg) scale(.9)}62%{opacity:1;transform:rotate(24deg) scale(1.2)}100%{opacity:0;transform:rotate(45deg) scale(1.25)}}
 @media(prefers-reduced-motion:reduce){#heroAttackArc.active{animation:none!important;opacity:0!important}}
+
+/* Portrait combat composition: art-first layout, independent of asset choice. */
+#combatStage{position:relative;display:block;isolation:isolate;overflow:hidden;min-height:clamp(280px,90vw,420px);border-radius:16px;background:radial-gradient(ellipse at 72% 54%,#5b285e77,transparent 45%),linear-gradient(155deg,#15162e,#292040 62%,#121529);border:1px solid #70436e}
+#combatStage::before{content:"";position:absolute;inset:auto -12% 0;height:24%;background:radial-gradient(ellipse at center,#c74d8e33,transparent 70%);pointer-events:none}
+#heroImage{position:absolute;z-index:2;left:0;bottom:0;width:64%;height:95%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 0 15px #ed65ba55)}
+#enemyImage{position:absolute;z-index:1;right:3%;bottom:16%;width:38%;height:47%;object-fit:contain;filter:drop-shadow(0 0 12px #ff7bc066)}
+#combatStage .battle-stage-label{position:absolute;z-index:4;top:10px;right:10px}
+#combatStage #heroAttackArc{left:48%;top:37%;width:38%;height:30%;z-index:5}
+#combatStage .battle-impact,#combatStage .battle-skill-flash{z-index:6}
+@media(max-width:360px){#heroImage{width:66%}#enemyImage{width:36%;right:2%}}
 </style></head><body><main>
 <h1>✦ 네온 방치단</h1><p class="sub">도시의 균열을 돌파하는 자동 전투</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
