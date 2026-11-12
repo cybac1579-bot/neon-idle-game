@@ -192,3 +192,26 @@ test('fresh save without auto-buy: 30-minute passive baseline records progressio
   assert.ok(checkpoints.every(p=>Number.isFinite(p.credits)&&Number.isFinite(p.energy)&&Number.isFinite(p.kills)),'baseline metrics finite');
   console.log('30-minute fresh passive baseline:',JSON.stringify({checkpoints,firstRebirthEligibleAt}));
 });
+
+test('fresh active-play proxy: manual purchases every five seconds over 30 minutes',()=>{
+  const b=boot(undefined);
+  const checkpoints=[];
+  let purchases=0,firstRebirthEligibleAt=null;
+  for(let second=1;second<=1800;second++){
+    b.get('step(1,false)');
+    if(second%5===0){
+      // Deliberately simple human proxy: buy the cheapest currently unlocked upgrade.
+      const bought=b.get('(()=>{const eligible=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>cost(a)-cost(b));return eligible.length?purchase(eligible[0]):false})()');
+      if(bought)purchases++;
+    }
+    if(firstRebirthEligibleAt===null&&b.get('s.stage')>=100)firstRebirthEligibleAt=second;
+    if([60,300,900,1800].includes(second)){
+      checkpoints.push({second,...b.get('({stage:s.stage,best:s.best,credits:s.credits,kills:s.kills,atk:s.atk,spd:s.spd,gen:s.gen,rebirths:s.rebirths})')});
+    }
+  }
+  assert.equal(b.get('s.autoLevel'),0);
+  assert.equal(b.get('s.rebirths'),0);
+  assert.ok(purchases>0,'manual-purchase proxy must buy upgrades');
+  assert.ok(checkpoints.every(p=>Number.isFinite(p.credits)&&Number.isFinite(p.kills)&&p.stage>=1));
+  console.log('30-minute fresh active manual-purchase proxy:',JSON.stringify({purchases,firstRebirthEligibleAt,checkpoints}));
+});
