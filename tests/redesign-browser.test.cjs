@@ -41,7 +41,9 @@ const server = createServer((req,res)=>{
     const size=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(size.width<=size.viewport+1,'horizontal overflow: '+JSON.stringify(size));
     await page.waitForTimeout(1000);
-    const saveKey=await page.evaluate(()=>{document.querySelector('#save').click();return localStorage.getItem('neon_rework_07')});
+    await page.locator('[data-view="stats"]').click();
+    await page.locator('#save').click();
+    const saveKey=await page.evaluate(()=>localStorage.getItem('neon_rework_07'));
     assert.ok(saveKey,'save must persist under original key');
     await page.reload({waitUntil:'load'});
     await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
