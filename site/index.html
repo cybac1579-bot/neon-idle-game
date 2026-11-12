@@ -126,10 +126,22 @@ main{max-width:520px;padding-top:10px}main>h1{font-size:20px;letter-spacing:.025
 #combatStage #heroAttackArc{left:48%;top:37%;width:38%;height:30%;z-index:5}
 #combatStage .battle-impact,#combatStage .battle-skill-flash{z-index:6}
 @media(max-width:360px){#heroImage{width:66%}#enemyImage{width:36%;right:2%}}
+
+/* Prototype animation layer: separate ambient light from the character bitmap.
+   This is NOT articulated hair/clothing animation; it is a low-cost visual baseline. */
+#combatStage .hero-ambient{position:absolute;z-index:3;left:7%;bottom:8%;width:52%;height:78%;pointer-events:none;opacity:.65;mix-blend-mode:screen;background:linear-gradient(112deg,transparent 32%,#7df8f000 45%,#7df8f035 50%,transparent 57%);mask-image:linear-gradient(to top,transparent,#000 30%,#000 75%,transparent);transform:translateX(-18%)}
+#combatStage .hero-weapon-glint{position:absolute;z-index:4;left:48%;top:34%;width:6px;height:68px;transform:rotate(40deg);border-radius:100%;pointer-events:none;background:linear-gradient(180deg,transparent,#f8e4ff88,transparent);filter:blur(3px);opacity:0}
+@media(prefers-reduced-motion:no-preference){
+ #combatStage .hero-ambient{animation:hero-ambient-pulse 3.7s ease-in-out infinite alternate}
+ #combatStage .hero-weapon-glint{animation:hero-weapon-spark 4.1s ease-in-out infinite}
+}
+@keyframes hero-ambient-pulse{0%{opacity:.18;transform:translateX(-18%)}100%{opacity:.48;transform:translateX(8%)}}
+@keyframes hero-weapon-spark{0%,72%,100%{opacity:0}78%{opacity:.75}87%{opacity:0}}
+@media(prefers-reduced-motion:reduce){#combatStage .hero-ambient,#combatStage .hero-weapon-glint{animation:none!important;opacity:0!important}}
 </style></head><body><main>
 <h1>✦ 네온 방치단</h1><p class="sub">도시의 균열을 돌파하는 자동 전투</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
-<section data-screen="battle" class="panel"><p class="sub" id="heroGrowth" aria-live="polite"></p><div class="stats"><div class="stat">현재 스테이지<strong id="stage"></strong></div><div class="stat">최고 기록<strong id="best"></strong></div><div class="stat">환생 횟수<strong id="rebirths"></strong></div></div><div class="fight" id="combatStage"><span class="battle-stage-label" id="battleStageLabel" aria-hidden="true">일반 전투</span><img id="heroImage" src="hero_swordswoman_219.webp" alt="분홍빛 검을 든 흑발 여성 검사" data-asset-status="prototype-219"><img id="enemyImage" src="enemy_scout.svg" alt="적"><span id="heroAttackArc" aria-hidden="true"></span><span class="battle-impact" id="battleImpact" aria-hidden="true"></span><span class="battle-skill-flash" id="battleSkillFlash" aria-hidden="true"></span></div><div class="bar"><div id="hpBar"></div></div><p class="sub" id="battleInfo"></p><p class="log" id="log"></p><div class="battle-progress" aria-label="다음 주요 성장 목표"><span id="battleGoal">다음 목표 확인 중</span></div></section>
+<section data-screen="battle" class="panel"><p class="sub" id="heroGrowth" aria-live="polite"></p><div class="stats"><div class="stat">현재 스테이지<strong id="stage"></strong></div><div class="stat">최고 기록<strong id="best"></strong></div><div class="stat">환생 횟수<strong id="rebirths"></strong></div></div><div class="fight" id="combatStage"><span class="battle-stage-label" id="battleStageLabel" aria-hidden="true">일반 전투</span><img id="heroImage" src="hero_swordswoman_219.webp" alt="분홍빛 검을 든 흑발 여성 검사" data-asset-status="prototype-219"><span class="hero-ambient" aria-hidden="true"></span><span class="hero-weapon-glint" aria-hidden="true"></span><img id="enemyImage" src="enemy_scout.svg" alt="적"><span id="heroAttackArc" aria-hidden="true"></span><span class="battle-impact" id="battleImpact" aria-hidden="true"></span><span class="battle-skill-flash" id="battleSkillFlash" aria-hidden="true"></span></div><div class="bar"><div id="hpBar"></div></div><p class="sub" id="battleInfo"></p><p class="log" id="log"></p><div class="battle-progress" aria-label="다음 주요 성장 목표"><span id="battleGoal">다음 목표 확인 중</span></div></section>
 <section data-screen="growth" class="panel"><h2>주인공 성장 정보</h2><p class="sub" id="heroGrowthDetails"></p></section>
 <section data-screen="growth" class="panel"><h2>⚔ 장비·스킬 · 14차 실험</h2><p class="sub" id="weaponInfo"></p><p class="sub" id="skillInfo"></p><div id="skillList" class="grid"></div><p class="sub">STAGE 15부터 무기, 20부터 스킬을 획득해. 재구성 시 계승 지정 스킬만 LV.1로 유지돼. 수치는 임시야.</p></section>
 <section data-screen="growth" class="panel"><h2>✦ 주인공 특성 · 임시 테스트</h2><p class="sub" id="traitPoints"></p><div class="grid" id="traits"></div><button id="traitReset" class="wide">특성 전체 초기화 · 포인트 반환</button><p class="sub">스킬 가속·장비 탐색은 임시 적용 중이야. 계승 확장은 LV.60부터 투자할 수 있어.</p></section>
