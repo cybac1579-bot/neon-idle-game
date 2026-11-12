@@ -33,8 +33,9 @@ const server = createServer((req,res)=>{
     await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'load'});
     await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
     assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1);
-    assert.equal(await page.locator('#combatStage img').count(),2);
+    assert.equal(await page.locator('#combatStage img:not([hidden])').count(),2);
     assert.equal(await page.locator('#heroImage').count(),1,'stable hero art slot');
+    assert.equal(await page.locator('#heroArtRoot .hero-part[hidden]').count(),2,'future hair and coat art slots remain hidden until assets exist');
     const composition=await page.evaluate(()=>{
       const arena=document.getElementById('combatStage').getBoundingClientRect();
       const hero=document.getElementById('heroImage').getBoundingClientRect();
@@ -57,8 +58,8 @@ const server = createServer((req,res)=>{
     assert.equal(computed.heroMaxWidth,'none','legacy image max-width must not override hero layout');
 
 
-    await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img')].every(img=>img.complete&&img.naturalWidth>0));
-    const assets=await page.locator('#combatStage img').evaluateAll(images=>images.map(img=>({src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight})));
+    await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img:not([hidden])')].every(img=>img.complete&&img.naturalWidth>0));
+    const assets=await page.locator('#combatStage img:not([hidden])').evaluateAll(images=>images.map(img=>({src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight})));
     assert.ok(assets.every(img=>img.width>0&&img.height>0),'combat art must decode: '+JSON.stringify(assets));
     assert.equal(assets[0].src,'hero_swordswoman_219.webp','uploaded swordswoman must be used instead of legacy art');
     assert.ok(assets[0].width===219&&assets[0].height===220,'hero image is still a low-resolution upload probe: '+JSON.stringify(assets[0]));
