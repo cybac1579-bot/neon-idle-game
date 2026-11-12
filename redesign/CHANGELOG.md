@@ -25,7 +25,10 @@ This file tracks **only** the new redesign line. It is distinct from the legacy 
 
 12. `da1fe81` — add repeatable Node structural smoke tests in `tests/redesign-static.test.cjs` (11 checks). Syntax, DOM reference, and duplicate-ID checks were independently evaluated in the GitHub tool environment; the committed Node test file was syntax-parsed but not executed under Node CI.
 
+13. `214e681` — add `.github/workflows/redesign-checks.yml` to run 11 static checks on pushes to the isolated redesign branch and on pull requests. CI result has not yet been independently confirmed.
+
 ## Verification boundaries
+- Direct local GitHub clone for Node execution failed because the container could not resolve github.com; GitHub Actions workflow was added as a reproducible alternative. Do not count this as a successful test run.
 - v5 source-level consistency checks passed 7/7, including the enemy animation selector regression. Browser/device tests remain outstanding.
 - v4 has not been runtime-tested or deployed.
 - Previous checks were source-level assertions only (8/8 and 7/7 as reported), **not** live-browser or real-device acceptance tests.
