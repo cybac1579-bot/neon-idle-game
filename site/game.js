@@ -99,7 +99,7 @@ const unlockStage={atk:1,spd:1,gen:1,amp:15,relay:25,forge:45,reactor:65};
 const costs={atk:[18,1.31],spd:[28,1.36],gen:[22,1.29],amp:[130,1.43],relay:[1200,1.55],forge:[6500,1.48],reactor:[75000,1.66]};
 const cost=type=>Math.ceil(costs[type][0]*Math.pow(costs[type][1],s[type]));
 function save(){s.lastSaved=Date.now();s.savedEnemyHp=enemyHp;s.savedAttackClock=attackClock;localStorage.setItem(KEY,JSON.stringify(s));}
-function spawn(){enemyMax=Math.round(enemyHealth(s.stage));enemyHp=enemyMax;const img=$('enemyImage');img.src=s.stage%10===0?'boss_guardian.webp':s.stage%5===0?'enemy_armor.svg':s.stage%3===0?'enemy_agile.svg':'enemy_scout.svg';}
+function spawn(){enemyMax=Math.round(enemyHealth(s.stage));enemyHp=enemyMax;const img=$('enemyImage');img.src=s.stage%20===0?'boss_overheat.webp':s.stage%10===0?'boss_guardian.webp':s.stage%5===0?'enemy_armor.svg':s.stage%3===0?'enemy_agile.svg':'enemy_scout.svg';}
 function unlock(key,msg){if(!s.knownUnlocks.includes(key)){s.knownUnlocks.push(key);logText='✨ 최초 해금 · '+msg;}}
 function purchase(type){if(s.best<unlockStage[type])return false;if(type==='spd'&&s.spd>=50)return false;const c=cost(type);if(s.credits<c)return false;s.credits-=c;s[type]++;return true;}
 function coreCost(type){return Math.ceil((type==='corePower'?1:type==='coreEconomy'?2:3)*Math.pow(1.85,s[type]));}
