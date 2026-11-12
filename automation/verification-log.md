@@ -111,3 +111,5 @@
 - Deployment: prior main `7c45e32a` Pages run 43130970357 **success**; new gameplay/test commits' Pages runs 43137899964 and 43137910842 pending/in progress, so latest deployment not verified.
 - Remaining risks: new test may fail and require repair; actual mobile portrait visual and boss combat feel unverified; 30-minute balance, real browser save migration, and published asset parity remain unverified.
 - Next: inspect 11-test CI and Pages for latest head, fix any failures; then verify portrait combat and 30-minute balance.
+
+- Follow-up: GitHub Actions **run 43137910692 completed success** on `d1aa9ca5` (11 tests including new boss/milestone fixtures); prior gameplay commit run 43137899929 also succeeded with nine existing tests. New Pages deployments still queued/in progress at follow-up, not yet verified.
