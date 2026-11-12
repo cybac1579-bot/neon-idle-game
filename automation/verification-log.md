@@ -172,3 +172,12 @@
 - Next: inspect workflow run 43171848321 logs and fix any permission/polling issue; then prioritize actual mobile portrait/browser verification and player-feasible purchase cadence.
 
 - Follow-up: Pages run **43171848321 completed success** on workflow fix `31fd45b1`; the new artifact visibility gate and deployment steps succeeded. Later `automation/**` documentation commits do not trigger Pages under the new path filter, so latest game assets match the workflow's deployed site source; independent HTTP/browser parity not checked.
+
+## 2026-11-12 16:11 KST — automated run 17 (keyboard/touch navigation accessibility)
+- Base main: `1fe39ebdf81c63311689ff0414322f4fc5bbc782`; UI commit `eda9a3bef2ddcda0a76cf64b8faaae4240678e19`; regression test commit `db1e49c443c5174f49f907a430b320a1d99e04e9`.
+- Startup: read automation README, verification log, coverage matrix, main commit, Actions runs, site HTML/game JS, test suite, Pages workflow and recursive repository tree. No manual handoff file found in repository; prior user feedback on combat-first mobile UI, low clutter and first-rebirth pacing considered; no manual files edited.
+- Focus: neglected keyboard accessibility on mobile portrait navigation and buttons. Source inspection found no explicit visible keyboard focus outline. Added high-contrast `:focus-visible` outline for buttons and checkboxes without adding screen clutter, preserving battle canvas and tab structure. Added one static contract regression for focus CSS and nav aria-pressed state; no game logic, economy or save schema changes.
+- Evidence: GitHub accepted both commits; existing 16-case CI passed in run 43165049886. New 17-case CI run 43179110804 was in progress at initial inspection; **do not claim it passed until confirmed**. CSS and markup source-contract checks are not real-device accessibility tests.
+- Deployment: prior Pages workflow fix run 43171848321 success. New site change Pages run 43179100924 was in progress at initial inspection; latest deployed site not yet confirmed.
+- Remaining risks: mobile portrait visual layout, real keyboard/screen-reader checks, 30-minute human purchase cadence, browser save migration and Pages artifact indexing recurrence.
+- Next: confirm new CI and Pages results; perform actual portrait browser/screen-reader interaction testing, then inspect combat animation/feedback and upgrade-purchase usability without crowding the main battle surface.
