@@ -240,5 +240,5 @@ test('foreground hit feedback is throttled and never called from offline settlem
   assert.match(game,/now-lastImpact<180/);
   assert.match(game,/prefers-reduced-motion: reduce/);
   assert.match(game,/if\(enemyHp<before\)combatImpact\(now\)/);
-  assert.doesNotMatch(game,/function settleElapsed\([^]*?\{[^]*?combatImpact\(/);
+  assert.doesNotMatch(game.split('function settleElapsed(')[1].split("$('skillList').addEventListener")[0],/combatImpact\(/);
 });
