@@ -23,6 +23,8 @@ This file tracks **only** the new redesign line. It is distinct from the legacy 
 10. `903f5a4` — add full hero progression details to the growth tab.
 11. `e9b76b6` — shorten battle hero status while retaining detailed values on growth screen.
 
+12. `da1fe81` — add repeatable Node structural smoke tests in `tests/redesign-static.test.cjs` (11 checks). Syntax, DOM reference, and duplicate-ID checks were independently evaluated in the GitHub tool environment; the committed Node test file was syntax-parsed but not executed under Node CI.
+
 ## Verification boundaries
 - v5 source-level consistency checks passed 7/7, including the enemy animation selector regression. Browser/device tests remain outstanding.
 - v4 has not been runtime-tested or deployed.
