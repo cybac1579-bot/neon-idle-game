@@ -42,3 +42,17 @@ Source (community-maintained game documentation): https://antimatterdimensions.w
 **Cost / expected value:** low for read-only next-unlock/retained-benefit summary based on existing state; medium-high for persistent effects and balancing; potentially high UX value but not proven for Neon.
 **Decision:** **Apply principle only / defer gameplay unlocks** until first and second rebirth pacing and actual portrait usability are measured. Prefer a small growth/details-panel milestone preview rather than extra battle buttons; no new tap mechanics. Do not copy AD's formulas, numbers, achievements or trees. This run made no AD-derived gameplay changes.
 **Next testable step:** verify post-rebirth goal wording and persistence with fixture tests, then measure player-facing milestone clarity in a real mobile browser.
+
+## 2026-11-12 22:54 KST — Melvor Idle: auto-combat target selection and automation guardrails
+
+Sources: community wiki combat overview https://melvor-idle.fandom.com/ru/wiki/%D0%91%D0%BE%D0%B9 ; Melvor wiki combat loadout https://melvoridle.wiki/tools/combat-loadout ; reported Auto Slayer eligibility inconsistency https://github.com/MelvorIdle/melvoridle.github.io/issues/2155 ; player feedback about managing loadouts https://www.reddit.com/r/MelvorIdle/comments/1cgtyv4/ . These are external references, not hands-on verification of a current build.
+
+**Transferable idea:** combat continues automatically after selecting a target and preparing a loadout. Optional strategic choices can be infrequent and meaningful (target class, loadout, risk) without repetitive taps. The reported Auto Slayer eligibility inconsistency illustrates why automatic and manual target selection should share one eligibility predicate.
+
+**Advantages / impact:** (1) optional pre-battle strategy gives agency without reaction demands (high); (2) explicit target eligibility reduces confusing automation behavior (high); (3) separating detailed loadout stats from battle canvas protects portrait readability (medium-high).
+
+**Drawbacks / impact:** (1) target pools and equipment counters can multiply balancing work (high); (2) automatically switching to dangerous enemies can produce unexplained losses (high); (3) extra selection UI risks crowding the existing battle screen (high).
+
+**Estimated Neon cost / expected effect:** low for auditing current auto-buy/auto-rebirth eligibility consistency and adding regression fixtures; medium for a compact optional pre-battle preference in the existing growth/details surface; high for multi-target enemy AI and gear-counter systems. Potentially high agency/clarity benefit, unproven until tested.
+
+**Decision:** **apply audit principle now, defer new mechanics**. Keep default fully automatic combat and existing boss stops. Before any target-selection feature, test shared eligibility and save compatibility; do not introduce tap attacks, mandatory manual targeting, or a dense combat toolbar. Next research should examine a different game's clear offline-return summary rather than repeat combat automation.
