@@ -348,3 +348,11 @@
 - Evidence: GitHub source and raw CI job logs; update_file accepted gameplay fix. **Post-fix CI run not yet verified; do not mark 27 tests passing.** Previous Pages deployment run 43325014834 succeeded for older `74f12b19`, not this fix. Current Pages deployment and served asset parity unverified.
 - Risks: post-fix CI may reveal other regressions; real mobile visibility timing and combat rendering unverified.
 - Next: obtain post-fix 27-test CI and Pages status; if green, verify served JS parity and rotate to boss/skill portrait performance. Manual records untouched.
+
+## 2026-11-13 08:12 KST — deployment follow-up and boss visual rotation
+- Base `d7bf92d4776a29fe2d5aa84ebb12acd79eed02b9`; gameplay `f5aa6654`, UI `e4f2078d`, new test `2f7067fe`, adjusted existing assertion `d5af9907`; resulting main to be rechecked after documentation.
+- Evidence: 27/27 successful CI run [43326070308](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43326070308), raw TAP; [43326072064](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43326072064) successful Pages deployment for `9b31af06`. Served live JS content parity and device verification still not confirmed.
+- Focus: portrait boss visibility, existing boss art reuse, automatic battle. `boss_overheat.webp` now selected at stages divisible by 20; `boss_guardian.webp` at other 10-stage bosses. Added portrait boss glow/motion under no-preference media query, no extra controls. New regression checks stage 10/20 assets.
+- New code run [43326299535](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43326299535) failed one **outdated test assertion** that expected guardian art at stage 20; corrected assertion in `d5af9907`. **Current post-correction CI and Pages remain unverified pending run completion.**
+- Research: Tap Titans 2 boss silhouette/pacing (not tapping), benefits/risks/cost and adoption in reference-research.md.
+- Risks: no real portrait screenshot/FPS/reduced-motion browser validation; no published asset parity check. Next: verify new CI and Pages, then inspect stage-20 art on real mobile and rotate to save migration/economy.
