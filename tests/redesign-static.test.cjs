@@ -13,7 +13,7 @@ const checks=[
  ['HTML ids are unique',()=>assert.equal(new Set(ids).size,ids.length)],
  ['Inline navigation script parses',()=>{const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]).filter(Boolean);assert.ok(scripts.length>0);for(const code of scripts)new vm.Script(code,{filename:'site/index.html:inline'})}],
  ['Navigation tabs have matching screen panels',()=>{const tabs=[...html.matchAll(/<button\s+data-view="([^"]+)"/g)].map(m=>m[1]);const screens=[...html.matchAll(/<section\s+data-screen="([^"]+)"/g)].map(m=>m[1]);assert.deepEqual([...new Set(tabs)].sort(),[...new Set(screens)].sort())}],
- ['Battle stage has two combat sprites',()=>{const stage=html.match(/<div class="fight" id="combatStage">([\s\S]*?)<\/div>/);assert.ok(stage);assert.equal([...stage[1].matchAll(/<img\b/g)].length,2)}],
+ ['Battle stage has two visible combat sprites',()=>{const stage=html.match(/<div class="fight" id="combatStage">([\s\S]*?)<\/div><div class="bar">/);assert.ok(stage);const visible=[...stage[1].matchAll(/<img\b[^>]*>/g)].map(m=>m[0]).filter(tag=>! /\bhidden(?:\s|>|=)/.test(tag));assert.equal(visible.length,2);assert.match(stage[1],/id="heroArtRoot"/)}],
 
  ['All direct DOM references exist',()=>assert.deepEqual([...new Set(refs)].filter(id=>!ids.includes(id)),[])],
  ['Combat stage exists',()=>assert.ok(ids.includes('combatStage'))],
