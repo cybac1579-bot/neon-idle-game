@@ -147,6 +147,13 @@ const server = createServer((req,res)=>{
     await page.locator('[data-view="growth"]').click();
     await page.locator('#closeDrawer').click();
     assert.equal(await page.locator('#featureDrawer').evaluate(el=>el.hidden),true,'close button dismisses drawer');
+    assert.equal(await page.locator('#battleSecondary').evaluate(el=>el.hidden),true,'secondary battle data hidden by default');
+    await page.locator('#battleMetaToggle').click();
+    assert.equal(await page.locator('#battleSecondary').evaluate(el=>el.hidden),false,'details expand');
+    assert.equal(await page.locator('#battleMetaToggle').getAttribute('aria-expanded'),'true','expanded state announced');
+    await page.locator('#battleMetaToggle').click();
+    assert.equal(await page.locator('#battleSecondary').evaluate(el=>el.hidden),true,'details collapse');
+    await page.screenshot({path:'test-results/battle-compact-portrait.png',fullPage:false});
     const size=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(size.width<=size.viewport+1,'horizontal overflow: '+JSON.stringify(size));
     await page.waitForTimeout(1000);
