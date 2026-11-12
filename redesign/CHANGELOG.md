@@ -19,8 +19,13 @@ This file tracks **only** the new redesign line. It is distinct from the legacy 
 7. `04e7066` — add passive skill-activation light sweep to combat stage, with reduced-motion fallback.
 8. `e990e75` — connect existing automatic skill activations to foreground-only visual feedback; no skill damage or cooldown changes.
 
+9. `0cfa654` — fix a real CSS regression: enemy idle animation selector no longer matched after adding overlay spans.
+10. `903f5a4` — add full hero progression details to the growth tab.
+11. `e9b76b6` — shorten battle hero status while retaining detailed values on growth screen.
+
 ## Verification boundaries
-- This v4 change has not been runtime-tested or deployed; a source-level consistency check follows.
+- v5 source-level consistency checks passed 7/7, including the enemy animation selector regression. Browser/device tests remain outstanding.
+- v4 has not been runtime-tested or deployed.
 - Previous checks were source-level assertions only (8/8 and 7/7 as reported), **not** live-browser or real-device acceptance tests.
 - The redesigned UI has not yet been merged or deployed to the public site.
 - Save key and offline calculation were intentionally preserved; runtime compatibility remains to be tested.
