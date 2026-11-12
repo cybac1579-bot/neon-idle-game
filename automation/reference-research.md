@@ -151,3 +151,15 @@ Reference: official Steam listing https://store.steampowered.com/app/1197260/The
 **Disadvantages / impact:** (1) copying extensive tower modules would balloon balance and save migration (high); (2) dense simultaneous combat effects may degrade phone performance (high); (3) optimizing around frequent menu intervention would undermine low-input play (high).
 **Cost / expected benefit:** low for auditing existing hit/boss cue hierarchy; medium for restrained cue adjustments with reduced-motion and frame-budget tests; very high for new tower modules. Better readability is plausible but **not measured on device**.
 **Decision:** **audit only** existing boss/skill hit differentiation and portrait screen before implementation. Defer new systems and any rapid interaction. Preserve fully automatic combat and optional infrequent choices.
+
+
+## 2026-11-13 08:00 KST — Idle Research: unlock communication versus layer sprawl
+
+Sources: official Steam description https://store.steampowered.com/app/1482860/Idle_Research/ ; independent gameplay analysis https://www.mrguider.org/strategy/idle-research-guide-tips-cheats-strategies/ . Secondary gameplay specifics are not independently reproduced in-game.
+
+**Observation:** research unlocks new producers, production layers feed one another, and prestige makes earlier progress faster. It also offers a large collection of research/crafting/combat/skill systems; its breadth is a warning against growing Neon through more tabs before current combat and rebirth are legible.
+
+**Benefits (impact):** (1) previewing next unlock and its production role clarifies the next goal (high); (2) visibly retained reset efficiency gives rebirth meaning (high); (3) automatic production preserves low-input pacing (high).
+**Costs/risks (impact):** (1) cascading resources obscure bottlenecks (high); (2) several overlapping upgrade menus crowd portrait screens (high); (3) active-play speedups risk violating no-mandatory-tapping (critical).
+**Neon cost / expected effect:** low for reusing existing milestone and upgrade data in the separate stats/growth screen; medium for measured reset summaries; high for new crafting or research layers and their save migrations. Potential clarity benefit is plausible but unmeasured.
+**Decision:** adopt only milestone/automation readability as a future audited UI improvement. Defer new research currencies, crafting slots, active speedups and additional tabs. This run prioritized a confirmed lifecycle accounting defect instead of implementing speculative new systems.
