@@ -181,3 +181,5 @@
 - Deployment: prior Pages workflow fix run 43171848321 success. New site change Pages run 43179100924 was in progress at initial inspection; latest deployed site not yet confirmed.
 - Remaining risks: mobile portrait visual layout, real keyboard/screen-reader checks, 30-minute human purchase cadence, browser save migration and Pages artifact indexing recurrence.
 - Next: confirm new CI and Pages results; perform actual portrait browser/screen-reader interaction testing, then inspect combat animation/feedback and upgrade-purchase usability without crowding the main battle surface.
+
+- Follow-up CI/deployment: first new test commit `db1e49c4` failed run 43179110804 (16/17 passed) because newly added source-contract regex was over-escaped; the game/UI did not fail. Corrected test regex in `3c44b9aecd3e408375f84fa1476d95c327f22575`. CI run 43179194767 **completed success (17/17)**. Site UI commit `eda9a3be` Pages run 43179100924 **completed success**. Documentation-only and test-only commits do not trigger Pages; no independent browser screenshot or live HTTP parity check.
