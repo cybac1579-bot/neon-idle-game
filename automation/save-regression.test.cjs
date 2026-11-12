@@ -266,10 +266,10 @@ test('combat hit cue animates foreground only, throttles bursts and honors reduc
 });
 
 test('next-purchase guidance prioritizes an affordable upgrade over an unaffordable one',()=>{
-  const b=boot({stage:1,best:1,credits:100,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  const b=boot({stage:1,best:1,credits:20,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   const actual=b.get('actionableGoal()');
   const expected=b.get('(()=>{const opts=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)).map(k=>({k,price:cost(k)})).sort((a,b)=>a.price-b.price);const affordable=opts.find(o=>s.credits>=o.price);return affordable?{price:affordable.price,credits:s.credits}:null})()');
   assert.ok(expected,'fixture must have an affordable option');
   assert.match(actual,/지금 구매 가능/,'available purchase must be actionable');
-  assert.ok(actual.includes('다음 구매:'),'goal must identify next purchase');
+  assert.match(actual,/다음 구매: 전투 엔진/,'affordable attack upgrade should be selected');
 });
