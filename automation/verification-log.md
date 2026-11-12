@@ -277,3 +277,13 @@
 - **Deployment:** latest Pages build and HTTP asset parity **unverified**. No claim of successful release.
 - **Unresolved risks:** 24-case CI result, deployed asset parity, mobile combat animation and skill cue FPS, real-browser offline double settlement, player-feasible 30-minute purchase cadence.
 - **Next:** obtain push-triggered CI/Pages job evidence; if 24th fixture fails, fix fixture or game based on logs. Then verify mobile portrait battle and audit phase-goal clarity without extra combat buttons or mandatory tapping.
+
+
+## 2026-11-13 02:58 KST — recovered push CI and deployment workflow evidence
+- **Base main:** `8beb110356a9cc50904f245d84ffbbcac4456f52`; resulting commit: the commit containing this log entry. Read automation policy, prior verification log/matrix, reference research, development/README.md and Node harness. The manual development index identifies frozen backup and separate redesign branch; neither was edited.
+- **Focus:** resolve repeatedly unverified 24-case CI and Pages status through push-triggered GitHub Actions API, rather than repeating source-only assertions.
+- **Evidence:** [Save regression run 43253802802](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43253802802) on `e20b150b9545b7bb708cc392504b51d870f2ddf5` returned completed/success; job 131306500874 and test step returned success. Earlier 23-case run 43231895335 also completed/success. The test source contains the 24th offline cap fixture. **Workflow-level pass confirmed, but individual test count/log output not independently inspected; no local or phone execution.**
+- **Deployment:** [Pages run 43222308459](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43222308459) on gameplay commit `f569632f` completed/success, including deploy-pages step. This is a confirmed historical game-code deployment, **not** HTTP asset parity or proof that current main is live. Later main changes are test/research/documentation; deployed asset fetch remains unverified.
+- **Changes:** updated automation research (Cookie Clicker milestone clarity versus forbidden tapping), coverage matrix and this log; no gameplay/test source modifications and no manual logs modified. **No newly confirmed gameplay defect** in this run.
+- **Risks:** live deployed JS parity, actual Samsung portrait battle visibility and FPS, hidden-tab resume behavior in real browser, 30-minute purchase cadence and first rebirth feel.
+- **Next:** inspect workflow test output for exact 24/24 count, verify published asset content against production commit, then run real-browser portrait battle and offline-resume scenarios; avoid additional UI clutter or required tapping.
