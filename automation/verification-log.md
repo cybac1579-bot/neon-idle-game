@@ -101,3 +101,13 @@
 - Next: check nine-case CI and repair any failure first; confirm Pages outcome, then test stage jumps/boss rewards and longer balance simulations.
 
 - Follow-up evidence: GitHub Actions run 43130921525 for `d00fc685` completed **success** (nine tests). Pages run 43130921499 was still in progress at follow-up; later documentation commits trigger additional deployments, so latest published head remains unverified.
+
+## 2026-11-12 — automated run 11 (boss stage-jump regression)
+- Base main: `7c45e32a1353216a3177e10cdc6887ebcf02ee6f`; gameplay fix `587f6963b5ba5a72fa51d4316b7ab2d343cf005f`; test addition `d1aa9ca50f28dc3fd9065d57e9775bdc03202a18`.
+- Startup: read automation README, verification log, coverage matrix, root README (empty), actual game code and nine-test suite; reviewed latest Actions and Pages runs. No manual development/handoff documents found in repository root; manual records unchanged.
+- Focus: rebirth-driven stage jumps and skipped boss encounters, a previously documented high-risk gap. Source confirmed `resolveEnemyDefeat` advanced by up to 12 stages without stopping at multiples of 10; boss art and boss-trait combat only appear when actually entering boss stages. This made entire boss encounters skippable after rebirth.
+- Fix: cap each jump at the next 10-stage boss boundary, then continue normal jump progression after defeating that boss. Calculate crossed milestone range using actual previous/new stages to avoid miscounting when the jump is capped. No save schema or UI changed.
+- Tests: added two Node VM fixture cases for stage 8 -> 10 -> 20 with 3 rebirths and milestone-10 one-time unlock. Previous nine tests passed Actions run 43130921525. New eleven-case Actions run 43137910692 was **queued at last check; do not claim pass**. Gameplay-only run 43137899929 also in progress.
+- Deployment: prior main `7c45e32a` Pages run 43130970357 **success**; new gameplay/test commits' Pages runs 43137899964 and 43137910842 pending/in progress, so latest deployment not verified.
+- Remaining risks: new test may fail and require repair; actual mobile portrait visual and boss combat feel unverified; 30-minute balance, real browser save migration, and published asset parity remain unverified.
+- Next: inspect 11-test CI and Pages for latest head, fix any failures; then verify portrait combat and 30-minute balance.
