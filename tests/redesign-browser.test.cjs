@@ -33,6 +33,16 @@ const server = createServer((req,res)=>{
     assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1);
     assert.equal(await page.locator('#combatStage img').count(),2);
     assert.equal(await page.locator('#heroImage').count(),1,'stable hero art slot');
+    const composition=await page.evaluate(()=>{
+      const arena=document.getElementById('combatStage').getBoundingClientRect();
+      const hero=document.getElementById('heroImage').getBoundingClientRect();
+      const enemy=document.getElementById('enemyImage').getBoundingClientRect();
+      return {arena:{x:arena.x,y:arena.y,width:arena.width,height:arena.height},hero:{x:hero.x,y:hero.y,width:hero.width,height:hero.height},enemy:{x:enemy.x,y:enemy.y,width:enemy.width,height:enemy.height}};
+    });
+    assert.ok(composition.arena.height>=280,'portrait arena must be tall enough');
+    assert.ok(composition.hero.height>composition.enemy.height,'hero art must dominate composition');
+    assert.ok(composition.hero.x>=composition.arena.x-1&&composition.enemy.x+composition.enemy.width<=composition.arena.x+composition.arena.width+1,'art must fit inside arena');
+
     await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img')].every(img=>img.complete&&img.naturalWidth>0));
     const assets=await page.locator('#combatStage img').evaluateAll(images=>images.map(img=>({src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight})));
     assert.ok(assets.every(img=>img.width>0&&img.height>0),'combat art must decode: '+JSON.stringify(assets));
