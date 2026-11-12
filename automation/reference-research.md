@@ -32,3 +32,13 @@ Sources: official store description https://apps.apple.com/tw/app/rogue-with-the
 **Cons (impact):** (1) adding troop AI/formation is a major scope increase (high); (2) separate rebirth reward paths complicate economy and save compatibility (high); (3) multiple simultaneously animated units can overload small portrait screens and battery (high).
 **Estimated implementation cost:** low for stronger visual enemy/skill differentiation using current single-hero combat; high for multi-unit AI, rebirth reward branches, and their tests.
 **Decision:** apply the *principle* of visible differentiated automatic combat; **defer** new troop classes, alternate rebirth rewards and extra currencies. Preserve mandatory boss stops and no repeated-tap combat. Next testable change: add lightweight differentiated attack/skill cue states with reduced-motion and mobile performance guards; verify in browser and on device before claiming visual quality.
+
+## 2026-11-12 21:54 KST — Antimatter Dimensions: non-spending milestones and reset friction
+
+Source (community-maintained game documentation): https://antimatterdimensions.wiki.gg/wiki/Eternity_Milestones ; achievements overview https://antimatterdimensions.wiki.gg/wiki/Achievements . The milestone reference describes cumulative Eternity-count unlocks that do not spend the count, including retained unlocks, autobuyers, and conditional offline income. This is a design reference, not direct hands-on verification.
+
+**Benefits (impact):** (1) non-spending milestone counters make long-term progress legible without another currency (high); (2) keeping automation after resets reduces repetitive interaction (high); (3) predictable next milestone supports optional long-term planning (medium).
+**Risks (impact):** (1) too many thresholds make the growth UI dense (high); (2) retained upgrades can flatten early combat pacing (high); (3) overlapping offline production and automation rules complicate save migration and balance (medium-high).
+**Cost / expected value:** low for read-only next-unlock/retained-benefit summary based on existing state; medium-high for persistent effects and balancing; potentially high UX value but not proven for Neon.
+**Decision:** **Apply principle only / defer gameplay unlocks** until first and second rebirth pacing and actual portrait usability are measured. Prefer a small growth/details-panel milestone preview rather than extra battle buttons; no new tap mechanics. Do not copy AD's formulas, numbers, achievements or trees. This run made no AD-derived gameplay changes.
+**Next testable step:** verify post-rebirth goal wording and persistence with fixture tests, then measure player-facing milestone clarity in a real mobile browser.
