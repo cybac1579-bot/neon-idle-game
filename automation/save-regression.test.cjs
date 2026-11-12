@@ -298,3 +298,21 @@ test('offline settlement caps credited time at 7200 seconds and never auto-rebir
   assert.match(b.get('logText'),/방치 진행 7200초 반영/,'return log must report credited, not wall time');
   assert.ok(b.get('s.cacheCredits')<=b.get('cachePayout()*5'),'offline cache must respect five-payout cap');
 });
+
+
+test('visibility resume settles hidden time once without duplicate cache payout',()=>{
+  const start=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:1,credits:30,cacheClock:0,cacheCredits:0,lastSaved:start},start);
+  b.document.hidden=true;
+  b.listeners.visibilitychange();
+  b.setNow(start+60000);
+  b.document.hidden=false;
+  b.listeners.visibilitychange();
+  const first=b.get('s.cacheCredits');
+  assert.ok(first>0,'one minute hidden should generate a cache payout');
+  const savedAt=b.get('s.lastSaved');
+  assert.equal(savedAt,start+60000,'settlement must save its credited timestamp');
+  b.listeners.visibilitychange();
+  assert.equal(b.get('s.cacheCredits'),first,'duplicate visible event must not credit cache twice');
+  assert.equal(b.get('s.lastSaved'),savedAt);
+});
