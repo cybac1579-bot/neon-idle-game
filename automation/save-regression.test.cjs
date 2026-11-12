@@ -242,3 +242,25 @@ test('foreground hit feedback is throttled and never called from offline settlem
   assert.match(game,/if\(enemyHp<before\)combatImpact\(now\)/);
   assert.doesNotMatch(game.split('function settleElapsed(')[1].split("$('skillList').addEventListener")[0],/combatImpact\(/);
 });
+
+
+test('combat hit cue animates foreground only, throttles bursts and honors reduced motion',()=>{
+  const b=boot({stage:1,best:1,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  const img=b.document.getElementById('enemyImage');
+  let calls=0;
+  img.animate=()=>{calls++};
+  b.get('combatImpact(1000)');
+  assert.equal(calls,1,'first foreground impact should animate');
+  b.get('combatImpact(1100)');
+  assert.equal(calls,1,'rapid hits should not stack animations');
+  b.get('combatImpact(1180)');
+  assert.equal(calls,2,'impact should resume after throttle');
+  b.get('settleElapsed(2)');
+  assert.equal(calls,2,'offline settlement should not animate');
+  b.get('window.matchMedia=()=>({matches:true})');
+  b.get('combatImpact(2000)');
+  assert.equal(calls,2,'reduced motion should suppress impact');
+  b.get('window.matchMedia=()=>({matches:false})');
+  b.get('combatImpact(2200)');
+  assert.equal(calls,3,'normal motion should restore impact');
+});
