@@ -78,6 +78,23 @@ const server = createServer((req,res)=>{
     assert.ok(animation.active,'attack arc activates on combat feedback');
     assert.ok(animation.running,'hero lunge animation starts');
     assert.deepEqual(animation.after,animation.before,'visual feedback must not change gameplay');
+    // Visual-only throttling: rapid hits must not restart the hero animation every frame.
+    const throttle=await page.evaluate(()=>{
+      const before={stage:s.stage,credits:s.credits,kills:s.kills};
+      visualAttack.lastHero=-Infinity;visualAttack.lastFx=-Infinity;
+      const base=performance.now(),initialHero=visualAttack.heroCount,initialFx=visualAttack.fxCount;
+      for(let i=0;i<20;i++)combatImpact(base+i*10);
+      return {hero:visualAttack.heroCount-initialHero,fx:visualAttack.fxCount-initialFx,
+        before,after:{stage:s.stage,credits:s.credits,kills:s.kills},
+        slow:visualAttackProfile(1),medium:visualAttackProfile(4),fast:visualAttackProfile(20)};
+    });
+    assert.ok(throttle.hero<=1,'rapid callbacks must not restart protagonist motion');
+    assert.ok(throttle.fx<=1,'rapid callbacks must not flood hit effects');
+    assert.deepEqual(throttle.after,throttle.before,'visual-only callbacks must not mutate combat state');
+    assert.equal(throttle.slow.mode,'individual');
+    assert.equal(throttle.medium.mode,'mixed');
+    assert.equal(throttle.fast.mode,'rapid');
+    assert.ok(throttle.fast.heroGap>throttle.medium.heroGap,'high speed must reduce motion density');
     const overlap=await page.evaluate(()=>{
       lastImpact=-Infinity;combatImpact(performance.now());
       const hero=document.querySelector('#combatStage img:first-of-type');
