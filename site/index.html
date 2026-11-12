@@ -10,6 +10,15 @@ html{-webkit-text-size-adjust:100%;touch-action:manipulation}body{min-width:0}ma
 [data-screen="battle"] .fight img:first-child{object-position:center bottom}
 @media(max-height:620px){[data-screen="battle"] .fight{min-height:205px}[data-screen="battle"] .fight img{height:195px}}
 @media(prefers-reduced-motion:no-preference){[data-screen="battle"] .fight img{transition:filter .2s ease}}
+/* Portrait battle presence: subtle silhouettes and boss emphasis without new controls. */
+@media(prefers-reduced-motion:no-preference){
+ [data-screen="battle"] .fight img:first-child{animation:hero-breathe 2.8s ease-in-out infinite;transform-origin:center bottom}
+ [data-screen="battle"] .fight img:last-child{animation:enemy-hover 2.2s ease-in-out infinite;transform-origin:center bottom}
+ [data-screen="battle"] .fight img[src="boss_guardian.webp"]{animation:boss-presence 1.8s ease-in-out infinite;filter:drop-shadow(0 0 18px #ff6aab99)}
+}
+@keyframes hero-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes enemy-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes boss-presence{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.035)}}
 </style></head><body><main>
 <h1>✦ 네온 방치단 <span class="pill">MOBILE 40</span></h1><p class="sub">환생 · 생산 계층 · 단계별 자동화 중심의 새로운 실험 빌드</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
