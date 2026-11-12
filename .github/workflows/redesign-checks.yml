@@ -20,7 +20,9 @@ jobs:
         with:
           node-version: '22'
       - name: Run redesign static checks
-        run: node tests/redesign-static.test.cjs
+        run: |
+          node tests/redesign-static.test.cjs
+          node tests/redesign-asset.test.cjs
 
   browser-smoke:
     runs-on: ubuntu-24.04
