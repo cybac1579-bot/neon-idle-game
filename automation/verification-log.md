@@ -113,3 +113,12 @@
 - Next: inspect 11-test CI and Pages for latest head, fix any failures; then verify portrait combat and 30-minute balance.
 
 - Follow-up: GitHub Actions **run 43137910692 completed success** on `d1aa9ca5` (11 tests including new boss/milestone fixtures); prior gameplay commit run 43137899929 also succeeded with nine existing tests. New Pages deployments still queued/in progress at follow-up, not yet verified.
+
+## 2026-11-12 — automated run 12 (auto-buy and portrait contract)
+- Base main: `03dc26410c472c174817a2a7785da59c16caa510`; test commit: `fc1ddfe573186e1927a81be41df90aaf4ebe02ad`.
+- Startup: reviewed automation README/log/coverage, latest game.js/index.html, root README (empty), recent commits and Actions. No repository manual handoff file found; no manual record changed.
+- Focus: previously untested auto-buy enabled/disabled and unlock gating, plus portrait viewport/combat CSS structural safeguards. Added two tests (13 total) to Node suite. No gameplay code or UI changed.
+- Evidence: source inspection and GitHub test-file update accepted. Existing 11-test CI run 43137910692 succeeded. New 13-test CI run 43144630537 was in progress at inspection; **do not claim 13 tests passed without completed run**. Portrait assertions inspect source, not actual rendering or touch interactions.
+- Deployment: prior main `03dc2641` Pages run 43137961883 succeeded; new test commit Pages run 43144630568 queued at inspection. Published asset parity unverified.
+- Remaining risks: actual short-phone layout/scroll, combat feel, 30-minute growth curve, browser save migration, and auto-buy decision quality beyond basic gating.
+- Next: check 13-test CI and Pages; fix any failure first, then inspect real-browser portrait layout and run a timed growth simulation.
