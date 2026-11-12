@@ -27,7 +27,11 @@ This file tracks **only** the new redesign line. It is distinct from the legacy 
 
 13. `214e681` — add `.github/workflows/redesign-checks.yml` to run 11 static checks on pushes to the isolated redesign branch and on pull requests. CI result has not yet been independently confirmed.
 
+14. `644221c` — extend CI smoke coverage from 11 to 14 checks: inline navigation JavaScript, navigation-to-screen mapping, and combat sprite count.
+15. `21d5ecf` — immediately repair invalid regular-expression escaping introduced in the new test code; test file now parses and the three new structural assertions were independently checked against current sources.
+
 ## Verification boundaries
+- The GitHub connector cannot list push-triggered Actions runs with its current workflow-run endpoint (PR-only); CI run status remains unverified, not reported as passed.
 - Direct local GitHub clone for Node execution failed because the container could not resolve github.com; GitHub Actions workflow was added as a reproducible alternative. Do not count this as a successful test run.
 - v5 source-level consistency checks passed 7/7, including the enemy animation selector regression. Browser/device tests remain outstanding.
 - v4 has not been runtime-tested or deployed.
