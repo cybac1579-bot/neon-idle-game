@@ -156,3 +156,16 @@ test('short portrait combat keeps a minimum canvas without hiding combat',()=>{
   assert.match(html,/@media\(max-height:620px\)\{\[data-screen="battle"\] \.fight\{min-height:205px\}/);
   assert.match(html,/<nav class="nav" aria-label="화면 이동">/);
 });
+
+test('30-minute simulated idle economy stays finite and auto-buy progresses without forced rebirth',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:1,best:1,credits:30,autoLevel:1,autoBuy:true,autoRebirth:false,lastSaved:stamp});
+  b.get('settleElapsed(1800)');
+  const metrics=b.get('({stage:s.stage,best:s.best,credits:s.credits,energy:s.energy,atk:s.atk,spd:s.spd,gen:s.gen,rebirths:s.rebirths,kills:s.kills})');
+  for(const key of ['credits','energy','atk','spd','gen','kills'])assert.ok(Number.isFinite(metrics[key]),key+' must remain finite');
+  assert.ok(metrics.stage>=1&&metrics.best>=metrics.stage);
+  assert.equal(metrics.rebirths,0,'no automatic rebirth during offline simulation');
+  assert.ok(metrics.kills>0,'idle combat must defeat at least one enemy');
+  assert.ok(metrics.atk+metrics.spd+metrics.gen>0,'auto-buy must invest during the 30-minute simulation');
+  console.log('30-minute simulated idle metrics:',JSON.stringify(metrics));
+});
