@@ -72,6 +72,10 @@ const server = createServer((req,res)=>{
 
     await page.waitForTimeout(120);
     await page.screenshot({path:'test-results/battle-attack.png',fullPage:true});
+    await page.emulateMedia({reducedMotion:'reduce'});
+    const reduced=await page.evaluate(()=>{lastImpact=-Infinity;combatImpact(performance.now());return {arc:getComputedStyle(document.getElementById('heroAttackArc')).animationName,hero:document.getElementById('heroImage').getAnimations().filter(a=>a.id==='hero-attack-lunge').length};});
+    assert.equal(reduced.arc,'none','reduced-motion disables sword arc');
+    await page.emulateMedia({reducedMotion:'no-preference'});
 
     await page.screenshot({path:'test-results/battle-portrait.png',fullPage:true});
     fs.writeFileSync('test-results/browser-diagnostics.json',JSON.stringify({assets,viewport:{width:390,height:844},initialStage:await page.locator('#stage').textContent()},null,2));
