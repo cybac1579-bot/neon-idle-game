@@ -25,3 +25,8 @@
 | Reference research: Universal Paperclips | 2026-11-13 01:52 KST, `6364a6c6` | Original browser game link and phase-transition cost/benefit comparison recorded in automation/reference-research.md | Audit existing phase goal clarity; defer click-heavy mechanics and new currencies |
 
 The table tracks actual evidence, not assumed passing tests. Refer to `automation/README.md` for separation from manual logs.
+
+
+| Push CI evidence recovered (24 tests) | 2026-11-13 02:58 KST, `e20b150b` | [Save regression workflow 43253802802](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43253802802) on fixture commit `e20b150b`: completed **success**; job 131306500874 and “Run saved-game regression tests” step **success**. Earlier 23-case run 43231895335 also success. | **Resolved prior CI visibility gap:** 24-case workflow success confirmed, but individual test names/count in job logs not independently inspected. Next: real browser resume, device UI and deployed asset parity. |
+| Latest confirmed production Pages workflow | 2026-11-13 02:58 KST, `f569632f` | [Pages workflow 43222308459](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43222308459) completed **success**; deploy-pages step succeeded for gameplay commit `f569632f`. | **High:** this proves deployment workflow at that commit, **not** live HTTP JS parity or deployment of later documentation/test commits. Verify served assets and phone behavior. |
+| Reference: Cookie Clicker milestone clarity | 2026-11-13 02:58 KST, base `8beb1103` | Original game https://orteil.dashnet.org/cookieclicker/; design-only comparison in reference-research.md | Reuse passive milestone clarity, reject click/timed interactions; low-priority after device checks. |
