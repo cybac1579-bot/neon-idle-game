@@ -372,3 +372,9 @@
 - Finding: current test proxy buys every 5s, much more active than intended optional low-input play; cannot infer fun from stage progression. No speculative numerical nerf. Added 30th regression to preserve meaningful first-rebirth runway (>=600s in existing active proxy), passive boss progression, and prevent passive first rebirth within 30 minutes. **New CI pending**; guard is a baseline, not a target for required interaction.
 - Risks: passive stage 21 in 30m may feel stagnant; 360 purchases is unrealistic; stage 666 in auto-buy scenario merits economy review. No real-device FPS, touch, save resume, or live asset parity proof.
 - Next: CI 30/30; measure 30-minute low-input proxy (infrequent purchases), compare milestones and time-to-upgrade, then refine UI/economy without repetitive tapping.
+
+## 2026-11-13 08:40 KST — low-input 30-minute proxy coverage
+- Base `e3b13cb011c65b905fe1c6e24a6104aaa91e9dc7`; added regression `74406007ccb9fef9c3b872ab3120b21ff09d128e`. Existing 30-case CI [43329735764](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43329735764): **success**.
+- New test simulates 1800 seconds with optional cheapest-eligible upgrades every 30s and 60s, captures 5/15/30-minute stage, credits, kills, first-rebirth eligibility and purchase count. Confirms finite economy, active automatic combat, no forced rebirth. Does not introduce tapping or automatic purchase for fresh players.
+- New CI [43330017594](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43330017594) queued at check time. **No result or balance change claimed yet**. The previous 5-second proxy is not realistic for intended low-input play.
+- Next: extract 30s/60s metrics from raw CI, assess whether growth stalls, then decide smallest justified change. Real phone/30-minute player feedback remains pending. First-playable readiness remains provisional 56% until verified evidence improves.
