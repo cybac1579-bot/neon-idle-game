@@ -83,7 +83,9 @@ const server = createServer((req,res)=>{
       const before={stage:s.stage,credits:s.credits,kills:s.kills};
       visualAttack.lastHero=-Infinity;visualAttack.lastFx=-Infinity;
       const base=performance.now(),initialHero=visualAttack.heroCount,initialFx=visualAttack.fxCount;
-      for(let i=0;i<20;i++)combatImpact(base+i*10);
+      const originalInterval=attackInterval;
+      attackInterval=()=>.05; // Force 20 attacks/s for the presentation throttle test.
+      try{for(let i=0;i<20;i++)combatImpact(base+i*10);}finally{attackInterval=originalInterval;}
       return {hero:visualAttack.heroCount-initialHero,fx:visualAttack.fxCount-initialFx,
         before,after:{stage:s.stage,credits:s.credits,kills:s.kills},
         slow:visualAttackProfile(1),medium:visualAttackProfile(4),fast:visualAttackProfile(20)};
