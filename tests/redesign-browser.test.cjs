@@ -65,6 +65,15 @@ const server = createServer((req,res)=>{
     assert.equal(await page.locator('#battleGoal').textContent()!=='',true);
     // Verify that the new visual layer can animate without changing combat state.
     assert.equal(await page.locator('#heroAttackArc').count(),1,'sword arc layer exists');
+    assert.equal(await page.locator('#combatStage .hero-ambient').count(),1,'independent ambient layer');
+    assert.equal(await page.locator('#combatStage .hero-weapon-glint').count(),1,'independent weapon light layer');
+    const visualLayers=await page.evaluate(()=>({
+      ambient:getComputedStyle(document.querySelector('.hero-ambient')).animationName,
+      glint:getComputedStyle(document.querySelector('.hero-weapon-glint')).animationName
+    }));
+    assert.notEqual(visualLayers.ambient,'none','ambient layer animates without touching combat');
+    assert.notEqual(visualLayers.glint,'none','weapon light animates without touching combat');
+
     const animation=await page.evaluate(()=>{
       const arc=document.getElementById('heroAttackArc');
       const hero=document.querySelector('#heroImage');
