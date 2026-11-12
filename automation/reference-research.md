@@ -139,3 +139,15 @@ Reference: original playable project https://trimps.github.io/ (design-level com
 **Disadvantages / impact:** (1) layered production/worker management would overwhelm the existing portrait battle surface (high); (2) automation rules and prestige tuning greatly increase test complexity (high); (3) importing rapid early-run management would violate the intended low-input mobile experience (critical).
 **Cost and expected benefit:** low for a read-only boss-blocker/next-goal audit in existing details, medium for optional allocation feedback, high for new production systems. Clarity benefit plausible but not device-validated.
 **Decision:** adopt only the *clear bottleneck and low-frequency planning* evaluation principle. Defer workers, new resources, repetitive purchases, tap combat and further reset layers. First verify current boss stop and allocation descriptions on a real portrait browser; preserve combat visual prominence and keep details off the main battle canvas.
+
+
+## 2026-11-13 06:51 KST — The Perfect Tower II: readable auto-defense and upgrade depth
+
+Reference: official Steam listing https://store.steampowered.com/app/1197260/The_Perfect_Tower_II/ (design-level comparison; no current-version play session or live source verification this run).
+
+**Transferable principle:** automatically resolved combat can retain visible stakes through clear enemy pressure, damage feedback, and optional long-horizon upgrade planning. This does not justify importing tower-defense mechanics into Neon.
+
+**Advantages / impact:** (1) strong visual combat feedback makes passive encounters legible (high); (2) upgrade goals can create medium-term agency without attack taps (high); (3) separating upgrade management from battle presentation protects portrait clarity (high).
+**Disadvantages / impact:** (1) copying extensive tower modules would balloon balance and save migration (high); (2) dense simultaneous combat effects may degrade phone performance (high); (3) optimizing around frequent menu intervention would undermine low-input play (high).
+**Cost / expected benefit:** low for auditing existing hit/boss cue hierarchy; medium for restrained cue adjustments with reduced-motion and frame-budget tests; very high for new tower modules. Better readability is plausible but **not measured on device**.
+**Decision:** **audit only** existing boss/skill hit differentiation and portrait screen before implementation. Defer new systems and any rapid interaction. Preserve fully automatic combat and optional infrequent choices.
