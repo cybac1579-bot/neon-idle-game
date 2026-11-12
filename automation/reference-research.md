@@ -127,3 +127,15 @@ Source: https://kittensgame.com/web/ (original browser game; design interpretati
 **Drawbacks / impact:** (1) many resource types and production chains increase cognitive burden (high); (2) requiring frequent cap clearing would violate low-input expectations (critical); (3) extra meters and prompts crowd portrait battle (high).
 **Cost / expected effect:** low for auditing existing cap text; medium for a nonmodal detail summary; high for new production chains. Comprehension benefit plausible, not player-tested.
 **Decision:** **apply the cap-clarity audit principle only**, defer new resource systems and frequent manual collection. This run instead fixed duplicate-hidden-event offline accounting and added a fixture; CI/device result pending.
+
+
+## 2026-11-13 06:00 KST — Trimps: idle combat progression versus management overhead
+
+Reference: original playable project https://trimps.github.io/ (design-level comparison, not a hands-on current-version benchmark).
+
+**Transferable observation:** a long-running automatic progression loop can expose optional planning around resource allocation and progression bottlenecks without demanding continuous attack taps. For Neon, the relevant question is whether the current automatic combat and existing allocation choice communicate *why* a boss or resource bottleneck matters.
+
+**Advantages / impact:** (1) meaningful bottlenecks give an otherwise passive run a next objective (high); (2) optional resource allocation provides low-frequency agency (medium-high); (3) persistent progression can give resets a strategic purpose (high).
+**Disadvantages / impact:** (1) layered production/worker management would overwhelm the existing portrait battle surface (high); (2) automation rules and prestige tuning greatly increase test complexity (high); (3) importing rapid early-run management would violate the intended low-input mobile experience (critical).
+**Cost and expected benefit:** low for a read-only boss-blocker/next-goal audit in existing details, medium for optional allocation feedback, high for new production systems. Clarity benefit plausible but not device-validated.
+**Decision:** adopt only the *clear bottleneck and low-frequency planning* evaluation principle. Defer workers, new resources, repetitive purchases, tap combat and further reset layers. First verify current boss stop and allocation descriptions on a real portrait browser; preserve combat visual prominence and keep details off the main battle canvas.
