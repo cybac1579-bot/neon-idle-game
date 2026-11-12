@@ -129,6 +129,21 @@ const server = createServer((req,res)=>{
       assert.equal(await page.locator('#featureDrawer').evaluate(el=>el.hidden),tab==='battle','drawer visibility '+tab);
       assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1,'battle remains mounted behind menu');
     }
+    // Capture the actual mobile drawer state and ensure combat remains visible above it.
+    await page.locator('[data-view="growth"]').click();
+    await page.screenshot({path:'test-results/growth-drawer-portrait.png',fullPage:false});
+    const drawerLayout=await page.evaluate(()=>{
+      const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height,width:r.width}};
+      return {drawer:rect('featureDrawer'),arena:rect('combatStage'),nav:document.querySelector('.nav').getBoundingClientRect().top,viewport:innerHeight};
+    });
+    assert.ok(drawerLayout.drawer.height<drawerLayout.viewport*.66,'drawer must not occupy the whole screen');
+    assert.ok(drawerLayout.drawer.top>0,'drawer must leave some battle visible');
+    assert.ok(drawerLayout.drawer.bottom<=drawerLayout.nav+3,'drawer must not cover bottom navigation');
+    assert.ok(drawerLayout.arena.top<drawerLayout.drawer.top,'combat stage must remain visible behind drawer');
+    await page.locator('[data-view="stats"]').click();
+    await page.screenshot({path:'test-results/stats-drawer-portrait.png',fullPage:false});
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#featureDrawer').evaluate(el=>el.hidden),true,'Escape closes drawer');
     await page.locator('[data-view="growth"]').click();
     await page.locator('#closeDrawer').click();
     assert.equal(await page.locator('#featureDrawer').evaluate(el=>el.hidden),true,'close button dismisses drawer');
