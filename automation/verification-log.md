@@ -124,3 +124,12 @@
 - Next: check 13-test CI and Pages; fix any failure first, then inspect real-browser portrait layout and run a timed growth simulation.
 
 - Follow-up evidence: 13-test GitHub Actions run 43144630537 on `fc1ddfe5` **completed success**. Pages run 43144630568 on same test commit **completed success**. Subsequent documentation commits trigger separate Pages runs, so the final documentation-only head's deployment remains pending; no real-browser/device verification performed.
+
+## 2026-11-12 — automated run 13 (30-minute idle economy fixture)
+- Base main: `2199bfdb65e92d7da48a5ddc7760e776bbcec641`; test change: `aebd0d2ce9bbc861853df1ffb092bff40f11bbae`. No gameplay code changed.
+- Startup: read automation README, previous verification log, coverage matrix, latest game.js/index.html, root README (empty), recent commits and Actions; no separate repository manual handoff document found. Manual files untouched.
+- Focus: neglected 30-minute growth/economy and auto-buy interaction rather than repeating prior short save fixtures. Added a 1,800-second Node VM simulation with auto-buy enabled, auto-rebirth disabled, finite-value checks, kills, purchased upgrades, and printed state metrics for later tuning.
+- Evidence: GitHub accepted test-file commit; previous 13-test CI run 43144630537 completed success. **New 14-case test execution had not yet been observed at initial inspection, so no pass claim.** This is deterministic-ish fake-DOM simulation, not 30-minute real-world browser play, subjective pacing, or measured mobile performance.
+- Deployment: base main Pages run 43144690587 completed success. New test/documentation head deployment pending confirmation; published asset parity not checked.
+- Risks: new fixture may fail, short-screen combat appearance, real browser migration, auto-buy purchase efficiency and perceived pacing. A simulation with fixed starting state cannot establish 30-minute player experience.
+- Next: inspect CI logs and metrics, fix failures, then evaluate progression pacing and UI on an actual portrait browser.
