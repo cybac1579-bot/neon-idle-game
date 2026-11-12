@@ -68,3 +68,14 @@ Sources: https://idlechampions.fandom.com/wiki/Modron_Automation ; https://steam
 **Cost / expected value:** low-medium for a compact optional return summary from existing settlement values; medium for accurate before/after snapshots and fixture coverage; high for parity guarantees or multi-party automation. Potential clarity benefit, not yet player-validated.
 **Decision:** **defer UI until offline lifecycle fixture coverage and real mobile view are checked**; prioritize accurate accounting and a nonmodal summary in an existing detail/status surface. No active tap mechanics, forced manual decisions, or automatic offline rebirth. Avoid copying formations, currencies, or formulas.
 **Next verification:** test 7,200-second cap, offline no-rebirth, and visible/hidden resume without duplicate rewards; verify that the current log message communicates actual credited time, not elapsed wall time.
+
+## 2026-11-13 00:59 KST — NGU Idle: layered idle progression and information overload
+
+Reference: https://store.steampowered.com/app/1147690/NGU_IDLE/ (official store listing; comparative design interpretation, not hands-on current-build verification).
+
+**Transferable idea:** multiple persistent progression layers can provide long-term goals while combat remains mostly automatic. Separate short-term action feedback from deep upgrade statistics rather than exposing all systems in the battle view.
+
+**Benefits / impact:** (1) layered milestones support long-term retention (high); (2) optional detailed growth panels protect battle readability (high); (3) permanent unlocks can reduce repeat-work after resets (medium-high).
+**Risks / impact:** (1) dense menus and overlapping currencies obscure the next meaningful choice (high); (2) excessive simultaneous systems dilute enemy/boss identity (high); (3) long automation chains and unfamiliar terminology raise onboarding cost (medium-high).
+**Cost / expected value:** low for auditing existing goal/detail placement; medium for milestone summaries; high for introducing new currencies or progression layers. No gameplay benefit proven for Neon yet.
+**Decision:** adopt only the *separation of battle feedback and detailed statistics* as an evaluation criterion; defer new layers and currencies until existing first/second rebirth and mobile layout are validated. No mandatory taps or rapid input. This run added an offline-cap regression fixture, not an NGU-derived gameplay change.
