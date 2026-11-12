@@ -331,3 +331,12 @@ test('repeated hidden events preserve original background start for offline sett
   assert.ok(b.get('s.cacheCredits')>0,'two hidden events must not discard the first 30 seconds');
   assert.equal(b.get('s.lastSaved'),start+60000);
 });
+
+test('visible event without a prior hidden transition never replays foreground time',()=>{
+  const b=boot({lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  b.get('step(5)');
+  const before=b.get('s.energy');
+  b.setNow(Date.UTC(2026,10,12,0,0,30));
+  b.listeners.visibilitychange();
+  assert.equal(b.get('s.energy'),before,'spurious visible event must not settle unsaved foreground time');
+});
