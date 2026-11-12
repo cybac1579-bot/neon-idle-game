@@ -222,3 +222,13 @@ test('keyboard navigation and toggle controls have visible focus treatment',()=>
   assert.match(html,/<nav class="nav" aria-label="화면 이동">/);
   assert.match(html,/setAttribute\('aria-pressed',String\(b.dataset.view===view\)\)/);
 });
+
+
+test('portrait combat motion emphasizes boss and respects reduced-motion preference',()=>{
+  const html=fs.readFileSync(path.join(__dirname,'../site/index.html'),'utf8');
+  assert.match(html,/@media\(prefers-reduced-motion:no-preference\)/);
+  assert.match(html,/animation:hero-breathe 2\.8s/);
+  assert.match(html,/animation:enemy-hover 2\.2s/);
+  assert.match(html,/img\[src="boss_guardian\.webp"\]\{animation:boss-presence/);
+  assert.doesNotMatch(html,/@media\(prefers-reduced-motion:reduce\)[\s\S]*animation:/);
+});
