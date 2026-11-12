@@ -13,6 +13,6 @@ if(src.endsWith('.webp')){
   assert.equal(bytes.toString('ascii',0,4),'RIFF','WebP RIFF signature');
   assert.equal(bytes.toString('ascii',8,12),'WEBP','WebP container signature');
 }else if(src.endsWith('.svg')){
-  assert.match(bytes.toString('utf8'),/<svg\\b/,'SVG signature');
+  assert.match(bytes.toString('utf8'),/<svg\b/,'SVG signature');
 }else throw new Error('Unsupported hero art format: '+src);
 console.log('PASS binary hero asset',src,bytes.length+' bytes');
