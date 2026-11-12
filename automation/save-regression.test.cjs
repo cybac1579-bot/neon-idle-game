@@ -354,6 +354,8 @@ test('automatic boss combat alternates existing artwork at stage 20 without play
 
 test('first playable screen titles do not expose internal experiment iteration labels',()=>{
   const html=fs.readFileSync(path.join(__dirname,'../site/index.html'),'utf8');
-  assert.match(html,/<title>네온 방치단<\\/title>/);
-  assert.doesNotMatch(html,/<h2>[^<]*(?:\\d+차 실험|임시 테스트|회수 · 실험)/);
+  assert.ok(html.includes('<title>네온 방치단</title>'));
+  for(const oldLabel of ['14차 실험','임시 테스트','정기 크레딧 회수 · 실험']){
+    assert.ok(!html.includes(oldLabel),'remove internal title: '+oldLabel);
+  }
 });
