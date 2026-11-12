@@ -91,3 +91,32 @@ test('periodic credit cache accumulates at most five payouts and claims once',()
   assert.equal(b.get('s.credits'),before+payout*5);
   assert.equal(b.get('transferCacheCredits()'),0);
 });
+
+test('upgrade purchase respects unlock, price and speed cap',()=>{
+  const b=boot({stage:1,best:1,credits:1000,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  assert.equal(b.get('purchase("amp")'),false,'locked upgrade must be unavailable');
+  assert.equal(b.get('s.amp'),0);
+  const cost=b.get('cost("atk")');
+  const before=b.get('s.credits');
+  assert.equal(b.get('purchase("atk")'),true);
+  assert.equal(b.get('s.credits'),before-cost);
+  assert.equal(b.get('s.atk'),1);
+  b.get('s.spd=50');
+  assert.equal(b.get('purchase("spd")'),false,'speed cap must hold');
+  b.get('s.credits=0');
+  assert.equal(b.get('purchase("atk")'),false,'cannot purchase without funds');
+});
+test('rebirth requires stage 100 and preserves permanent upgrades',()=>{
+  const b=boot({stage:99,best:99,credits:500,cores:3,corePower:2,rebirths:0,
+    lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  assert.equal(b.get('rebirth()'),false);
+  b.get('s.stage=100');
+  const gain=b.get('gainCore()');
+  assert.ok(gain>0);
+  assert.equal(b.get('rebirth()'),true);
+  assert.equal(b.get('s.stage'),1);
+  assert.equal(b.get('s.rebirths'),1);
+  assert.equal(b.get('s.cores'),3+gain);
+  assert.equal(b.get('s.corePower'),2);
+  assert.equal(b.get('s.atk'),0);
+});
