@@ -122,3 +122,5 @@
 - Deployment: prior main `03dc2641` Pages run 43137961883 succeeded; new test commit Pages run 43144630568 queued at inspection. Published asset parity unverified.
 - Remaining risks: actual short-phone layout/scroll, combat feel, 30-minute growth curve, browser save migration, and auto-buy decision quality beyond basic gating.
 - Next: check 13-test CI and Pages; fix any failure first, then inspect real-browser portrait layout and run a timed growth simulation.
+
+- Follow-up evidence: 13-test GitHub Actions run 43144630537 on `fc1ddfe5` **completed success**. Pages run 43144630568 on same test commit **completed success**. Subsequent documentation commits trigger separate Pages runs, so the final documentation-only head's deployment remains pending; no real-browser/device verification performed.
