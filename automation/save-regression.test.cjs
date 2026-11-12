@@ -287,3 +287,14 @@ test('next-purchase guidance stays actionable after rebirth with preserved best 
   assert.match(actual,/다음 구매: 전투 엔진/);
   assert.match(actual,/지금 구매 가능/);
 });
+
+test('offline settlement caps credited time at 7200 seconds and never auto-rebirths',()=>{
+  const b=boot({stage:100,best:100,rebirths:1,autoLevel:3,autoRebirth:true,
+    lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  const before=b.get('s.rebirths');
+  const credited=b.get('settleElapsed(14400)');
+  assert.equal(credited,7200,'offline credited time must be capped at two hours');
+  assert.equal(b.get('s.rebirths'),before,'offline settlement must not trigger automatic rebirth');
+  assert.match(b.get('logText'),/방치 진행 7200초 반영/,'return log must report credited, not wall time');
+  assert.ok(b.get('s.cacheCredits')<=b.get('cachePayout()*5'),'offline cache must respect five-payout cap');
+});
