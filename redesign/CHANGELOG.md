@@ -33,7 +33,12 @@ This file tracks **only** the new redesign line. It is distinct from the legacy 
 16. `7463948` — add real Chromium/Playwright browser smoke covering initial render, automatic battle, portrait viewport overflow, four tabs, sprite count and page errors.
 17. `85f9954` — add an isolated `browser-smoke` GitHub Actions job. This adds an executable browser test path but **does not** establish that CI has passed.
 
+18. `efee0a7` — extend browser smoke to capture a 390×844 portrait screenshot and check original localStorage save key survives reload; detect HTTP asset failures.
+19. `27c9300` — upload browser screenshots as short-retention CI artifacts for visual inspection.
+20. `0fbf3f5` — avoid false failures from optional browser favicon requests while still checking game asset HTTP errors.
+
 ## Verification boundaries
+- Runtime execution remains unconfirmed: Chromium is available locally, but repository clone is blocked by GitHub DNS resolution in the container; the connector's commit status and PR-only workflow lookup do not provide a push-run result. Screenshot artifacts will only exist if CI actually runs.
 - Current commit combined status returned no statuses and the available commit workflow lookup returned no runs; neither result establishes success or failure for push-triggered Actions.
 - The GitHub connector cannot list push-triggered Actions runs with its current workflow-run endpoint (PR-only); CI run status remains unverified, not reported as passed.
 - Direct local GitHub clone for Node execution failed because the container could not resolve github.com; GitHub Actions workflow was added as a reproducible alternative. Do not count this as a successful test run.
