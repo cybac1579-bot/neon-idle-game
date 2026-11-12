@@ -13,7 +13,7 @@ html{-webkit-text-size-adjust:100%;touch-action:manipulation}body{min-width:0}ma
 /* Portrait battle presence: subtle silhouettes and boss emphasis without new controls. */
 @media(prefers-reduced-motion:no-preference){
  [data-screen="battle"] .fight img:first-child{animation:hero-breathe 2.8s ease-in-out infinite;transform-origin:center bottom}
- [data-screen="battle"] .fight img:last-child{animation:enemy-hover 2.2s ease-in-out infinite;transform-origin:center bottom}
+ [data-screen="battle"] #enemyImage{animation:enemy-hover 2.2s ease-in-out infinite;transform-origin:center bottom}
  [data-screen="battle"] .fight img[src="boss_guardian.webp"]{animation:boss-presence 1.8s ease-in-out infinite;filter:drop-shadow(0 0 18px #ff6aab99)}
 }
 @keyframes hero-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
