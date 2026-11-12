@@ -79,3 +79,14 @@ Reference: https://store.steampowered.com/app/1147690/NGU_IDLE/ (official store 
 **Risks / impact:** (1) dense menus and overlapping currencies obscure the next meaningful choice (high); (2) excessive simultaneous systems dilute enemy/boss identity (high); (3) long automation chains and unfamiliar terminology raise onboarding cost (medium-high).
 **Cost / expected value:** low for auditing existing goal/detail placement; medium for milestone summaries; high for introducing new currencies or progression layers. No gameplay benefit proven for Neon yet.
 **Decision:** adopt only the *separation of battle feedback and detailed statistics* as an evaluation criterion; defer new layers and currencies until existing first/second rebirth and mobile layout are validated. No mandatory taps or rapid input. This run added an offline-cap regression fixture, not an NGU-derived gameplay change.
+
+## 2026-11-13 01:52 KST — Universal Paperclips: phase transitions without input pressure
+
+Reference: original browser game https://www.decisionproblem.com/paperclips/ (gameplay design reference; no hands-on session or current-build measurement in this run).
+
+**Transferable principle:** make a new progression phase recognizable through a changed goal, resource tradeoff and presentation rather than merely adding a new currency. For Neon, existing phase/rebirth systems could explain the next unlock in the growth/details panel while the battle remains automatic.
+
+**Benefits / impact:** (1) clear phase milestones can create meaningful long-term goals (high); (2) showing one next milestone can reduce cognitive load on portrait screens (medium-high); (3) using existing phase state avoids new save fields (medium).
+**Drawbacks / impact:** (1) copying the original's clicking and micromanagement violates Neon's low-input rule (critical); (2) abrupt phase transitions may obscure ongoing combat and boss progression (high); (3) adding more resource conversion layers could amplify balance and tutorial cost (high).
+**Estimated cost / expected value:** low for read-only next-phase copy and tests, medium for UI presentation and localization, high for a new economic phase. Benefit to real-player comprehension is plausible but not measured.
+**Decision:** **apply only as a future clarity audit**, not a mechanic. Keep automatic battle and existing boss stops, defer new resource layers and any rapid-tap loop. First obtain executable evidence for the 24-case suite and actual mobile portrait usability; then test whether existing phase unlock text already communicates the next objective.
