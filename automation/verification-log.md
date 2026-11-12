@@ -339,3 +339,12 @@
 - **Research:** compared Idle Research production/research unlock clarity against layered-system overload using official Steam and independent guide; recorded weighted benefits/risks, cost and defer/adopt rationale in automation/reference-research.md. No forced tapping or new currencies.
 - **Open risks:** 27-case suite unexecuted, actual browser visibility event semantics, saved timestamp and offline re-entry, production deployment, portrait boss/skill visibility, device performance and 30-minute play feel.
 - **Next:** obtain latest push CI raw TAP (27 cases) and fix any failures; verify served JS parity and mobile background/resume; then rotate to portrait boss/skill feedback and performance with reduced motion, preserving automatic combat.
+
+## 2026-11-13 08:06 KST — interactive follow-up: CI failures 25/26
+- Base main: `6f49598ddade07600ecd78fa09e5e2c735d383dc`; gameplay fix: `9b31af0662ab6d392cb750e72f2147c4bd026e87`.
+- Scope: GitHub Actions raw failure logs for run [43325021854](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43325021854), 27 cases; 25 pass, 2 fail (#25 single 60s visibility resume cache payout; #26 repeated hidden event cache payout). Historical [43284619096](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43284619096) also fails #25.
+- Diagnosis: `settleElapsed` advances in 0.85-second slices; repeated binary floating-point addition leaves `cacheClock` slightly below 60 at exactly 60s. Both failing assertions check `cacheCredits>0`. The earlier lifecycle guard fix remains in place; this is a 60s payout boundary rounding defect, not evidence that the hidden start was overwritten.
+- Change: `site/game.js` uses a 1e-7s tolerance for the 60s cache payout threshold and clamps the post-payout remainder to nonnegative. No tap requirement, UI changes or save schema changes.
+- Evidence: GitHub source and raw CI job logs; update_file accepted gameplay fix. **Post-fix CI run not yet verified; do not mark 27 tests passing.** Previous Pages deployment run 43325014834 succeeded for older `74f12b19`, not this fix. Current Pages deployment and served asset parity unverified.
+- Risks: post-fix CI may reveal other regressions; real mobile visibility timing and combat rendering unverified.
+- Next: obtain post-fix 27-test CI and Pages status; if green, verify served JS parity and rotate to boss/skill portrait performance. Manual records untouched.
