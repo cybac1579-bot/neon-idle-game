@@ -40,10 +40,19 @@ main{max-width:520px;padding-top:10px}main>h1{font-size:20px;letter-spacing:.025
 [data-screen="battle"] #log{background:#101a32a8;border-left:3px solid var(--neon-pink);border-radius:3px;padding:9px 10px;margin:8px 0 0;line-height:1.4}
 @media(max-height:650px){[data-screen="battle"] .fight{min-height:220px;padding-top:8px}[data-screen="battle"] .fight img{height:205px}}
 @media(prefers-reduced-motion:reduce){[data-screen="battle"] .fight img{animation:none!important;transition:none!important}}
+
+/* Passive battle feedback: CSS-only labels and a single recycled impact node. */
+#combatStage{overflow:hidden}
+.battle-stage-label{position:absolute;top:12px;left:12px;z-index:2;padding:5px 10px;border-radius:99px;background:#0d1837bb;border:1px solid #67e7e36b;color:#a5fff4;font-size:11px;font-weight:800;letter-spacing:.04em}
+#combatStage[data-boss="true"]{border-color:#ff80bb9e;background:radial-gradient(ellipse at 65% 34%,#e9478233,transparent 55%),linear-gradient(180deg,#2b183e,#19203c)}
+#combatStage[data-boss="true"] .battle-stage-label{color:#ffe2a2;border-color:#ff9c9a;background:#60223bbb}
+.battle-impact{position:absolute;z-index:3;left:66%;top:40%;width:52px;height:52px;border:3px solid #ffe6a3;border-radius:50%;box-shadow:0 0 20px #ffe17eaa;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.35)}
+@media(prefers-reduced-motion:no-preference){.battle-impact.active{animation:neon-hit .24s ease-out both}@keyframes neon-hit{0%{opacity:.9;transform:translate(-50%,-50%) scale(.35)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}}
+@media(prefers-reduced-motion:reduce){.battle-impact{display:none}}
 </style></head><body><main>
 <h1>✦ 네온 방치단 <span class="pill">MOBILE 40</span></h1><p class="sub">환생 · 생산 계층 · 단계별 자동화 중심의 새로운 실험 빌드</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
-<section data-screen="battle" class="panel"><p class="sub" id="heroGrowth" aria-live="polite"></p><div class="stats"><div class="stat">현재 스테이지<strong id="stage"></strong></div><div class="stat">최고 기록<strong id="best"></strong></div><div class="stat">환생 횟수<strong id="rebirths"></strong></div></div><div class="fight"><img src="seha_portrait.webp" alt="전투 캐릭터"><img id="enemyImage" src="enemy_scout.svg" alt="적"></div><div class="bar"><div id="hpBar"></div></div><p class="sub" id="battleInfo"></p><p class="log" id="log"></p></section>
+<section data-screen="battle" class="panel"><p class="sub" id="heroGrowth" aria-live="polite"></p><div class="stats"><div class="stat">현재 스테이지<strong id="stage"></strong></div><div class="stat">최고 기록<strong id="best"></strong></div><div class="stat">환생 횟수<strong id="rebirths"></strong></div></div><div class="fight" id="combatStage"><span class="battle-stage-label" id="battleStageLabel" aria-hidden="true">일반 전투</span><img src="seha_portrait.webp" alt="전투 캐릭터"><img id="enemyImage" src="enemy_scout.svg" alt="적"><span class="battle-impact" id="battleImpact" aria-hidden="true"></span></div><div class="bar"><div id="hpBar"></div></div><p class="sub" id="battleInfo"></p><p class="log" id="log"></p></section>
 <section data-screen="growth" class="panel"><h2>⚔ 장비·스킬 · 14차 실험</h2><p class="sub" id="weaponInfo"></p><p class="sub" id="skillInfo"></p><div id="skillList" class="grid"></div><p class="sub">STAGE 15부터 무기, 20부터 스킬을 획득해. 재구성 시 계승 지정 스킬만 LV.1로 유지돼. 수치는 임시야.</p></section>
 <section data-screen="growth" class="panel"><h2>✦ 주인공 특성 · 임시 테스트</h2><p class="sub" id="traitPoints"></p><div class="grid" id="traits"></div><button id="traitReset" class="wide">특성 전체 초기화 · 포인트 반환</button><p class="sub">스킬 가속·장비 탐색은 임시 적용 중이야. 계승 확장은 LV.60부터 투자할 수 있어.</p></section>
 <section data-screen="stats" class="panel"><h2>◎ 성장 목표</h2><div id="goal" class="hint"></div><p id="speedNotice"></p></section>
