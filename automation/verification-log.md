@@ -257,3 +257,13 @@
 - Deployment: **unverified** for base and resulting commits; no HTTP asset parity established. Do not claim production update.
 - Remaining risks: 23-case CI outcome, live JS parity, offline cap/visibility duplicate settlement, mobile battle frame performance, player-feasible purchase cadence.
 - Next: obtain actual push-triggered 23-case CI/Pages job evidence; add executable offline cap/resume accounting regression, then inspect mobile portrait combat on a real browser/device. Preserve automatic combat without repetitive taps.
+
+## 2026-11-13 00:59 KST — offline two-hour cap regression and research rotation
+- Base main: `aec6e30fff22df71b554b6a6a6b3b9297948c05a`. Changes: test `e20b150b9545b7bb708cc392504b51d870f2ddf5`, research `2c5a87495cb6e8747ce873862f7b75cfc6e0d0aa`, coverage `18017a86ba92e328ff88570ea0cea43a76bb0557`; final log commit is the commit containing this entry.
+- Startup: read automation README, verification log, coverage matrix, reference research, development/README.md (manual legacy index), current site/game.js and existing Node harness; no manual file edited. Production main is distinct from frozen backup and redesign branch.
+- Focus: previously unverified long offline settlement cap and no automatic rebirth; avoid repeating prior goal-guidance source checks. Added 24th Node fixture: 14,400s absence credits at most 7,200s, never auto-rebirths, reports credited time and caps cache at five payouts.
+- Evidence: source code inspection confirms `settleElapsed` caps to 7,200s, calls `step(dt,false)`, and writes credited duration to log; GitHub accepted the new fixture. **No executable Node run or successful 24-case CI result observed**; test assertions are not evidence of passing behavior. Previous 23-case CI remains unverified.
+- Deployment: GitHub Actions page could not be fetched; published site asset URL inaccessible. **No confirmation of latest Pages deployment or asset parity**. No gameplay file changed this run.
+- Reference: new NGU Idle comparison in automation/reference-research.md, official store link, benefits/risks/costs; deferred new currencies and complexity. Repeated tapping prohibited.
+- Remaining risks: fixture may fail, browser hidden/visible accounting, save migration, mobile combat frame rate and visibility, latest published asset version.
+- Next: obtain actual CI outcome for 24 fixtures and repair failures; verify Pages build and deployed game.js parity; then prioritize real-browser portrait battle/skill cue and resume tests.
