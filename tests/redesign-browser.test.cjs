@@ -36,6 +36,22 @@ const server = createServer((req,res)=>{
     const assets=await page.locator('#combatStage img').evaluateAll(images=>images.map(img=>({src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight})));
     assert.ok(assets.every(img=>img.width>0&&img.height>0),'combat art must decode: '+JSON.stringify(assets));
     assert.equal(await page.locator('#battleGoal').textContent()!=='',true);
+    // Verify that the new visual layer can animate without changing combat state.
+    assert.equal(await page.locator('#heroAttackArc').count(),1,'sword arc layer exists');
+    const animation=await page.evaluate(()=>{
+      const arc=document.getElementById('heroAttackArc');
+      const hero=document.querySelector('#combatStage img:first-of-type');
+      const before={stage:s.stage,credits:s.credits,kills:s.kills};
+      combatImpact(performance.now()+1000);
+      const active=arc.classList.contains('active');
+      const running=hero.getAnimations().length>0;
+      return {active,running,before,after:{stage:s.stage,credits:s.credits,kills:s.kills}};
+    });
+    assert.ok(animation.active,'attack arc activates on combat feedback');
+    assert.ok(animation.running,'hero lunge animation starts');
+    assert.deepEqual(animation.after,animation.before,'visual feedback must not change gameplay');
+    await page.screenshot({path:'test-results/battle-attack.png',fullPage:true});
+
     await page.screenshot({path:'test-results/battle-portrait.png',fullPage:true});
     fs.writeFileSync('test-results/browser-diagnostics.json',JSON.stringify({assets,viewport:{width:390,height:844},initialStage:await page.locator('#stage').textContent()},null,2));
     for(const tab of ['growth','reset','stats','battle']){
