@@ -7,6 +7,7 @@ on:
     paths:
       - 'site/**'
       - 'tests/redesign-static.test.cjs'
+      - 'tests/redesign-asset.test.cjs'
       - 'tests/redesign-browser.test.cjs'
       - '.github/workflows/redesign-checks.yml'
   workflow_dispatch:
