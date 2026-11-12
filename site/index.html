@@ -19,6 +19,27 @@ html{-webkit-text-size-adjust:100%;touch-action:manipulation}body{min-width:0}ma
 @keyframes hero-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes enemy-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes boss-presence{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.035)}}
+
+/* Redesign v1: stage-first portrait composition; presentation-only, save logic unchanged. */
+:root{--neon-pink:#ff6cab;--neon-cyan:#76f7ed;--neon-gold:#ffe28b}
+body{background:radial-gradient(ellipse 90% 38% at 50% 0%,#36234c 0%,#14172d 65%,#0b1020 100%)}
+main{max-width:520px;padding-top:10px}main>h1{font-size:20px;letter-spacing:.025em}main>p.sub{margin:3px 0 9px}
+.nav{border-bottom:1px solid #52618b55;backdrop-filter:blur(10px)}
+[data-screen="battle"]{position:relative;margin-top:8px;padding:12px;border-color:#6b5e92;background:linear-gradient(180deg,#272448,#1a2340 48%,#151a32);box-shadow:0 10px 34px #0007,inset 0 1px #ffffff17}
+[data-screen="battle"]::before{content:"AUTO BATTLE";position:absolute;right:14px;top:12px;letter-spacing:.16em;color:var(--neon-cyan);font-size:10px;font-weight:800;opacity:.85}
+[data-screen="battle"] #heroGrowth{max-width:72%;font-size:11px;line-height:1.45;margin:2px 0 12px}
+[data-screen="battle"] .stats{position:relative;z-index:1;grid-template-columns:1.15fr 1fr 1fr;gap:6px}
+[data-screen="battle"] .stat{background:#0c1530c7;border:1px solid #465b7c88;padding:9px 7px}
+[data-screen="battle"] .stat strong{color:var(--neon-gold);font-size:19px}
+[data-screen="battle"] .fight{position:relative;min-height:clamp(285px,46svh,470px);margin:10px -4px 0;padding:22px 5px 20px;background:radial-gradient(ellipse at 50% 94%,#26e2d027 0%,transparent 50%),linear-gradient(180deg,#121b3a44,#27204444);border:1px solid #6de5e42e;isolation:isolate}
+[data-screen="battle"] .fight::before{content:"";position:absolute;z-index:-1;inset:10% 8% 17%;border-radius:50%;background:radial-gradient(circle,#dc56a81e,transparent 66%);pointer-events:none}
+[data-screen="battle"] .fight::after{content:"";position:absolute;bottom:13px;left:7%;right:7%;height:21px;border-radius:50%;background:#0008;filter:blur(12px);z-index:-1;pointer-events:none}
+[data-screen="battle"] .fight img{height:clamp(240px,40svh,400px);width:49%;max-width:49%;filter:drop-shadow(0 10px 12px #0008)}
+[data-screen="battle"] .bar{height:13px;margin-top:10px;border:1px solid #745c83;background:#100f28}
+[data-screen="battle"] #battleInfo{font-size:12px;color:#d9e4fa;margin:10px 0 5px}
+[data-screen="battle"] #log{background:#101a32a8;border-left:3px solid var(--neon-pink);border-radius:3px;padding:9px 10px;margin:8px 0 0;line-height:1.4}
+@media(max-height:650px){[data-screen="battle"] .fight{min-height:220px;padding-top:8px}[data-screen="battle"] .fight img{height:205px}}
+@media(prefers-reduced-motion:reduce){[data-screen="battle"] .fight img{animation:none!important;transition:none!important}}
 </style></head><body><main>
 <h1>✦ 네온 방치단 <span class="pill">MOBILE 40</span></h1><p class="sub">환생 · 생산 계층 · 단계별 자동화 중심의 새로운 실험 빌드</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
