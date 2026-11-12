@@ -30,7 +30,11 @@ This file tracks **only** the new redesign line. It is distinct from the legacy 
 14. `644221c` — extend CI smoke coverage from 11 to 14 checks: inline navigation JavaScript, navigation-to-screen mapping, and combat sprite count.
 15. `21d5ecf` — immediately repair invalid regular-expression escaping introduced in the new test code; test file now parses and the three new structural assertions were independently checked against current sources.
 
+16. `7463948` — add real Chromium/Playwright browser smoke covering initial render, automatic battle, portrait viewport overflow, four tabs, sprite count and page errors.
+17. `85f9954` — add an isolated `browser-smoke` GitHub Actions job. This adds an executable browser test path but **does not** establish that CI has passed.
+
 ## Verification boundaries
+- Current commit combined status returned no statuses and the available commit workflow lookup returned no runs; neither result establishes success or failure for push-triggered Actions.
 - The GitHub connector cannot list push-triggered Actions runs with its current workflow-run endpoint (PR-only); CI run status remains unverified, not reported as passed.
 - Direct local GitHub clone for Node execution failed because the container could not resolve github.com; GitHub Actions workflow was added as a reproducible alternative. Do not count this as a successful test run.
 - v5 source-level consistency checks passed 7/7, including the enemy animation selector regression. Browser/device tests remain outstanding.
