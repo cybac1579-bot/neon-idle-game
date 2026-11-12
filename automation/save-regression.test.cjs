@@ -136,3 +136,23 @@ test('jump landing on a boss still grants crossed milestone once',()=>{
   assert.equal(b.get('s.knownUnlocks.filter(k=>k==="milestone-10").length'),1);
   assert.equal(b.get('s.best'),10);
 });
+
+test('auto-buy spends available credits only when enabled and unlocked',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const disabled=boot({stage:1,best:1,credits:10000,autoLevel:1,autoBuy:false,lastSaved:stamp});
+  disabled.get('step(11,false)');
+  assert.equal(disabled.get('s.atk'),0);
+  assert.equal(disabled.get('s.spd'),0);
+  const enabled=boot({stage:1,best:1,credits:10000,autoLevel:1,autoBuy:true,lastSaved:stamp});
+  enabled.get('step(11,false)');
+  assert.ok(enabled.get('s.atk+s.spd+s.gen')>0,'enabled auto-buy should purchase an unlocked upgrade');
+  assert.ok(enabled.get('s.credits')<10000,'auto-buy should pay for upgrades');
+  assert.equal(enabled.get('s.amp'),0,'locked upgrades must remain unavailable');
+});
+test('short portrait combat keeps a minimum canvas without hiding combat',()=>{
+  const html=fs.readFileSync(path.join(__dirname,'../site/index.html'),'utf8');
+  assert.match(html,/name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/);
+  assert.match(html,/\[data-screen="battle"\] \.fight\{min-height:clamp\(250px,43svh,420px\)/);
+  assert.match(html,/@media\(max-height:620px\)\{\[data-screen="battle"\] \.fight\{min-height:205px\}/);
+  assert.match(html,/<nav class="nav" aria-label="화면 이동">/);
+});
