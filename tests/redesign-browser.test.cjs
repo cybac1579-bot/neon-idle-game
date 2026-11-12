@@ -58,7 +58,7 @@ const server = createServer((req,res)=>{
     await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img')].every(img=>img.complete&&img.naturalWidth>0));
     const assets=await page.locator('#combatStage img').evaluateAll(images=>images.map(img=>({src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight})));
     assert.ok(assets.every(img=>img.width>0&&img.height>0),'combat art must decode: '+JSON.stringify(assets));
-    assert.equal(assets[0].src,'hero_upload_probe.svg','uploaded swordswoman must be used instead of legacy art');
+    assert.equal(assets[0].src,'hero_upload_probe.webp','uploaded swordswoman must be used instead of legacy art');
     assert.equal(await page.locator('#battleGoal').textContent()!=='',true);
     // Verify that the new visual layer can animate without changing combat state.
     assert.equal(await page.locator('#heroAttackArc').count(),1,'sword arc layer exists');
