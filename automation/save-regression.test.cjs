@@ -380,3 +380,29 @@ test('first-playable 30-minute pacing baseline: passive remains pre-rebirth and 
   assert.ok(firstEligible===null||firstEligible>=600,'first rebirth must not be reachable within 10 minutes in this baseline');
   console.log('first-playable pacing guard:',JSON.stringify({passiveStage:passive.get('s.stage'),activeStage:active.get('s.stage'),firstEligible,purchases}));
 });
+
+
+test('30-minute low-input play proxies compare 30s and 60s optional upgrades',()=>{
+  const scenarios=[];
+  for(const interval of [30,60]){
+    const b=boot(undefined);
+    let purchases=0,firstEligible=null;
+    const checkpoints=[];
+    for(let second=1;second<=1800;second++){
+      b.get('step(1,false)');
+      if(second%interval===0){
+        const bought=b.get('(()=>{const eligible=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>cost(a)-cost(b));return eligible.length?purchase(eligible[0]):false})()');
+        if(bought)purchases++;
+      }
+      if(firstEligible===null&&b.get('s.stage')>=100)firstEligible=second;
+      if([300,900,1800].includes(second))checkpoints.push({second,stage:b.get('s.stage'),credits:b.get('s.credits'),kills:b.get('s.kills')});
+    }
+    const final=b.get('({stage:s.stage,best:s.best,credits:s.credits,kills:s.kills,rebirths:s.rebirths})');
+    assert.ok(purchases>0,'optional upgrades should be affordable');
+    assert.ok(Number.isFinite(final.credits)&&final.kills>0,'low-input economy stays finite and combat runs');
+    assert.equal(final.rebirths,0,'no forced rebirth');
+    scenarios.push({interval,purchases,firstEligible,checkpoints,final});
+  }
+  assert.ok(scenarios[0].final.stage>=scenarios[1].final.stage,'30s proxy should not progress slower than 60s proxy');
+  console.log('30-minute low-input proxies:',JSON.stringify(scenarios));
+});
