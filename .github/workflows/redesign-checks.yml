@@ -1,0 +1,22 @@
+name: Redesign static smoke checks
+on:
+  push:
+    branches:
+      - development/reference-redesign
+  pull_request:
+    paths:
+      - 'site/**'
+      - 'tests/redesign-static.test.cjs'
+      - '.github/workflows/redesign-checks.yml'
+  workflow_dispatch:
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run redesign static checks
+        run: node tests/redesign-static.test.cjs
