@@ -15,4 +15,6 @@
 | Manual/automation separation | 2026-11-12 21:54 KST, `d6718845` | Read `development/README.md`; `development/manual-log.md` absent; automation files only edited | Preserve frozen backup and redesign branch boundaries; high |
 | Progression goal guidance | 2026-11-12 23:57 KST, `ea50450b` | Source assertions: affordable-first selection present; 2 new Node VM fixtures (zero-credit fallback and rebirth with retained best), 23 tests authored total. **23-test CI not observed**; prior 20-case pass is historical only | **High:** obtain 23-test CI result, confirm rendered wording and deployed parity; no runtime success claim |
 
-| Offline-return reporting / lifecycle | 2026-11-12 23:57 KST, `ef1bf909` | Source review: `settleElapsed` caps to 7,200s and calls `step(dt,false)`; prior 4-case Node fixture pass 43117916982 only | **High:** new cap/visibility accounting fixture, browser resume and no duplicate settlement; no fresh execution evidence |\n\nThe table tracks actual evidence, not assumed passing tests. Refer to `automation/README.md` for separation from manual logs.
+| Offline-return reporting / lifecycle | 2026-11-12 23:57 KST, `ef1bf909` | Source review: `settleElapsed` caps to 7,200s and calls `step(dt,false)`; prior 4-case Node fixture pass 43117916982 only | **High:** new cap/visibility accounting fixture, browser resume and no duplicate settlement; no fresh execution evidence |
+
+The table tracks actual evidence, not assumed passing tests. Refer to `automation/README.md` for separation from manual logs.
