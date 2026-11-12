@@ -16,7 +16,11 @@ This file tracks **only** the new redesign line. It is distinct from the legacy 
 5. `b29aa1d` — visible next-milestone label on combat screen.
 6. `cbb3965` — milestone wiring, kill feedback and stage-clear flash.
 
+7. `04e7066` — add passive skill-activation light sweep to combat stage, with reduced-motion fallback.
+8. `e990e75` — connect existing automatic skill activations to foreground-only visual feedback; no skill damage or cooldown changes.
+
 ## Verification boundaries
+- This v4 change has not been runtime-tested or deployed; a source-level consistency check follows.
 - Previous checks were source-level assertions only (8/8 and 7/7 as reported), **not** live-browser or real-device acceptance tests.
 - The redesigned UI has not yet been merged or deployed to the public site.
 - Save key and offline calculation were intentionally preserved; runtime compatibility remains to be tested.
