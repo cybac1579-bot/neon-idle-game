@@ -51,6 +51,13 @@ const server = createServer((req,res)=>{
     assert.ok(animation.active,'attack arc activates on combat feedback');
     assert.ok(animation.running,'hero lunge animation starts');
     assert.deepEqual(animation.after,animation.before,'visual feedback must not change gameplay');
+    const overlap=await page.evaluate(()=>{
+      lastImpact=-Infinity;combatImpact(performance.now());
+      const hero=document.querySelector('#combatStage img:first-of-type');
+      return hero.getAnimations().filter(a=>a.id==='hero-attack-lunge').length;
+    });
+    assert.equal(overlap,1,'repeated hits must not stack sword lunge animations');
+
     await page.waitForTimeout(120);
     await page.screenshot({path:'test-results/battle-attack.png',fullPage:true});
 
