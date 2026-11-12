@@ -90,3 +90,12 @@
 - Deployment: prior head `90068658` Pages run 43117968333 succeeded. Pages run 43123215232 for new test commit was still in progress at time of inspection; do not claim deployed version.
 - Remaining risks: actual combat visuals and enemy interactions on mobile, boss-stage skipping under high rebirth stage jumps, balance of credits/rewards, real browser save migration, Pages asset verification.
 - Next: inspect portrait combat on browser/device and test stage-jump boss progression and cost/reward balance; confirm Pages result.
+
+## 2026-11-12 — automated run 10 (growth economy and rebirth)
+- Base main: `f1e35a9790c75890d5eb2ea8e9d240f20bf549a7`; gameplay unchanged; new tests committed as `d00fc685a2946e54230a699acf82c6923fa9fb25`.
+- Startup: read automation README, previous log and coverage matrix; checked prior manual-document status (root README previously empty, no separate handoff found). Manual files not edited.
+- Focus: previously untested upgrade unlock gates, purchase costs, insufficient funds, speed cap, and stage-100 rebirth threshold, permanent core upgrades and reset behavior. Added two Node VM fixture tests to existing seven.
+- Evidence: GitHub update_file accepted test commit. Prior seven-case CI run 43123215199 passed. **Nine-case run 43130921525 was queued/in progress at inspection; nine-case pass not yet established.** No actual browser/device test performed.
+- Deployment: prior main `f1e35a97` Pages workflow 43123270981 succeeded. Current test commit Pages run 43130921499 queued at inspection; latest deployment **unverified**.
+- Remaining risks: balance over 30-minute play, boss-stage skipping, actual mobile combat visuals, browser save migration, auto-buy decisions, and CI results of new fixtures.
+- Next: check nine-case CI and repair any failure first; confirm Pages outcome, then test stage jumps/boss rewards and longer balance simulations.
