@@ -173,3 +173,22 @@ test('30-minute simulated idle economy stays finite and auto-buy progresses with
   assert.ok(metrics.atk+metrics.spd+metrics.gen>0,'auto-buy must invest during the 30-minute simulation');
   console.log('30-minute simulated idle metrics:',JSON.stringify({checkpoints,final:metrics}));
 });
+
+test('fresh save without auto-buy: 30-minute passive baseline records progression and first rebirth eligibility',()=>{
+  const b=boot(undefined);
+  const checkpoints=[];
+  let elapsed=0,firstRebirthEligibleAt=null;
+  for(const segment of [60,240,600,900]){
+    // Same capped offline settlement used in the earlier auto-buy fixture.
+    b.get('settleElapsed('+segment+')');
+    elapsed+=segment;
+    const state=b.get('({stage:s.stage,best:s.best,credits:s.credits,energy:s.energy,kills:s.kills,rebirths:s.rebirths,atk:s.atk,spd:s.spd,gen:s.gen})');
+    if(firstRebirthEligibleAt===null&&state.stage>=100)firstRebirthEligibleAt=elapsed;
+    checkpoints.push({elapsed,...state});
+  }
+  assert.equal(b.get('s.autoLevel'),0,'fresh save has no automation unlocked');
+  assert.equal(b.get('s.atk+s.spd+s.gen'),0,'passive baseline must not buy upgrades');
+  assert.equal(b.get('s.rebirths'),0,'offline settlement must not rebirth');
+  assert.ok(checkpoints.every(p=>Number.isFinite(p.credits)&&Number.isFinite(p.energy)&&Number.isFinite(p.kills)),'baseline metrics finite');
+  console.log('30-minute fresh passive baseline:',JSON.stringify({checkpoints,firstRebirthEligibleAt}));
+});
