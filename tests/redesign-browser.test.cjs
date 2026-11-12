@@ -32,8 +32,12 @@ const server = createServer((req,res)=>{
     await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
     assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1);
     assert.equal(await page.locator('#combatStage img').count(),2);
+    await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img')].every(img=>img.complete&&img.naturalWidth>0));
+    const assets=await page.locator('#combatStage img').evaluateAll(images=>images.map(img=>({src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight})));
+    assert.ok(assets.every(img=>img.width>0&&img.height>0),'combat art must decode: '+JSON.stringify(assets));
     assert.equal(await page.locator('#battleGoal').textContent()!=='',true);
     await page.screenshot({path:'test-results/battle-portrait.png',fullPage:true});
+    fs.writeFileSync('test-results/browser-diagnostics.json',JSON.stringify({assets,viewport:{width:390,height:844},initialStage:await page.locator('#stage').textContent()},null,2));
     for(const tab of ['growth','reset','stats','battle']){
       await page.locator('[data-view="'+tab+'"]').click();
       assert.equal(await page.locator('[data-screen="'+tab+'"]:not(.view-hidden)').count()>0,true,'tab '+tab);
@@ -48,6 +52,7 @@ const server = createServer((req,res)=>{
     await page.reload({waitUntil:'load'});
     await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
     assert.ok(await page.evaluate(()=>localStorage.getItem('neon_rework_07')),'save must survive reload');
+    fs.writeFileSync('test-results/browser-errors.json',JSON.stringify(errors,null,2));
     assert.deepEqual(errors,[],'browser runtime errors');
     console.log('PASS browser startup, auto battle, 4 tabs, sprites, goal, mobile width, no runtime errors');
   } finally {await browser.close()}
