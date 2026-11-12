@@ -356,3 +356,11 @@
 - New code run [43326299535](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43326299535) failed one **outdated test assertion** that expected guardian art at stage 20; corrected assertion in `d5af9907`. **Current post-correction CI and Pages remain unverified pending run completion.**
 - Research: Tap Titans 2 boss silhouette/pacing (not tapping), benefits/risks/cost and adoption in reference-research.md.
 - Risks: no real portrait screenshot/FPS/reduced-motion browser validation; no published asset parity check. Next: verify new CI and Pages, then inspect stage-20 art on real mobile and rotate to save migration/economy.
+
+## 2026-11-13 08:25 KST — first-playable presentation pass
+- Base `50c9af8de325ff66d5e34aa44a7f21bb6df32436`; gameplay unchanged. UI commit `9dc2e3da`, regression fixture `2160295f`; resulting main after documentation to be rechecked.
+- Scope: first-playable user-facing labels and previous boss-art regression. GitHub Actions [43326469830](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43326469830) succeeded for 28-case boss-art fixture at `50c9af8d`. This does **not** validate subsequent UI edits.
+- Change: removed stale internal iteration/experiment tags from HTML title and growth, traits, cache section headings. Preserved gameplay, automatic combat, existing UI structure, save schema. Added 29th test checking clean public-facing titles; fixture corrected to avoid regex escaping mistakes.
+- Verification: GitHub code and test commits accepted; new CI [43327197220](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43327197220) queued at check time; Pages [43327162179](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43327162179) in progress. No post-change success claimed. Real mobile/browser play, 30-minute progression, FPS, served file parity remain unverified.
+- First-playable progress is **provisional 55% planning estimate**, not test pass rate: functional systems and automated regression exist, but 30-minute live mobile UX/balance, save continuity, UI quality and release acceptance remain unverified. 100% means ready for user trial, never 'finished game'.
+- Next: verify 29-case CI and Pages; assess 30-minute play pacing and portrait battle on actual mobile, then correct high-impact issues before requesting user trial.
