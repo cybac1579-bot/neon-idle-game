@@ -183,3 +183,12 @@
 - Next: confirm new CI and Pages results; perform actual portrait browser/screen-reader interaction testing, then inspect combat animation/feedback and upgrade-purchase usability without crowding the main battle surface.
 
 - Follow-up CI/deployment: first new test commit `db1e49c4` failed run 43179110804 (16/17 passed) because newly added source-contract regex was over-escaped; the game/UI did not fail. Corrected test regex in `3c44b9aecd3e408375f84fa1476d95c327f22575`. CI run 43179194767 **completed success (17/17)**. Site UI commit `eda9a3be` Pages run 43179100924 **completed success**. Documentation-only and test-only commits do not trigger Pages; no independent browser screenshot or live HTTP parity check.
+
+## 2026-11-12 17:52 KST — automated run 18 (portrait combat presence)
+- Base main: `fbcc65a6d1627379c96c00dc8136673f9213d092`; game UI commit `3267e434609aaf10948e72140d7c9afe2eab438a`; test commit `ea765cd3efc1a00d1db843c5f922faefa5fa022c`.
+- Startup: read automation README, verification log, coverage matrix, root README, site/index.html, site/game.js, regression tests, CI workflow, recent Actions and main. Root README is empty; no separate manual handoff exists in repository. Existing user manual feedback (combat-first, portrait, low UI clutter, 30-minute pacing) respected; no manual notes modified.
+- Scope/fix: combat presence was static despite large portrait battle canvas. Added subtle hero breathing, enemy hover and boss-specific presence CSS animations within `prefers-reduced-motion:no-preference`; no new buttons, no gameplay logic or economy changes. Added source-contract regression for animations, boss selector and motion preference.
+- Evidence: GitHub accepted two file commits. Existing 17-test CI passed run 43179194767; new 18-test CI run 43186610317 **in progress at initial check**, so pass not yet claimed. CSS static checks cannot validate actual animation fluidity, layout or FPS on Galaxy hardware.
+- Deployment: prior UI Pages run 43179100924 passed. New UI Pages run 43186586013 **in progress at initial check**; new deployment not yet confirmed. Test-only commit does not trigger Pages.
+- Risks: actual phone portrait appearance/performance, combat attack impact cues, browser storage migration, user-paced purchase cadence, live asset parity.
+- Next: verify both new Actions outcomes; repair failures. Then add actual attack/skill impact cues with throttled rendering and test short-screen interaction, or prioritize browser visual verification if available.
