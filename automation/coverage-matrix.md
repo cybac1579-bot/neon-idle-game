@@ -2,7 +2,7 @@
 
 | Area | Last checked | Evidence | Status / next priority |
 | --- | --- | --- | --- |
-| Mobile portrait combat visibility | 2026-11-12, `fc1ddfe5` | Added viewport/combat CSS source-contract fixture; 13-test CI **passed** run 43144630537 | **Real device/browser visual verification pending**; high |
+| Mobile portrait combat visibility | 2026-11-12, `ea765cd3` | Prior viewport CSS contract 13-test CI passed run 43144630537; added hero/enemy/boss portrait motion and reduced-motion contract, new 18-test CI run 43186610317 pending | **Real phone/browser animation and frame performance pending**; high |
 | Combat logic, attacks, skills, enemies, bosses | 2026-11-12, `d1aa9ca5` | Fixed source-level skipped boss encounters at rebirth jump; added two boss/milestone tests; **11 tests passed** Actions run 43137910692 | Real mobile combat visual/play remains unverified; high |
 | Save/load, old-version compatibility | 2026-11-12, `ec66c1d5` | GitHub Actions run 43117916982: **4/4 Node fixture tests passed** after fixing fake DOM innerHTML children | Browser/device migration and malformed nested fields remain unverified; high |
 | Offline progression, auto-buy, economy | 2026-11-12, `fc1ddfe5` | Added enabled/disabled auto-buy and unlock-gate fixture; 13-test CI **passed** run 43144630537; prior cache tests passed 43123215199 | Verify auto-buy strategy and 30-minute economy; high |
