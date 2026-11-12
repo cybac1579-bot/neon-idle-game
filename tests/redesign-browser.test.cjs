@@ -126,7 +126,12 @@ const server = createServer((req,res)=>{
     for(const tab of ['growth','reset','stats','battle']){
       await page.locator('[data-view="'+tab+'"]').click();
       assert.equal(await page.locator('[data-screen="'+tab+'"]:not(.view-hidden)').count()>0,true,'tab '+tab);
+      assert.equal(await page.locator('#featureDrawer').evaluate(el=>el.hidden),tab==='battle','drawer visibility '+tab);
+      assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1,'battle remains mounted behind menu');
     }
+    await page.locator('[data-view="growth"]').click();
+    await page.locator('#closeDrawer').click();
+    assert.equal(await page.locator('#featureDrawer').evaluate(el=>el.hidden),true,'close button dismisses drawer');
     const size=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(size.width<=size.viewport+1,'horizontal overflow: '+JSON.stringify(size));
     await page.waitForTimeout(1000);
