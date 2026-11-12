@@ -17,4 +17,8 @@
 
 | Offline-return reporting / lifecycle | 2026-11-12 23:57 KST, `ef1bf909` | Source review: `settleElapsed` caps to 7,200s and calls `step(dt,false)`; prior 4-case Node fixture pass 43117916982 only | **High:** new cap/visibility accounting fixture, browser resume and no duplicate settlement; no fresh execution evidence |
 
+
+| Offline 2h cap and return accounting | 2026-11-13 00:59 KST, base `aec6e30f`, fixture `e20b150b` | Added Node fixture for 14,400s wall time -> 7,200s credited, no offline rebirth, cache five-payout cap, log wording. **Not executed/CI unconfirmed.** | **Critical:** run 24-test suite and repair any fixture/runtime failure; browser visibility resume and published JS parity remain unverified |
+| Reference research: NGU Idle | 2026-11-13 00:59 KST, `2c5a8749` | Official Steam store reference; compared layered progression versus portrait UI complexity; no gameplay code changed | Defer new currencies; preserve automatic combat and inspect detail-panel clutter |
+
 The table tracks actual evidence, not assumed passing tests. Refer to `automation/README.md` for separation from manual logs.
