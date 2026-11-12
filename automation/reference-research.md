@@ -103,3 +103,15 @@ Source: original game https://orteil.dashnet.org/cookieclicker/ (design comparis
 **Costs/risks (impact):** (1) click-driven primary loop violates Neon’s no-repeated-tapping constraint (critical); (2) event popups compete with combat readability on portrait displays (high); (3) achievement sprawl and extra unlocks require balancing and save migration (medium-high).
 
 **Cost / decision:** low for a read-only milestone summary on the existing growth/detail surface; medium-high for new unlock effects. **Apply only the clarity principle; defer implementation** until actual phone viewport and current phase-goal wording are tested. No extra combat buttons, timed taps or currency layers. No gameplay changes this run.
+
+
+## 2026-11-13 03:53 KST — Realm Grinder: meaningful reset choice without click pressure
+
+Sources: original developer game page https://www.kongregate.com/en/games/divinegames/realm-grinder ; strategy overview https://www.pcgamer.com/realm-grinder-guide/ ; player-reported repetition https://www.reddit.com/r/incremental_games/comments/uj4bkj/ . Source review only, not a current hands-on game session.
+
+**Observation:** faction selection changes passive/active production builds; abdication resets faction affiliation while permanent gem progression accumulates. This supports differentiated long-term choices, but the original also includes manual treasure clicking and extensive repeated purchase/reset loops.
+
+**Benefits / impact:** (1) distinct passive strategies offer replay variety without requiring reaction inputs (high); (2) reset decisions can feel consequential when one persistent benefit is clearly explained (high); (3) an optional next-reset preview may reduce uncertainty (medium-high).
+**Risks / impact:** (1) factions/build trees create large balance and save-schema burden (high); (2) rapid abdication/purchase repetition conflicts with Neon mobile low-input rule (critical); (3) many production modifiers obscure enemy/boss progression (high).
+**Cost / expected value:** low for auditing existing rebirth-preview text and test coverage; medium for an optional read-only comparison using current state; high for faction systems. Potential strategic clarity is plausible, not device-validated.
+**Decision:** **adopt only the principle of meaningful, clearly previewed low-frequency reset decisions; defer new factions, currencies, click loops, and rapid repeated resets.** Keep automatic combat and battle presence. Next evidence: test visibility-resume settlement exactly once and verify current reset preview in portrait browser before considering UI changes.
