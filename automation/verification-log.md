@@ -99,3 +99,5 @@
 - Deployment: prior main `f1e35a97` Pages workflow 43123270981 succeeded. Current test commit Pages run 43130921499 queued at inspection; latest deployment **unverified**.
 - Remaining risks: balance over 30-minute play, boss-stage skipping, actual mobile combat visuals, browser save migration, auto-buy decisions, and CI results of new fixtures.
 - Next: check nine-case CI and repair any failure first; confirm Pages outcome, then test stage jumps/boss rewards and longer balance simulations.
+
+- Follow-up evidence: GitHub Actions run 43130921525 for `d00fc685` completed **success** (nine tests). Pages run 43130921499 was still in progress at follow-up; later documentation commits trigger additional deployments, so latest published head remains unverified.
