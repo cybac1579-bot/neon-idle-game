@@ -2,6 +2,9 @@ name: Deploy Neon Idle Game
 on:
   push:
     branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,5 +25,22 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+      # GitHub's artifact list can lag behind a successful upload.
+      - name: Wait for Pages artifact metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          for attempt in $(seq 1 12); do
+            count=$(gh api "repos/$GH_REPO/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '[.artifacts[] | select(.name == "github-pages" and .expired == false)] | length' 2>/dev/null || echo 0)
+            if [ "$count" -ge 1 ]; then
+              echo "Pages artifact metadata visible (attempt $attempt)"
+              exit 0
+            fi
+            echo "Waiting for uploaded Pages artifact metadata ($attempt/12)"
+            sleep 5
+          done
+          echo "::error::Pages artifact metadata remained unavailable after upload"
+          exit 1
       - id: deployment
         uses: actions/deploy-pages@v4
