@@ -43,6 +43,17 @@ const server = createServer((req,res)=>{
     assert.ok(composition.hero.height>composition.enemy.height,'hero art must dominate composition');
     assert.ok(composition.hero.width/composition.arena.width>.60,'legacy max-width must not shrink hero art');
     assert.ok(composition.hero.x>=composition.arena.x-1&&composition.enemy.x+composition.enemy.width<=composition.arena.x+composition.arena.width+1,'art must fit inside arena');
+    const computed=await page.evaluate(()=>{
+      const hero=document.getElementById('heroImage');
+      const enemy=document.getElementById('enemyImage');
+      const stage=document.getElementById('combatStage');
+      return {heroPosition:getComputedStyle(hero).position,enemyPosition:getComputedStyle(enemy).position,stageOverflow:getComputedStyle(stage).overflow,heroMaxWidth:getComputedStyle(hero).maxWidth};
+    });
+    assert.equal(computed.heroPosition,'absolute','hero must use layered portrait positioning');
+    assert.equal(computed.enemyPosition,'absolute','enemy must use layered portrait positioning');
+    assert.equal(computed.stageOverflow,'hidden','battle composition must clip effect overflow');
+    assert.equal(computed.heroMaxWidth,'none','legacy image max-width must not override hero layout');
+
 
     await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img')].every(img=>img.complete&&img.naturalWidth>0));
     const assets=await page.locator('#combatStage img').evaluateAll(images=>images.map(img=>({src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight})));
