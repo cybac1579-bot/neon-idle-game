@@ -340,3 +340,13 @@ test('visible event without a prior hidden transition never replays foreground t
   b.listeners.visibilitychange();
   assert.equal(b.get('s.energy'),before,'spurious visible event must not settle unsaved foreground time');
 });
+
+
+test('automatic boss combat alternates existing artwork at stage 20 without player tapping',()=>{
+  const guardian=boot({stage:10,best:20,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  assert.match(guardian.document.getElementById('enemyImage').src,/boss_guardian\\.webp/);
+  const overheat=boot({stage:20,best:20,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  assert.match(overheat.document.getElementById('enemyImage').src,/boss_overheat\\.webp/);
+  const html=fs.readFileSync(path.join(__dirname,'../site/index.html'),'utf8');
+  assert.match(html,/img\\[src="boss_overheat\\.webp"\\]\\{animation:boss-presence/);
+});
