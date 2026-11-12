@@ -115,3 +115,15 @@ Sources: original developer game page https://www.kongregate.com/en/games/divine
 **Risks / impact:** (1) factions/build trees create large balance and save-schema burden (high); (2) rapid abdication/purchase repetition conflicts with Neon mobile low-input rule (critical); (3) many production modifiers obscure enemy/boss progression (high).
 **Cost / expected value:** low for auditing existing rebirth-preview text and test coverage; medium for an optional read-only comparison using current state; high for faction systems. Potential strategic clarity is plausible, not device-validated.
 **Decision:** **adopt only the principle of meaningful, clearly previewed low-frequency reset decisions; defer new factions, currencies, click loops, and rapid repeated resets.** Keep automatic combat and battle presence. Next evidence: test visibility-resume settlement exactly once and verify current reset preview in portrait browser before considering UI changes.
+
+
+## 2026-11-13 04:56 KST — Kittens Game: resource ceilings and low-input production planning
+
+Source: https://kittensgame.com/web/ (original browser game; design interpretation only, not hands-on measurement).
+
+**Transferable idea:** resource caps and production goals can make long passive intervals understandable, but hidden caps can make waiting feel wasted. Neon already caps periodic credits at five payouts, so explain this limit in the existing detail/status area rather than add a mandatory collection prompt.
+
+**Advantages / impact:** (1) visible cap prevents confusion over lost offline earnings (high); (2) a clear next production target makes idle waiting purposeful (medium-high); (3) optional read-only details protect the automatic combat canvas (high).
+**Drawbacks / impact:** (1) many resource types and production chains increase cognitive burden (high); (2) requiring frequent cap clearing would violate low-input expectations (critical); (3) extra meters and prompts crowd portrait battle (high).
+**Cost / expected effect:** low for auditing existing cap text; medium for a nonmodal detail summary; high for new production chains. Comprehension benefit plausible, not player-tested.
+**Decision:** **apply the cap-clarity audit principle only**, defer new resource systems and frequent manual collection. This run instead fixed duplicate-hidden-event offline accounting and added a fixture; CI/device result pending.
