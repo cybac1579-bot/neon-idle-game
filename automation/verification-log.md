@@ -192,3 +192,5 @@
 - Deployment: prior UI Pages run 43179100924 passed. New UI Pages run 43186586013 **in progress at initial check**; new deployment not yet confirmed. Test-only commit does not trigger Pages.
 - Risks: actual phone portrait appearance/performance, combat attack impact cues, browser storage migration, user-paced purchase cadence, live asset parity.
 - Next: verify both new Actions outcomes; repair failures. Then add actual attack/skill impact cues with throttled rendering and test short-screen interaction, or prioritize browser visual verification if available.
+
+- Follow-up: new regression run **43186610317 completed success (18/18)** on `ea765cd3`; Pages deployment run **43186586013 completed success** on UI commit `3267e434`. This confirms Actions execution and Pages job, not real-device visual quality or independent HTTP asset parity. Final automation-record commit remains documentation-only and does not trigger Pages.
