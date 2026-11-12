@@ -163,3 +163,11 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 **Costs/risks (impact):** (1) cascading resources obscure bottlenecks (high); (2) several overlapping upgrade menus crowd portrait screens (high); (3) active-play speedups risk violating no-mandatory-tapping (critical).
 **Neon cost / expected effect:** low for reusing existing milestone and upgrade data in the separate stats/growth screen; medium for measured reset summaries; high for new crafting or research layers and their save migrations. Potential clarity benefit is plausible but unmeasured.
 **Decision:** adopt only milestone/automation readability as a future audited UI improvement. Defer new research currencies, crafting slots, active speedups and additional tabs. This run prioritized a confirmed lifecycle accounting defect instead of implementing speculative new systems.
+
+## 2026-11-13 08:12 KST — Tap Titans 2: boss differentiation without tap combat
+- Reference: https://www.gamehive.com/games/tap-titans-2 ; https://store.steampowered.com/app/1923130/Tap_Titans_2/
+- **Scope:** visual identity and boss-stage pacing only, not its tap mechanic; no new claims about unverified specific TT2 mechanics.
+- **Benefits:** distinctive boss silhouettes make 10-stage milestones more legible (high); reuse of existing assets avoids art-production dependency (medium); optional/passive presentation keeps auto-combat intact (high).
+- **Risks:** alternating images alone cannot substitute for mechanical enemy variety (medium); extra motion may cost battery or distract (medium); visually borrowing a tap-centric game could imply mandatory interaction (high).
+- **Cost/effect:** low: existing `boss_guardian.webp` and `boss_overheat.webp` can alternate at 10/20 stages with existing reduced-motion CSS and no extra buttons. Expected better milestone readability, not yet user/device validated.
+- **Decision:** implement alternating existing boss artwork and restrained portrait emphasis; reject rapid taps, active combat, and extra control prompts. Test with real portrait device later.
