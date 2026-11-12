@@ -42,7 +42,8 @@ const server = createServer((req,res)=>{
       const arc=document.getElementById('heroAttackArc');
       const hero=document.querySelector('#combatStage img:first-of-type');
       const before={stage:s.stage,credits:s.credits,kills:s.kills};
-      combatImpact(performance.now()+1000);
+      lastImpact=-Infinity;
+      combatImpact(performance.now());
       const active=arc.classList.contains('active');
       const running=hero.getAnimations().length>0;
       return {active,running,before,after:{stage:s.stage,credits:s.credits,kills:s.kills}};
@@ -50,6 +51,7 @@ const server = createServer((req,res)=>{
     assert.ok(animation.active,'attack arc activates on combat feedback');
     assert.ok(animation.running,'hero lunge animation starts');
     assert.deepEqual(animation.after,animation.before,'visual feedback must not change gameplay');
+    await page.waitForTimeout(120);
     await page.screenshot({path:'test-results/battle-attack.png',fullPage:true});
 
     await page.screenshot({path:'test-results/battle-portrait.png',fullPage:true});
