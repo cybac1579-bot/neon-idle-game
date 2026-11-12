@@ -59,8 +59,59 @@ main{max-width:520px;padding-top:10px}main>h1{font-size:20px;letter-spacing:.025
 .battle-skill-flash{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;background:linear-gradient(115deg,transparent 18%,#68fff53a 45%,#ffe27e2a 52%,transparent 76%)}
 @media(prefers-reduced-motion:no-preference){.battle-skill-flash.active{animation:neon-skill-flash .52s ease-out both}@keyframes neon-skill-flash{0%{opacity:0;transform:translateX(-30%)}28%{opacity:.95}100%{opacity:0;transform:translateX(30%)}}}
 @media(prefers-reduced-motion:reduce){.battle-skill-flash{display:none}}
+
+/* Portrait arena composition v2: visual hierarchy, no gameplay logic changes. */
+[data-screen="battle"]{padding:11px}
+[data-screen="battle"] .stats{grid-template-columns:1.35fr 1fr 1fr}
+[data-screen="battle"] .stat{padding:7px 8px;font-size:10px}
+[data-screen="battle"] .stat strong{font-size:16px}
+[data-screen="battle"] .fight{
+  min-height:clamp(270px,39svh,390px);
+  margin:8px -2px 0;
+  padding:44px 9px 17px;
+  align-items:flex-end;
+  gap:0;
+  background:
+    linear-gradient(0deg,#0c1028 0%,transparent 30%),
+    repeating-linear-gradient(90deg,transparent 0 37px,#6be9f013 38px 40px,transparent 41px 74px),
+    radial-gradient(ellipse at 45% 72%,#f65ea12b,transparent 54%),
+    linear-gradient(180deg,#181b3d,#2b1d49 58%,#111d39);
+}
+[data-screen="battle"] .fight::before{
+  inset:auto 0 18px;
+  height:39%;
+  border-radius:0;
+  background:
+    linear-gradient(90deg,#10172c 0 10%,transparent 10% 12%,#12182e 12% 23%,transparent 23% 26%,#0d1831 26% 42%,transparent 42% 45%,#111a34 45% 61%,transparent 61% 65%,#11172e 65% 79%,transparent 79% 82%,#10172c 82% 100%);
+  opacity:.64;
+}
+[data-screen="battle"] .fight::after{bottom:8px;left:9%;right:9%;height:22px;background:#040917aa}
+[data-screen="battle"] .fight img{
+  position:relative;
+  z-index:1;
+  height:clamp(205px,31svh,315px);
+  max-width:51%;
+  width:51%;
+  object-fit:contain;
+  object-position:center bottom;
+}
+[data-screen="battle"] .fight img:first-of-type{
+  width:55%;max-width:55%;margin-right:-5%;
+  filter:drop-shadow(0 10px 14px #08091dcc) drop-shadow(0 0 9px #f56bab55);
+}
+[data-screen="battle"] #enemyImage{
+  width:45%;max-width:45%;
+  filter:drop-shadow(0 10px 14px #08091dcc) drop-shadow(0 0 10px #70eaff77);
+}
+[data-screen="battle"] .battle-stage-label{top:11px;left:11px}
+[data-screen="battle"] #battleInfo{margin-top:8px}
+@media(max-height:650px){
+ [data-screen="battle"] .fight{min-height:225px;padding-top:37px}
+ [data-screen="battle"] .fight img{height:195px}
+}
+@media(max-width:340px){[data-screen="battle"] .fight{min-height:240px}}
 </style></head><body><main>
-<h1>✦ 네온 방치단 <span class="pill">MOBILE 40</span></h1><p class="sub">환생 · 생산 계층 · 단계별 자동화 중심의 새로운 실험 빌드</p>
+<h1>✦ 네온 방치단</h1><p class="sub">도시의 균열을 돌파하는 자동 전투</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
 <section data-screen="battle" class="panel"><p class="sub" id="heroGrowth" aria-live="polite"></p><div class="stats"><div class="stat">현재 스테이지<strong id="stage"></strong></div><div class="stat">최고 기록<strong id="best"></strong></div><div class="stat">환생 횟수<strong id="rebirths"></strong></div></div><div class="fight" id="combatStage"><span class="battle-stage-label" id="battleStageLabel" aria-hidden="true">일반 전투</span><img src="seha_portrait.webp" alt="전투 캐릭터"><img id="enemyImage" src="enemy_scout.svg" alt="적"><span class="battle-impact" id="battleImpact" aria-hidden="true"></span><span class="battle-skill-flash" id="battleSkillFlash" aria-hidden="true"></span></div><div class="bar"><div id="hpBar"></div></div><p class="sub" id="battleInfo"></p><p class="log" id="log"></p><div class="battle-progress" aria-label="다음 주요 성장 목표"><span id="battleGoal">다음 목표 확인 중</span></div></section>
 <section data-screen="growth" class="panel"><h2>주인공 성장 정보</h2><p class="sub" id="heroGrowthDetails"></p></section>
