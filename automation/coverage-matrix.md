@@ -21,4 +21,7 @@
 | Offline 2h cap and return accounting | 2026-11-13 00:59 KST, base `aec6e30f`, fixture `e20b150b` | Added Node fixture for 14,400s wall time -> 7,200s credited, no offline rebirth, cache five-payout cap, log wording. **Not executed/CI unconfirmed.** | **Critical:** run 24-test suite and repair any fixture/runtime failure; browser visibility resume and published JS parity remain unverified |
 | Reference research: NGU Idle | 2026-11-13 00:59 KST, `2c5a8749` | Official Steam store reference; compared layered progression versus portrait UI complexity; no gameplay code changed | Defer new currencies; preserve automatic combat and inspect detail-panel clutter |
 
+| CI / deployed asset verification | 2026-11-13 01:52 KST, base `23592066` | GitHub commit search confirms base main; connector commit-workflow endpoint covers PR runs only; local git remote DNS failed; public Pages URL unavailable through web reader. No 24-case execution evidence. | **Critical:** obtain push Actions job IDs/logs and verify published JS; no pass/deploy claim |
+| Reference research: Universal Paperclips | 2026-11-13 01:52 KST, `6364a6c6` | Original browser game link and phase-transition cost/benefit comparison recorded in automation/reference-research.md | Audit existing phase goal clarity; defer click-heavy mechanics and new currencies |
+
 The table tracks actual evidence, not assumed passing tests. Refer to `automation/README.md` for separation from manual logs.
