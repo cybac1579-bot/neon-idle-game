@@ -378,3 +378,9 @@
 - New test simulates 1800 seconds with optional cheapest-eligible upgrades every 30s and 60s, captures 5/15/30-minute stage, credits, kills, first-rebirth eligibility and purchase count. Confirms finite economy, active automatic combat, no forced rebirth. Does not introduce tapping or automatic purchase for fresh players.
 - New CI [43330017594](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43330017594) queued at check time. **No result or balance change claimed yet**. The previous 5-second proxy is not realistic for intended low-input play.
 - Next: extract 30s/60s metrics from raw CI, assess whether growth stalls, then decide smallest justified change. Real phone/30-minute player feedback remains pending. First-playable readiness remains provisional 56% until verified evidence improves.
+
+### Low-input CI result (same run)
+- [43330017594](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43330017594) completed successfully: **31/31 tests pass, 0 fail**.
+- 30-second optional purchase: 60 purchases; stages 19/33/48 at 5/15/30 minutes, first rebirth not reached.
+- 60-second optional purchase: 30 purchases; stages 17/26/37 at 5/15/30 minutes, first rebirth not reached.
+- This is a synthetic cheapest-available-upgrade proxy, not proof of fun or actual user input pattern. Do not infer a needed nerf/buff from stage count alone. Next examine milestone unlocks, reward differentiation and time-to-next-choice before balance changes.
