@@ -359,3 +359,24 @@ test('first playable screen titles do not expose internal experiment iteration l
     assert.ok(!html.includes(oldLabel),'remove internal title: '+oldLabel);
   }
 });
+
+
+test('first-playable 30-minute pacing baseline: passive remains pre-rebirth and active proxy has meaningful runway',()=>{
+  const passive=boot(undefined);
+  passive.get('settleElapsed(1800)');
+  assert.ok(passive.get('s.stage')>=10,'passive auto-combat should progress beyond the first boss');
+  assert.ok(passive.get('s.stage')<100,'passive baseline should not reach first rebirth without upgrades');
+  const active=boot(undefined);
+  let firstEligible=null,purchases=0;
+  for(let second=1;second<=1800;second++){
+    active.get('step(1,false)');
+    if(second%5===0){
+      const bought=active.get('(()=>{const eligible=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>cost(a)-cost(b));return eligible.length?purchase(eligible[0]):false})()');
+      if(bought)purchases++;
+    }
+    if(firstEligible===null&&active.get('s.stage')>=100)firstEligible=second;
+  }
+  assert.ok(purchases>0,'purchase proxy must make upgrade decisions');
+  assert.ok(firstEligible===null||firstEligible>=600,'first rebirth must not be reachable within 10 minutes in this baseline');
+  console.log('first-playable pacing guard:',JSON.stringify({passiveStage:passive.get('s.stage'),activeStage:active.get('s.stage'),firstEligible,purchases}));
+});
