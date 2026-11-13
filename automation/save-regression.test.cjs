@@ -1097,3 +1097,19 @@ test('portrait deep-zone layout has safe single-column choices and accessible to
  for(const id of ['safe','risk','study'])assert.ok(html.includes('data-deep-choice="'+id+'"'));
  assert.match(html,/id="deepMessage" aria-live="polite"/);
 });
+
+test('dungeon UI power estimate matches the timed encounter damage model',()=>{
+ const b=boot({deepFloor:12,lastSaved:Date.UTC(2026,10,12)});
+ for(const choice of ['safe','risk','study']){
+  const need=b.get('deepEstimatedPower(13,"'+choice+'")');
+  const hp=b.get('deepRequiredPower(13)*deepEventModifier(13,"'+choice+'")');
+  const time=b.get('deepEncounterLimit("'+choice+'")');
+  const interval=b.get('attackInterval()');
+  const bonus=b.get('1+deepResearchBonus("navigation")*.02');
+  assert.ok(need*bonus*time/interval>=hp,'estimate must clear encounter within deadline');
+  assert.ok((need-1)*bonus*time/interval<hp+0.0001,'estimate should not overstate requirement by more than rounding');
+ }
+ assert.match(b.document.getElementById('deepGate').textContent,/예상 필요/);
+ const buttons=b.document.getElementById('deepChoices').children;
+ assert.ok(buttons.every(x=>x.textContent.includes('권장 전투력')));
+});
