@@ -812,20 +812,16 @@ test('deep-zone floors and research survive ordinary and higher rebirth without 
  assert.equal(b.get('s.deepShards'),17);
  assert.equal(b.get('s.deepResearch.navigation'),1);
 });
-test('deep-zone floor is gated by current power and cannot be claimed twice without advancing',()=>{
- const now=Date.UTC(2026,10,12,0,0,0);
- const b=boot({deepFloor:0,deepShards:0,lastSaved:now});
- assert.equal(b.get('clearDeepFloor("invalid")'),false);
- const requirement=b.get('deepRequiredPower()');
- assert.ok(requirement>0);
- b.get('s.atk=0;s.energy=0');
- if(b.get('power()')<requirement)assert.equal(b.get('clearDeepFloor("safe")'),false);
+test('deep-zone completion requires timed encounter and does not duplicate reward',()=>{
+ const b=boot({deepFloor:0,deepShards:0,lastSaved:Date.UTC(2026,10,12)});
+ assert.equal(b.get('startDeepEncounter("invalid")'),false);
+ assert.equal(b.get('startDeepEncounter("safe")'),true);
+ assert.equal(b.get('s.deepFloor'),0);
  b.get('s.atk=100;s.energy=1e6');
- assert.equal(b.get('clearDeepFloor("safe")'),true);
+ assert.equal(b.get('tickDeepEncounter(5)'),true);
  assert.equal(b.get('s.deepFloor'),1);
  assert.equal(b.get('s.deepShards'),1);
- assert.equal(b.get('deepNextFloor()'),2);
- assert.equal(b.get('clearDeepFloor("invalid")'),false);
+ assert.equal(b.get('tickDeepEncounter(5)'),false);
  assert.equal(b.get('s.deepShards'),1);
 });
 test('deep-zone research uses only shards, caps levels and sanitizes old save',()=>{
@@ -857,18 +853,16 @@ test('deep research modifies main economy and combat without spending rebirth cu
  assert.equal(b.get('s.deepResearch.scavenging'),1);
  assert.equal(b.get('s.deepResearch.resilience'),1);
 });
-test('deep-zone choice rewards differ and risk requires greater current combat strength',()=>{
- const now=Date.UTC(2026,10,12,0,0,0);
- const b=boot({deepFloor:0,lastSaved:now});
+test('deep-zone choice rewards and event modifiers differ',()=>{
+ const b=boot({deepFloor:0,lastSaved:Date.UTC(2026,10,12)});
  assert.equal(b.get('deepFloorReward(1,"safe")'),1);
  assert.equal(b.get('deepFloorReward(1,"risk")'),2);
- assert.equal(b.get('deepFloorReward(1,"study")'),2);
+ assert.ok(b.get('deepEventModifier(1,"risk")')>b.get('deepEventModifier(1,"safe")'));
  b.get('s.atk=100;s.energy=1e6');
- assert.equal(b.get('clearDeepFloor("risk")'),true);
+ assert.equal(b.get('startDeepEncounter("risk")'),true);
+ assert.equal(b.get('tickDeepEncounter(5)'),true);
  assert.equal(b.get('s.deepShards'),2);
- assert.equal(b.get('s.deepFloor'),1);
 });
-
 test('timed deep-zone encounter saves current floor and grants exactly one completion reward',()=>{
  const now=Date.UTC(2026,10,12,0,0,0);
  const b=boot({deepFloor:4,deepShards:0,lastSaved:now});
