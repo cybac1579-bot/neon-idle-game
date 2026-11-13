@@ -60,6 +60,7 @@ const server = createServer((req,res)=>{
     assert.equal(computed.enemyPosition,'absolute','enemy must use layered portrait positioning');
     assert.equal(computed.stageOverflow,'hidden','battle composition must clip effect overflow');
     assert.equal(computed.heroMaxWidth,'none','legacy image max-width must not override hero layout');
+    assert.ok(composition.hero.width>=composition.arena.width*.55,'nested art must fill the intended portrait slot');
 
 
     await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img:not([hidden])')].every(img=>img.complete&&img.naturalWidth>0));
