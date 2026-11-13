@@ -1197,3 +1197,33 @@ test('auto dungeon waits 30 active seconds between clears and does not advance d
  b.get('step(1,true)');
  assert.equal(b.get('s.deepFloor'),3);
 });
+
+test('auto toggle from deep tab starts immediately and stopping preserves current encounter',()=>{
+ const b=boot({deepFloor:1,lastSaved:Date.UTC(2026,10,12)});
+ const button=b.document.getElementById('deepAuto');
+ assert.equal(typeof button.onclick,'function');
+ button.onclick();
+ assert.equal(b.get('s.deepAuto'),true);
+ assert.equal(b.get('s.deepEncounter.choice'),'safe');
+ assert.match(button.textContent,/현재 전투는 계속/);
+ button.onclick();
+ assert.equal(b.get('s.deepAuto'),false);
+ assert.equal(b.get('s.deepEncounter.choice'),'safe');
+ b.get('s.atk=1e8;s.energy=1e9;tickDeepEncounter(1)');
+ assert.equal(b.get('s.deepFloor'),2);
+ b.get('step(100,true)');
+ assert.equal(b.get('s.deepFloor'),2);
+});
+test('auto dungeon cooldown persists across reload without granting offline floors',()=>{
+ const now=Date.UTC(2026,10,12);
+ const b=boot({deepFloor:1,deepAuto:true,lastSaved:now},now);
+ b.get('step(12,true)');
+ assert.equal(b.get('s.deepAutoClock'),12);
+ b.get('save()');
+ const saved=JSON.parse(b.values.get('neon_rework_07'));
+ const resumed=boot(saved,now+10000);
+ assert.equal(resumed.get('s.deepAutoClock'),12);
+ assert.equal(resumed.get('s.deepFloor'),1);
+ resumed.get('step(18,true)');
+ assert.equal(resumed.get('s.deepFloor'),2);
+});
