@@ -1084,3 +1084,16 @@ test('30-minute spending strategy compares unspent, core-spending and combined p
   assert.ok(run.snapshots.at(-1).deepFloor<=60);
  }
 });
+
+test('portrait deep-zone layout has safe single-column choices and accessible touch targets',()=>{
+ const css=fs.readFileSync(path.join(__dirname,'../site/portrait-integration.css'),'utf8');
+ const html=fs.readFileSync(path.join(__dirname,'../site/index.html'),'utf8');
+ assert.match(css,/#deepChoices\s*\{grid-template-columns:1fr\}/);
+ assert.match(css,/#deepChoices button\s*\{min-height:58px/);
+ assert.match(css,/#deepLeave\s*\{min-height:48px\}/);
+ assert.match(css,/\.nav button\s*\{min-width:0;min-height:48px/);
+ assert.match(css,/@media\(max-width:360px\)/);
+ assert.match(html,/<nav class="nav" aria-label="화면 이동">/);
+ for(const id of ['safe','risk','study'])assert.ok(html.includes('data-deep-choice="'+id+'"'));
+ assert.match(html,/id="deepMessage" aria-live="polite"/);
+});
