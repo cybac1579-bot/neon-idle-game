@@ -712,3 +712,34 @@ test('prestige soft-wall diagnostic: compare identical late-stage state before a
  console.log('Prestige soft-wall same-state diagnostic:',JSON.stringify(rows));
  // This is a controlled combat-only snapshot, not a full time-to-stage simulation.
 });
+
+
+test('prestige route simulation: 20-minute continuation versus rebirth with the same seeded upgrade policy',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const saved={stage:100,best:100,credits:1e10,energy:1e7,atk:20,spd:18,gen:10,amp:4,relay:2,forge:1,reactor:1,lastSaved:now};
+ const rows=[];
+ for(const route of ['continue','rebirth']){
+  const b=boot(saved,now,271);
+  const initialCoreReward=b.get('gainCore()');
+  if(route==='rebirth'){
+   assert.equal(b.get('rebirth()'),true);
+   b.get('buyCore("corePower")');
+  }
+  const checkpoints=[];
+  let timeTo100=route==='continue'?0:null;
+  for(let second=1;second<=1200;second++){
+   b.get('step(1,false)');
+   if(second%10===0){
+    b.get('(()=>{let tries=0;while(tries++<5){const affordable=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k));if(!affordable.length)break;const chosen=affordable.includes("atk")?"atk":affordable.sort((a,b)=>cost(a)-cost(b))[0];if(!purchase(chosen))break;}})()');
+   }
+   if(timeTo100===null&&b.get('s.stage')>=100)timeTo100=second;
+   if([60,300,600,1200].includes(second))checkpoints.push({second,stage:b.get('s.stage'),credits:Math.floor(b.get('s.credits'))});
+  }
+  rows.push({route,initialCoreReward,timeTo100,checkpoints,finalStage:b.get('s.stage'),rebirths:b.get('s.rebirths'),corePower:b.get('s.corePower')});
+ }
+ assert.equal(rows.length,2);
+ assert.equal(rows[0].rebirths,0);
+ assert.equal(rows[1].rebirths,1);
+ console.log('Prestige route simulation (seed 271; same initial stage-100 snapshot):',JSON.stringify(rows));
+ // Diagnostic only: this does not imply a fresh player's stage-100 arrival time or a balanced soft wall.
+});
