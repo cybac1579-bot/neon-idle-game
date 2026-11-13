@@ -241,3 +241,10 @@ Reference: https://ivark.github.io/AntimatterDimensions/ (official playable game
 - Tradeoffs: many nested currencies/upgrade layers overwhelm portrait combat UI (high), opaque exponential costs can hide meaningful choice (high), fast repeated resets can undermine a 30-minute first run (high).
 - Implementation cost: low for reusing current milestone labels, medium for better path comparisons, high for new reset layers/save migration.
 - Decision: **apply only consistency verification now**; defer new currencies and reset mechanics. Existing automatic combat and optional low-frequency choices remain unchanged. Added a milestone/phase guidance regression fixture; test result pending CI.
+
+
+## 2026-11-13 19:59 KST — Trimps: specialize choices without active-tap burden
+- Reference: [Trimps playable official site](https://trimps.github.io/). Existing research already considered its broader resource-management complexity; this pass isolates *early upgrade-path comparison* rather than repeating a full game review. This is a design analogy, not a measured claim about Trimps retention.
+- **Potential benefits:** (high) distinct attack versus speed versus production choices; (medium) clearer 30-minute goals; (medium) meaningful optional decision every 60s rather than forced actions.
+- **Risks/costs:** (high) copying multiple manual resource loops would violate low-input constraint; (medium) apparent strategy differences can be random loot artifacts; (medium) balancing one route may make others obsolete. Comparative VM fixture is low implementation cost; any tuning is medium cost due to combat/economy interaction.
+- **Decision:** defer balance changes until new 3-path 30-minute fixture CI and logs are verified. Reject manual tapping/resource micromanagement; retain automatic combat and visible battlefield. This pass does not establish superiority of any path.
