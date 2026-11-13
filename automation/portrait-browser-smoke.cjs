@@ -23,6 +23,21 @@ const assert=require('node:assert/strict');
    assert.ok(liveAfter.clock-liveBefore.clock<4,'foreground clock does not jump excessively');
    assert.ok(liveAfter.credits>=liveBefore.credits,'foreground resource production is nonnegative');
    assert.ok(liveAfter.stage>=liveBefore.stage,'foreground stage does not regress');
+   // First-session player journey with no injected money or simulated game time.
+   assert.match(await page.locator('#battleGoal').innerText(),/STAGE|스테이지|재구성/,'battle goal is visible');
+   await page.locator('[data-view="reset"]').click();
+   assert.equal(await page.locator('#rebirth').isDisabled(),true,'rebirth unavailable before stage 100');
+   await page.locator('[data-view="growth"]').click();
+   const firstAtk=await page.evaluate(()=>s.atk);
+   const firstCredits=await page.evaluate(()=>s.credits);
+   assert.ok(firstCredits>=18,'starting player can afford first attack upgrade');
+   await page.locator('#upgrades [data-buy="atk"]').click();
+   assert.equal(await page.evaluate(()=>s.atk),firstAtk+1,'real starting credits purchase attack');
+   assert.ok((await page.evaluate(()=>s.credits))<firstCredits,'first upgrade spends actual credits');
+   await page.locator('[data-view="battle"]').click();
+   await page.waitForTimeout(8000);
+   assert.ok(await page.locator('#battleGoal').innerText(),'battle objective stays visible during live play');
+   assert.ok((await page.evaluate(()=>s.cacheClock))>=9,'real game clock keeps running through first purchase');
    for(const tab of ['growth','reset','deep','stats','battle']){
     await page.locator('[data-view="'+tab+'"]').click();
     assert.equal(await page.locator('[data-view="'+tab+'"]').getAttribute('aria-pressed'),'true');
