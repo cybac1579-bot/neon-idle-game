@@ -177,3 +177,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Visible next-growth purchase guidance
 - Added `#growthNext` immediately before growth upgrade buttons; render reuses `actionableGoal()` to show affordable cheapest upgrade, owned/required credits, and basic-production wait estimate if short. No extra battle-screen clutter.
 - Extended Chromium first-session check for guidance before/after actual initial purchase. CI **43527116211 passed**: 83 Node regressions + 360/412px Chromium smoke. UI placement and calculations verified, not player comprehension or a full 30-minute real-time play. First playable readiness remains 60%.
+
+## 2026-11-14 — Compact growth next action and touch size
+- Kept detailed `actionableGoal()` in statistics; added compact `shortGrowthGoal()` for growth panel with available cheapest purchase or shortfall. Added a subtle left-border hint and 58px min-height growth upgrade buttons on narrow portrait screens.
+- Chromium smoke asserts hint under 100 chars, real first purchase updates hint, and attack upgrade target >=58px at 360px and 412px. CI **43527384002 passed**: 83 Node regressions + Chromium smoke. Human readability and physical Android remain unverified. First playable readiness 60%.
