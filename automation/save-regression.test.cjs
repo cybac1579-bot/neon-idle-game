@@ -1240,3 +1240,17 @@ test('dungeon auto button exposes pressed state and fifth-floor pause reason',()
  assert.match(b.document.getElementById('deepMessage').textContent,/5층 단위 도달/);
  assert.match(b.document.getElementById('deepMessage').textContent,/다음 경로를 선택/);
 });
+
+test('portrait five-tab navigation has matching screen sections and readable deep auto status',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../site/index.html'),'utf8');
+ const css=fs.readFileSync(path.join(__dirname,'../site/portrait-integration.css'),'utf8');
+ const views=[...html.matchAll(/<button\s+data-view="([^"]+)"/g)].map(x=>x[1]);
+ assert.deepEqual(views,['battle','growth','reset','deep','stats']);
+ const screens=[...html.matchAll(/<section\s+data-screen="([^"]+)"/g)].map(x=>x[1]);
+ for(const view of views)assert.ok(screens.includes(view),'missing screen '+view);
+ assert.match(html,/classList\.toggle\('view-hidden',el\.dataset\.screen!==view\)/);
+ assert.match(html,/b\.setAttribute\('aria-pressed',String\(b\.dataset\.view===view\)\)/);
+ assert.match(css,/#deepAuto\{min-height:58px/);
+ assert.match(css,/#deepAuto\[aria-pressed="true"\]/);
+ assert.match(css,/#deepMessage\{min-height:2\.5em/);
+});
