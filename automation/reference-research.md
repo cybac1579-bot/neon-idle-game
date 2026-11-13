@@ -171,3 +171,10 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 - **Risks:** alternating images alone cannot substitute for mechanical enemy variety (medium); extra motion may cost battery or distract (medium); visually borrowing a tap-centric game could imply mandatory interaction (high).
 - **Cost/effect:** low: existing `boss_guardian.webp` and `boss_overheat.webp` can alternate at 10/20 stages with existing reduced-motion CSS and no extra buttons. Expected better milestone readability, not yet user/device validated.
 - **Decision:** implement alternating existing boss artwork and restrained portrait emphasis; reject rapid taps, active combat, and extra control prompts. Test with real portrait device later.
+
+## 2026-11-13 — prestige goal transparency, reference comparison (design assessment)
+- **Reference:** Antimatter Dimensions (official: https://ivark.github.io/AntimatterDimensions/). Here the comparison is a design principle, not a fresh verification of its current version: major prestige gates should expose exact remaining prerequisites rather than suggesting the reset already happened.
+- **Our observed gap:** STAGE 180 goal claimed phase transition after milestone even when `gainPhase()` still blocked by cumulative rebirth count. This is a game-specific logic mismatch independently confirmed in source.
+- **Benefits of prerequisite-aware goal:** (high) avoids false completion impression; (medium) clarifies why phase control is locked; (medium) improves post-milestone direction without new buttons.
+- **Risks/tradeoffs:** (low) more contextual wording needs translation/UX review; (medium) late-stage goals may still be dense on narrow phones; (low) changing labels alone does not make prestige rewarding.
+- **Cost and decision:** low implementation cost, adopted in `1e96744b` with regression. Do not copy Antimatter Dimensions' reset mechanics or currency layers. Defer further prestige systems until existing 30-minute mobile loop is validated.
