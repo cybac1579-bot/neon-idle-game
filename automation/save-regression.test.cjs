@@ -12,7 +12,7 @@ function boot(saved,now=Date.UTC(2026,10,12,0,0,0),seed=null){
   const listeners={};
   const nodes=new Map();
   function element(){
-    return {style:{},dataset:{},children:[],classList:{toggle(){}},addEventListener(){},
+    return {style:{},dataset:{},children:[],attributes:{},setAttribute(name,value){this.attributes[name]=String(value)},getAttribute(name){return this.attributes[name]||null},classList:{toggle(){}},addEventListener(){},
       querySelectorAll(){return []},appendChild(n){this.children.push(n)},
       remove(){},
       set innerHTML(html){this.children=[...String(html).matchAll(/<(strong|small|button)\b[^>]*>/g)].map(()=>element())},
@@ -1226,4 +1226,17 @@ test('auto dungeon cooldown persists across reload without granting offline floo
  assert.equal(resumed.get('s.deepFloor'),1);
  resumed.get('step(18,true)');
  assert.equal(resumed.get('s.deepFloor'),2);
+});
+
+test('dungeon auto button exposes pressed state and fifth-floor pause reason',()=>{
+ const b=boot({deepFloor:4,lastSaved:Date.UTC(2026,10,12)});
+ const button=b.document.getElementById('deepAuto');
+ assert.equal(button.getAttribute('aria-pressed'),'false');
+ button.onclick();
+ assert.equal(button.getAttribute('aria-pressed'),'true');
+ b.get('s.atk=1e8;s.energy=1e9;tickDeepEncounter(1);render()');
+ assert.equal(b.get('s.deepFloor'),5);
+ assert.equal(button.getAttribute('aria-pressed'),'false');
+ assert.match(b.document.getElementById('deepMessage').textContent,/5층 단위 도달/);
+ assert.match(b.document.getElementById('deepMessage').textContent,/다음 경로를 선택/);
 });
