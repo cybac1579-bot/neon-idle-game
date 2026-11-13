@@ -590,3 +590,27 @@ test('battle goal stays synchronized with milestone across early, unlock and pha
     assert.ok(b.document.getElementById('goal').textContent.includes(battle),'battle and stats goals should agree');
   }
 });
+
+
+test('30-minute low-input upgrade strategies compare attack, speed and energy',()=>{
+ const scenarios=[];
+ for(const priority of ['atk','spd','gen']){
+  const b=boot(undefined);
+  let purchases=0,firstRebirth=null;
+  const checkpoints=[];
+  for(let second=1;second<=1800;second++){
+   b.get('step(1,false)');
+   if(second%60===0){
+    const bought=b.get(`(()=>{const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k));if(!options.length)return null;const preferred=options.includes("${priority}")?"${priority}":options.sort((a,b)=>cost(a)-cost(b))[0];return purchase(preferred)?preferred:null})()`);
+    if(bought)purchases++;
+   }
+   if(firstRebirth===null&&b.get('s.stage')>=100)firstRebirth=second;
+   if([300,900,1800].includes(second))checkpoints.push({second,stage:b.get('s.stage'),credits:Math.floor(b.get('s.credits'))});
+  }
+  const final=b.get('({stage:s.stage,best:s.best,kills:s.kills,credits:s.credits,atk:s.atk,spd:s.spd,gen:s.gen})');
+  assert.ok(Number.isFinite(final.credits)&&final.kills>0);
+  assert.ok(purchases>0,'every strategy must afford upgrades');
+  scenarios.push({priority,purchases,firstRebirth,checkpoints,final});
+ }
+ console.log('30-minute strategy comparison:',JSON.stringify(scenarios));
+});
