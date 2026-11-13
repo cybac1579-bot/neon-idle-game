@@ -1042,3 +1042,45 @@ test('30-minute active policy comparison includes manual rebirth and persistent 
   assert.ok(run.snapshots.every((p,i,a)=>i===0||p.deepFloor>=a[i-1].deepFloor),'rebirth must never reduce deepest floor');
  }
 });
+
+function simulatedSpendingPolicy({rebirthThreshold=5,spendCores=false,spendShards=false,seed=7123}={}){
+ const now=Date.UTC(2026,10,12);
+ const b=boot({stage:1,best:1,credits:30,energy:0,deepFloor:0,deepShards:0,lastSaved:now},now,seed);
+ const snapshots=[];let firstRebirth=null;let corePurchases=0;let researchPurchases=0;
+ for(let second=1;second<=1800;second++){
+  b.get('step(1,true)');
+  if(second%3===0)b.get('(()=>{const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k));options.sort((a,b)=>cost(a)-cost(b));if(options.length)purchase(options[0]);})()');
+  if(second%30===0)b.get('startDeepEncounter("safe")');
+  if(second%5===0&&rebirthThreshold!==null&&b.get('gainCore()')>=rebirthThreshold){
+   if(b.get('rebirth()')&&firstRebirth===null)firstRebirth=second;
+  }
+  if(second%10===0&&spendCores){
+   const before=b.get('s.cores');
+   b.get('(()=>{const ids=["corePower","coreEconomy","coreEnergy","coreStart","coreBounty","coreTempo"];const options=ids.filter(id=>s[id]<coreDefinition(id)[3]&&s.cores>=coreCost(id));options.sort((a,b)=>coreCost(a)-coreCost(b));if(options.length)buyCore(options[0]);})()');
+   if(b.get('s.cores')<before)corePurchases++;
+  }
+  if(second%10===0&&spendShards){
+   const before=b.get('s.deepShards');
+   b.get('(()=>{const ids=["scavenging","resilience","navigation"];const options=ids.filter(id=>s.deepResearch[id]<5&&s.deepShards>=deepResearchCost(id));options.sort((a,b)=>deepResearchCost(a)-deepResearchCost(b));if(options.length)buyDeepResearch(options[0]);})()');
+   if(b.get('s.deepShards')<before)researchPurchases++;
+  }
+  if(second%300===0)snapshots.push({seconds:second,stage:b.get('s.stage'),best:b.get('s.best'),rebirths:b.get('s.rebirths'),deepFloor:b.get('s.deepFloor'),shards:b.get('s.deepShards'),cores:b.get('s.cores'),corePower:b.get('s.corePower'),coreEconomy:b.get('s.coreEconomy'),research:b.get('JSON.stringify(s.deepResearch)'),power:b.get('power()')});
+ }
+ return {firstRebirth,corePurchases,researchPurchases,snapshots};
+}
+test('30-minute spending strategy compares unspent, core-spending and combined permanent upgrades',()=>{
+ const noSpend=simulatedSpendingPolicy({});
+ const cores=simulatedSpendingPolicy({spendCores:true});
+ const combined=simulatedSpendingPolicy({spendCores:true,spendShards:true});
+ console.log('30m permanent spending:',JSON.stringify({noSpend,cores,combined}));
+ assert.equal(noSpend.snapshots.length,6);
+ assert.ok(cores.corePurchases>0);
+ assert.ok(combined.corePurchases>0);
+ assert.ok(combined.researchPurchases>0);
+ for(const run of [noSpend,cores,combined]){
+  assert.ok(run.snapshots.at(-1).rebirths>=1);
+  assert.ok(run.snapshots.every((p,i,a)=>i===0||p.deepFloor>=a[i-1].deepFloor));
+  assert.ok(run.snapshots.every(p=>Number.isFinite(p.power)&&p.power>0));
+  assert.ok(run.snapshots.at(-1).deepFloor<=60);
+ }
+});
