@@ -192,3 +192,10 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 - **Benefits:** **high** lower exposure to lost progress on page navigation; **medium** protects trust in delayed rewards; **medium** small code footprint and no extra player interaction.
 - **Costs/risks:** **medium** browser/OS may still terminate before any lifecycle callback; **medium** localStorage can fail under quota/privacy restrictions; **low** additional write on navigation. These are not fixed by merely adding a listener.
 - **Decision:** adopt the low-cost persistence checkpoint; defer speculative extra prestige or tapping systems. Next research rotation should compare offline-reward clarity and long-term save robustness, then test actual mobile behavior before claiming parity with reference titles.
+
+## 2026-11-13 12:53 KST — Antimatter Dimensions comparison: save reliability before more prestige layers
+- **Basis:** previously reviewed Antimatter Dimensions' long-form idle/prestige structure, compared against the current game's localStorage and lifecycle code; no new external claims about its implementation or user retention.
+- **Transferable lesson:** in long idle progress, a recoverable save failure is more urgent than adding another upgrade layer. Existing direct localStorage writes could throw and interrupt the foreground loop. This run adopted a non-throwing save path and an explicit on-screen warning.
+- **Benefits:** **high** automatic battle can continue under storage rejection; **high** avoids falsely implying progress was persisted; **medium** no new mandatory interaction.
+- **Costs/risks:** **high** progress still cannot persist if browser storage remains blocked; **medium** warning could be visually obscured on a small portrait screen; **low** repeated failed writes incur overhead every 5 seconds.
+- **Decision:** adopt minimal fault isolation, defer elaborate cloud save/import/export until justified by real player needs. Verify physical mobile and continue examining save compatibility before new prestige mechanics.
