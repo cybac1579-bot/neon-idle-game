@@ -912,3 +912,13 @@ test('deep-zone floor event rotates and choice limits differ',()=>{
  assert.notEqual(b.get('deepEvent(1).title'),b.get('deepEvent(2).title'));
  assert.ok(b.get('deepEncounterLimit("risk")')<b.get('deepEncounterLimit("study")'));
 });
+
+test('deep research max bonuses do not directly explode baseline production or combat',()=>{
+ const b=boot({deepResearch:{scavenging:0,resilience:0,navigation:0},lastSaved:Date.UTC(2026,10,12)});
+ const baseCredits=b.get('creditRate()'),basePower=b.get('power()');
+ b.get('s.deepResearch.scavenging=5;s.deepResearch.resilience=5;s.deepResearch.navigation=5');
+ assert.ok(b.get('creditRate()')/baseCredits<=1.21);
+ assert.ok(b.get('power()')/basePower<=1.16);
+ assert.ok(b.get('deepEventBonus(3,"study")')>b.get('deepEventBonus(3,"safe")'));
+ assert.ok(b.get('deepEventBonus(2,"risk")')>b.get('deepEventBonus(2,"safe")'));
+});
