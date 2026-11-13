@@ -1,0 +1,42 @@
+name: Source backup and restore verification
+on:
+  push:
+    branches:
+      - development/reference-redesign
+    paths:
+      - '.github/workflows/source-backup.yml'
+  workflow_dispatch:
+jobs:
+  source-backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build versioned root-level source ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p backup-output restore-check
+          git rev-parse HEAD > backup-output/commit.txt
+          git ls-files -z | xargs -0 sha256sum > backup-output/source-sha256.txt
+          git ls-files -z | xargs -0 zip -q backup-output/neon-source-backup.zip
+          unzip -t backup-output/neon-source-backup.zip | tail -1
+          unzip -q backup-output/neon-source-backup.zip -d restore-check
+          (cd restore-check && sha256sum -c ../backup-output/source-sha256.txt)
+          test -f restore-check/site/index.html
+          test -f restore-check/site/game.js
+          test -f restore-check/tests/redesign-browser.test.cjs
+          test -f restore-check/.github/workflows/redesign-checks.yml
+          (cd restore-check && node tests/redesign-static.test.cjs && node tests/redesign-asset.test.cjs)
+          sha256sum backup-output/neon-source-backup.zip > backup-output/backup-zip-sha256.txt
+      - name: Upload restorable source ZIP and manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: redesign-source-backup
+          path: backup-output/
+          if-no-files-found: error
+          retention-days: 30
