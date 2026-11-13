@@ -261,3 +261,9 @@ Reference: https://ivark.github.io/AntimatterDimensions/ (official playable game
 - Benefit: testing the same RNG seeds across alternative upgrade priorities makes the effect of purchase choices easier to distinguish from loot/crit luck (high); can reveal dominated upgrade paths before changing production balance (high); preserves no-tap automatic combat (high).
 - Drawbacks: three seeds are not statistical proof (high); deterministic tests cannot establish enjoyment (high); longer CI simulation adds maintenance/runtime cost (medium).
 - Decision: apply reproducible diagnostic test only (`c31b0db8`), defer balance changes until CI results and numeric checkpoints are inspected. Do not copy formulas, prestige systems or active-tap mechanics.
+
+## 2026-11-13 22:55 KST — Idle Champions: passive automation versus player agency (focused comparison)
+- Reference: https://www.idlechampions.com/ (official game). This is a qualitative design lens, not fresh firsthand gameplay or retention measurement.
+- Applicable: optional formation/strategy changes while combat continues autonomously. Benefits: **high** maintains visible combat without rapid taps; **medium** distinct tactical choices; **medium** gives waiting time a clear purpose.
+- Costs/risks: **high** importing a full party/formation roster bloats portrait UI and balance; **medium** automation may hide why a build works; **medium** extra choices can become mandatory micromanagement. Implementation cost: **low** to expose existing growth goals, **medium** to validate strategic tradeoffs, **high** to copy roster mechanics.
+- Decision: **defer** new party systems. Prioritize numerical validation of existing attack/speed/energy paths and read-only goal cues. Reject mandatory tapping, timed reactions, and crowded combat controls.
