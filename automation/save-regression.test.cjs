@@ -768,3 +768,32 @@ test('prestige route sensitivity: compare low-credit stage-100 snapshots across 
  console.log('Prestige sensitivity (600s, stage-100 start):',JSON.stringify(rows));
  // Descriptive comparison only: not a tuned equilibrium or a player-representative sample.
 });
+
+
+test('expanded core shop: all seven paths have finite caps and retain progress across rebirth',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:100,best:100,cores:1e12,totalCores:1e12,lastSaved:now});
+ const ids=b.get('CORE_UPGRADES.map(x=>x[0]).join(",")').split(',');
+ assert.equal(ids.length,7);
+ for(const id of ids){
+  const cap=b.get('coreDefinition("'+id+'")[3]');
+  assert.ok(Number.isInteger(cap)&&cap>0);
+  b.get('s["'+id+'"]='+cap+';');
+  const before=b.get('s.cores');
+  b.get('buyCore("'+id+'")');
+  assert.equal(b.get('s["'+id+'"]'),cap,'must not exceed cap: '+id);
+  assert.equal(b.get('s.cores'),before,'capped investment must not spend: '+id);
+ }
+ b.get('s.corePower=1;s.coreEconomy=1;s.coreEnergy=1;s.coreStart=1;s.coreBounty=1;s.coreTempo=1;s.autoLevel=1');
+ assert.equal(b.get('rebirth()'),true);
+ for(const id of ids)assert.equal(b.get('s["'+id+'"]'),1,'rebirth should preserve '+id);
+});
+test('new core investment effects are real and distinct',()=>{
+ const b=boot({stage:100,best:100,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ const baseline=[b.get('energyRate()'),b.get('startingCredits()'),b.get('enemyReward(100)'),b.get('attackInterval()')];
+ b.get('s.coreEnergy=1;s.coreStart=1;s.coreBounty=1;s.coreTempo=1');
+ assert.ok(b.get('energyRate()')>baseline[0]);
+ assert.ok(b.get('startingCredits()')>baseline[1]);
+ assert.ok(b.get('enemyReward(100)')>baseline[2]);
+ assert.ok(b.get('attackInterval()')<baseline[3]);
+});
