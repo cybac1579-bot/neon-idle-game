@@ -900,3 +900,21 @@ test('deep-zone retreat and both rebirth layers cancel only the current encounte
  assert.equal(b.get('s.deepEncounter'),null);
  assert.equal(b.get('s.deepFloor'),9);
 });
+
+test('deep-zone timed failure preserves cleared floors and pays no reward',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({deepFloor:10,deepShards:7,lastSaved:now});
+ assert.equal(b.get('startDeepEncounter("safe")'),true);
+ b.get('s.atk=0;s.energy=0');
+ assert.equal(b.get('tickDeepEncounter(30)'),false);
+ assert.equal(b.get('s.deepEncounter'),null);
+ assert.equal(b.get('s.deepFloor'),10);
+ assert.equal(b.get('s.deepShards'),7);
+ assert.equal(b.get('deepNextFloor()'),11);
+});
+test('deep-zone floor event rotates and choice limits differ',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({deepFloor:0,lastSaved:now});
+ assert.notEqual(b.get('deepEvent(1).title'),b.get('deepEvent(2).title'));
+ assert.ok(b.get('deepEncounterLimit("risk")')<b.get('deepEncounterLimit("study")'));
+});
