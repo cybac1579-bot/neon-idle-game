@@ -463,3 +463,14 @@ test('mobile pagehide persists the latest progress without requiring beforeunloa
   assert.equal(resumed.get('s.credits'),9876);
   assert.equal(resumed.get('s.stage'),14);
 });
+
+
+test('storage quota/privacy rejection does not crash combat or silently claim save success',()=>{
+  const b=boot(undefined);
+  b.ctx.localStorage.setItem=()=>{throw new Error('QuotaExceededError')};
+  assert.equal(b.get('save()'),false);
+  assert.match(b.get('logText'),/저장 실패/);
+  assert.doesNotThrow(()=>b.get('step(1,false)'));
+  assert.doesNotThrow(()=>b.get('loop(1000)'));
+  assert.equal(b.get('save()'),false);
+});
