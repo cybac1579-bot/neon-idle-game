@@ -168,7 +168,7 @@ function deepResearchBonus(id){return s.deepResearch[id]||0;}
 function deepZoneMessage(choice,success){return success?'심층 '+s.deepFloor+'층 돌파 · 결정 획득!':'현재 전투력으로 돌파하기 어려워. 전선에서 성장한 뒤 다시 도전해.';}
 function deepResearchCost(id){
  const def=DEEP_RESEARCH.find(x=>x[0]===id);
- return def?2*Math.pow(2,s.deepResearch[id]):Infinity;
+ return def?5*Math.pow(3,s.deepResearch[id]):Infinity;
 }
 function buyDeepResearch(id){
  const def=DEEP_RESEARCH.find(x=>x[0]===id);
