@@ -3,6 +3,11 @@
 const {chromium}=require('playwright');
 const path=require('node:path');
 const assert=require('node:assert/strict');
+const http=require('node:http');
+const fs=require('node:fs');
+const siteRoot=path.resolve(__dirname,'../site');
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp'};
+
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  try{
@@ -113,6 +118,35 @@ const assert=require('node:assert/strict');
    await page.close();
    console.log('Chromium portrait smoke passed at '+width+'px');
   }
+  // Real HTTP origin: file:// localStorage behavior is not representative of deployed web play.
+  const server=http.createServer((req,res)=>{
+   const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+   const file=path.resolve(siteRoot,'.'+pathname);
+   if(!file.startsWith(siteRoot+path.sep)){res.writeHead(403);res.end();return;}
+   fs.readFile(file,(err,data)=>{
+    if(err){res.writeHead(404);res.end();return;}
+    res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'});res.end(data);
+   });
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try{
+   const origin='http://127.0.0.1:'+server.address().port;
+   const httpPage=await browser.newPage({viewport:{width:360,height:850},isMobile:true,hasTouch:true});
+   const failed=[];
+   httpPage.on('pageerror',e=>failed.push(e.message));
+   httpPage.on('response',r=>{if(r.status()>=400)failed.push(r.status()+' '+r.url())});
+   await httpPage.goto(origin+'/index.html');
+   assert.equal(await httpPage.evaluate(()=>typeof s),'object','HTTP game initializes');
+   await httpPage.locator('[data-view="growth"]').click();
+   await httpPage.locator('#upgrades [data-buy="atk"]').click();
+   assert.equal(await httpPage.evaluate(()=>s.atk),1,'HTTP origin real first purchase');
+   await httpPage.evaluate(()=>save());
+   await httpPage.reload();
+   assert.equal(await httpPage.evaluate(()=>s.atk),1,'HTTP origin preserves progress on reload');
+   assert.deepEqual(failed,[],'HTTP assets and scripts load without errors');
+   await httpPage.close();
+   console.log('Chromium HTTP-origin startup, asset loading, purchase and save passed');
+  }finally{await new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()))}
   // A full unaccelerated minute validates the first timed idle payout in a real browser.
   const longPage=await browser.newPage({viewport:{width:360,height:850},isMobile:true,hasTouch:true});
   const longErrors=[];
