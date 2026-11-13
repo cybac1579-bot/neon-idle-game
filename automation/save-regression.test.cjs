@@ -962,7 +962,7 @@ function simulatedThirtyMinuteRun(research,seed=7123){
  const b=boot({stage:1,best:1,credits:30,energy:0,deepFloor:0,deepShards:0,deepResearch:research,lastSaved:now},now,seed);
  const snapshots=[];
  for(let second=1;second<=1800;second++){
-  b.get('step(1,false)');
+  b.get('step(1,true)');
   // Scripted active player buys the cheapest unlocked upgrade every 3 seconds.
   if(second%3===0)b.get('(()=>{const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k));options.sort((a,b)=>cost(a)-cost(b));if(options.length)purchase(options[0]);})()');
   if(second%30===0)b.get('startDeepEncounter("safe")');
