@@ -33,6 +33,27 @@ const assert=require('node:assert/strict');
    assert.ok(await page.locator('#deepLeave').isEnabled());
    await page.locator('#deepLeave').click();
    assert.ok(await page.locator('#deepLeave').isDisabled());
+   // A real browser reload must preserve progress, including dungeon state.
+   await page.evaluate(()=>{
+    s.deepFloor=4;
+    s.deepShards=17;
+    s.deepAuto=false;
+    s.deepAutoClock=0;
+    save();
+   });
+   await page.reload();
+   await page.locator('[data-view="deep"]').click();
+   assert.match(await page.locator('#deepFloor').innerText(),/4/,'saved dungeon floor restored');
+   assert.match(await page.locator('#deepShards').innerText(),/17/,'saved dungeon shards restored');
+   assert.equal(await page.locator('#deepAuto').getAttribute('aria-pressed'),'false');
+   await page.locator('#deepAuto').click();
+   assert.equal(await page.locator('#deepAuto').getAttribute('aria-pressed'),'true');
+   await page.reload();
+   await page.locator('[data-view="deep"]').click();
+   assert.equal(await page.locator('#deepAuto').getAttribute('aria-pressed'),'true','auto choice survives reload');
+   assert.ok(await page.locator('#deepLeave').isEnabled(),'active encounter survives reload');
+   await page.locator('#deepAuto').click();
+   await page.locator('#deepLeave').click();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'no horizontal overflow');
    assert.deepEqual(errors,[],'browser JS exceptions');
    await page.close();
