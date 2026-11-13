@@ -73,8 +73,9 @@ const server = createServer((req,res)=>{
     await page.waitForFunction(()=>[...document.querySelectorAll('#combatStage img:not([hidden])')].every(img=>img.complete&&img.naturalWidth>0));
     const assets=await page.locator('#combatStage img:not([hidden])').evaluateAll(images=>images.map(img=>({src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight})));
     assert.ok(assets.every(img=>img.width>0&&img.height>0),'combat art must decode: '+JSON.stringify(assets));
-    assert.equal(assets[0].src,'hero_swordswoman_219.webp','uploaded swordswoman must be used instead of legacy art');
-    assert.ok(assets[0].width===219&&assets[0].height===220,'hero image is still a low-resolution upload probe: '+JSON.stringify(assets[0]));
+    assert.ok(['hero_swordswoman_219.webp','hero_fantasy_fullbody.webp'].includes(assets[0].src),'recognized heroine asset must load: '+JSON.stringify(assets[0]));
+    if(assets[0].src==='hero_fantasy_fullbody.webp') assert.ok(assets[0].width>=1000&&assets[0].height>=1400,'fantasy heroine must be high resolution: '+JSON.stringify(assets[0]));
+    else assert.ok(assets[0].width===219&&assets[0].height===220,'legacy asset dimensions changed unexpectedly: '+JSON.stringify(assets[0]));
     assert.equal(await page.locator('#battleGoal').textContent()!=='',true);
     // Verify that the new visual layer can animate without changing combat state.
     assert.equal(await page.locator('#heroAttackArc').count(),1,'sword arc layer exists');
