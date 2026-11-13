@@ -26,7 +26,7 @@ function boot(saved,now=Date.UTC(2026,10,12,0,0,0)){
   const RealDate=Date;
   class FakeDate extends RealDate{static now(){return now}}
   const ctx=vm.createContext({document,localStorage,Date:FakeDate,Math,JSON,Number,Object,Array,Set,
-    performance:{now:()=>0},window:{addEventListener(){}},requestAnimationFrame(){},confirm:()=>true});
+    performance:{now:()=>0},window:{addEventListener(name,cb){listeners['window:'+name]=cb}},requestAnimationFrame(){},confirm:()=>true});
   vm.runInContext(source,ctx,{filename:'site/game.js',timeout:15000});
   return {ctx,document,listeners,values,now,setNow(n){now=n},get(expr){return vm.runInContext(expr,ctx)}};
 }
@@ -446,4 +446,20 @@ test('upgrade hint identifies cheapest available choice without claiming strateg
   const affordable=b.get('actionableGoal()');
   assert.match(affordable,/현재 구매 가능한 최저가 강화/);
   assert.doesNotMatch(affordable,/추천|최적/);
+});
+
+
+test('mobile pagehide persists the latest progress without requiring beforeunload',()=>{
+  const b=boot({stage:12,best:12,credits:500,lastSaved:Date.UTC(2026,10,12)});
+  assert.equal(typeof b.listeners['window:pagehide'],'function');
+  b.get('s.credits=9876;s.stage=14;s.best=14');
+  b.listeners['window:pagehide']();
+  const saved=JSON.parse(b.values.get('neon_rework_07'));
+  assert.equal(saved.credits,9876);
+  assert.equal(saved.stage,14);
+  assert.equal(saved.best,14);
+  assert.ok(saved.lastSaved>0);
+  const resumed=boot(saved);
+  assert.equal(resumed.get('s.credits'),9876);
+  assert.equal(resumed.get('s.stage'),14);
 });
