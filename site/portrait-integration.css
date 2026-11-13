@@ -1,0 +1,17 @@
+/* First isolated visual port from reference-redesign. No gameplay or persistence changes. */
+:root{--arena-cyan:#76f7ed;--arena-pink:#ff6cab;--arena-gold:#ffe28b}
+body{background:radial-gradient(ellipse 90% 38% at 50% 0%,#36234c 0%,#14172d 65%,#0b1020 100%)}
+[data-screen="battle"]{position:relative;background:linear-gradient(180deg,#272448,#1a2340 48%,#151a32);border-color:#6b5e92;box-shadow:0 10px 34px #0007,inset 0 1px #ffffff17}
+[data-screen="battle"]::before{content:"AUTO BATTLE";position:absolute;right:14px;top:12px;letter-spacing:.12em;color:var(--arena-cyan);font-size:10px;font-weight:800}
+[data-screen="battle"] #heroGrowth{max-width:70%;min-height:1em}
+[data-screen="battle"] .stats{position:relative;z-index:1}
+[data-screen="battle"] .stat{background:#0c1530c7;border:1px solid #465b7c88}
+[data-screen="battle"] .stat strong{color:var(--arena-gold)}
+[data-screen="battle"] .fight{position:relative;min-height:clamp(270px,39svh,390px);margin-top:10px;padding:22px 5px 20px;background:radial-gradient(ellipse at 50% 94%,#26e2d027,transparent 50%),linear-gradient(180deg,#121b3a44,#27204444);border:1px solid #6de5e42e;isolation:isolate}
+[data-screen="battle"] .fight::after{content:"";position:absolute;bottom:12px;left:8%;right:8%;height:20px;border-radius:50%;background:#0008;filter:blur(12px);z-index:-1;pointer-events:none}
+[data-screen="battle"] .fight img{height:clamp(230px,36svh,355px);width:49%;max-width:49%;object-position:center bottom}
+[data-screen="battle"] .bar{height:13px;border:1px solid #745c83;background:#100f28}
+[data-screen="battle"] #log{border-left:3px solid var(--arena-pink);padding-left:8px}
+@media(max-width:390px){[data-screen="battle"]{padding:10px}[data-screen="battle"] .stat{padding:7px 5px}[data-screen="battle"] .stat strong{font-size:15px}}
+@media(max-height:650px){[data-screen="battle"] .fight{min-height:210px;padding-top:8px}[data-screen="battle"] .fight img{height:195px}}
+@media(prefers-reduced-motion:reduce){[data-screen="battle"] .fight img{animation:none!important;transition:none!important}}
