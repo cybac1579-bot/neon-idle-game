@@ -1145,3 +1145,38 @@ test('rebirth stops dungeon automation and retains deepest cleared floor',()=>{
  assert.equal(b.get('s.deepAuto'),false);
  assert.equal(b.get('s.deepFloor'),12);
 });
+
+function simulatedDungeonControlPolicy(mode,seed=7123){
+ const now=Date.UTC(2026,10,12);
+ const b=boot({stage:1,best:1,credits:30,energy:0,deepFloor:0,deepShards:0,lastSaved:now},now,seed);
+ let manualStarts=0,autoStarts=0,milestoneResumes=0,firstFloorTime=null;
+ const snapshots=[];
+ for(let second=1;second<=1800;second++){
+  if(mode==='auto-once'&&second===1){b.get('s.deepAuto=true');autoStarts++;}
+  if(mode==='auto-resume'&&second%30===1&&!b.get('s.deepAuto')&&!b.get('s.deepEncounter')){
+   b.get('s.deepAuto=true');autoStarts++;if(second>1)milestoneResumes++;
+  }
+  b.get('step(1,true)');
+  if(second%3===0)b.get('(()=>{const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k));options.sort((a,b)=>cost(a)-cost(b));if(options.length)purchase(options[0]);})()');
+  if(mode==='manual-safe'&&second%30===0&&b.get('startDeepEncounter("safe")'))manualStarts++;
+  if(mode==='manual-risk'&&second%30===0&&b.get('startDeepEncounter("risk")'))manualStarts++;
+  if(firstFloorTime===null&&b.get('s.deepFloor')>=1)firstFloorTime=second;
+  if(second%300===0)snapshots.push({seconds:second,stage:b.get('s.stage'),deepFloor:b.get('s.deepFloor'),shards:b.get('s.deepShards'),auto:b.get('s.deepAuto')});
+ }
+ return {mode,manualStarts,autoStarts,milestoneResumes,firstFloorTime,snapshots};
+}
+test('30-minute dungeon input policies compare manual safe/risk and auto-once/auto-resume',()=>{
+ const runs=['manual-safe','manual-risk','auto-once','auto-resume'].map(mode=>simulatedDungeonControlPolicy(mode));
+ console.log('30m dungeon control policies:',JSON.stringify(runs));
+ for(const run of runs){
+  assert.equal(run.snapshots.length,6);
+  assert.ok(run.snapshots.every((p,i,a)=>i===0||p.deepFloor>=a[i-1].deepFloor));
+  assert.ok(run.snapshots.every(p=>Number.isFinite(p.shards)&&p.shards>=0));
+ }
+ assert.ok(runs[0].manualStarts>0);
+ assert.ok(runs[1].manualStarts>0);
+ assert.equal(runs[2].autoStarts,1);
+ assert.ok(runs[3].autoStarts>1);
+ assert.ok(runs[2].snapshots.at(-1).deepFloor<=5,'one opt-in should stop at first milestone');
+ assert.ok(runs[3].snapshots.at(-1).deepFloor>=runs[2].snapshots.at(-1).deepFloor);
+});
