@@ -1117,10 +1117,10 @@ test('dungeon UI power estimate matches the timed encounter damage model',()=>{
 test('opt-in safe dungeon automation stops after fifth floor and preserves completed depth',()=>{
  const b=boot({deepFloor:3,deepShards:0,lastSaved:Date.UTC(2026,10,12)});
  b.get('s.atk=1e8;s.energy=1e9;s.deepAuto=true');
- b.get('step(1,true)');
+ b.get('step(30,true)');
  assert.equal(b.get('s.deepFloor'),4);
  assert.equal(b.get('s.deepAuto'),true);
- b.get('step(1,true)');
+ b.get('step(30,true)');
  assert.equal(b.get('s.deepFloor'),5);
  assert.equal(b.get('s.deepAuto'),false);
  b.get('step(1,true)');
@@ -1179,4 +1179,21 @@ test('30-minute dungeon input policies compare manual safe/risk and auto-once/au
  assert.ok(runs[3].autoStarts>1);
  assert.ok(runs[2].snapshots.at(-1).deepFloor<=5,'one opt-in should stop at first milestone');
  assert.ok(runs[3].snapshots.at(-1).deepFloor>=runs[2].snapshots.at(-1).deepFloor);
+ assert.ok(runs[3].snapshots.at(-1).deepFloor<=runs[0].snapshots.at(-1).deepFloor+5,'auto pacing must not skip dozens of floors beyond manual safe route');
+ assert.ok(runs[3].snapshots.at(-1).shards<=runs[0].snapshots.at(-1).shards*1.3,'auto pacing must not multiply safe route shard yield');
+});
+
+test('auto dungeon waits 30 active seconds between clears and does not advance during offline ticks',()=>{
+ const b=boot({deepFloor:1,deepAuto:true,lastSaved:Date.UTC(2026,10,12)});
+ b.get('s.atk=1e8;s.energy=1e9');
+ b.get('step(29,true)');
+ assert.equal(b.get('s.deepFloor'),1);
+ b.get('step(1,true)');
+ assert.equal(b.get('s.deepFloor'),2);
+ b.get('step(29,false)');
+ assert.equal(b.get('s.deepFloor'),2);
+ b.get('step(29,true)');
+ assert.equal(b.get('s.deepFloor'),2);
+ b.get('step(1,true)');
+ assert.equal(b.get('s.deepFloor'),3);
 });
