@@ -157,3 +157,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — First real Chromium smoke exposed fresh-save initialization bug
 - Added Playwright Chromium portrait smoke for 360px/412px, five-tab navigation, deep auto start/stop, leave and horizontal overflow. First CI **43525820584 failed** because runner default Ubuntu 26.04 was unsupported by pinned Playwright 1.56.1; pinned Ubuntu 24.04.
 - Second browser CI **43525889349 failed** on initialization wait. Diagnostic revision **43526055053** exposed `#deepAuto aria-pressed="undefined"` with no JS exceptions on a clean browser profile. Root cause: `initial()` did not define `deepAuto` or `deepAutoClock`; prior VM tests booted from partial saved state, masking clean-install behavior. Added both initial defaults and a clean-install regression. Browser CI **43526191290** pending at time of this log entry. Do not claim browser pass before its result; readiness stays 58% until smoke is green.
+
+## 2026-11-14 — Browser save/reload deep-zone integration
+- Extended Chromium portrait smoke (360px/412px) to persist floor/shards, reload and assert saved values, start auto, reload and assert pressed state plus active encounter, then stop and leave. This tests real browser localStorage and event handlers, not just fake DOM.
+- CI **43526399743 passed**: 83 Node regressions and Chromium portrait smoke. Real Android device interaction and 30-minute human play remain unverified; first playable readiness 60%.
