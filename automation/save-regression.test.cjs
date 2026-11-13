@@ -617,3 +617,25 @@ test('30-minute low-input upgrade strategies compare attack, speed and energy',(
  }
  console.log('30-minute strategy comparison:',JSON.stringify(scenarios));
 });
+
+
+test('30-minute mixed investment paths quantify speed and production complementarity',()=>{
+ const rows=[];
+ for(const seed of [17,271,2026])for(const policy of ['attack-only','attack-speed','attack-energy','balanced-roi']){
+  const b=boot(undefined,Date.UTC(2026,10,12,0,0,0),seed);
+  const bought={atk:0,spd:0,gen:0,other:0};const checkpoints=[];
+  for(let second=1;second<=1800;second++){
+   b.get('step(1,false)');
+   if(second%60===0){
+    const choice=b.get(`(()=>{const affordable=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k));if(!affordable.length)return null;let desired='atk';if('${policy}'==='attack-speed'&&s.spd<Math.ceil(s.atk/4))desired='spd';if('${policy}'==='attack-energy'&&s.gen<Math.ceil(s.atk/4))desired='gen';if('${policy}'==='balanced-roi'){const interval=.85*Math.pow(.1/.85,Math.min(50,s.spd)/50);const speedGain=s.spd<50?interval/(.85*Math.pow(.1/.85,(s.spd+1)/50))-1:0;const attackGain=((5+(s.atk+1)*4)/(5+s.atk*4))*1.115-1;const energyGain=(1+(s.gen+1)*.015)/(1+s.gen*.015)-1;const scores={atk:attackGain/cost('atk'),spd:speedGain/cost('spd'),gen:energyGain/cost('gen')};desired=Object.keys(scores).filter(k=>affordable.includes(k)).sort((a,b)=>scores[b]-scores[a])[0]||'atk';}const target=affordable.includes(desired)?desired:affordable.includes('atk')?'atk':affordable.sort((a,b)=>cost(a)-cost(b))[0];return purchase(target)?target:null;})()`);
+    if(choice)bought[choice]===undefined?bought.other++:bought[choice]++;
+   }
+   if([300,900,1800].includes(second))checkpoints.push({second,stage:b.get('s.stage'),credits:Math.floor(b.get('s.credits'))});
+  }
+  const final=b.get('({stage:s.stage,best:s.best,atk:s.atk,spd:s.spd,gen:s.gen,credits:s.credits,kills:s.kills})');
+  assert.ok(Number.isFinite(final.credits)&&final.kills>0);
+  rows.push({seed,policy,bought,checkpoints,final});
+ }
+ assert.equal(rows.length,12);
+ console.log('30-minute mixed strategy comparison:',JSON.stringify(rows));
+});
