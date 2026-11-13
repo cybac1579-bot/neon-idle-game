@@ -199,3 +199,10 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 - **Benefits:** **high** automatic battle can continue under storage rejection; **high** avoids falsely implying progress was persisted; **medium** no new mandatory interaction.
 - **Costs/risks:** **high** progress still cannot persist if browser storage remains blocked; **medium** warning could be visually obscured on a small portrait screen; **low** repeated failed writes incur overhead every 5 seconds.
 - **Decision:** adopt minimal fault isolation, defer elaborate cloud save/import/export until justified by real player needs. Verify physical mobile and continue examining save compatibility before new prestige mechanics.
+
+## 2026-11-13 13:54 KST — idle save trust and explicit confirmation (design comparison)
+- **Basis:** compare this game's manual-save UI against the already documented Antimatter Dimensions long-session/prestige reference; this entry is an internal UX inference, **not** a newly verified external claim about that game's implementation.
+- **Transferable lesson:** for accumulated idle progress, an explicit save confirmation must reflect the actual persistence outcome. Previously this game's manual-save button overwrote the failure warning with '저장 완료' even when storage rejected the write.
+- **Benefits:** **high** prevents false assurance and potential lost progress; **medium** gives actionable recovery information; **low** minimal implementation and no extra taps.
+- **Costs/risks:** **medium** localStorage can still be unavailable and no durable backup exists; **medium** small-screen battle log may obscure warning; **low** no additional gameplay choice is created.
+- **Decision:** adopt truthful confirmation in `5572df40` and test it. Defer adding speculative cloud saves or mandatory manual checkpoints. Next comparison should focus on background progress messaging and actual mobile readability, not repetitive input.
