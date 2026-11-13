@@ -11,7 +11,10 @@ const assert=require('node:assert/strict');
    const errors=[];
    page.on('pageerror',e=>errors.push(e.message));
    await page.goto('file://'+path.resolve(__dirname,'../site/index.html'));
-   await page.waitForFunction(()=>document.querySelector('#deepAuto')?.getAttribute('aria-pressed')==='false');
+   await page.waitForLoadState('load');
+   const status=await page.evaluate(()=>({auto:document.querySelector('#deepAuto')?.getAttribute('aria-pressed'),script:typeof window.s,gameScript:[...document.scripts].map(x=>x.src||'inline')}));
+   if(status.auto!=='false')throw new Error('Deep auto UI did not initialize: '+JSON.stringify(status)+'; page errors: '+JSON.stringify(errors));
+
    for(const tab of ['growth','reset','deep','stats','battle']){
     await page.locator('[data-view="'+tab+'"]').click();
     assert.equal(await page.locator('[data-view="'+tab+'"]').getAttribute('aria-pressed'),'true');
