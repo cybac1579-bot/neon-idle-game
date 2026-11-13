@@ -420,3 +420,13 @@ test('milestone goals distinguish credit-only checkpoints from actual unlocks',(
   b.get('s.stage=85');
   assert.match(b.get('milestoneGoal()'),/STAGE 100.*새 기능: 재구성/);
 });
+
+
+test('stage 180 goal reports phase prerequisites rather than claiming a transition',()=>{
+  const b=boot({stage:180,best:180,rebirths:0,phases:0});
+  assert.match(b.get('milestoneGoal()'),/재구성 누적 2회/);
+  b.get('s.rebirths=2');
+  assert.match(b.get('milestoneGoal()'),/위상 전환 가능/);
+  b.get('s.phases=1');
+  assert.match(b.get('milestoneGoal()'),/위상 전환 달성/);
+});
