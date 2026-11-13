@@ -406,3 +406,17 @@ test('30-minute low-input play proxies compare 30s and 60s optional upgrades',()
   assert.ok(scenarios[0].final.stage>=scenarios[1].final.stage,'30s proxy should not progress slower than 60s proxy');
   console.log('30-minute low-input proxies:',JSON.stringify(scenarios));
 });
+
+
+test('milestone goals distinguish credit-only checkpoints from actual unlocks',()=>{
+  const b=boot(undefined);
+  assert.match(b.get('milestoneGoal()'),/STAGE 10.*달성 보너스 크레딧/);
+  b.get('s.stage=10');
+  assert.match(b.get('milestoneGoal()'),/STAGE 15.*새 기능: 에너지 증폭기/);
+  b.get('s.stage=25');
+  assert.match(b.get('milestoneGoal()'),/STAGE 35.*달성 보너스 크레딧/);
+  b.get('s.stage=35');
+  assert.match(b.get('milestoneGoal()'),/STAGE 45.*새 기능: 크레딧 주조기/);
+  b.get('s.stage=85');
+  assert.match(b.get('milestoneGoal()'),/STAGE 100.*새 기능: 재구성/);
+});
