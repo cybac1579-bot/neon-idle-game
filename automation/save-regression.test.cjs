@@ -487,3 +487,42 @@ test('manual save button reports success only after durable storage write',()=>{
   assert.doesNotMatch(b.get('logText'),/저장 완료/);
   assert.doesNotThrow(()=>b.get('step(1,false)'));
 });
+
+
+test('mobile background resume settles once despite repeated foreground event and pagehide',()=>{
+  const start=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:8,best:8,credits:500,lastSaved:start},start);
+  b.document.hidden=true;
+  b.listeners.visibilitychange();
+  const hiddenSave=JSON.parse(b.values.get('neon_rework_07'));
+  assert.equal(hiddenSave.lastSaved,start);
+  b.setNow(start+60000);
+  b.listeners['window:pagehide']();
+  b.document.hidden=false;
+  b.listeners.visibilitychange();
+  const once=b.get('({credits:s.credits,kills:s.kills,stage:s.stage,lastSaved:s.lastSaved})');
+  assert.equal(once.lastSaved,start+60000);
+  b.listeners.visibilitychange();
+  const twice=b.get('({credits:s.credits,kills:s.kills,stage:s.stage,lastSaved:s.lastSaved})');
+  assert.deepEqual(JSON.parse(JSON.stringify(twice)),JSON.parse(JSON.stringify(once)),'duplicate visible event must not grant more rewards');
+  const reloaded=boot(JSON.parse(b.values.get('neon_rework_07')),start+60000);
+  assert.equal(reloaded.get('s.credits'),once.credits,'reload at the same timestamp must not pay again');
+  assert.equal(reloaded.get('s.kills'),once.kills);
+});
+
+test('legacy partial save normalizes corrupt numeric and optional fields while retaining valid progress',()=>{
+  const now=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:42,best:44,credits:3210,energy:Infinity,atk:-9,spd:'bad',gen:3,
+    knownUnlocks:['forge',null,42],allocation:'obsolete',autoBuy:1,
+    traits:null,skillsOwned:[],skillsEquipped:[],lastSaved:now},now);
+  assert.equal(b.get('s.stage'),42);
+  assert.equal(b.get('s.best'),44);
+  assert.equal(b.get('s.credits'),3210);
+  assert.equal(b.get('s.atk'),0);
+  assert.equal(b.get('s.spd'),0);
+  assert.equal(b.get('s.gen'),3);
+  assert.equal(b.get('s.allocation'),'balanced');
+  assert.equal(b.get('s.knownUnlocks.length'),1);
+  assert.doesNotThrow(()=>b.get('step(1,false)'));
+  assert.equal(b.get('save()'),true);
+});
