@@ -47,6 +47,8 @@ jobs:
           test -s dist/neon-idle/app-icon-192.png
           test -s dist/neon-idle/app-icon-512.png
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('dist/neon-idle/manifest.webmanifest','utf8'));if(m.icons.length!==2||!m.icons.every(x=>x.type==='image/png'))process.exit(1)"
+      - name: Smoke test the actual packaged web bundle over HTTP
+        run: node automation/packaged-browser-smoke.cjs
       - name: Upload first-playable web bundle for testing
         uses: actions/upload-artifact@v4
         with:
