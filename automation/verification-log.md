@@ -449,3 +449,6 @@
 - New CI [43368451366](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43368451366): **37/37 pass, 0 fail**. Earlier gameplay-only CI [43368442870](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43368442870) success. Pages [43368442891](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43368442891) **in progress at initial verification**; do not claim deployment success until completed.
 - Risks: Android storage permission/quota and small-screen warning visibility remain untested; background/foreground double settlement, legacy save migration and real 30-minute phone play still need targeted verification. First-playable readiness remains **58%**, unchanged: a critical correctness fix, not proof of player-ready UX.
 - Next: confirm Pages status, test visibilitychange/pagehide interaction for no duplicated idle payout, test save migrations, then resume 30-minute gameplay milestone analysis.
+
+### 13:56 KST — deployment verification
+- Pages [43368442891](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43368442891) **completed success** for exact gameplay fix `5572df40f0fa2977afa0215a30362e07d15d519c`. This confirms deployment workflow success, not a served-browser parity or physical mobile test.
