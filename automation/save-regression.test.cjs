@@ -743,3 +743,28 @@ test('prestige route simulation: 20-minute continuation versus rebirth with the 
  console.log('Prestige route simulation (seed 271; same initial stage-100 snapshot):',JSON.stringify(rows));
  // Diagnostic only: this does not imply a fresh player's stage-100 arrival time or a balanced soft wall.
 });
+
+
+test('prestige route sensitivity: compare low-credit stage-100 snapshots across seeds',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const rows=[];
+ for(const seed of [17,271,2026])for(const startingCredits of [0,10000,1000000]){
+  const saved={stage:100,best:100,credits:startingCredits,energy:1e7,atk:20,spd:18,gen:10,amp:4,relay:2,forge:1,reactor:1,lastSaved:now};
+  const pair=[];
+  for(const route of ['continue','rebirth']){
+   const b=boot(saved,now,seed);
+   if(route==='rebirth'){assert.equal(b.get('rebirth()'),true);b.get('buyCore("corePower")');}
+   let regained=null;
+   for(let second=1;second<=600;second++){
+    b.get('step(1,false)');
+    if(second%10===0)b.get('(()=>{let tries=0;while(tries++<5){const available=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k));if(!available.length)break;const selected=available.includes("atk")?"atk":available.sort((a,b)=>cost(a)-cost(b))[0];if(!purchase(selected))break;}})()');
+    if(route==='rebirth'&&regained===null&&b.get('s.stage')>=100)regained=second;
+   }
+   pair.push({route,stage:b.get('s.stage'),regainedStage100At:regained});
+  }
+  rows.push({seed,startingCredits,continueStage:pair[0].stage,rebirthStage:pair[1].stage,rebirthRegained100At:pair[1].regainedStage100At,rebirthAhead:pair[1].stage>pair[0].stage});
+ }
+ assert.equal(rows.length,9);
+ console.log('Prestige sensitivity (600s, stage-100 start):',JSON.stringify(rows));
+ // Descriptive comparison only: not a tuned equilibrium or a player-representative sample.
+});
