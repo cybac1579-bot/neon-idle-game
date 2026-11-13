@@ -840,3 +840,31 @@ test('deep-zone research uses only shards, caps levels and sanitizes old save',(
  assert.equal(b.get('s.deepResearch.navigation'),3);
  assert.equal(b.get('s.cores'),cores);
 });
+
+test('deep research modifies main economy and combat without spending rebirth currencies',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({deepShards:1000,lastSaved:now});
+ const baselineCredits=b.get('creditRate()'),baselinePower=b.get('power()');
+ const cores=b.get('s.cores'),tokens=b.get('s.phaseTokens');
+ assert.equal(b.get('buyDeepResearch("scavenging")'),true);
+ assert.equal(b.get('buyDeepResearch("resilience")'),true);
+ assert.ok(b.get('creditRate()')>baselineCredits);
+ assert.ok(b.get('power()')>baselinePower);
+ assert.equal(b.get('s.cores'),cores);
+ assert.equal(b.get('s.phaseTokens'),tokens);
+ b.get('s.stage=180;s.rebirths=2');
+ b.get('phase()');
+ assert.equal(b.get('s.deepResearch.scavenging'),1);
+ assert.equal(b.get('s.deepResearch.resilience'),1);
+});
+test('deep-zone choice rewards differ and risk requires greater current combat strength',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({deepFloor:0,lastSaved:now});
+ assert.equal(b.get('deepFloorReward(1,"safe")'),1);
+ assert.equal(b.get('deepFloorReward(1,"risk")'),2);
+ assert.equal(b.get('deepFloorReward(1,"study")'),2);
+ b.get('s.atk=100;s.energy=1e6');
+ assert.equal(b.get('clearDeepFloor("risk")'),true);
+ assert.equal(b.get('s.deepShards'),2);
+ assert.equal(b.get('s.deepFloor'),1);
+});
