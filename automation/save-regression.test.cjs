@@ -430,3 +430,20 @@ test('stage 180 goal reports phase prerequisites rather than claiming a transiti
   b.get('s.phases=1');
   assert.match(b.get('milestoneGoal()'),/위상 전환 달성/);
 });
+
+
+test('upgrade hint identifies cheapest available choice without claiming strategic optimality',()=>{
+  const b=boot(undefined);
+  const first=b.get('actionableGoal()');
+  assert.match(first,/현재 구매 가능한 최저가 강화/);
+  assert.match(first,/전투 엔진/);
+  assert.doesNotMatch(first,/추천|최적/);
+  b.get('s.credits=0');
+  const waiting=b.get('actionableGoal()');
+  assert.match(waiting,/다음 최저가 강화/);
+  assert.doesNotMatch(waiting,/구매 가능$/);
+  b.get('s.credits=10000;s.best=65');
+  const affordable=b.get('actionableGoal()');
+  assert.match(affordable,/현재 구매 가능한 최저가 강화/);
+  assert.doesNotMatch(affordable,/추천|최적/);
+});
