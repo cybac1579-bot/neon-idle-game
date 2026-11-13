@@ -24,3 +24,10 @@
 - 브라우저 오류 로그 및 이미지 캡처 파일이 artifact에 포함됨. 120초 제한에 도달하지 않았음.
 - **판단:** GitHub CI에서 이번 실행의 시간 초과는 재현되지 않았음. 이전 로컬 Chromium 실행 시간 초과의 근본 원인은 아직 특정하지 못했으므로 완전 해결로 보고하지 않는다.
 - 신규 판타지 원화는 별도 로컬 ZIP에 존재하지만 GitHub 개발 브랜치의 바이너리 에셋에는 아직 없음. CI는 현재 레거시 원화를 검사한 것임.
+
+## 로컬 Chromium 재현 및 바이너리 이관 관문 (추가 회차)
+- `neon-fantasy-art-local-preview.zip`의 실제 `site/hero_fantasy_fullbody.webp`를 확인함(1346×1602 RGBA, HTML src 참조).
+- 로컬 시스템 `/usr/bin/chromium`은 존재하지만 Playwright Node 모듈은 설치되지 않음.
+- `chromium --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-software-rasterizer --window-size=390,844 --screenshot=...` 실행을 `timeout 18s`로 제한해 재시도했으나 종료 코드 **124(시간 초과)**, 스크린샷 미생성. DBus/zygote 관련 로그만 확보. **로컬 Chromium은 여전히 불안정**, CI Chromium 4.11초 성공과 분리해 판단.
+- 로컬 ZIP은 GitHub 브랜치에 자동 동기화되지 않음. 현재 GitHub 브랜치에는 `hero_fantasy_fullbody.webp`가 없으므로 CI가 신규 원화를 렌더링했다고 주장할 수 없음.
+- 다음: GitHub API에 바이너리 bytes를 전달할 수 있는 경로를 확보해 원화 blob 등록 후 개발 브랜치에 연결. 그다음 CI 캡처/화면 확인. 로컬 브라우저에 무제한 대기하지 않는다.
