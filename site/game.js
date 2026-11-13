@@ -161,14 +161,15 @@ function tickDeepEncounter(dt){
   s.deepShards+=reward;
   s.deepFloor=floor;
   s.deepAutoClock=0;
-  if(s.deepAuto&&floor%5===0)s.deepAuto=false;
-  s.deepOutcome=deepEvent(floor).title+' · '+deepEvent(floor)[choice]+' 성공 · 심층 결정 +'+reward;
+  const milestonePause=s.deepAuto&&floor%5===0;
+  if(milestonePause)s.deepAuto=false;
+  s.deepOutcome=deepEvent(floor).title+' · '+deepEvent(floor)[choice]+' 성공 · 심층 결정 +'+reward+(milestonePause?' · 5층 단위 도달! 자동 탐험 일시 중지 · 다음 경로를 선택해':'');
   save();return true;
  }
  if(e.clock>=e.limit){
   s.deepEncounter=null;
   s.deepAuto=false;
-  s.deepOutcome='탐험 실패 · 현재 층은 유지돼. 전선에서 성장하거나 다른 접근법을 선택해.';
+  s.deepOutcome='탐험 실패 · 자동 탐험 중지 · 현재 층은 유지돼. 전선에서 성장하거나 다른 접근법을 선택해.';
   save();
  }
  return false;
@@ -236,6 +237,7 @@ function renderDeepZone(){
  for(const b of Array.from($('deepChoices').children)){const choice=b.dataset.deepChoice;if(choice){const name=deepEvent()[choice];const extra=deepEventBonus(deepNextFloor(),choice);b.textContent=name+' · 결정 '+fmt(deepFloorReward(deepNextFloor(),choice)+extra)+'개 · 제한 '+deepEncounterLimit(choice)+'초 · 권장 전투력 '+fmt(deepEstimatedPower(deepNextFloor(),choice));}}
  for(const b of Array.from($('deepChoices').children))b.disabled=!!encounter;
  $('deepAuto').textContent=s.deepAuto?(encounter?'안전 자동 탐험 중지 · 현재 전투는 계속':'안전 자동 탐험 중지 · 다음 진입 '+Math.ceil(Math.max(0,30-s.deepAutoClock))+'초 후'):'안전 자동 탐험 시작 · 5층마다 선택';
+ $('deepAuto').setAttribute('aria-pressed',String(s.deepAuto));
  $('deepLeave').disabled=!encounter;
  $('deepFloor').textContent=fmt(s.deepFloor)+'층';
  $('deepNext').textContent=fmt(deepNextFloor())+'층';
