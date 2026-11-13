@@ -181,3 +181,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Compact growth next action and touch size
 - Kept detailed `actionableGoal()` in statistics; added compact `shortGrowthGoal()` for growth panel with available cheapest purchase or shortfall. Added a subtle left-border hint and 58px min-height growth upgrade buttons on narrow portrait screens.
 - Chromium smoke asserts hint under 100 chars, real first purchase updates hint, and attack upgrade target >=58px at 360px and 412px. CI **43527384002 passed**: 83 Node regressions + Chromium smoke. Human readability and physical Android remain unverified. First playable readiness 60%.
+
+## 2026-11-14 — One real minute of Chromium idle progression
+- Added a separate fresh 360px Chromium browser scenario running 62 actual seconds (no mocked clock, no injected credits): assert 60-second periodic credit cache accrues and timer wraps; claim through real growth UI; verify currency increases and cache decreases; reload and verify claimed credits persist. Also checks no browser JS errors and stage/currency nonregression.
+- CI **43527625168 passed**, alongside 83 Node regressions and the prior 360/412px browser flows. This verifies a 1-minute idle payout, not a 30-minute human play session or Galaxy device. First playable readiness 61% (a previously untested timed reward now verified end-to-end).
