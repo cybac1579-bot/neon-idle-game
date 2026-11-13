@@ -115,6 +115,11 @@ function normalizeDeepZone(){
 function deepNextFloor(){return s.deepFloor+1;}
 function deepRequiredPower(floor=deepNextFloor()){return Math.ceil(40*Math.pow(1.28,Math.max(0,floor-1)));}
 function deepChoiceOptions(){return ['safe','risk','study'];}
+function deepEstimatedPower(floor,choice){
+ const limit=deepEncounterLimit(choice);
+ const rate=1+deepResearchBonus('navigation')*.02;
+ return Math.ceil(deepRequiredPower(floor)*deepEventModifier(floor,choice)*Math.max(.1,attackInterval())/(limit*rate));
+}
 function deepFloorReward(floor,choice){
  const base=1+Math.floor((floor-1)/5);
  return choice==='risk'?base*2:choice==='study'?base+1+Math.min(3,s.deepResearch.scavenging):base;
@@ -223,14 +228,14 @@ function renderDeepZone(){
  const encounter=s.deepEncounter;
  $('deepMessage').textContent=encounter?'탐험 전투 · 적 잔여 '+fmt(encounter.remaining)+' · 제한 '+Math.max(0,Math.ceil(encounter.limit-encounter.clock))+'초':(s.deepOutcome||'접근법을 선택해 탐험을 시작해.');
  $('deepEvent').textContent='현재 사건 · '+deepEvent().title;
- for(const b of Array.from($('deepChoices').children)){const choice=b.dataset.deepChoice;if(choice){const name=deepEvent()[choice];const extra=deepEventBonus(deepNextFloor(),choice);b.textContent=name+' · '+'결정 '+fmt(deepFloorReward(deepNextFloor(),choice)+extra)+'개 · 전투 부담 ×'+deepEventModifier(deepNextFloor(),choice).toFixed(2);}}
+ for(const b of Array.from($('deepChoices').children)){const choice=b.dataset.deepChoice;if(choice){const name=deepEvent()[choice];const extra=deepEventBonus(deepNextFloor(),choice);b.textContent=name+' · 결정 '+fmt(deepFloorReward(deepNextFloor(),choice)+extra)+'개 · 제한 '+deepEncounterLimit(choice)+'초 · 권장 전투력 '+fmt(deepEstimatedPower(deepNextFloor(),choice));}}
  for(const b of Array.from($('deepChoices').children))b.disabled=!!encounter;
  $('deepLeave').disabled=!encounter;
  $('deepFloor').textContent=fmt(s.deepFloor)+'층';
  $('deepNext').textContent=fmt(deepNextFloor())+'층';
  $('deepShards').textContent=fmt(s.deepShards);
- const need=deepRequiredPower(),current=power();
- $('deepGate').textContent='현재 전투력 '+fmt(current)+' / 기본 필요 전투력 '+fmt(need)+(current>=need?' · 도전 가능':' · 성장 후 돌파 권장');
+ const need=deepEstimatedPower(deepNextFloor(),'safe'),current=power();
+ $('deepGate').textContent='현재 전투력 '+fmt(current)+' / 안전 진입 예상 필요 '+fmt(need)+(current>=need?' · 돌파 가능성 높음':' · 성장 후 도전 권장')+' · 공격 간격·제한 시간 반영한 추정치';
  const panel=$('deepResearchList');
  for(const [id,name,cap] of DEEP_RESEARCH){
   let b=Array.from(panel.children).find(n=>n.dataset.deepResearch===id);
