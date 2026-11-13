@@ -1,10 +1,10 @@
 'use strict';
 const KEY='neon_rework_07', $=id=>document.getElementById(id);
-const initial=()=>({credits:30,cacheCredits:0,cacheClock:0,energy:0,stage:1,best:1,hp:0,kills:0,atk:0,spd:0,gen:0,amp:0,relay:0,forge:0,reactor:0,rebirths:0,cores:0,totalCores:0,corePower:0,coreEconomy:0,coreEnergy:0,coreStart:0,coreBounty:0,coreTempo:0,autoLevel:0,autoBuy:false,autoRebirth:false,allocation:"balanced",phases:0,phaseTokens:0,phaseFlux:0,phaseEngine:0,knownUnlocks:[],heroLevel:1,heroXp:0,traitPointsEarned:0,traitPointsSpent:0,traits:{},weapon:null,skillsOwned:[],skillsEquipped:[],skillsInherited:[],skillLevels:{},skillXp:{},skillClock:0,lastSaved:Date.now()});
+const initial=()=>({credits:30,cacheCredits:0,cacheClock:0,energy:0,stage:1,best:1,hp:0,kills:0,atk:0,spd:0,gen:0,amp:0,relay:0,forge:0,reactor:0,rebirths:0,cores:0,totalCores:0,corePower:0,coreEconomy:0,coreEnergy:0,coreStart:0,coreBounty:0,coreTempo:0,autoLevel:0,autoBuy:false,autoRebirth:false,allocation:"balanced",phases:0,phaseTokens:0,phaseFlux:0,phaseEngine:0,knownUnlocks:[],heroLevel:1,heroXp:0,traitPointsEarned:0,traitPointsSpent:0,traits:{},weapon:null,skillsOwned:[],skillsEquipped:[],skillsInherited:[],skillLevels:{},skillXp:{},skillClock:0,deepFloor:0,deepShards:0,deepResearch:{},lastSaved:Date.now()});
 let s=initial(),enemyHp=0,enemyMax=0,attackClock=0,enemyClock=0,saveClock=0,resetArmed=false,logText='첫 장벽을 향해 성장해 봐.';
 function safeNumber(v,min=0,max=1e100){return Number.isFinite(v)?Math.max(min,Math.min(max,v)):min}
 let pendingOffline=0,hiddenAt=null;
-function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(!v||typeof v!=='object')return;s={...initial(),...v};for(const k of ['credits','cacheCredits','energy','cores','totalCores','phaseTokens','phaseFlux'])s[k]=safeNumber(s[k]);for(const k of ['stage','best','atk','spd','gen','amp','relay','forge','reactor','rebirths','corePower','coreEconomy','coreEnergy','coreStart','coreBounty','coreTempo','autoLevel','phases','phaseEngine','kills'])s[k]=Math.floor(safeNumber(s[k],k==='stage'||k==='best'?1:0,1e7));s.cacheClock=safeNumber(s.cacheClock,0,60);s.heroLevel=Math.max(1,Math.floor(safeNumber(s.heroLevel,1,100000)));s.heroXp=safeNumber(s.heroXp);s.traitPointsEarned=Math.max(s.heroLevel-1,Math.floor(safeNumber(s.traitPointsEarned)));normalizeTraits();normalizeGearSkills();s.knownUnlocks=Array.isArray(s.knownUnlocks)?s.knownUnlocks.filter(x=>typeof x==='string'):[];s.autoBuy=!!s.autoBuy;s.autoRebirth=!!s.autoRebirth;s.allocation=['balanced','assault','supply'].includes(s.allocation)?s.allocation:'balanced';const savedAt=Number.isFinite(v.lastSaved)&&v.lastSaved>0?v.lastSaved:Date.now();pendingOffline=Math.min(7200,Math.max(0,(Date.now()-savedAt)/1000));enemyHp=safeNumber(s.savedEnemyHp,0);attackClock=safeNumber(s.savedAttackClock,0,0.85);logText='저장 데이터 복원 완료';}catch(e){s=initial();pendingOffline=0;logText='저장 데이터를 읽지 못해 새 게임으로 시작했어.'}}
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(!v||typeof v!=='object')return;s={...initial(),...v};for(const k of ['credits','cacheCredits','energy','cores','totalCores','phaseTokens','phaseFlux'])s[k]=safeNumber(s[k]);for(const k of ['stage','best','atk','spd','gen','amp','relay','forge','reactor','rebirths','corePower','coreEconomy','coreEnergy','coreStart','coreBounty','coreTempo','autoLevel','phases','phaseEngine','kills'])s[k]=Math.floor(safeNumber(s[k],k==='stage'||k==='best'?1:0,1e7));s.cacheClock=safeNumber(s.cacheClock,0,60);normalizeDeepZone();s.heroLevel=Math.max(1,Math.floor(safeNumber(s.heroLevel,1,100000)));s.heroXp=safeNumber(s.heroXp);s.traitPointsEarned=Math.max(s.heroLevel-1,Math.floor(safeNumber(s.traitPointsEarned)));normalizeTraits();normalizeGearSkills();s.knownUnlocks=Array.isArray(s.knownUnlocks)?s.knownUnlocks.filter(x=>typeof x==='string'):[];s.autoBuy=!!s.autoBuy;s.autoRebirth=!!s.autoRebirth;s.allocation=['balanced','assault','supply'].includes(s.allocation)?s.allocation:'balanced';const savedAt=Number.isFinite(v.lastSaved)&&v.lastSaved>0?v.lastSaved:Date.now();pendingOffline=Math.min(7200,Math.max(0,(Date.now()-savedAt)/1000));enemyHp=safeNumber(s.savedEnemyHp,0);attackClock=safeNumber(s.savedAttackClock,0,0.85);logText='저장 데이터 복원 완료';}catch(e){s=initial();pendingOffline=0;logText='저장 데이터를 읽지 못해 새 게임으로 시작했어.'}}
 
 // 12차 임시 특성: 사용자 승인 하에 테스트용. 미구현 스킬/장비 특성은 투자 차단.
 const TRAITS=[
@@ -100,6 +100,43 @@ const costs={atk:[18,1.31],spd:[28,1.36],gen:[22,1.29],amp:[130,1.43],relay:[120
 const cost=type=>Math.ceil(costs[type][0]*Math.pow(costs[type][1],s[type]));
 function save(){// Preserve the start of an unsettled hidden interval across pagehide/eviction.
 s.lastSaved=hiddenAt===null?Date.now():hiddenAt;s.savedEnemyHp=enemyHp;s.savedAttackClock=attackClock;try{localStorage.setItem(KEY,JSON.stringify(s));return true;}catch(e){logText='⚠ 저장 실패 · 브라우저 저장 공간과 개인정보 보호 설정을 확인해 줘. 현재 진행은 화면을 닫으면 사라질 수 있어.';return false;}}
+// Deep-zone progression is permanent. Its combat gate deliberately uses current main-run power.
+const DEEP_RESEARCH=[['scavenging','회수 기술',5],['navigation','경로 분석',5],['resilience','위험 대응',5]];
+function normalizeDeepZone(){
+ s.deepFloor=Math.floor(safeNumber(s.deepFloor,0,1000000));
+ s.deepShards=Math.floor(safeNumber(s.deepShards,0,1e12));
+ const raw=s.deepResearch&&typeof s.deepResearch==='object'&&!Array.isArray(s.deepResearch)?s.deepResearch:{};
+ s.deepResearch={};
+ for(const [id,,cap] of DEEP_RESEARCH)s.deepResearch[id]=Math.floor(safeNumber(raw[id],0,cap));
+}
+function deepNextFloor(){return s.deepFloor+1;}
+function deepRequiredPower(floor=deepNextFloor()){return Math.ceil(40*Math.pow(1.28,Math.max(0,floor-1)));}
+function deepChoiceOptions(){return ['safe','risk','study'];}
+function deepFloorReward(floor,choice){
+ const base=1+Math.floor((floor-1)/5);
+ return choice==='risk'?base*2:choice==='study'?base+1:base;
+}
+function clearDeepFloor(choice){
+ if(!deepChoiceOptions().includes(choice))return false;
+ const floor=deepNextFloor();
+ const required=deepRequiredPower(floor);
+ const effective=power()*(choice==='risk'?.8:1);
+ if(!Number.isFinite(effective)||effective<required)return false;
+ s.deepShards+=deepFloorReward(floor,choice);
+ s.deepFloor=floor;
+ save();return true;
+}
+function deepResearchCost(id){
+ const def=DEEP_RESEARCH.find(x=>x[0]===id);
+ return def?2*Math.pow(2,s.deepResearch[id]):Infinity;
+}
+function buyDeepResearch(id){
+ const def=DEEP_RESEARCH.find(x=>x[0]===id);
+ if(!def||s.deepResearch[id]>=def[2])return false;
+ const cost=deepResearchCost(id);
+ if(s.deepShards<cost)return false;
+ s.deepShards-=cost;s.deepResearch[id]++;save();return true;
+}
 function spawn(){enemyMax=Math.round(enemyHealth(s.stage));enemyHp=enemyMax;const img=$('enemyImage');img.src=s.stage%20===0?'boss_overheat.webp':s.stage%10===0?'boss_guardian.webp':s.stage%5===0?'enemy_armor.svg':s.stage%3===0?'enemy_agile.svg':'enemy_scout.svg';}
 function unlock(key,msg){if(!s.knownUnlocks.includes(key)){s.knownUnlocks.push(key);logText='✨ 최초 해금 · '+msg;}}
 function purchase(type){if(s.best<unlockStage[type])return false;if(type==='spd'&&s.spd>=50)return false;const c=cost(type);if(s.credits<c)return false;s.credits-=c;s[type]++;return true;}
