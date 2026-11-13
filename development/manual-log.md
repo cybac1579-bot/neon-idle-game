@@ -161,3 +161,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Browser save/reload deep-zone integration
 - Extended Chromium portrait smoke (360px/412px) to persist floor/shards, reload and assert saved values, start auto, reload and assert pressed state plus active encounter, then stop and leave. This tests real browser localStorage and event handlers, not just fake DOM.
 - CI **43526399743 passed**: 83 Node regressions and Chromium portrait smoke. Real Android device interaction and 30-minute human play remain unverified; first playable readiness 60%.
+
+## 2026-11-14 — Real browser growth / rebirth / core purchase loop
+- Expanded 360px/412px Playwright Chromium smoke: click normal attack growth purchase; set up eligible stage 110 for deterministic rebirth test; accept native confirmation dialog; assert stage/normal upgrades reset, cores/rebirth count increase, persistent deep floor/shards preserved; click permanent core power upgrade; reload and assert core and deep progress persist.
+- CI **43526531400 passed** (83 Node regressions + Chromium smoke). Stage 110 is deliberately test-fixtured, not evidence of reaching it through real-time 30-minute play. Android physical-device and 30-minute human experience remain unverified. First playable readiness 60% pending broader gameplay test.
