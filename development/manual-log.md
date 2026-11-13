@@ -145,3 +145,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Auto dungeon UI stop and save/resume consistency
 - Improved deep-auto button label: when stopping auto during a live encounter, the current battle continues; stopping only cancels subsequent auto entries. A manual dungeon choice while auto is queued now disables auto and resets its cooldown.
 - Added fake-DOM button integration test for start/stop semantics and saved cooldown reload test. CI run **43525266042 passed 80 tests**. Verified state transition and persistence, not physical touch hitboxes or rendered browser UI. Continue with actual portrait browser/device validation; 1st playable readiness stays 58%.
+
+## 2026-11-14 — Deep auto milestone feedback and accessibility state
+- Deep auto toggle now updates `aria-pressed` on each render. On reaching a five-floor milestone, the outcome explicitly explains the auto pause and asks the player to choose the next route. Failure outcome explicitly identifies auto stopped.
+- First CI **43525434363 failed** because fake DOM in Node tests lacked `setAttribute`, not because of browser runtime. Extended test harness with attribute APIs and added state/message regression. CI **43525454742 passed 81 tests**. This validates scripted DOM state, not visual mobile touch usability. First playable readiness remains 58%.
