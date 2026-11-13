@@ -149,3 +149,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Deep auto milestone feedback and accessibility state
 - Deep auto toggle now updates `aria-pressed` on each render. On reaching a five-floor milestone, the outcome explicitly explains the auto pause and asks the player to choose the next route. Failure outcome explicitly identifies auto stopped.
 - First CI **43525434363 failed** because fake DOM in Node tests lacked `setAttribute`, not because of browser runtime. Extended test harness with attribute APIs and added state/message regression. CI **43525454742 passed 81 tests**. This validates scripted DOM state, not visual mobile touch usability. First playable readiness remains 58%.
+
+## 2026-11-14 — Portrait tab mapping and dungeon action readability
+- Increased deep auto toggle min tap height to 58px and clarified enabled state with pressed-state border; ensured dungeon outcome message wraps and reserves space on narrow viewports.
+- Added static regression for all five nav targets matching screen sections, nav active/hidden-state script, pressed-state semantics and dungeon CSS. CI **43525644961 passed 82 tests**. This is not an actual rendered/mobile browser or physical touch test. 1st playable readiness stays 58%; next step should prioritize an executable browser/device smoke test rather than repeating static-only checks.
