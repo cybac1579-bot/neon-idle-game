@@ -1113,3 +1113,35 @@ test('dungeon UI power estimate matches the timed encounter damage model',()=>{
  const buttons=b.document.getElementById('deepChoices').children;
  assert.ok(buttons.every(x=>x.textContent.includes('권장 전투력')));
 });
+
+test('opt-in safe dungeon automation stops after fifth floor and preserves completed depth',()=>{
+ const b=boot({deepFloor:3,deepShards:0,lastSaved:Date.UTC(2026,10,12)});
+ b.get('s.atk=1e8;s.energy=1e9;s.deepAuto=true');
+ b.get('step(1,true)');
+ assert.equal(b.get('s.deepFloor'),4);
+ assert.equal(b.get('s.deepAuto'),true);
+ b.get('step(1,true)');
+ assert.equal(b.get('s.deepFloor'),5);
+ assert.equal(b.get('s.deepAuto'),false);
+ b.get('step(1,true)');
+ assert.equal(b.get('s.deepFloor'),5);
+ assert.equal(b.get('s.deepEncounter'),null);
+});
+test('automatic deep exploration pauses on failure and never runs offline',()=>{
+ const now=Date.UTC(2026,10,12);
+ const b=boot({deepFloor:60,deepShards:0,deepAuto:true,lastSaved:now});
+ b.get('s.atk=0;s.energy=0');
+ b.get('step(30,false)');
+ assert.equal(b.get('s.deepEncounter'),null);
+ assert.equal(b.get('s.deepFloor'),60);
+ assert.equal(b.get('s.deepAuto'),true);
+ b.get('step(30,true)');
+ assert.equal(b.get('s.deepAuto'),false);
+ assert.equal(b.get('s.deepFloor'),60);
+});
+test('rebirth stops dungeon automation and retains deepest cleared floor',()=>{
+ const b=boot({stage:110,best:110,deepFloor:12,deepAuto:true,lastSaved:Date.UTC(2026,10,12)});
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.deepAuto'),false);
+ assert.equal(b.get('s.deepFloor'),12);
+});
