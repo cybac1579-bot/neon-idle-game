@@ -956,3 +956,36 @@ test('ten-minute controlled growth comparison: deep research does not change ord
  assert.ok(stageB>=stageA,'research should not reduce fixed-build combat progress');
  assert.ok(stageB<=stageA+40,'fixed-build research alone should not skip dozens of extra stages');
 });
+
+function simulatedThirtyMinuteRun(research,seed=7123){
+ const now=Date.UTC(2026,10,12);
+ const b=boot({stage:1,best:1,credits:30,energy:0,deepFloor:0,deepShards:0,deepResearch:research,lastSaved:now},now,seed);
+ const snapshots=[];
+ for(let second=1;second<=1800;second++){
+  b.get('step(1,false)');
+  // Scripted active player buys the cheapest unlocked upgrade every 3 seconds.
+  if(second%3===0)b.get('(()=>{let count=0;while(count++<8){const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k));if(!options.length)break;options.sort((a,b)=>cost(a)-cost(b));if(!purchase(options[0]))break;}})()');
+  if(second%30===0)b.get('startDeepEncounter("safe")');
+  if(second%300===0)snapshots.push({
+   seconds:second,stage:b.get('s.stage'),rebirths:b.get('s.rebirths'),
+   deepFloor:b.get('s.deepFloor'),shards:b.get('s.deepShards'),
+   credits:b.get('s.credits'),power:b.get('power()')
+  });
+ }
+ return snapshots;
+}
+test('30-minute scripted active-play comparison checks progression without runaway research skip',()=>{
+ const base=simulatedThirtyMinuteRun({scavenging:0,navigation:0,resilience:0});
+ const max=simulatedThirtyMinuteRun({scavenging:5,navigation:5,resilience:5});
+ assert.equal(base.length,6);
+ assert.equal(max.length,6);
+ for(const snap of [...base,...max]){
+  assert.ok(Number.isFinite(snap.credits)&&snap.credits>=0);
+  assert.ok(Number.isFinite(snap.power)&&snap.power>0);
+  assert.ok(Number.isInteger(snap.deepFloor)&&snap.deepFloor>=0);
+ }
+ const lastBase=base.at(-1),lastMax=max.at(-1);
+ assert.ok(lastMax.stage>=lastBase.stage);
+ assert.ok(lastMax.stage<=lastBase.stage+60,'max research should not skip 60+ extra stages in this scripted policy');
+ assert.ok(lastMax.deepFloor<=lastBase.deepFloor+30,'max research should not trivialize 30+ additional dungeon floors');
+});
