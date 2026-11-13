@@ -221,7 +221,7 @@ function renderDeepZone(){
  const encounter=s.deepEncounter;
  $('deepMessage').textContent=encounter?'탐험 전투 · 적 잔여 '+fmt(encounter.remaining)+' · 제한 '+Math.max(0,Math.ceil(encounter.limit-encounter.clock))+'초':(s.deepOutcome||'접근법을 선택해 탐험을 시작해.');
  $('deepEvent').textContent='현재 사건 · '+deepEvent().title;
- for(const b of Array.from($('deepChoices').children)){const choice=b.dataset.deepChoice;if(choice){const name=deepEvent()[choice];const extra=deepEventBonus(deepNextFloor(),choice);b.firstChild.textContent=name;b.lastElementChild.textContent='결정 '+fmt(deepFloorReward(deepNextFloor(),choice)+extra)+'개 · 전투 부담 ×'+deepEventModifier(deepNextFloor(),choice).toFixed(2);}}
+ for(const b of Array.from($('deepChoices').children)){const choice=b.dataset.deepChoice;if(choice){const name=deepEvent()[choice];const extra=deepEventBonus(deepNextFloor(),choice);b.textContent=name+' · '+'결정 '+fmt(deepFloorReward(deepNextFloor(),choice)+extra)+'개 · 전투 부담 ×'+deepEventModifier(deepNextFloor(),choice).toFixed(2);}}
  for(const b of Array.from($('deepChoices').children))b.disabled=!!encounter;
  $('deepLeave').disabled=!encounter;
  $('deepFloor').textContent=fmt(s.deepFloor)+'층';
