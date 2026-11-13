@@ -80,11 +80,11 @@ const fluxRate=()=>s.phases>0?(0.12+s.phases*.08)*(1+s.phaseEngine*.35):0;
 const phaseEngineCost=()=>Math.ceil(12*Math.pow(2.4,s.phaseEngine));
 const startingCredits=()=> (30*(1+s.phaseEngine*2)+s.rebirths*500)*(1+s.coreStart*.2)*(1+traitLevel('restart')*.2);
 function buyPhaseEngine(){const c=phaseEngineCost();if(s.phaseFlux<c)return false;s.phaseFlux-=c;s.phaseEngine++;save();render();return true;}
-const creditRate=()=> (.8+s.forge*3.5*Math.pow(1.23,s.forge))*(1+Math.min(2,s.gen*.08))*(1+s.coreEconomy*.6)*phaseMultiplier()*(s.stage>=55&&s.allocation==='supply'?2.5:1);
+const creditRate=()=> (.8+s.forge*3.5*Math.pow(1.23,s.forge))*(1+Math.min(2,s.gen*.08))*(1+s.coreEconomy*.6)*phaseMultiplier()*(s.stage>=55&&s.allocation==='supply'?2.5:1)*(1+deepResearchBonus('scavenging')*.04);
 // 9차: 전선 선택 전 효과를 수치로 비교한다. 실제 배율 공식과 동일한 계산을 사용한다.
 function allocationComparison(){
  const baseCredits=(.8+s.forge*3.5*Math.pow(1.23,s.forge))*(1+Math.min(2,s.gen*.08))*(1+s.coreEconomy*.6)*phaseMultiplier();
- const basePower=(5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(1+traitLevel('precision')*.04)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier();
+ const basePower=(5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(1+traitLevel('precision')*.04)*(1+deepResearchBonus('resilience')*.03)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier();
  return [
   ['균형',basePower,baseCredits],
   ['공격 집중',basePower*2.2,baseCredits],
@@ -114,18 +114,20 @@ function deepRequiredPower(floor=deepNextFloor()){return Math.ceil(40*Math.pow(1
 function deepChoiceOptions(){return ['safe','risk','study'];}
 function deepFloorReward(floor,choice){
  const base=1+Math.floor((floor-1)/5);
- return choice==='risk'?base*2:choice==='study'?base+1:base;
+ return choice==='risk'?base*2:choice==='study'?base+1+Math.min(3,s.deepResearch.scavenging):base;
 }
 function clearDeepFloor(choice){
  if(!deepChoiceOptions().includes(choice))return false;
  const floor=deepNextFloor();
  const required=deepRequiredPower(floor);
- const effective=power()*(choice==='risk'?.8:1);
+ const effective=power()*(choice==='risk'?.8:1)*(1+deepResearchBonus('navigation')*.02);
  if(!Number.isFinite(effective)||effective<required)return false;
  s.deepShards+=deepFloorReward(floor,choice);
  s.deepFloor=floor;
  save();return true;
 }
+function deepResearchBonus(id){return s.deepResearch[id]||0;}
+function deepZoneMessage(choice,success){return success?'심층 '+s.deepFloor+'층 돌파 · 결정 획득!':'현재 전투력으로 돌파하기 어려워. 전선에서 성장한 뒤 다시 도전해.';}
 function deepResearchCost(id){
  const def=DEEP_RESEARCH.find(x=>x[0]===id);
  return def?2*Math.pow(2,s.deepResearch[id]):Infinity;
@@ -179,7 +181,22 @@ function updateButtons(containerId,entries,attribute){
 }
 function renderTraits(){const panel=$('traits');const ids=TRAITS.map(t=>t[0]);for(const node of Array.from(panel.children))if(!ids.includes(node.dataset.trait))node.remove();for(const [id,name,cap,desc,requirement] of TRAITS){let b=Array.from(panel.children).find(n=>n.dataset.trait===id);if(!b){b=document.createElement('button');b.dataset.trait=id;b.innerHTML='<strong></strong><small></small>';panel.appendChild(b);}const lv=traitLevel(id);b.firstElementChild.textContent=name+' '+lv+'/'+cap;b.lastElementChild.textContent=desc+(requirement===0?' · 미구현 대기':requirement>0?' · LV.'+requirement+' 해금':'');b.disabled=lv>=cap||availablePoints()<1||requirement===0||requirement>0&&s.heroLevel<requirement;}$('traitPoints').textContent='사용 가능 '+availablePoints()+'포인트 · 투자 '+s.traitPointsSpent+'포인트';}
 function renderGearSkills(){const w=$('weaponInfo');w.textContent=s.weapon?'무기: '+WEAPON_TIERS[s.weapon.tier][0]+' · 획득 STAGE '+s.weapon.stage+' · 공격력 ×'+weaponMultiplier().toFixed(2):'무기 없음 · STAGE 15부터 획득 가능';$('skillInfo').textContent='보유 '+s.skillsOwned.length+'/4 · 장착 '+s.skillsEquipped.length+'/'+skillSlotCount()+' · 계승 지정 '+s.skillsInherited.length+'/'+inheritanceSlots();const panel=$('skillList');for(const n of Array.from(panel.children))if(!s.skillsOwned.includes(n.dataset.skill))n.remove();for(const id of s.skillsOwned){let n=Array.from(panel.children).find(x=>x.dataset.skill===id);if(!n){n=document.createElement('div');n.dataset.skill=id;n.innerHTML='<strong></strong><button data-equip="'+id+'"></button><button data-inherit="'+id+'"></button>';panel.appendChild(n);}n.children[0].textContent=SKILLS[id][0]+' · LV.'+(s.skillLevels[id]||1)+' ('+Math.floor(s.skillXp[id]||0)+'/'+(s.skillLevels[id]>=20?'MAX':skillXpNeeded(s.skillLevels[id]||1))+') · '+SKILLS[id][1];n.children[1].textContent=s.skillsEquipped.includes(id)?'장착 해제':'장착';n.children[1].disabled=!s.skillsEquipped.includes(id)&&s.skillsEquipped.length>=skillSlotCount();n.children[2].textContent=s.skillsInherited.includes(id)?'계승 해제':'계승 지정';n.children[2].disabled=!s.skillsInherited.includes(id)&&s.skillsInherited.length>=inheritanceSlots();}}
-function render(){if(!enemyMax)spawn();renderGearSkills();$('heroGrowth').textContent='주인공 LV.'+fmt(s.heroLevel)+' · 경험치 '+fmt(s.heroXp)+'/'+fmt(xpNeeded(s.heroLevel))+' · 특성 포인트 '+fmt(s.traitPointsEarned)+' (사용 가능 '+fmt(availablePoints())+') · 장착 스킬 슬롯 '+skillSlotCount()+'/5 · 계승 '+inheritanceSlots()+'/2';renderTraits();$('stage').textContent=fmt(s.stage);$('best').textContent=fmt(s.best);$('rebirths').textContent=fmt(s.rebirths);$('credits').textContent=fmt(s.credits);$('cacheAmount').textContent=fmt(s.cacheCredits);$('cacheTimer').textContent=Math.max(0,Math.ceil(60-s.cacheClock))+'초 후 적립 · 최대 5회분';$('claimCache').disabled=s.cacheCredits<1;$('energyRate').textContent=fmt(energyRate());$('power').textContent=fmt(power());$('hpBar').style.width=Math.max(0,100*enemyHp/enemyMax)+'%';$('battleInfo').textContent='적 체력 '+fmt(Math.max(0,enemyHp))+' / '+fmt(enemyMax)+' · '+attackInterval().toFixed(2)+'초마다 공격 · 에너지 '+fmt(s.energy);$('log').textContent=logText;
+function renderDeepZone(){
+ $('deepFloor').textContent=fmt(s.deepFloor)+'층';
+ $('deepNext').textContent=fmt(deepNextFloor())+'층';
+ $('deepShards').textContent=fmt(s.deepShards);
+ const need=deepRequiredPower(),current=power();
+ $('deepGate').textContent='현재 전투력 '+fmt(current)+' / 기본 필요 전투력 '+fmt(need)+(current>=need?' · 도전 가능':' · 성장 후 돌파 권장');
+ const panel=$('deepResearchList');
+ for(const [id,name,cap] of DEEP_RESEARCH){
+  let b=Array.from(panel.children).find(n=>n.dataset.deepResearch===id);
+  if(!b){b=document.createElement('button');b.dataset.deepResearch=id;b.innerHTML='<strong></strong><small></small>';panel.appendChild(b);}
+  b.firstElementChild.textContent=name+' '+s.deepResearch[id]+'/'+cap;
+  b.lastElementChild.textContent=s.deepResearch[id]>=cap?'최대 연구 완료':'심층 결정 '+fmt(deepResearchCost(id))+'개';
+  b.disabled=s.deepResearch[id]>=cap||s.deepShards<deepResearchCost(id);
+ }
+}
+function render(){if(!enemyMax)spawn();renderDeepZone();renderGearSkills();$('heroGrowth').textContent='주인공 LV.'+fmt(s.heroLevel)+' · 경험치 '+fmt(s.heroXp)+'/'+fmt(xpNeeded(s.heroLevel))+' · 특성 포인트 '+fmt(s.traitPointsEarned)+' (사용 가능 '+fmt(availablePoints())+') · 장착 스킬 슬롯 '+skillSlotCount()+'/5 · 계승 '+inheritanceSlots()+'/2';renderTraits();$('stage').textContent=fmt(s.stage);$('best').textContent=fmt(s.best);$('rebirths').textContent=fmt(s.rebirths);$('credits').textContent=fmt(s.credits);$('cacheAmount').textContent=fmt(s.cacheCredits);$('cacheTimer').textContent=Math.max(0,Math.ceil(60-s.cacheClock))+'초 후 적립 · 최대 5회분';$('claimCache').disabled=s.cacheCredits<1;$('energyRate').textContent=fmt(energyRate());$('power').textContent=fmt(power());$('hpBar').style.width=Math.max(0,100*enemyHp/enemyMax)+'%';$('battleInfo').textContent='적 체력 '+fmt(Math.max(0,enemyHp))+' / '+fmt(enemyMax)+' · '+attackInterval().toFixed(2)+'초마다 공격 · 에너지 '+fmt(s.energy);$('log').textContent=logText;
 $('battleGoal').textContent=milestoneGoal();const goal=s.best<100?'첫 재구성을 위해 STAGE 100 도달 · 현재 '+s.stage+'/100':s.rebirths<1?'재구성으로 영구 코어를 얻어 이전 구간을 더 빠르게 돌파해':s.autoLevel<1?'영구 코어로 자동 구매를 해금해':s.best<180?'STAGE 180 돌파 및 재구성 2회 달성 · 새로운 성장 계층을 향해':s.rebirths<2?'위상 전환 조건: 누적 재구성 2회 필요':'위상 전환으로 상위 성장 계층에 진입해';$('goal').textContent=goal+' · '+milestoneGoal()+' · '+actionableGoal();$('allocationPanel').classList.toggle('hide',s.stage<55);$('allocationStatus').textContent=s.allocation==='assault'?'공격 집중: 전투력 ×2.2':s.allocation==='supply'?'보급 집중: 크레딧 생산 ×2.5':'균형 운용: 기본 효율';for(const b of $('allocationPanel').querySelectorAll('[data-allocation]'))b.disabled=s.allocation===b.dataset.allocation;$('allocationCompare').textContent=allocationComparison().map(([name,p,c])=>name+' · 전투력 '+fmt(p)+' / 크레딧 초당 '+fmt(c)).join('\n');
 updateButtons('upgrades',[['atk','⚔ 전투 엔진','기본 공격력 성장'],['spd','➤ 공격속도','Lv.50에서 0.10초 · 최대 10회/초'],['gen','⚡ 에너지 발전기','초당 에너지 생산'],['amp','✦ 에너지 증폭기','축적 에너지의 전투력 전환'],['relay','⌁ 에너지 중계기','발전기 생산량 증폭'],['forge','◇ 크레딧 주조기','시간당 크레딧 생산'],['reactor','✹ 전투 반응로','독립 전투력 증폭']].filter(([k])=>s.best>=unlockStage[k]).map(([k,n,d])=>[k,n,d,k==='spd'&&s.spd>=50?0:cost(k),s.credits>=cost(k)&&(k!=='spd'||s.spd<50)]),'buy');
 $('cores').textContent=fmt(s.cores);$('coreGain').textContent='+'+fmt(gainCore());$('coreBoost').textContent='×'+coreMultiplier().toFixed(2);$('rebirth').disabled=!gainCore();updateButtons('coreUpgrades',CORE_UPGRADES.map(([k,n,d,cap])=>[k,n,d+' · 최대 '+cap+'단계',coreCost(k),s[k]<cap&&s.cores>=coreCost(k)]),'core');$('autoLocked').classList.toggle('hide',s.autoLevel>0);$('autoControls').classList.toggle('hide',s.autoLevel===0);$('autoBuy').checked=s.autoBuy;$('autoRebirth').checked=s.autoRebirth;$('autoRebirth').disabled=s.autoLevel<3;$('autoDetails').textContent=s.autoLevel<3?'자동화 Lv.3부터 조건부 재구성 가능':'획득 코어가 누적 코어의 15% 이상이거나 3개 이상일 때 자동 재구성';$('phaseTokens').textContent=fmt(s.phaseTokens);$('phaseGain').textContent='+'+fmt(gainPhase());$('phases').textContent=fmt(s.phases);$('phase').disabled=!gainPhase();$('phaseFlux').textContent=fmt(s.phaseFlux);$('fluxRate').textContent=fluxRate().toFixed(2);$('phaseEngine').textContent='위상 압축 Lv.'+s.phaseEngine+' · 흐름 '+fmt(phaseEngineCost())+' 필요';$('phaseEngine').disabled=s.phaseFlux<phaseEngineCost();$('phaseLayer').classList.toggle('hide',s.phases===0);}
@@ -188,6 +205,8 @@ load();const restoredEnemyHp=enemyHp;spawn();if(restoredEnemyHp>0&&restoredEnemy
 // 0.85초 단위로 처리하여 프레임당 최대 30회 공격 제한에 걸리지 않게 한다.
 function settleElapsed(seconds){const duration=Math.min(7200,Math.max(0,seconds));if(duration<0.01)return 0;let remaining=duration;while(remaining>0.000001){const dt=Math.min(.85,remaining);step(dt,false);remaining-=dt;}logText='방치 진행 '+Math.floor(duration)+'초 반영';save();return duration;}
 if(pendingOffline>=0.01)settleElapsed(pendingOffline);
+$('deepResearchList').addEventListener('click',e=>{const b=e.target.closest('[data-deep-research]');if(b&&buyDeepResearch(b.dataset.deepResearch)){render();$('deepMessage').textContent='영구 연구 완료 · 모든 환생 이후에도 유지돼.'}});
+document.querySelector('[data-screen="deep"]').addEventListener('click',e=>{const b=e.target.closest('[data-deep-choice]');if(!b)return;const choice=b.dataset.deepChoice;const success=clearDeepFloor(choice);render();$('deepMessage').textContent=deepZoneMessage(choice,success)});
 $('skillList').addEventListener('click',e=>{const equip=e.target.closest('[data-equip]'),inherit=e.target.closest('[data-inherit]');if(equip)toggleEquipSkill(equip.dataset.equip);if(inherit)toggleInheritSkill(inherit.dataset.inherit)});$('traits').addEventListener('click',e=>{const b=e.target.closest('[data-trait]');if(b)buyTrait(b.dataset.trait)});$('traitReset').onclick=()=>{if(s.traitPointsSpent&&confirm('투자한 특성 포인트를 모두 돌려받고 다시 배분할까?'))resetTraits()};$('upgrades').addEventListener('click',e=>{const b=e.target.closest('[data-buy]');if(b&&purchase(b.dataset.buy)){render();save()}});$('coreUpgrades').addEventListener('click',e=>{const b=e.target.closest('[data-core]');if(b)buyCore(b.dataset.core)});$('rebirth').onclick=()=>{if(gainCore()&&confirm('기본 성장과 현재 스테이지를 초기화하고 코어 '+gainCore()+'개를 받을까?')){rebirth();render()}};$('phase').onclick=()=>{if(gainPhase()&&confirm('재구성 강화까지 초기화하고 위상 토큰을 얻을까?'))phase()};$('autoBuy').onchange=e=>{s.autoBuy=e.target.checked;save()};$('autoRebirth').onchange=e=>{s.autoRebirth=e.target.checked;save()};$('phaseEngine').onclick=buyPhaseEngine;$('allocationPanel').addEventListener('click',e=>{const b=e.target.closest('[data-allocation]');if(b&&s.stage>=55){s.allocation=b.dataset.allocation;render();save()}});$('claimCache').onclick=claimCache;$('save').onclick=()=>{const saved=save();if(saved)logText='저장 완료';render()};$('reset').onclick=()=>{if(!resetArmed){resetArmed=true;$('reset').textContent='정말 초기화할까? 다시 눌러 확정';return;}if(confirm('모든 개편 1차 저장 데이터를 삭제할까?')){localStorage.removeItem(KEY);s=initial();spawn();render()}resetArmed=false;$('reset').textContent='저장 데이터 초기화 (2회 확인)'};
 let last=performance.now(),lastImpact=-Infinity;
 // Foreground-only, throttled damage feedback; never animate during offline settlement.
