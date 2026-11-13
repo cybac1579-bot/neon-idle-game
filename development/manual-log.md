@@ -189,3 +189,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Live 62-second periodic save/navigation stress
 - Expanded the real-time Chromium 62-second run into four 15.5-second checkpoints, switching growth/stats/battle/growth tabs, calling save and comparing localStorage JSON stage/credits against in-memory state, checking finite economy. Existing timed payout claim/reload checks still run at the end.
 - CI **43528003870 passed** (83 Node regressions + Chromium 360/412px flows and live 62-second stress). This is a short endurance checkpoint, not a 30-minute real browser run or Android device test. First playable readiness stays 61%.
+
+## 2026-11-14 — Served HTTP-origin first playable smoke
+- Added a local ephemeral HTTP static server inside Chromium smoke, checking deployed-style origin asset responses and JS errors, initial growth button purchase, localStorage save and reload persistence. This supplements existing file:// and 62-second idle checks; does not constitute a public deployment or Android installation.
+- CI **43528438443 passed**: 83 Node regressions + Chromium portrait, 62-second live reward, and HTTP-origin checks. First playable readiness 62% (new execution environment covered). Next: evaluate deploy packaging, Android browser/PWA constraints and realistic first-play access.
