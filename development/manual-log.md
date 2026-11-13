@@ -193,3 +193,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Served HTTP-origin first playable smoke
 - Added a local ephemeral HTTP static server inside Chromium smoke, checking deployed-style origin asset responses and JS errors, initial growth button purchase, localStorage save and reload persistence. This supplements existing file:// and 62-second idle checks; does not constitute a public deployment or Android installation.
 - CI **43528438443 passed**: 83 Node regressions + Chromium portrait, 62-second live reward, and HTTP-origin checks. First playable readiness 62% (new execution environment covered). Next: evaluate deploy packaging, Android browser/PWA constraints and realistic first-play access.
+
+## 2026-11-14 — Portrait home-screen metadata foundation
+- Added relative-scope web manifest (standalone, portrait, Korean app title/theme) and temporary SVG icon, linked from HTML. HTTP-origin Chromium test fetches manifest/icon, checks orientation, display, relative launch URL and normal save/purchase flow.
+- CI **43528983661 passed**: 83 Node regressions and browser flows including 62-second live reward. Important: manifest metadata alone does not establish Chrome Android installability; secure HTTPS, suitable raster icons and actual phone installation still need verification. No service worker/offline support claimed. First playable readiness stays 62%.
