@@ -484,3 +484,10 @@
 
 ### 2026-11-13 16:57 KST — CI result confirmed
 - [43389397329](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43389397329) **success: 42/42 pass, 0 fail**, including new storage-denial hidden lifecycle test #42. This was test-only, so the previously successful gameplay Pages deployment [43382099941](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43382099941) remains the latest applicable gameplay deployment. No actual Android/browser live-site validation performed. Readiness remains **58%**.
+
+
+## 2026-11-13 17:57 KST — make progression target visible in battle
+- Base main `6ec0d00069e7efdcd31ffb4e393f157aaf8f16eb`; HTML commit `fbb3920cc5f5482d9cf7a1be04c223619826b497`; game JS commit `795030ea4d1d34e30c06ced1eb36c5f1d9314de6`. Reviewed automation README/log/matrix/research, development/README.md, current index and game logic. Manual records untouched.
+- Finding: next milestone and reward text was only in the statistics tab (`#goal`), leaving the primary auto-combat screen without a progression target. Added a compact read-only `#battleGoal` under battle information, populated by the existing `milestoneGoal()` on render; no extra buttons, taps, rewards, save changes, or progression math.
+- Prior baseline CI [43389397329](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43389397329) passed 42/42; prior applicable gameplay Pages [43382099941](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43382099941) passed. New [CI 43397286985](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43397286985) and [Pages 43397287028](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43397287028) **queued at initial check, not yet verified**. No new pass or deployed-live claim.
+- Readiness **58% unchanged** pending CI, served parity, portrait readability, and real 30-minute play. Next: inspect both workflows, repair failures first; verify battle goal fits short portrait and investigate meaningful early upgrade alternatives.
