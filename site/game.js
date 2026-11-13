@@ -1,6 +1,6 @@
 'use strict';
 const KEY='neon_rework_07', $=id=>document.getElementById(id);
-const initial=()=>({credits:30,cacheCredits:0,cacheClock:0,energy:0,stage:1,best:1,hp:0,kills:0,atk:0,spd:0,gen:0,amp:0,relay:0,forge:0,reactor:0,rebirths:0,cores:0,totalCores:0,corePower:0,coreEconomy:0,coreEnergy:0,coreStart:0,coreBounty:0,coreTempo:0,autoLevel:0,autoBuy:false,autoRebirth:false,allocation:"balanced",phases:0,phaseTokens:0,phaseFlux:0,phaseEngine:0,knownUnlocks:[],heroLevel:1,heroXp:0,traitPointsEarned:0,traitPointsSpent:0,traits:{},weapon:null,skillsOwned:[],skillsEquipped:[],skillsInherited:[],skillLevels:{},skillXp:{},skillClock:0,deepFloor:0,deepShards:0,deepResearch:{},lastSaved:Date.now()});
+const initial=()=>({credits:30,cacheCredits:0,cacheClock:0,energy:0,stage:1,best:1,hp:0,kills:0,atk:0,spd:0,gen:0,amp:0,relay:0,forge:0,reactor:0,rebirths:0,cores:0,totalCores:0,corePower:0,coreEconomy:0,coreEnergy:0,coreStart:0,coreBounty:0,coreTempo:0,autoLevel:0,autoBuy:false,autoRebirth:false,allocation:"balanced",phases:0,phaseTokens:0,phaseFlux:0,phaseEngine:0,knownUnlocks:[],heroLevel:1,heroXp:0,traitPointsEarned:0,traitPointsSpent:0,traits:{},weapon:null,skillsOwned:[],skillsEquipped:[],skillsInherited:[],skillLevels:{},skillXp:{},skillClock:0,deepFloor:0,deepShards:0,deepResearch:{},deepEncounter:null,lastSaved:Date.now()});
 let s=initial(),enemyHp=0,enemyMax=0,attackClock=0,enemyClock=0,saveClock=0,resetArmed=false,logText='첫 장벽을 향해 성장해 봐.';
 function safeNumber(v,min=0,max=1e100){return Number.isFinite(v)?Math.max(min,Math.min(max,v)):min}
 let pendingOffline=0,hiddenAt=null;
@@ -107,6 +107,8 @@ function normalizeDeepZone(){
  s.deepShards=Math.floor(safeNumber(s.deepShards,0,1e12));
  const raw=s.deepResearch&&typeof s.deepResearch==='object'&&!Array.isArray(s.deepResearch)?s.deepResearch:{};
  s.deepResearch={};
+ const encounter=s.deepEncounter;
+ s.deepEncounter=encounter&&typeof encounter==='object'&&deepChoiceOptions().includes(encounter.choice)&&encounter.floor===s.deepFloor+1?{floor:encounter.floor,choice:encounter.choice,remaining:safeNumber(encounter.remaining,0,1e100),clock:safeNumber(encounter.clock,0,30)}:null;
  for(const [id,,cap] of DEEP_RESEARCH)s.deepResearch[id]=Math.floor(safeNumber(raw[id],0,cap));
 }
 function deepNextFloor(){return s.deepFloor+1;}
@@ -126,6 +128,30 @@ function clearDeepFloor(choice){
  s.deepFloor=floor;
  save();return true;
 }
+// A deliberate choice starts a timed encounter; it does not award a floor instantly.
+function startDeepEncounter(choice){
+ if(!deepChoiceOptions().includes(choice)||s.deepEncounter)return false;
+ const floor=deepNextFloor();
+ const modifier=choice==='risk'?1.45:choice==='study'?1.2:1;
+ s.deepEncounter={floor,choice,remaining:deepRequiredPower(floor)*modifier,clock:0};
+ save();return true;
+}
+function tickDeepEncounter(dt){
+ const e=s.deepEncounter;
+ if(!e||!Number.isFinite(dt)||dt<=0)return false;
+ // Combat power always follows the live main-run build; rebirth cannot preserve a strong encounter.
+ const damage=power()*(1+deepResearchBonus('navigation')*.02)*dt/Math.max(.1,attackInterval());
+ e.remaining=Math.max(0,e.remaining-damage);
+ e.clock+=dt;
+ if(e.remaining>0)return false;
+ const choice=e.choice;
+ s.deepEncounter=null;
+ // Rewards and progress are committed together in the existing save state.
+ s.deepShards+=deepFloorReward(deepNextFloor(),choice);
+ s.deepFloor++;
+ save();return true;
+}
+function leaveDeepEncounter(){if(!s.deepEncounter)return false;s.deepEncounter=null;save();return true;}
 function deepResearchBonus(id){return s.deepResearch[id]||0;}
 function deepZoneMessage(choice,success){return success?'심층 '+s.deepFloor+'층 돌파 · 결정 획득!':'현재 전투력으로 돌파하기 어려워. 전선에서 성장한 뒤 다시 도전해.';}
 function deepResearchCost(id){
@@ -148,8 +174,8 @@ function coreCost(type){const def=coreDefinition(type);return def?Math.ceil(def[
 function buyCore(type){const def=coreDefinition(type);if(!def||s[type]>=def[3])return;const c=coreCost(type);if(s.cores<c)return;s.cores-=c;s[type]++;if(type==='autoLevel')unlock('auto','자동 구매 해금');save();render();}
 function gainCore(){return s.stage<100?0:Math.max(5,Math.floor(Math.pow((s.stage-95)/5,1.25)*(1+s.phaseEngine*.3)));}
 function gainPhase(){return s.stage>=180&&s.rebirths>=2?Math.max(1,Math.floor((s.stage-175)/5)):0;}
-function rebirth(automatic=false){const gain=gainCore();if(!gain)return false;s.cores+=gain;s.totalCores+=gain;s.rebirths++;resetGearSkills();s.stage=1;s.cacheCredits=0;s.cacheClock=0;s.credits=startingCredits();s.energy=0;s.allocation='balanced';s.atk=s.spd=s.gen=s.amp=s.relay=s.forge=s.reactor=0;attackClock=enemyClock=0;spawn();unlock('rebirth','재구성 완료');logText=(automatic?'자동 ':'')+'재구성! 영구 코어 +'+fmt(gain);save();return true;}
-function phase(){const gain=gainPhase();if(!gain)return;s.phaseTokens+=gain;s.phases++;resetGearSkills();s.stage=1;s.cacheCredits=0;s.cacheClock=0;s.credits=startingCredits();s.energy=0;s.allocation='balanced';s.atk=s.spd=s.gen=s.amp=s.relay=s.forge=s.reactor=0;s.cores=0;s.totalCores=0;s.corePower=s.coreEconomy=s.coreEnergy=s.coreStart=s.coreBounty=s.coreTempo=s.autoLevel=0;s.autoBuy=s.autoRebirth=false;s.rebirths=0;spawn();unlock('phase','위상 전환 완료');logText='위상 전환! 영구 위상 토큰 +'+fmt(gain);save();render();}
+function rebirth(automatic=false){const gain=gainCore();if(!gain)return false;s.deepEncounter=null;s.cores+=gain;s.totalCores+=gain;s.rebirths++;resetGearSkills();s.stage=1;s.cacheCredits=0;s.cacheClock=0;s.credits=startingCredits();s.energy=0;s.allocation='balanced';s.atk=s.spd=s.gen=s.amp=s.relay=s.forge=s.reactor=0;attackClock=enemyClock=0;spawn();unlock('rebirth','재구성 완료');logText=(automatic?'자동 ':'')+'재구성! 영구 코어 +'+fmt(gain);save();return true;}
+function phase(){const gain=gainPhase();if(!gain)return;s.deepEncounter=null;s.phaseTokens+=gain;s.phases++;resetGearSkills();s.stage=1;s.cacheCredits=0;s.cacheClock=0;s.credits=startingCredits();s.energy=0;s.allocation='balanced';s.atk=s.spd=s.gen=s.amp=s.relay=s.forge=s.reactor=0;s.cores=0;s.totalCores=0;s.corePower=s.coreEconomy=s.coreEnergy=s.coreStart=s.coreBounty=s.coreTempo=s.autoLevel=0;s.autoBuy=s.autoRebirth=false;s.rebirths=0;spawn();unlock('phase','위상 전환 완료');logText='위상 전환! 영구 위상 토큰 +'+fmt(gain);save();render();}
 const milestoneTargets=[10,15,25,35,45,55,65,75,85,100,120,150,180];
 const milestoneLabels={10:'초기 전선 확보',15:'에너지 증폭 해금',25:'에너지 중계기 해금',35:'중계망 정비',45:'크레딧 주조기 해금',55:'전선 배분 해금',65:'전투 반응로 해금',75:'반응로 안정화',85:'최종 방벽 접근',100:'재구성 해금',120:'재구성 보상 확대',150:'고밀도 전선',180:'위상 전환 조건'};
 function actionableGoal(){const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)).map(k=>({k,price:cost(k)})).sort((a,b)=>a.price-b.price);const next=options.find(o=>s.credits>=o.price)||options[0];const names={atk:'전투 엔진',spd:'공격속도',gen:'에너지 발전기',amp:'에너지 증폭기',relay:'에너지 중계기',forge:'크레딧 주조기',reactor:'전투 반응로'};const deficit=Math.max(0,next.price-s.credits);const rate=creditRate();const estimate=rate>0?Math.ceil(deficit/rate):null;return `${deficit===0?'현재 구매 가능한 최저가 강화':'다음 최저가 강화'}: ${names[next.k]} · ${fmt(next.price)} 크레딧 / 보유 ${fmt(s.credits)} · ${deficit===0?'구매 가능':rate>0?`기본 생산 기준 약 ${estimate}초 (전투 보상으로 단축 가능)`:'크레딧 생산을 강화해'}`;}
@@ -161,7 +187,7 @@ function cachePayout(){return Math.max(10,Math.floor(enemyReward(Math.min(60,Mat
 function transferCacheCredits(){const amount=Math.max(0,Math.floor(s.cacheCredits||0));if(!amount)return 0;s.credits=Math.min(1e100,s.credits+amount);s.cacheCredits=0;return amount;}
 function claimCache(){const amount=transferCacheCredits();if(!amount)return false;logText='정기 회수 크레딧 +'+fmt(amount);save();render();return true;}
 const autoPurchaseInterval=()=>[30,10,8,6,4,3][Math.min(5,Math.max(0,s.autoLevel))];
-function step(dt,allowAutoRebirth=true){s.cacheClock+=dt;while(s.cacheClock>=60-1e-7){s.cacheClock=Math.max(0,s.cacheClock-60);s.cacheCredits=Math.min(cachePayout()*5,s.cacheCredits+cachePayout());}s.energy=Math.min(1e100,s.energy+energyRate()*dt);s.phaseFlux=Math.min(1e100,s.phaseFlux+fluxRate()*dt);s.credits=Math.min(1e100,s.credits+creditRate()*dt);skillTick(dt);resolveEnemyDefeat();attackClock+=dt;enemyClock+=dt;let hits=0;while(attackClock>=attackInterval()&&hits++<30){attackClock-=attackInterval();enemyHp-=power()*(Math.random()<traitLevel('double')*.03?2:1);resolveEnemyDefeat();}
+function step(dt,allowAutoRebirth=true){tickDeepEncounter(dt);s.cacheClock+=dt;while(s.cacheClock>=60-1e-7){s.cacheClock=Math.max(0,s.cacheClock-60);s.cacheCredits=Math.min(cachePayout()*5,s.cacheCredits+cachePayout());}s.energy=Math.min(1e100,s.energy+energyRate()*dt);s.phaseFlux=Math.min(1e100,s.phaseFlux+fluxRate()*dt);s.credits=Math.min(1e100,s.credits+creditRate()*dt);skillTick(dt);resolveEnemyDefeat();attackClock+=dt;enemyClock+=dt;let hits=0;while(attackClock>=attackInterval()&&hits++<30){attackClock-=attackInterval();enemyHp-=power()*(Math.random()<traitLevel('double')*.03?2:1);resolveEnemyDefeat();}
 if(s.autoBuy&&s.autoLevel>0){s.autoPurchaseClock=(s.autoPurchaseClock||0)+dt;if(s.autoPurchaseClock>=autoPurchaseInterval()){s.autoPurchaseClock%=autoPurchaseInterval();let attempts=0;while(attempts++<Math.min(100,3+s.autoLevel*8)){const choices=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>cost(a)-cost(b));if(!choices.length)break;purchase(choices[0]);}}}
 if(allowAutoRebirth&&s.autoRebirth&&s.autoLevel>=3&&gainCore()>=Math.max(3,Math.ceil(s.totalCores*.15)))rebirth(true);
 }
@@ -182,6 +208,10 @@ function updateButtons(containerId,entries,attribute){
 function renderTraits(){const panel=$('traits');const ids=TRAITS.map(t=>t[0]);for(const node of Array.from(panel.children))if(!ids.includes(node.dataset.trait))node.remove();for(const [id,name,cap,desc,requirement] of TRAITS){let b=Array.from(panel.children).find(n=>n.dataset.trait===id);if(!b){b=document.createElement('button');b.dataset.trait=id;b.innerHTML='<strong></strong><small></small>';panel.appendChild(b);}const lv=traitLevel(id);b.firstElementChild.textContent=name+' '+lv+'/'+cap;b.lastElementChild.textContent=desc+(requirement===0?' · 미구현 대기':requirement>0?' · LV.'+requirement+' 해금':'');b.disabled=lv>=cap||availablePoints()<1||requirement===0||requirement>0&&s.heroLevel<requirement;}$('traitPoints').textContent='사용 가능 '+availablePoints()+'포인트 · 투자 '+s.traitPointsSpent+'포인트';}
 function renderGearSkills(){const w=$('weaponInfo');w.textContent=s.weapon?'무기: '+WEAPON_TIERS[s.weapon.tier][0]+' · 획득 STAGE '+s.weapon.stage+' · 공격력 ×'+weaponMultiplier().toFixed(2):'무기 없음 · STAGE 15부터 획득 가능';$('skillInfo').textContent='보유 '+s.skillsOwned.length+'/4 · 장착 '+s.skillsEquipped.length+'/'+skillSlotCount()+' · 계승 지정 '+s.skillsInherited.length+'/'+inheritanceSlots();const panel=$('skillList');for(const n of Array.from(panel.children))if(!s.skillsOwned.includes(n.dataset.skill))n.remove();for(const id of s.skillsOwned){let n=Array.from(panel.children).find(x=>x.dataset.skill===id);if(!n){n=document.createElement('div');n.dataset.skill=id;n.innerHTML='<strong></strong><button data-equip="'+id+'"></button><button data-inherit="'+id+'"></button>';panel.appendChild(n);}n.children[0].textContent=SKILLS[id][0]+' · LV.'+(s.skillLevels[id]||1)+' ('+Math.floor(s.skillXp[id]||0)+'/'+(s.skillLevels[id]>=20?'MAX':skillXpNeeded(s.skillLevels[id]||1))+') · '+SKILLS[id][1];n.children[1].textContent=s.skillsEquipped.includes(id)?'장착 해제':'장착';n.children[1].disabled=!s.skillsEquipped.includes(id)&&s.skillsEquipped.length>=skillSlotCount();n.children[2].textContent=s.skillsInherited.includes(id)?'계승 해제':'계승 지정';n.children[2].disabled=!s.skillsInherited.includes(id)&&s.skillsInherited.length>=inheritanceSlots();}}
 function renderDeepZone(){
+ const encounter=s.deepEncounter;
+ $('deepMessage').textContent=encounter?'탐험 전투 진행 중 · '+fmt(encounter.remaining)+' 남음 · 환생하면 현재 전투는 취소돼.':$('deepMessage').textContent;
+ for(const b of Array.from($('deepChoices').children))b.disabled=!!encounter;
+ $('deepLeave').disabled=!encounter;
  $('deepFloor').textContent=fmt(s.deepFloor)+'층';
  $('deepNext').textContent=fmt(deepNextFloor())+'층';
  $('deepShards').textContent=fmt(s.deepShards);
@@ -205,8 +235,9 @@ load();const restoredEnemyHp=enemyHp;spawn();if(restoredEnemyHp>0&&restoredEnemy
 // 0.85초 단위로 처리하여 프레임당 최대 30회 공격 제한에 걸리지 않게 한다.
 function settleElapsed(seconds){const duration=Math.min(7200,Math.max(0,seconds));if(duration<0.01)return 0;let remaining=duration;while(remaining>0.000001){const dt=Math.min(.85,remaining);step(dt,false);remaining-=dt;}logText='방치 진행 '+Math.floor(duration)+'초 반영';save();return duration;}
 if(pendingOffline>=0.01)settleElapsed(pendingOffline);
+$('deepLeave').onclick=()=>{if(leaveDeepEncounter()){render();$('deepMessage').textContent='이번 층에서 퇴장했어. 돌파 기록은 유지돼.'}};
 $('deepResearchList').addEventListener('click',e=>{const b=e.target.closest('[data-deep-research]');if(b&&buyDeepResearch(b.dataset.deepResearch)){render();$('deepMessage').textContent='영구 연구 완료 · 모든 환생 이후에도 유지돼.'}});
-$('deepChoices').addEventListener('click',e=>{const b=e.target.closest('[data-deep-choice]');if(!b)return;const choice=b.dataset.deepChoice;const success=clearDeepFloor(choice);render();$('deepMessage').textContent=deepZoneMessage(choice,success)});
+$('deepChoices').addEventListener('click',e=>{const b=e.target.closest('[data-deep-choice]');if(!b)return;const choice=b.dataset.deepChoice;const started=startDeepEncounter(choice);render();$('deepMessage').textContent=started?'심층 '+deepNextFloor()+'층 전투 시작 · 현재 전투력으로 자동 진행해.':'이미 탐험 전투 중이야.'});
 $('skillList').addEventListener('click',e=>{const equip=e.target.closest('[data-equip]'),inherit=e.target.closest('[data-inherit]');if(equip)toggleEquipSkill(equip.dataset.equip);if(inherit)toggleInheritSkill(inherit.dataset.inherit)});$('traits').addEventListener('click',e=>{const b=e.target.closest('[data-trait]');if(b)buyTrait(b.dataset.trait)});$('traitReset').onclick=()=>{if(s.traitPointsSpent&&confirm('투자한 특성 포인트를 모두 돌려받고 다시 배분할까?'))resetTraits()};$('upgrades').addEventListener('click',e=>{const b=e.target.closest('[data-buy]');if(b&&purchase(b.dataset.buy)){render();save()}});$('coreUpgrades').addEventListener('click',e=>{const b=e.target.closest('[data-core]');if(b)buyCore(b.dataset.core)});$('rebirth').onclick=()=>{if(gainCore()&&confirm('기본 성장과 현재 스테이지를 초기화하고 코어 '+gainCore()+'개를 받을까?')){rebirth();render()}};$('phase').onclick=()=>{if(gainPhase()&&confirm('재구성 강화까지 초기화하고 위상 토큰을 얻을까?'))phase()};$('autoBuy').onchange=e=>{s.autoBuy=e.target.checked;save()};$('autoRebirth').onchange=e=>{s.autoRebirth=e.target.checked;save()};$('phaseEngine').onclick=buyPhaseEngine;$('allocationPanel').addEventListener('click',e=>{const b=e.target.closest('[data-allocation]');if(b&&s.stage>=55){s.allocation=b.dataset.allocation;render();save()}});$('claimCache').onclick=claimCache;$('save').onclick=()=>{const saved=save();if(saved)logText='저장 완료';render()};$('reset').onclick=()=>{if(!resetArmed){resetArmed=true;$('reset').textContent='정말 초기화할까? 다시 눌러 확정';return;}if(confirm('모든 개편 1차 저장 데이터를 삭제할까?')){localStorage.removeItem(KEY);s=initial();spawn();render()}resetArmed=false;$('reset').textContent='저장 데이터 초기화 (2회 확인)'};
 let last=performance.now(),lastImpact=-Infinity;
 // Foreground-only, throttled damage feedback; never animate during offline settlement.
