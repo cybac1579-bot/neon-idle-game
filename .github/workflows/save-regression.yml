@@ -25,4 +25,13 @@ jobs:
         with:
           node-version: '22'
       - name: Run saved-game regression tests
-        run: node --test automation/save-regression.test.cjs
+        run: node --test automation/save-regression.test.cjs 2>&1 | tee regression-results.log
+        shell: bash
+      - name: Upload regression diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-results
+          path: regression-results.log
+          if-no-files-found: warn
+          retention-days: 14
