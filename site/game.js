@@ -119,16 +119,6 @@ function deepFloorReward(floor,choice){
  const base=1+Math.floor((floor-1)/5);
  return choice==='risk'?base*2:choice==='study'?base+1+Math.min(3,s.deepResearch.scavenging):base;
 }
-function clearDeepFloor(choice){
- if(!deepChoiceOptions().includes(choice))return false;
- const floor=deepNextFloor();
- const required=deepRequiredPower(floor);
- const effective=power()*(choice==='risk'?.8:1)*(1+deepResearchBonus('navigation')*.02);
- if(!Number.isFinite(effective)||effective<required)return false;
- s.deepShards+=deepFloorReward(floor,choice);
- s.deepFloor=floor;
- save();return true;
-}
 // A deliberate choice starts a timed encounter; it does not award a floor instantly.
 // Encounter templates rotate by floor, changing choice outcomes without forcing repeated cleared floors.
 const DEEP_EVENTS=[
@@ -138,10 +128,12 @@ const DEEP_EVENTS=[
 ];
 function deepEvent(floor=deepNextFloor()){return DEEP_EVENTS[(floor-1)%DEEP_EVENTS.length];}
 function deepEncounterLimit(choice){return choice==='risk'?14:choice==='study'?22:18;}
+function deepEventModifier(floor,choice){const index=(floor-1)%DEEP_EVENTS.length;return choice==='risk'?[1.7,1.45,1.9][index]:choice==='study'?[1.2,1.4,1.15][index]:[1,1.05,.95][index];}
+function deepEventBonus(floor,choice){const index=(floor-1)%DEEP_EVENTS.length;return choice==='study'&&index===2?2:choice==='risk'&&index===1?1:0;}
 function startDeepEncounter(choice){
  if(!deepChoiceOptions().includes(choice)||s.deepEncounter)return false;
  const floor=deepNextFloor();
- const modifier=choice==='risk'?1.6:choice==='study'?1.25:1;
+ const modifier=deepEventModifier(floor,choice);
  s.deepEncounter={floor,choice,remaining:deepRequiredPower(floor)*modifier,clock:0,limit:deepEncounterLimit(choice)};
  s.deepOutcome='';
  save();return true;
@@ -156,10 +148,10 @@ function tickDeepEncounter(dt){
  if(e.remaining<=0){
   const floor=e.floor,choice=e.choice;
   s.deepEncounter=null;
-  const reward=deepFloorReward(floor,choice);
+  const reward=deepFloorReward(floor,choice)+deepEventBonus(floor,choice);
   s.deepShards+=reward;
   s.deepFloor=floor;
-  s.deepOutcome=deepEvent(floor).title+' 돌파 · 심층 결정 +'+reward;
+  s.deepOutcome=deepEvent(floor).title+' · '+deepEvent(floor)[choice]+' 성공 · 심층 결정 +'+reward;
   save();return true;
  }
  if(e.clock>=e.limit){
@@ -229,6 +221,7 @@ function renderDeepZone(){
  const encounter=s.deepEncounter;
  $('deepMessage').textContent=encounter?'탐험 전투 · 적 잔여 '+fmt(encounter.remaining)+' · 제한 '+Math.max(0,Math.ceil(encounter.limit-encounter.clock))+'초':(s.deepOutcome||'접근법을 선택해 탐험을 시작해.');
  $('deepEvent').textContent='현재 사건 · '+deepEvent().title;
+ for(const b of Array.from($('deepChoices').children)){const choice=b.dataset.deepChoice;if(choice){const name=deepEvent()[choice];const extra=deepEventBonus(deepNextFloor(),choice);b.firstChild.textContent=name;b.lastElementChild.textContent='결정 '+fmt(deepFloorReward(deepNextFloor(),choice)+extra)+'개 · 전투 부담 ×'+deepEventModifier(deepNextFloor(),choice).toFixed(2);}}
  for(const b of Array.from($('deepChoices').children))b.disabled=!!encounter;
  $('deepLeave').disabled=!encounter;
  $('deepFloor').textContent=fmt(s.deepFloor)+'층';
