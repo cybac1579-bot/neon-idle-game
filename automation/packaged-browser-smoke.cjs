@@ -55,6 +55,31 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    await page.close();
    console.log('Packaged HTTP browser smoke passed at '+width+'px');
   }
+  // Android Chrome-like context: device UA, touch, DPR and mobile viewport.
+  // This is emulation, not a physical Galaxy or an actual APK installation.
+  const android=await browser.newContext({
+   viewport:{width:412,height:915},deviceScaleFactor:2.625,isMobile:true,hasTouch:true,
+   userAgent:'Mozilla/5.0 (Linux; Android 15; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36'
+  });
+  try{
+   const page=await android.newPage();
+   const errors=[];
+   page.on('pageerror',e=>errors.push(e.message));
+   await page.goto(origin+'/index.html');
+   assert.match(await page.evaluate(()=>navigator.userAgent),/Android/,'Android mobile UA');
+   assert.equal(await page.evaluate(()=>matchMedia('(pointer: coarse)').matches),true,'touch pointer');
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'Android mobile layout fits');
+   await page.locator('[data-view="growth"]').tap();
+   await page.locator('#upgrades [data-buy="atk"]').tap();
+   assert.equal(await page.evaluate(()=>s.atk),1,'Android emulation touch purchase');
+   await page.goto(origin+'/index.html'); // triggers pagehide and reload-like navigation
+   assert.equal(await page.evaluate(()=>s.atk),1,'Android navigation retains purchase');
+   await page.locator('[data-view="deep"]').tap();
+   assert.ok(await page.locator('#deepFloor').isVisible(),'Android touch dungeon navigation');
+   assert.deepEqual(errors,[],'Android emulation no JS exceptions');
+   await page.close();
+   console.log('Packaged Android mobile emulation touch and pagehide save passed');
+  }finally{await android.close()}
  }finally{
   if(browser)await browser.close();
   await new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()));
