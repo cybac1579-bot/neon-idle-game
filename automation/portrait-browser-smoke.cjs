@@ -15,6 +15,14 @@ const assert=require('node:assert/strict');
    const status=await page.evaluate(()=>({auto:document.querySelector('#deepAuto')?.getAttribute('aria-pressed'),script:typeof window.s,gameScript:[...document.scripts].map(x=>x.src||'inline')}));
    if(status.auto!=='false')throw new Error('Deep auto UI did not initialize: '+JSON.stringify(status)+'; page errors: '+JSON.stringify(errors));
 
+   // Real wall-clock progression: no step() calls, clock mocking or injected resources.
+   const liveBefore=await page.evaluate(()=>({clock:s.cacheClock,credits:s.credits,stage:s.stage}));
+   await page.waitForTimeout(2200);
+   const liveAfter=await page.evaluate(()=>({clock:s.cacheClock,credits:s.credits,stage:s.stage}));
+   assert.ok(liveAfter.clock-liveBefore.clock>1.5,'foreground game clock advances without test acceleration');
+   assert.ok(liveAfter.clock-liveBefore.clock<4,'foreground clock does not jump excessively');
+   assert.ok(liveAfter.credits>=liveBefore.credits,'foreground resource production is nonnegative');
+   assert.ok(liveAfter.stage>=liveBefore.stage,'foreground stage does not regress');
    for(const tab of ['growth','reset','deep','stats','battle']){
     await page.locator('[data-view="'+tab+'"]').click();
     assert.equal(await page.locator('[data-view="'+tab+'"]').getAttribute('aria-pressed'),'true');
