@@ -181,6 +181,24 @@ const server = createServer((req,res)=>{
     await page.reload({waitUntil:'load',timeout:15000});mark('save-reload');
     await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
     assert.ok(await page.evaluate(()=>localStorage.getItem('neon_rework_07')),'save must survive reload');
+    // Real browser layout checks at smaller and larger portrait sizes.
+    for(const viewport of [{width:360,height:780},{width:412,height:915}]){
+      await page.setViewportSize(viewport);
+      await page.waitForTimeout(80);
+      const layout=await page.evaluate(()=>{
+        const arena=document.getElementById('combatStage').getBoundingClientRect();
+        const hero=document.getElementById('heroImage').getBoundingClientRect();
+        const enemy=document.getElementById('enemyImage').getBoundingClientRect();
+        return {scrollWidth:document.documentElement.scrollWidth,viewportWidth:innerWidth,arena:{left:arena.left,right:arena.right,height:arena.height},hero:{left:hero.left,right:hero.right,height:hero.height},enemy:{left:enemy.left,right:enemy.right,height:enemy.height}};
+      });
+      assert.ok(layout.scrollWidth<=layout.viewportWidth+1,'horizontal overflow at '+viewport.width+': '+JSON.stringify(layout));
+      assert.ok(layout.arena.height>=250,'combat arena collapsed at '+viewport.width+': '+JSON.stringify(layout));
+      assert.ok(layout.hero.height>layout.enemy.height,'hero no longer dominates at '+viewport.width);
+      assert.ok(layout.hero.left>=layout.arena.left-2&&layout.enemy.right<=layout.arena.right+2,'combat art clipped at '+viewport.width+': '+JSON.stringify(layout));
+      await page.screenshot({path:'test-results/battle-portrait-'+viewport.width+'.png',fullPage:false,timeout:10000});
+      mark('portrait-'+viewport.width+'-verified');
+    }
+    await page.setViewportSize({width:390,height:844});
     fs.writeFileSync('test-results/browser-errors.json',JSON.stringify(errors,null,2));
     assert.deepEqual(errors,[],'browser runtime errors');
     mark('all-assertions-passed');
