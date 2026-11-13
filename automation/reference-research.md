@@ -185,3 +185,10 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 - **Benefits:** **high** truthful choice presentation; **medium** fewer misinterpretations of a stalled economy; **medium** clearer contrast between passive and optional purchase behavior.
 - **Costs/risks:** **low** extra Korean heading length on portrait; **medium** cheapest choice still does not optimize player goals; **high** copying active-only quest gating or jump/tap interactions would violate user low-input constraints.
 - **Decision:** adopt only truthful hint wording (low cost); **reject** active-only quest requirements and repetitive input. Defer strategic recommendations until their effect can be validated with multiple upgrade-path simulations; do not imply price-only sorting is optimal.
+
+## 2026-11-13 11:54 KST — mobile idle-game continuity: compare priorities rather than copy mechanics
+- **Comparison basis:** existing Antimatter Dimensions and Idle Slayer reference entries in this file, plus the current game's own lifecycle/save implementation; no new external gameplay or retention claim is made in this pass.
+- **Transferable design principle:** long idle sessions and prestige progress are meaningful only if progress survives app switches and navigation. This is a reliability prerequisite, not another currency/upgrade feature. Implemented redundant `pagehide` checkpoint in `dd5ab79f`, in addition to visibility and periodic saves.
+- **Benefits:** **high** lower exposure to lost progress on page navigation; **medium** protects trust in delayed rewards; **medium** small code footprint and no extra player interaction.
+- **Costs/risks:** **medium** browser/OS may still terminate before any lifecycle callback; **medium** localStorage can fail under quota/privacy restrictions; **low** additional write on navigation. These are not fixed by merely adding a listener.
+- **Decision:** adopt the low-cost persistence checkpoint; defer speculative extra prestige or tapping systems. Next research rotation should compare offline-reward clarity and long-term save robustness, then test actual mobile behavior before claiming parity with reference titles.
