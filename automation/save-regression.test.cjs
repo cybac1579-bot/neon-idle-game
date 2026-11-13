@@ -924,11 +924,11 @@ test('deep research max bonuses do not directly explode baseline production or c
 });
 
 test('deep-zone timeout cannot be bypassed by one oversized frame',()=>{
- const b=boot({deepFloor:0,deepShards:0,lastSaved:Date.UTC(2026,10,12)});
+ const b=boot({deepFloor:30,deepShards:0,lastSaved:Date.UTC(2026,10,12)});
  assert.equal(b.get('startDeepEncounter("risk")'),true);
  b.get('s.atk=0;s.energy=0');
  assert.equal(b.get('tickDeepEncounter(100000)'),false);
- assert.equal(b.get('s.deepFloor'),0);
+ assert.equal(b.get('s.deepFloor'),30);
  assert.equal(b.get('s.deepShards'),0);
  assert.equal(b.get('s.deepEncounter'),null);
 });
