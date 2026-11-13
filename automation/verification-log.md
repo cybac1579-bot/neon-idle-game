@@ -452,3 +452,10 @@
 
 ### 13:56 KST — deployment verification
 - Pages [43368442891](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43368442891) **completed success** for exact gameplay fix `5572df40f0fa2977afa0215a30362e07d15d519c`. This confirms deployment workflow success, not a served-browser parity or physical mobile test.
+
+## 2026-11-13 14:55 KST — background double-settlement and legacy partial-save regression
+- Base main `3b7801743a76e8afd03d6ec06b281a0287b5d912`; new regression commit `21551909a4376146e7c6b4696b98fd60bcae8fe3`. Read automation README, verification log, matrix, research, and development/README.md; manual-log absent, manual files unchanged.
+- Latest existing CI [43368451366](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43368451366) passed 37/37. Latest game deployment [43368442891](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43368442891) completed success at check time; this is workflow evidence, not live browser parity.
+- Added two executable runtime regressions: (1) hidden -> pagehide -> 60s foreground -> duplicate foreground event -> same-timestamp reload must award offline time only once; (2) partial/legacy saved fields must normalize invalid numerics, traits, allocation and unlocks while retaining valid stage/currency and allowing battle/save.
+- New CI [43375261726](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43375261726) queued at initial check; **do not claim pass until result is inspected**. No gameplay code, save schema or UI changed; Pages redeployment not required for test-only commit.
+- Readiness **58% unchanged**. Risks: real Android background throttling/tab eviction, served-file parity, physical 30-minute play, and meaningful upgrade-choice feedback remain unverified. Next: inspect new CI; fix any failing regression first; then investigate offline cap/clock skew and long-session reward clarity before adding systems.
