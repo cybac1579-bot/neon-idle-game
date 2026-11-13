@@ -92,7 +92,7 @@ function allocationComparison(){
  ];
 }
 const energyRate=()=> (1+s.gen*1.7)*Math.pow(1.16,s.gen)*(1+s.relay*.65)*(1+s.coreEconomy*.12)*(1+s.coreEnergy*.18)*phaseMultiplier()*(1+traitLevel('energy')*.04);
-const power=()=> (5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(s.stage>=55&&s.allocation==='assault'?2.2:1)*(1+traitLevel('precision')*.04)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier();
+const power=()=> (5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(s.stage>=55&&s.allocation==='assault'?2.2:1)*(1+traitLevel('precision')*.04)*(1+deepResearchBonus('resilience')*.03)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier();
 const enemyHealth=stage=>Math.round(48*Math.pow(1.22,stage-1)*Math.pow(1.30,Math.floor((stage-1)/20))); // 4차: 장벽 강화, 보상 목표 병행
 const enemyReward=stage=>Math.round(16*Math.pow(1.19,stage-1)*(1+s.coreBounty*.12));
 const unlockStage={atk:1,spd:1,gen:1,amp:15,relay:25,forge:45,reactor:65};
