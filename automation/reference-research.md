@@ -226,3 +226,10 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 - **Benefit (high):** no false save success when quota is denied; **benefit (high):** a later successful retry retains already-settled progress without duplicate rewards; **benefit (medium):** no additional player tapping.
 - **Risk (high):** no local-only app can recover progress that never persisted before tab eviction; **risk (medium):** simulated browser exceptions differ from Android behavior; **cost (low):** additional regression maintenance.
 - **Decision:** add quota rejection lifecycle regression; defer new idle multiplier/forced manual save. Inspect CI before claiming coverage, then rotate to milestone choice and offline cap communication.
+
+
+## 2026-11-13 17:57 KST — idle progression visibility: use existing milestone system
+- **Basis:** existing Rogue with the Dead / Antimatter Dimensions notes and current game's UI audit, not a new external claim. The milestone goal and unlock-versus-credit distinction existed only under the statistics tab, while auto combat is the primary idle viewing surface.
+- **Benefits:** **high** visible next objective without menu hunting; **medium** rewards and unlocks become understandable during passive combat; **low implementation cost** by reusing `milestoneGoal()`.
+- **Risks:** **medium** long Korean text may wrap on small portrait screens; **medium** too much battle text could dilute visual presence; **low** rendering a read-only label each frame is redundant but already consistent with current render loop.
+- **Decision:** expose a single concise milestone label on battle, keep detailed statistics in its existing tab, add no mandatory interaction or new currencies. Verify mobile wrapping and deployment before calling it player-ready.
