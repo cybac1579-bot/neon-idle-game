@@ -181,6 +181,17 @@ body.drawer-open::before{content:"";position:fixed;inset:0;background:#09070b66;
 [data-screen="battle"] .battle-secondary .stat{padding:7px}
 [data-screen="battle"] #battleInfo{font-size:.87rem}
 [data-screen="battle"] .battle-progress{margin-top:8px}
+
+/* Portrait combat composition v2: hero/enemy silhouettes share the arena.
+   Temporary art remains; this does not imply high-resolution artwork is ready. */
+#combatStage{min-height:clamp(310px,48svh,490px);overflow:hidden;background:linear-gradient(0deg,#10121f 0%,#17172455 40%,transparent 100%),radial-gradient(ellipse at 72% 76%,#d3a16b30,transparent 48%),linear-gradient(160deg,#2c2636,#151929 70%,#282031);border:1px solid #947550;box-shadow:inset 0 0 35px #0006}
+#combatStage::after{content:"";position:absolute;z-index:0;inset:auto 0 0;height:24%;background:linear-gradient(180deg,transparent,#b88d5840 76%,#20172388);pointer-events:none}
+#combatStage .hero-art-root{left:-3%;bottom:0;width:59%;height:87%;z-index:2}
+#combatStage #enemyImage{right:5%;bottom:19%;width:36%;height:40%;z-index:2;filter:drop-shadow(0 8px 12px #0b0a13c9) drop-shadow(0 0 10px #c7a5f055)}
+#combatStage .hero-ambient{left:2%;bottom:3%;width:47%;height:73%;opacity:.27}
+#combatStage .hero-weapon-glint{left:45%;top:37%}
+#combatStage .battle-stage-label{left:auto;right:10px;top:10px;color:#f1d6a6;border:1px solid #ad8c5c;background:#191621d9}
+@media(max-width:390px){#combatStage{min-height:clamp(300px,46svh,440px)}}
 </style></head><body><main>
 <h1>✦ 네온 방치단</h1><p class="sub">도시의 균열을 돌파하는 자동 전투</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
