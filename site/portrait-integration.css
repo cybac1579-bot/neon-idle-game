@@ -38,3 +38,10 @@ body{background:radial-gradient(ellipse 90% 38% at 50% 0%,#36234c 0%,#14172d 65%
  [data-screen="deep"] .stat{padding:8px 5px;font-size:10px}
  #deepChoices button{font-size:13px}
 }
+
+/* Keep dungeon automation and exit actions comfortably tappable on narrow phones. */
+#deepAuto{min-height:58px;line-height:1.4;text-align:center}
+#deepLeave{min-height:48px;text-align:center}
+#deepAuto[aria-pressed="true"]{border-width:2px;border-color:#ffe17e}
+#deepMessage{min-height:2.5em;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:360px){#deepAuto{padding:12px 8px;font-size:12px}}
