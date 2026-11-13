@@ -639,3 +639,39 @@ test('30-minute mixed investment paths quantify speed and production complementa
  assert.equal(rows.length,12);
  console.log('30-minute mixed strategy comparison:',JSON.stringify(rows));
 });
+
+
+test('rebirth soft-wall foundation: higher push rewards more cores, reset keeps permanent progression',()=>{
+ const at99=boot({stage:99,best:99,credits:2000,heroLevel:18,heroXp:4,traitPointsEarned:17,knownUnlocks:['forge'],lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ assert.equal(at99.get('gainCore()'),0,'rebirth must not be available before unlock');
+ const at100=boot({stage:100,best:100,credits:2000,heroLevel:18,heroXp:4,traitPointsEarned:17,knownUnlocks:['forge'],lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ const at120=boot({stage:120,best:120,credits:2000,heroLevel:18,heroXp:4,traitPointsEarned:17,knownUnlocks:['forge'],lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ const reward100=at100.get('gainCore()'),reward120=at120.get('gainCore()');
+ assert.ok(reward100>0 && reward120>reward100,'pushing beyond first eligibility must improve the prestige reward');
+ assert.equal(at120.get('rebirth()'),true);
+ assert.equal(at120.get('s.stage'),1);
+ assert.equal(at120.get('s.rebirths'),1);
+ assert.equal(at120.get('s.cores'),reward120);
+ assert.equal(at120.get('s.totalCores'),reward120);
+ assert.equal(at120.get('s.best'),120,'historical best must survive');
+ assert.equal(at120.get('s.heroLevel'),18,'permanent hero progression must survive');
+ assert.ok(at120.get('s.knownUnlocks.includes("forge")'),'previously unlocked features must remain known');
+ assert.equal(at120.get('s.atk'),0,'run-only upgrades must reset');
+ assert.equal(at120.get('s.spd'),0,'run-only upgrades must reset');
+ assert.equal(at120.get('s.gen'),0,'run-only upgrades must reset');
+ assert.ok(at120.get('s.credits')>=0);
+});
+
+test('rebirth investment: persistent core power upgrades survive a second reset',()=>{
+ const b=boot({stage:120,best:120,credits:1000,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ assert.equal(b.get('rebirth()'),true);
+ assert.ok(b.get('s.cores')>=1);
+ b.get('buyCore("corePower")');
+ assert.equal(b.get('s.corePower'),1);
+ const afterInvestment=b.get('s.cores');
+ b.get('s.stage=120;s.best=120');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.corePower'),1,'core investment must remain across rebirths');
+ assert.ok(b.get('s.cores')>afterInvestment,'next push must award more permanent currency');
+ assert.equal(b.get('s.rebirths'),2);
+});
