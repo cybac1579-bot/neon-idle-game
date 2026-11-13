@@ -675,3 +675,21 @@ test('rebirth investment: persistent core power upgrades survive a second reset'
  assert.ok(b.get('s.cores')>afterInvestment,'next push must award more permanent currency');
  assert.equal(b.get('s.rebirths'),2);
 });
+
+
+test('prestige balance diagnostic: rebirth count multiplier versus purchased core power',()=>{
+ const b=boot({stage:100,best:100,credits:5000,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ const base=b.get('coreMultiplier()');
+ b.get('s.rebirths=1');
+ const once=b.get('coreMultiplier()');
+ b.get('s.rebirths=2');
+ const twice=b.get('coreMultiplier()');
+ b.get('s.rebirths=1;s.corePower=1');
+ const invested=b.get('coreMultiplier()');
+ assert.equal(base,1);
+ assert.equal(once,3);
+ assert.equal(twice,9);
+ assert.ok(invested>once,'core power purchase should still contribute');
+ assert.ok(invested<twice,'one core power level is weaker than one extra automatic rebirth');
+ console.log('Prestige multiplier diagnostic:',JSON.stringify({base,oneRebirth:once,twoRebirths:twice,oneRebirthOneCorePower:invested,corePowerGainPercent:Math.round((invested/once-1)*100)}));
+});
