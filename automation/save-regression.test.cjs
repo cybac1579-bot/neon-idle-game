@@ -693,3 +693,22 @@ test('prestige balance diagnostic: rebirth count multiplier versus purchased cor
  assert.ok(invested<twice,'one core power level is weaker than one extra automatic rebirth');
  console.log('Prestige multiplier diagnostic:',JSON.stringify({base,oneRebirth:once,twoRebirths:twice,oneRebirthOneCorePower:invested,corePowerGainPercent:Math.round((invested/once-1)*100)}));
 });
+
+
+test('prestige soft-wall diagnostic: compare identical late-stage state before and after permanent rebirth',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const snapshot={stage:100,best:100,credits:1e12,energy:1e8,atk:25,spd:20,gen:12,amp:6,relay:3,forge:2,reactor:1,lastSaved:now};
+ const baseline=boot(snapshot,now,271);
+ const post=boot({...snapshot,rebirths:1,totalCores:5,cores:4,corePower:1},now,271);
+ const stageHealth=baseline.get('enemyHealth(100)');
+ const before=baseline.get('power()/attackInterval()');
+ const after=post.get('power()/attackInterval()');
+ const gainAt100=baseline.get('gainCore()');
+ const gainAt120=baseline.get('s.stage=120;gainCore()');
+ assert.ok(stageHealth>0&&Number.isFinite(stageHealth));
+ assert.ok(after>before,'prestige investment should increase sustained damage at identical stage and upgrades');
+ assert.ok(gainAt120>gainAt100,'higher-stage push should yield higher core payout');
+ const rows={stage:100,health:stageHealth,preRebirthDps:Math.round(before),postRebirthDps:Math.round(after),dpsRatio:Number((after/before).toFixed(3)),estimatedSecondsToKillBefore:Number((stageHealth/before).toFixed(2)),estimatedSecondsToKillAfter:Number((stageHealth/after).toFixed(2)),coreReward100:gainAt100,coreReward120:gainAt120};
+ console.log('Prestige soft-wall same-state diagnostic:',JSON.stringify(rows));
+ // This is a controlled combat-only snapshot, not a full time-to-stage simulation.
+});
