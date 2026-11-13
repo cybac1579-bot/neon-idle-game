@@ -213,3 +213,10 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 - **Benefits:** **high** protects economic balance from duplicated offline payout; **high** safeguards valid historical progress; **medium** preserves low-input gameplay.
 - **Costs/risks:** **medium** simulated browser events cannot prove Android OS lifecycle behavior; **medium** long-duration clock skew and storage-denial scenarios need separate checks; **low** test maintenance cost.
 - **Decision:** adopt targeted regressions before speculative prestige/content expansion. Defer new automatic tapping or mandatory manual save actions; next rotate to offline-cap and reward transparency.
+
+## 2026-11-13 15:55 KST — offline checkpoint semantics (Rogue with the Dead / Antimatter Dimensions reference)
+- Basis: existing comparison notes and this game's verified code inspection, not new assertions about reference games' private implementations. The relevant design principle is that idle reward is tied to a settled checkpoint, not merely the last save event.
+- **Observed flaw:** a hidden tab could save a new wall-clock timestamp on pagehide without settling elapsed combat, losing earned offline time if evicted. That makes the reward feel unreliable even when combat progression works.
+- **Benefits of fix:** **high** avoids lost idle progress on eviction; **high** keeps reward exactly-once across reload; **medium** improves confidence without extra input.
+- **Costs/risks:** **medium** client clock can still be manipulated and Android behavior is not simulated perfectly; **medium** 2h offline cap may need player-facing explanation; **low** localized implementation complexity.
+- **Decision:** preserve the unsettled hidden checkpoint in save and add runtime tests. Do not add active tapping, cloud save or speculative offline multiplier; next assess whether capped reward duration is visible enough on mobile.
