@@ -31,3 +31,8 @@
 - `chromium --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-software-rasterizer --window-size=390,844 --screenshot=...` 실행을 `timeout 18s`로 제한해 재시도했으나 종료 코드 **124(시간 초과)**, 스크린샷 미생성. DBus/zygote 관련 로그만 확보. **로컬 Chromium은 여전히 불안정**, CI Chromium 4.11초 성공과 분리해 판단.
 - 로컬 ZIP은 GitHub 브랜치에 자동 동기화되지 않음. 현재 GitHub 브랜치에는 `hero_fantasy_fullbody.webp`가 없으므로 CI가 신규 원화를 렌더링했다고 주장할 수 없음.
 - 다음: GitHub API에 바이너리 bytes를 전달할 수 있는 경로를 확보해 원화 blob 등록 후 개발 브랜치에 연결. 그다음 CI 캡처/화면 확인. 로컬 브라우저에 무제한 대기하지 않는다.
+
+## 다중 세로 해상도 검증 (후속 회차)
+- 브라우저 검사 `16df7e135d0356d0fc56a91ea6ba6029917d63f2` / Actions 실행 `43514509490` **성공**.
+- 테스트에 360×780, 390×844, 412×915 CSS px 세로 화면 추가. 가로 넘침, 전투 공간 높이, 캐릭터/적 영역 배치 검사 통과.
+- artifact `14080146876` 실제 다운로드. 세 해상도 스크린샷과 브라우저 진단 파일 확인. **신규 판타지 원화는 아직 GitHub에 없으므로 검증 이미지는 레거시 주인공 기준.**
