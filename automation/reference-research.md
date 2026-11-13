@@ -275,3 +275,9 @@ Reference: https://ivark.github.io/AntimatterDimensions/ (official playable game
 - Risks/impact: (1) **high** many layered resources can overwhelm a portrait game; (2) **high** opaque exponential scaling can make choices appear meaningless; (3) **medium** extra automation and reset layers multiply save/CI maintenance.
 - Cost/expected effect: **low** to show existing next milestone and analyze current path outputs; **medium** to rebalance upgrade costs after evidence; **high** for additional meta-currencies or new reset layers. Player benefit is hypothetical until measured.
 - Decision: **apply analysis discipline only**, defer new systems. Preserve automatic battle and low-frequency optional choices, reject repeated taps. First retrieve seeded strategy numbers from CI artifact and test real portrait clarity.
+
+## 2026-11-14 00:52 KST — Idle Slayer: passive progression versus active-input traps
+- Reference: [Idle Slayer official Steam listing](https://store.steampowered.com/app/1353300/Idle_Slayer/). Qualitative design comparison, not a fresh gameplay session or measured retention claim.
+- Transferable lens: short- and long-horizon upgrade anticipation, periodic unlock feedback, and recognizable enemy/loot events. **Benefits:** high for visible rewards during passive combat, medium for clear next goals, medium for varied combat presentation.
+- Risks: high if active jumping/collection or frequent reactions are copied, medium if rewards become visually noisy on narrow screens, medium if too many upgrade branches obscure choices. **Cost:** low to audit current milestone/loot visibility, medium for restrained visual feedback, high for an action-platform control layer.
+- **Decision:** reject active collection/jumping/tap mechanics. Defer new content until CI integrity and nine-path balance evidence are reliable. Later consider passive, noninteractive combat reward cues only if mobile portrait audit shows a visibility gap.
