@@ -494,3 +494,10 @@
 
 ### 17:58 KST — CI and Pages workflow confirmation
 - [CI 43397286985](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43397286985) completed **success** for gameplay commit `795030ea` (regression job successful; exact TAP test count not independently extracted this run). [Pages 43397287028](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43397287028) completed **success** for the same gameplay commit. Earlier intermediate Pages run 43397282212 was cancelled by superseding deployment, not a failed current deploy. No live-served JS parity or real Android portrait verification performed. Readiness **58%** pending actual usability evidence.
+
+## 2026-11-13 18:56 KST — battle milestone consistency regression
+- Base main: `5420db2c66d8677c1275bdaf9c622d645d2f684c`; test commits: `d071d4dd58f1f7191ff3b36b911e50803bd3d6fe`, corrected target fixture `a8551e7117c0aa42e53918760917f65328b55b65`. No gameplay code changed.
+- Read automation policy, prior log, coverage matrix, research, manual development README and current game/test source. Manual notes preserved.
+- Scope: battle-visible milestone agrees with statistics goal at stages 1/14/179/180, including rebirth-count gate, phase availability and completed phase. Corrected fixture's initial expected stage from 5 to actual stage 10 before CI; this was test authoring, not a runtime bug.
+- Baseline: [CI 43397286985](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43397286985) and [Pages 43397287028](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43397287028) successful on gameplay `795030ea`. New test workflow outcome **pending confirmation** at writing; no new pass claim. Existing Pages deployment applies unchanged game files; served parity unverified.
+- Readiness: **58% (delta 0)**. Real Android portrait fit and 30-minute play still unverified. Next: inspect fresh CI and repair any failure; compare early upgrade strategy using simulated paths, then address evidence-based bottleneck.
