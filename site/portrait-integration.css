@@ -15,3 +15,26 @@ body{background:radial-gradient(ellipse 90% 38% at 50% 0%,#36234c 0%,#14172d 65%
 @media(max-width:390px){[data-screen="battle"]{padding:10px}[data-screen="battle"] .stat{padding:7px 5px}[data-screen="battle"] .stat strong{font-size:15px}}
 @media(max-height:650px){[data-screen="battle"] .fight{min-height:210px;padding-top:8px}[data-screen="battle"] .fight img{height:195px}}
 @media(prefers-reduced-motion:reduce){[data-screen="battle"] .fight img{animation:none!important;transition:none!important}}
+
+/* Portrait usability pass: safe-area navigation, readable dungeon decisions and 48px tap targets.
+   Static CSS review only; requires real browser/device confirmation. */
+.nav{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;overflow:visible}
+.nav button{min-width:0;min-height:48px;white-space:nowrap;line-height:1.25;text-align:center}
+#deepChoices{grid-template-columns:1fr}
+#deepChoices button{min-height:58px;padding:12px 14px;font-size:14px;line-height:1.35}
+#deepChoices button small{font-size:12px;line-height:1.4}
+[data-screen="deep"] .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+[data-screen="deep"] .stat{min-width:0;overflow-wrap:anywhere}
+[data-screen="deep"] .stat strong{font-size:clamp(14px,4vw,19px)}
+[data-screen="deep"] .hint{overflow-wrap:anywhere}
+#deepLeave{min-height:48px}
+#deepResearchList{grid-template-columns:1fr}
+#deepResearchList button{min-height:58px}
+@media(max-width:360px){
+ .nav{gap:2px}
+ .nav button{padding:9px 1px;font-size:11px}
+ [data-screen="deep"]{padding:10px}
+ [data-screen="deep"] .stats{gap:4px}
+ [data-screen="deep"] .stat{padding:8px 5px;font-size:10px}
+ #deepChoices button{font-size:13px}
+}
