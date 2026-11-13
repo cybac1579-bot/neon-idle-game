@@ -1254,3 +1254,10 @@ test('portrait five-tab navigation has matching screen sections and readable dee
  assert.match(css,/#deepAuto\[aria-pressed="true"\]/);
  assert.match(css,/#deepMessage\{min-height:2\.5em/);
 });
+
+test('brand-new save initializes deep automation as off and button state as false',()=>{
+ const b=boot(undefined);
+ assert.equal(b.get('s.deepAuto'),false);
+ assert.equal(b.get('s.deepAutoClock'),0);
+ assert.equal(b.document.getElementById('deepAuto').getAttribute('aria-pressed'),'false');
+});
