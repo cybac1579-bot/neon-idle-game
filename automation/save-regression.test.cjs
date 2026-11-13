@@ -6,7 +6,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../site/game.js'),'utf8');
-function boot(saved,now=Date.UTC(2026,10,12,0,0,0)){
+function boot(saved,now=Date.UTC(2026,10,12,0,0,0),seed=null){
   const values=new Map();
   if(saved!==undefined)values.set('neon_rework_07',JSON.stringify(saved));
   const listeners={};
@@ -26,7 +26,10 @@ function boot(saved,now=Date.UTC(2026,10,12,0,0,0)){
   const localStorage={getItem(k){return values.get(k)||null},setItem(k,v){if(denyWrites)throw new Error('QuotaExceededError');values.set(k,v)},removeItem(k){values.delete(k)}};
   const RealDate=Date;
   class FakeDate extends RealDate{static now(){return now}}
-  const ctx=vm.createContext({document,localStorage,Date:FakeDate,Math,JSON,Number,Object,Array,Set,
+  let rng=(seed===null?null:(seed>>>0));
+  const seededMath=Object.create(Math);
+  if(rng!==null)seededMath.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
+  const ctx=vm.createContext({document,localStorage,Date:FakeDate,Math:seededMath,JSON,Number,Object,Array,Set,
     performance:{now:()=>0},window:{addEventListener(name,cb){listeners['window:'+name]=cb}},requestAnimationFrame(){},confirm:()=>true});
   vm.runInContext(source,ctx,{filename:'site/game.js',timeout:15000});
   return {ctx,document,listeners,values,now,setNow(n){now=n},denyWrites(v){denyWrites=v},get(expr){return vm.runInContext(expr,ctx)}};
@@ -594,8 +597,8 @@ test('battle goal stays synchronized with milestone across early, unlock and pha
 
 test('30-minute low-input upgrade strategies compare attack, speed and energy',()=>{
  const scenarios=[];
- for(const priority of ['atk','spd','gen']){
-  const b=boot(undefined);
+ for(const seed of [17,271,2026])for(const priority of ['atk','spd','gen']){
+  const b=boot(undefined,Date.UTC(2026,10,12,0,0,0),seed);
   let purchases=0,firstRebirth=null;
   const checkpoints=[];
   for(let second=1;second<=1800;second++){
@@ -610,7 +613,7 @@ test('30-minute low-input upgrade strategies compare attack, speed and energy',(
   const final=b.get('({stage:s.stage,best:s.best,kills:s.kills,credits:s.credits,atk:s.atk,spd:s.spd,gen:s.gen})');
   assert.ok(Number.isFinite(final.credits)&&final.kills>0);
   assert.ok(purchases>0,'every strategy must afford upgrades');
-  scenarios.push({priority,purchases,firstRebirth,checkpoints,final});
+  scenarios.push({seed,priority,purchases,firstRebirth,checkpoints,final});
  }
  console.log('30-minute strategy comparison:',JSON.stringify(scenarios));
 });
