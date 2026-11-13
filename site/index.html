@@ -192,6 +192,8 @@ body.drawer-open::before{content:"";position:fixed;inset:0;background:#09070b66;
 #combatStage .hero-weapon-glint{left:45%;top:37%}
 #combatStage .battle-stage-label{left:auto;right:10px;top:10px;color:#f1d6a6;border:1px solid #ad8c5c;background:#191621d9}
 @media(max-width:390px){#combatStage{min-height:clamp(300px,46svh,440px)}}
+/* Prevent legacy portrait constraints from clipping the nested character art. */
+[data-screen="battle"] #combatStage #heroArtRoot #heroImage{max-width:none!important;width:100%;height:100%;left:0;bottom:0;object-fit:contain}
 </style></head><body><main>
 <h1>✦ 네온 방치단</h1><p class="sub">도시의 균열을 돌파하는 자동 전투</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
