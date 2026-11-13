@@ -18,3 +18,12 @@
 2. 생성된 전체 백업을 실제 재다운로드하고 ZIP CRC 및 핵심 파일 포함 여부 검사.
 3. 압축 해제 후 브라우저 테스트/실행까지 확인한 경우에만 복원 검증 성공으로 표시.
 4. 그래픽 개편 브랜치와 `main`을 혼동하지 않고 백업 대상/기준 SHA를 명시.
+
+## 실제 전체 소스 백업 성공 (2026-11-14)
+- 새 workflow: `.github/workflows/source-backup.yml`; 대상 브랜치 `development/reference-redesign`, 백업 실행 `43452895934` **성공**.
+- 백업 대상 커밋 `31bc15d547cc966a39e13f1d78aa9ca2627b104a`, GitHub Actions artifact ID `14053010778` (`redesign-source-backup`).
+- Actions 안에서 tracked files ZIP 생성 → 압축 해제 → 각 파일 SHA-256 비교 → 정적/에셋 테스트 통과.
+- artifact ZIP을 실제로 다시 다운로드해 CRC 검증. 내부 `neon-source-backup.zip` **32개 파일**, 내부 ZIP CRC 통과, `backup-zip-sha256.txt`와 SHA-256 일치, `site/index.html`, `site/game.js` 존재 확인.
+- 사용자 다운로드용 원본 ZIP을 대화 산출물 `neon-source-backup-verified.zip`으로 추출. 별도 artifact에는 `commit.txt`, `source-sha256.txt`, `backup-zip-sha256.txt`도 보관.
+- **한계:** 정적 테스트와 ZIP 복원 무결성은 확인했지만, 복원한 프로젝트의 실제 휴대전화 플레이는 미검증. 신규 판타지 원화 바이너리는 아직 저장소에 없으므로 백업에도 없음.
+- workflow는 `workflow_dispatch`를 지원하며 최초에는 workflow 파일 추가 push로 실행됨. 향후 일반 코드 변경 때마다 자동 백업되지는 않으므로 정기 백업 정책은 별도 설정이 필요함.
