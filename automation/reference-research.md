@@ -281,3 +281,15 @@ Reference: https://ivark.github.io/AntimatterDimensions/ (official playable game
 - Transferable lens: short- and long-horizon upgrade anticipation, periodic unlock feedback, and recognizable enemy/loot events. **Benefits:** high for visible rewards during passive combat, medium for clear next goals, medium for varied combat presentation.
 - Risks: high if active jumping/collection or frequent reactions are copied, medium if rewards become visually noisy on narrow screens, medium if too many upgrade branches obscure choices. **Cost:** low to audit current milestone/loot visibility, medium for restrained visual feedback, high for an action-platform control layer.
 - **Decision:** reject active collection/jumping/tap mechanics. Defer new content until CI integrity and nine-path balance evidence are reliable. Later consider passive, noninteractive combat reward cues only if mobile portrait audit shows a visibility gap.
+
+## 2026-11-14 01:50 KST — Trimps revisited: automated progress vs boss-stop clarity (different subsystem)
+
+Reference: original browser game https://trimps.github.io/ . This is a design comparison of automated advancement and optional preparation, **not** a newly verified play session or an assertion about its latest mechanics. Prior Trimps research concerned growth bottlenecks; this entry instead focuses on *communicating an automatic combat stop*.
+
+**Potential benefits (impact):** (1) a clear boss-stop explanation distinguishes deliberate progression gates from stalled automation (high); (2) a compact next-action hint can make unattended play understandable (medium-high); (3) keeping preparation choices in the growth/details view protects battle art visibility (high).
+
+**Costs/risks (impact):** (1) additional text over the combat scene may crowd narrow portrait screens (high); (2) prompts could accidentally encourage frequent manual intervention (high); (3) a new automation setting would complicate persistence and testing without proven need (medium).
+
+**Implementation cost / expected value:** low for reusing existing battle goal text and checking boss-stop messaging, medium for conditional UI changes and portrait regression tests, high for new automation rules. Value is plausible but not yet observed on a phone.
+
+**Decision:** **Audit first, defer new UI**. Existing battle goal is already present; do not add buttons, tap attacks or another resource. Next evidence: capture narrow-viewport battle screenshots and verify boss-stop versus next milestone wording during an unattended run. Only adjust wording if confusion is demonstrated. No gameplay change from this comparison.
