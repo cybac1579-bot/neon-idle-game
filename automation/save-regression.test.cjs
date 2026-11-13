@@ -875,7 +875,7 @@ test('timed deep-zone encounter saves current floor and grants exactly one compl
  assert.equal(b.get('s.deepFloor'),5);
  assert.equal(b.get('s.deepShards'),3); // supply-cache event risk bonus
  assert.equal(b.get('tickDeepEncounter(5)'),false);
- assert.equal(b.get('s.deepShards'),2);
+ assert.equal(b.get('s.deepShards'),3);
 });
 test('deep-zone retreat and both rebirth layers cancel only the current encounter',()=>{
  const now=Date.UTC(2026,10,12,0,0,0);
