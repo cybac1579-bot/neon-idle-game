@@ -868,3 +868,35 @@ test('deep-zone choice rewards differ and risk requires greater current combat s
  assert.equal(b.get('s.deepShards'),2);
  assert.equal(b.get('s.deepFloor'),1);
 });
+
+test('timed deep-zone encounter saves current floor and grants exactly one completion reward',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({deepFloor:4,deepShards:0,lastSaved:now});
+ assert.equal(b.get('startDeepEncounter("risk")'),true);
+ assert.equal(b.get('startDeepEncounter("safe")'),false);
+ assert.equal(b.get('s.deepFloor'),4);
+ assert.equal(b.get('s.deepShards'),0);
+ b.get('s.atk=100;s.energy=1e6');
+ assert.equal(b.get('tickDeepEncounter(5)'),true);
+ assert.equal(b.get('s.deepFloor'),5);
+ assert.equal(b.get('s.deepShards'),2);
+ assert.equal(b.get('tickDeepEncounter(5)'),false);
+ assert.equal(b.get('s.deepShards'),2);
+});
+test('deep-zone retreat and both rebirth layers cancel only the current encounter',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({deepFloor:9,deepShards:11,stage:180,best:180,rebirths:2,lastSaved:now});
+ assert.equal(b.get('startDeepEncounter("study")'),true);
+ assert.equal(b.get('leaveDeepEncounter()'),true);
+ assert.equal(b.get('s.deepFloor'),9);
+ assert.equal(b.get('s.deepShards'),11);
+ b.get('startDeepEncounter("safe")');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.deepEncounter'),null);
+ assert.equal(b.get('s.deepFloor'),9);
+ b.get('s.stage=180;s.rebirths=2');
+ b.get('startDeepEncounter("safe")');
+ b.get('phase()');
+ assert.equal(b.get('s.deepEncounter'),null);
+ assert.equal(b.get('s.deepFloor'),9);
+});
