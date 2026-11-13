@@ -10,6 +10,10 @@ fs.mkdirSync('test-results',{recursive:true});
 const path = require('node:path');
 const root = path.resolve('site');
 const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png'};
+const testStarted=Date.now();
+const timings=[];
+const mark=(phase)=>{const elapsedMs=Date.now()-testStarted;timings.push({phase,elapsedMs});console.log('[browser-phase]',phase,elapsedMs+'ms');fs.writeFileSync('test-results/browser-timings.json',JSON.stringify(timings,null,2));};
+mark('server-setup');
 const server = createServer((req,res)=>{
   const name = decodeURIComponent(new URL(req.url,'http://localhost').pathname);
   const target = path.resolve(root,'.'+(name==='/'?'/index.html':name));
@@ -20,18 +24,18 @@ const server = createServer((req,res)=>{
   });
 });
 (async()=>{
-  server.listen(0,'127.0.0.1');await once(server,'listening');
+  server.listen(0,'127.0.0.1');await once(server,'listening');mark('server-listening');
   const port=server.address().port;
-  const browser=await chromium.launch({headless:true,timeout:20000});
+  const browser=await chromium.launch({headless:true,timeout:20000});mark('chromium-launched');
   let page;
   try{
-    page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});
+    page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});mark('page-created');
     page.setDefaultTimeout(12000);
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     page.on('response',response=>{if(response.status()>=400&&!response.url().endsWith('/favicon.ico'))errors.push('HTTP '+response.status()+' '+response.url())});
-    await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'load'});
-    await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
+    await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'load',timeout:15000});mark('page-loaded');
+    await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);mark('game-ready');
     assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1);
     assert.equal(await page.locator('#combatStage img:not([hidden])').count(),2);
     assert.equal(await page.locator('#heroImage').count(),1,'stable hero art slot');
@@ -134,7 +138,7 @@ const server = createServer((req,res)=>{
     assert.equal(reduced.arc,'none','reduced-motion disables sword arc');
     await page.emulateMedia({reducedMotion:'no-preference'});
 
-    await page.screenshot({path:'test-results/battle-portrait.png',fullPage:true});
+    await page.screenshot({path:'test-results/battle-portrait.png',fullPage:true});mark('battle-screenshot');
     fs.writeFileSync('test-results/browser-diagnostics.json',JSON.stringify({assets,viewport:{width:390,height:844},initialStage:await page.locator('#stage').textContent()},null,2));
     for(const tab of ['growth','reset','stats','battle']){
       await page.locator('[data-view="'+tab+'"]').click();
@@ -166,7 +170,7 @@ const server = createServer((req,res)=>{
     assert.equal(await page.locator('#battleMetaToggle').getAttribute('aria-expanded'),'true','expanded state announced');
     await page.locator('#battleMetaToggle').click();
     assert.equal(await page.locator('#battleSecondary').evaluate(el=>el.hidden),true,'details collapse');
-    await page.screenshot({path:'test-results/battle-compact-portrait.png',fullPage:false});
+    await page.screenshot({path:'test-results/battle-compact-portrait.png',fullPage:false});mark('compact-screenshot');
     const size=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(size.width<=size.viewport+1,'horizontal overflow: '+JSON.stringify(size));
     await page.waitForTimeout(1000);
@@ -174,13 +178,15 @@ const server = createServer((req,res)=>{
     await page.locator('#save').click();
     const saveKey=await page.evaluate(()=>localStorage.getItem('neon_rework_07'));
     assert.ok(saveKey,'save must persist under original key');
-    await page.reload({waitUntil:'load'});
+    await page.reload({waitUntil:'load',timeout:15000});mark('save-reload');
     await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
     assert.ok(await page.evaluate(()=>localStorage.getItem('neon_rework_07')),'save must survive reload');
     fs.writeFileSync('test-results/browser-errors.json',JSON.stringify(errors,null,2));
     assert.deepEqual(errors,[],'browser runtime errors');
+    mark('all-assertions-passed');
     console.log('PASS browser startup, auto battle, 4 tabs, sprites, goal, mobile width, no runtime errors');
   } catch(error){
+    mark('failure');
     fs.writeFileSync('test-results/browser-failure.txt',String(error?.stack||error));
     if(page){try{await page.screenshot({path:'test-results/browser-failure.png',fullPage:true,timeout:5000})}catch(e){fs.writeFileSync('test-results/screenshot-failure.txt',String(e))}}
     throw error;
