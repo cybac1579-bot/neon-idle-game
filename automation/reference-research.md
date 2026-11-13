@@ -293,3 +293,10 @@ Reference: original browser game https://trimps.github.io/ . This is a design co
 **Implementation cost / expected value:** low for reusing existing battle goal text and checking boss-stop messaging, medium for conditional UI changes and portrait regression tests, high for new automation rules. Value is plausible but not yet observed on a phone.
 
 **Decision:** **Audit first, defer new UI**. Existing battle goal is already present; do not add buttons, tap attacks or another resource. Next evidence: capture narrow-viewport battle screenshots and verify boss-stop versus next milestone wording during an unattended run. Only adjust wording if confusion is demonstrated. No gameplay change from this comparison.
+
+## 2026-11-14 02:51 KST — Kittens Game: gradual automation without obligatory taps
+- Reference: https://kittensgame.com/web/ (official browser game). This is a **design-level comparison**, not a fresh complete playthrough or verification of its latest balance.
+- Potential benefits: (1) visible long-term goals and gated unlocks help explain passive resource accumulation (**high**); (2) optional automation can remove repetitive purchasing (**high**); (3) a small number of meaningful resource tradeoffs can diversify strategies (**medium**).
+- Costs/risks: (1) layered resources/buildings create major mobile portrait UI clutter (**high**); (2) frequent manual optimization would violate low-input auto-combat intent (**high**); (3) extensive economy balancing and save-schema expansion threaten first-playable stability (**high**).
+- Implementation cost: low to audit existing milestone text; medium to tune already-existing economy choices; high to introduce new resource layers. Expected near-term value: **medium for goal clarity, low for new systems**.
+- Decision: **audit existing goals and 30-minute reward milestones only; defer new currencies/building menus**. No tap-based combat or mandatory fast responses. Wait for actual seeded 3×3 metrics before balance edits.
