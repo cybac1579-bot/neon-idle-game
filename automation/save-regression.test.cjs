@@ -550,5 +550,8 @@ test('future-dated save and over-cap offline interval cannot create negative or 
   assert.equal(future.get('s.credits'),500);
   const long=boot({stage:8,best:8,credits:500,lastSaved:start-86400000},start);
   const capped=boot({stage:8,best:8,credits:500,lastSaved:start-7200000},start);
-  assert.equal(long.get('s.credits'),capped.get('s.credits'),'offline payout must cap at 7200 seconds');
+  assert.match(long.get('logText'),/방치 진행 7200초 반영/,'long absence must settle only 7200 seconds');
+  assert.match(capped.get('logText'),/방치 진행 7200초 반영/,'cap boundary must settle 7200 seconds');
+  assert.ok(Number.isFinite(long.get('s.credits'))&&Number.isFinite(capped.get('s.credits')),'capped rewards must remain finite');
+  // Combat has random crit/loot outcomes, so exact credit equality across independent boots is not valid.
 });
