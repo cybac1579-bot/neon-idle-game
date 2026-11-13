@@ -137,6 +137,17 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    httpPage.on('response',r=>{if(r.status()>=400&&!r.url().endsWith('/favicon.ico'))failed.push(r.status()+' '+r.url())});
    await httpPage.goto(origin+'/index.html');
    assert.equal(await httpPage.evaluate(()=>typeof s),'object','HTTP game initializes');
+   const manifestResponse=await httpPage.request.get(origin+'/manifest.webmanifest');
+   assert.equal(manifestResponse.status(),200,'manifest served');
+   const manifest=await manifestResponse.json();
+   assert.equal(manifest.display,'standalone','standalone mobile app display');
+   assert.equal(manifest.orientation,'portrait','portrait mobile orientation');
+   assert.equal(manifest.start_url,'./index.html','manifest uses relative start URL');
+   const iconResponse=await httpPage.request.get(origin+'/app-icon.svg');
+   assert.equal(iconResponse.status(),200,'app icon served');
+   assert.match(await iconResponse.text(),/<svg/,'app icon SVG valid root');
+   assert.equal(await httpPage.locator('link[rel="manifest"]').getAttribute('href'),'manifest.webmanifest','document advertises manifest');
+
    await httpPage.locator('[data-view="growth"]').click();
    await httpPage.locator('#upgrades [data-buy="atk"]').click();
    assert.equal(await httpPage.evaluate(()=>s.atk),1,'HTTP origin real first purchase');
