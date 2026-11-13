@@ -169,3 +169,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Foreground real-time Chromium progression vs existing 30-minute simulation
 - Added non-accelerated 2.2-second foreground Chromium checks at 360px and 412px: cache clock advances 1.5–4 seconds, credits do not decrease without user purchase, stage does not regress. The same browser smoke continues through purchases, rebirth, core upgrades and reload.
 - CI **43526704121 passed**: 83 Node regressions and Chromium browser smoke. Existing 1800-second VM proxy tests remain in the suite (manual cheapest-upgrade purchase cadence and dungeon policy comparison). Browser smoke is 2.2 seconds per viewport, **not** a real 30-minute browser run; VM model is not proof of human pacing. Readiness remains 60%.
+
+## 2026-11-14 — First-session real-time browser controls and objective
+- Extended Chromium 360px/412px smoke to check visible battle goal, rebirth locked before stage 100, initial 30-credit wallet can buy first 18-credit attack upgrade via real button without resource injection, credits decrease, and battle objective persists after another 8 seconds of real time. Existing smoke then continues with injected test fixtures for deep/rebirth/cores.
+- CI **43526847386 passed**: 83 Node regressions plus real Chromium smoke. The new early-session segment is ~10 seconds per viewport, not 30 minutes or a human feel test. First playable readiness stays 60%.
