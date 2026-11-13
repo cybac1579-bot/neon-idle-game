@@ -119,7 +119,23 @@ const assert=require('node:assert/strict');
   longPage.on('pageerror',e=>longErrors.push(e.message));
   await longPage.goto('file://'+path.resolve(__dirname,'../site/index.html'));
   const start=await longPage.evaluate(()=>({clock:s.cacheClock,credits:s.credits,stage:s.stage}));
-  await longPage.waitForTimeout(62000);
+  // Checkpoint each quarter-minute while the real game loop continues.
+  for(let quarter=0;quarter<4;quarter++){
+   await longPage.waitForTimeout(15500);
+   const tab=['growth','stats','battle','growth'][quarter];
+   await longPage.locator('[data-view="'+tab+'"]').click();
+   assert.ok(await longPage.locator('[data-screen="'+tab+'"]').first().isVisible(),'long-run tab '+tab);
+   const checkpoint=await longPage.evaluate(()=>{
+    const saved=save();
+    const raw=localStorage.getItem(KEY);
+    const snapshot=raw?JSON.parse(raw):null;
+    return {saved,clock:s.cacheClock,stage:s.stage,credits:s.credits,storedStage:snapshot?.stage,storedCredits:snapshot?.credits};
+   });
+   assert.equal(checkpoint.saved,true,'quarter-minute save succeeds');
+   assert.equal(checkpoint.storedStage,checkpoint.stage,'checkpoint stage matches storage');
+   assert.equal(checkpoint.storedCredits,checkpoint.credits,'checkpoint credits match storage');
+   assert.ok(Number.isFinite(checkpoint.credits)&&checkpoint.credits>=0,'checkpoint economy finite');
+  }
   const end=await longPage.evaluate(()=>({clock:s.cacheClock,cache:s.cacheCredits,credits:s.credits,stage:s.stage}));
   assert.ok(end.clock>=0&&end.clock<10,'60-second timed cache clock rolls over');
   assert.ok(end.cache>0,'real minute creates claimable credits without injected state');
