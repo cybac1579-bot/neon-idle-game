@@ -873,7 +873,7 @@ test('timed deep-zone encounter saves current floor and grants exactly one compl
  b.get('s.atk=100;s.energy=1e6');
  assert.equal(b.get('tickDeepEncounter(5)'),true);
  assert.equal(b.get('s.deepFloor'),5);
- assert.equal(b.get('s.deepShards'),2);
+ assert.equal(b.get('s.deepShards'),3); // supply-cache event risk bonus
  assert.equal(b.get('tickDeepEncounter(5)'),false);
  assert.equal(b.get('s.deepShards'),2);
 });
