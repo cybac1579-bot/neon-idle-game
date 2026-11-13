@@ -922,3 +922,23 @@ test('deep research max bonuses do not directly explode baseline production or c
  assert.ok(b.get('deepEventBonus(3,"study")')>b.get('deepEventBonus(3,"safe")'));
  assert.ok(b.get('deepEventBonus(2,"risk")')>b.get('deepEventBonus(2,"safe")'));
 });
+
+test('deep-zone timeout cannot be bypassed by one oversized frame',()=>{
+ const b=boot({deepFloor:0,deepShards:0,lastSaved:Date.UTC(2026,10,12)});
+ assert.equal(b.get('startDeepEncounter("risk")'),true);
+ b.get('s.atk=0;s.energy=0');
+ assert.equal(b.get('tickDeepEncounter(100000)'),false);
+ assert.equal(b.get('s.deepFloor'),0);
+ assert.equal(b.get('s.deepShards'),0);
+ assert.equal(b.get('s.deepEncounter'),null);
+});
+test('research max bonus is finite across ordinary and phase resets',()=>{
+ const b=boot({stage:180,best:180,rebirths:2,deepFloor:40,deepShards:200,deepResearch:{scavenging:5,navigation:5,resilience:5},lastSaved:Date.UTC(2026,10,12)});
+ const c=b.get('creditRate()'),p=b.get('power()');
+ assert.ok(Number.isFinite(c)&&c>0&&Number.isFinite(p)&&p>0);
+ b.get('phase()');
+ assert.equal(b.get('s.deepFloor'),40);
+ assert.equal(b.get('s.deepShards'),200);
+ assert.equal(b.get('s.deepResearch.scavenging'),5);
+ assert.ok(Number.isFinite(b.get('power()')));
+});
