@@ -576,3 +576,17 @@ test('hidden save rejection does not stop offline settlement or falsely confirm 
  const reload=boot(saved,start+60000);
  assert.equal(reload.get('s.credits'),saved.credits,'successful retry must not double award on reload');
 });
+
+test('battle goal stays synchronized with milestone across early, unlock and phase gates',()=>{
+  for(const [stage,rebirths,phases,expected] of [
+    [1,0,0,'STAGE 5'],[14,0,0,'STAGE 15'],[179,0,0,'STAGE 180'],
+    [180,0,0,'재구성 누적 2회'],[180,2,0,'위상 전환 가능'],
+    [180,2,1,'위상 전환 달성']
+  ]){
+    const b=boot({stage,best:stage,rebirths,phases,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+    b.get('render()');
+    const battle=b.document.getElementById('battleGoal').textContent;
+    assert.ok(battle.includes(expected),`stage ${stage} rebirths ${rebirths} phases ${phases}: ${battle}`);
+    assert.ok(b.document.getElementById('goal').textContent.includes(battle),'battle and stats goals should agree');
+  }
+});
