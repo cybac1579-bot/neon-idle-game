@@ -134,7 +134,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    const httpPage=await browser.newPage({viewport:{width:360,height:850},isMobile:true,hasTouch:true});
    const failed=[];
    httpPage.on('pageerror',e=>failed.push(e.message));
-   httpPage.on('response',r=>{if(r.status()>=400)failed.push(r.status()+' '+r.url())});
+   httpPage.on('response',r=>{if(r.status()>=400&&!r.url().endsWith('/favicon.ico'))failed.push(r.status()+' '+r.url())});
    await httpPage.goto(origin+'/index.html');
    assert.equal(await httpPage.evaluate(()=>typeof s),'object','HTTP game initializes');
    await httpPage.locator('[data-view="growth"]').click();
