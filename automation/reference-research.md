@@ -206,3 +206,10 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 - **Benefits:** **high** prevents false assurance and potential lost progress; **medium** gives actionable recovery information; **low** minimal implementation and no extra taps.
 - **Costs/risks:** **medium** localStorage can still be unavailable and no durable backup exists; **medium** small-screen battle log may obscure warning; **low** no additional gameplay choice is created.
 - **Decision:** adopt truthful confirmation in `5572df40` and test it. Defer adding speculative cloud saves or mandatory manual checkpoints. Next comparison should focus on background progress messaging and actual mobile readability, not repetitive input.
+
+## 2026-11-13 14:55 KST — Rogue with the Dead / Antimatter Dimensions: offline settlement reliability
+- **Basis:** previously recorded reference notes on idle progress and reset loops, compared with current game's `visibilitychange`, `pagehide`, `settleElapsed`, and partial-save normalization. This is a design inference rather than a newly verified claim about either game's internal implementation.
+- **Transferable lesson:** meaningful idle progress must be paid exactly once when resuming; an accidental duplicate reward can invalidate pacing, and a corrupted legacy save must not silently erase valid stage/currency. The current test additions cover those invariants without adding player interactions.
+- **Benefits:** **high** protects economic balance from duplicated offline payout; **high** safeguards valid historical progress; **medium** preserves low-input gameplay.
+- **Costs/risks:** **medium** simulated browser events cannot prove Android OS lifecycle behavior; **medium** long-duration clock skew and storage-denial scenarios need separate checks; **low** test maintenance cost.
+- **Decision:** adopt targeted regressions before speculative prestige/content expansion. Defer new automatic tapping or mandatory manual save actions; next rotate to offline-cap and reward transparency.
