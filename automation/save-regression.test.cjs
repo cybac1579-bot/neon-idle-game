@@ -22,13 +22,14 @@ function boot(saved,now=Date.UTC(2026,10,12,0,0,0)){
   }
   const document={hidden:false,getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id)},
     createElement(){return element()},addEventListener(name,cb){listeners[name]=cb}};
-  const localStorage={getItem(k){return values.get(k)||null},setItem(k,v){values.set(k,v)},removeItem(k){values.delete(k)}};
+  let denyWrites=false;
+  const localStorage={getItem(k){return values.get(k)||null},setItem(k,v){if(denyWrites)throw new Error('QuotaExceededError');values.set(k,v)},removeItem(k){values.delete(k)}};
   const RealDate=Date;
   class FakeDate extends RealDate{static now(){return now}}
   const ctx=vm.createContext({document,localStorage,Date:FakeDate,Math,JSON,Number,Object,Array,Set,
     performance:{now:()=>0},window:{addEventListener(name,cb){listeners['window:'+name]=cb}},requestAnimationFrame(){},confirm:()=>true});
   vm.runInContext(source,ctx,{filename:'site/game.js',timeout:15000});
-  return {ctx,document,listeners,values,now,setNow(n){now=n},get(expr){return vm.runInContext(expr,ctx)}};
+  return {ctx,document,listeners,values,now,setNow(n){now=n},denyWrites(v){denyWrites=v},get(expr){return vm.runInContext(expr,ctx)}};
 }
 test('invalid timestamp does not award phantom offline progress',()=>{
   const b=boot({stage:1,lastSaved:null,credits:30});
@@ -554,4 +555,24 @@ test('future-dated save and over-cap offline interval cannot create negative or 
   assert.match(capped.get('logText'),/방치 진행 7200초 반영/,'cap boundary must settle 7200 seconds');
   assert.ok(Number.isFinite(long.get('s.credits'))&&Number.isFinite(capped.get('s.credits')),'capped rewards must remain finite');
   // Combat has random crit/loot outcomes, so exact credit equality across independent boots is not valid.
+});
+
+
+test('hidden save rejection does not stop offline settlement or falsely confirm persistence',()=>{
+ const start=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:8,best:8,credits:500,lastSaved:start},start);
+ b.denyWrites(true);b.document.hidden=true;
+ assert.doesNotThrow(()=>b.listeners.visibilitychange());
+ assert.match(b.get('logText'),/저장 실패/);
+ b.setNow(start+60000);assert.doesNotThrow(()=>b.listeners['window:pagehide']());
+ assert.equal(JSON.parse(b.values.get('neon_rework_07')).lastSaved,start);
+ b.document.hidden=false;
+ assert.doesNotThrow(()=>b.listeners.visibilitychange());
+ assert.ok(b.get('s.credits')>500,'unsaved session still settles offline progress in memory');
+ assert.match(b.get('logText'),/저장 실패/,'failed settlement save must warn rather than claim durability');
+ b.denyWrites(false);assert.equal(b.get('save()'),true);
+ const saved=JSON.parse(b.values.get('neon_rework_07'));
+ assert.equal(saved.lastSaved,start+60000);
+ const reload=boot(saved,start+60000);
+ assert.equal(reload.get('s.credits'),saved.credits,'successful retry must not double award on reload');
 });
