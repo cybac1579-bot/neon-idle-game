@@ -797,3 +797,46 @@ test('new core investment effects are real and distinct',()=>{
  assert.ok(b.get('enemyReward(100)')>baseline[2]);
  assert.ok(b.get('attackInterval()')<baseline[3]);
 });
+
+test('deep-zone floors and research survive ordinary and higher rebirth without replay',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:180,best:180,rebirths:2,deepFloor:50,deepShards:17,deepResearch:{scavenging:2,navigation:1},lastSaved:now});
+ assert.equal(b.get('deepNextFloor()'),51);
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('deepNextFloor()'),51);
+ assert.equal(b.get('s.deepShards'),17);
+ assert.equal(b.get('s.deepResearch.scavenging'),2);
+ b.get('s.stage=180;s.rebirths=2');
+ b.get('phase()');
+ assert.equal(b.get('deepNextFloor()'),51);
+ assert.equal(b.get('s.deepShards'),17);
+ assert.equal(b.get('s.deepResearch.navigation'),1);
+});
+test('deep-zone floor is gated by current power and cannot be claimed twice without advancing',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({deepFloor:0,deepShards:0,lastSaved:now});
+ assert.equal(b.get('clearDeepFloor("invalid")'),false);
+ const requirement=b.get('deepRequiredPower()');
+ assert.ok(requirement>0);
+ b.get('s.atk=0;s.energy=0');
+ if(b.get('power()')<requirement)assert.equal(b.get('clearDeepFloor("safe")'),false);
+ b.get('s.atk=100;s.energy=1e6');
+ assert.equal(b.get('clearDeepFloor("safe")'),true);
+ assert.equal(b.get('s.deepFloor'),1);
+ assert.equal(b.get('s.deepShards'),1);
+ assert.equal(b.get('deepNextFloor()'),2);
+ assert.equal(b.get('clearDeepFloor("invalid")'),false);
+ assert.equal(b.get('s.deepShards'),1);
+});
+test('deep-zone research uses only shards, caps levels and sanitizes old save',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({deepFloor:-100,deepShards:100,deepResearch:{scavenging:99,navigation:2,resilience:-9},lastSaved:now});
+ assert.equal(b.get('s.deepFloor'),0);
+ assert.equal(b.get('s.deepResearch.scavenging'),5);
+ assert.equal(b.get('s.deepResearch.resilience'),0);
+ assert.equal(b.get('buyDeepResearch("scavenging")'),false);
+ const cores=b.get('s.cores');
+ assert.equal(b.get('buyDeepResearch("navigation")'),true);
+ assert.equal(b.get('s.deepResearch.navigation'),3);
+ assert.equal(b.get('s.cores'),cores);
+});
