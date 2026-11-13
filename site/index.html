@@ -20,7 +20,7 @@ html{-webkit-text-size-adjust:100%;touch-action:manipulation}body{min-width:0}ma
 @keyframes hero-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes enemy-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes boss-presence{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.035)}}
-</style></head><body><main>
+</style><link rel="stylesheet" href="portrait-integration.css"></head><body><main>
 <h1>✦ 네온 방치단 <span class="pill">MOBILE 40</span></h1><p class="sub">환생 · 생산 계층 · 단계별 자동화 중심의 새로운 실험 빌드</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
 <section data-screen="battle" class="panel"><p class="sub" id="heroGrowth" aria-live="polite"></p><div class="stats"><div class="stat">현재 스테이지<strong id="stage"></strong></div><div class="stat">최고 기록<strong id="best"></strong></div><div class="stat">환생 횟수<strong id="rebirths"></strong></div></div><div class="fight"><img src="seha_portrait.webp" alt="전투 캐릭터"><img id="enemyImage" src="enemy_scout.svg" alt="적"></div><div class="bar"><div id="hpBar"></div></div><p class="sub" id="battleInfo"></p><p class="sub" id="battleGoal" aria-live="off"></p><p class="log" id="log"></p></section>
