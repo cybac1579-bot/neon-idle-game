@@ -526,3 +526,29 @@ test('legacy partial save normalizes corrupt numeric and optional fields while r
   assert.doesNotThrow(()=>b.get('step(1,false)'));
   assert.equal(b.get('save()'),true);
 });
+
+
+test('pagehide while hidden preserves unpaid offline time across tab eviction',()=>{
+  const start=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:8,best:8,credits:500,lastSaved:start},start);
+  b.document.hidden=true;
+  b.listeners.visibilitychange();
+  b.setNow(start+60000);
+  b.listeners['window:pagehide']();
+  const saved=JSON.parse(b.values.get('neon_rework_07'));
+  assert.equal(saved.lastSaved,start,'pagehide must not advance settlement timestamp while hidden');
+  const reloaded=boot(saved,start+60000);
+  assert.ok(reloaded.get('s.credits')>saved.credits,'reload should award previously unpaid hidden progress');
+  assert.equal(reloaded.get('s.lastSaved'),start+60000,'settlement checkpoint must advance after reward');
+  const again=boot(JSON.parse(reloaded.values.get('neon_rework_07')),start+60000);
+  assert.equal(again.get('s.credits'),reloaded.get('s.credits'),'same-time reload must not duplicate offline reward');
+});
+
+test('future-dated save and over-cap offline interval cannot create negative or unlimited rewards',()=>{
+  const start=Date.UTC(2026,10,12,0,0,0);
+  const future=boot({stage:8,best:8,credits:500,lastSaved:start+86400000},start);
+  assert.equal(future.get('s.credits'),500);
+  const long=boot({stage:8,best:8,credits:500,lastSaved:start-86400000},start);
+  const capped=boot({stage:8,best:8,credits:500,lastSaved:start-7200000},start);
+  assert.equal(long.get('s.credits'),capped.get('s.credits'),'offline payout must cap at 7200 seconds');
+});
