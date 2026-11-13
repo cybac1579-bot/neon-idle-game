@@ -474,3 +474,16 @@ test('storage quota/privacy rejection does not crash combat or silently claim sa
   assert.doesNotThrow(()=>b.get('loop(1000)'));
   assert.equal(b.get('save()'),false);
 });
+
+
+test('manual save button reports success only after durable storage write',()=>{
+  const b=boot(undefined);
+  b.document.getElementById('save').onclick();
+  assert.equal(b.get('logText'),'저장 완료');
+  assert.ok(b.values.has('neon_rework_07'));
+  b.ctx.localStorage.setItem=()=>{throw new Error('QuotaExceededError')};
+  b.document.getElementById('save').onclick();
+  assert.match(b.get('logText'),/저장 실패/);
+  assert.doesNotMatch(b.get('logText'),/저장 완료/);
+  assert.doesNotThrow(()=>b.get('step(1,false)'));
+});
