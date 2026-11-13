@@ -173,3 +173,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — First-session real-time browser controls and objective
 - Extended Chromium 360px/412px smoke to check visible battle goal, rebirth locked before stage 100, initial 30-credit wallet can buy first 18-credit attack upgrade via real button without resource injection, credits decrease, and battle objective persists after another 8 seconds of real time. Existing smoke then continues with injected test fixtures for deep/rebirth/cores.
 - CI **43526847386 passed**: 83 Node regressions plus real Chromium smoke. The new early-session segment is ~10 seconds per viewport, not 30 minutes or a human feel test. First playable readiness stays 60%.
+
+## 2026-11-14 — Visible next-growth purchase guidance
+- Added `#growthNext` immediately before growth upgrade buttons; render reuses `actionableGoal()` to show affordable cheapest upgrade, owned/required credits, and basic-production wait estimate if short. No extra battle-screen clutter.
+- Extended Chromium first-session check for guidance before/after actual initial purchase. CI **43527116211 passed**: 83 Node regressions + 360/412px Chromium smoke. UI placement and calculations verified, not player comprehension or a full 30-minute real-time play. First playable readiness remains 60%.
