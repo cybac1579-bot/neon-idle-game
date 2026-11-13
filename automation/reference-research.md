@@ -267,3 +267,11 @@ Reference: https://ivark.github.io/AntimatterDimensions/ (official playable game
 - Applicable: optional formation/strategy changes while combat continues autonomously. Benefits: **high** maintains visible combat without rapid taps; **medium** distinct tactical choices; **medium** gives waiting time a clear purpose.
 - Costs/risks: **high** importing a full party/formation roster bloats portrait UI and balance; **medium** automation may hide why a build works; **medium** extra choices can become mandatory micromanagement. Implementation cost: **low** to expose existing growth goals, **medium** to validate strategic tradeoffs, **high** to copy roster mechanics.
 - Decision: **defer** new party systems. Prioritize numerical validation of existing attack/speed/energy paths and read-only goal cues. Reject mandatory tapping, timed reactions, and crowded combat controls.
+
+## 2026-11-13 23:54 KST — NGU Idle: delayed progress visibility versus excessive meta-complexity
+- Reference: [NGU Idle official Steam listing](https://store.steampowered.com/app/1147690/NGU_IDLE/). Qualitative comparison only; no new hands-on session or quantitative retention claim.
+- Transferable principle: persistent incremental growth benefits from a clearly visible next achievable goal and an understandable long-term upgrade path, even while moment-to-moment progress is automatic.
+- Benefits/impact: (1) **high** long-horizon targets can make waiting purposeful; (2) **medium** distinct growth investments support optional strategic agency; (3) **medium** post-reset acceleration gives prior progress meaning.
+- Risks/impact: (1) **high** many layered resources can overwhelm a portrait game; (2) **high** opaque exponential scaling can make choices appear meaningless; (3) **medium** extra automation and reset layers multiply save/CI maintenance.
+- Cost/expected effect: **low** to show existing next milestone and analyze current path outputs; **medium** to rebalance upgrade costs after evidence; **high** for additional meta-currencies or new reset layers. Player benefit is hypothetical until measured.
+- Decision: **apply analysis discipline only**, defer new systems. Preserve automatic battle and low-frequency optional choices, reject repeated taps. First retrieve seeded strategy numbers from CI artifact and test real portrait clarity.
