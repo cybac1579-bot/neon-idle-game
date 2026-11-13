@@ -23,6 +23,6 @@ jobs:
         run: |
           test -s site/portrait-integration.css
           grep -q 'href="portrait-integration.css"' site/index.html
-          git diff dbfb7a759f2f4d4947db4fdb3fc18c5bbbf03fb1 HEAD -- site/game.js | grep -q '^$' || { echo 'Game logic changed'; exit 1; }
+          git diff --quiet dbfb7a759f2f4d4947db4fdb3fc18c5bbbf03fb1 HEAD -- site/game.js || { echo 'Game logic changed'; exit 1; }
       - name: Existing save and gameplay regression suite
         run: node --test automation/save-regression.test.cjs
