@@ -991,3 +991,22 @@ test('30-minute scripted active-play comparison checks progression without runaw
  assert.ok(lastMax.stage<=lastBase.stage+60,'stage acceleration: '+JSON.stringify({base,lastMax,max}));
  assert.ok(lastMax.deepFloor<=lastBase.deepFloor+30,'max research should not trivialize 30+ additional dungeon floors');
 });
+
+test('30-minute dungeon currency does not buy every permanent research level',()=>{
+ const snapshots=simulatedThirtyMinuteRun({scavenging:0,navigation:0,resilience:0});
+ const earned=snapshots.at(-1).shards;
+ const totalCost=3*[0,1,2,3,4].reduce((sum,level)=>sum+5*Math.pow(3,level),0);
+ assert.ok(earned<totalCost,'30-minute shard yield '+earned+' must not max the entire catalog costing '+totalCost);
+});
+test('rebirth retains dungeon depth but removes immediate combat strength needed for next high floor',()=>{
+ const b=boot({stage:180,best:180,rebirths:2,deepFloor:50,deepShards:100,lastSaved:Date.UTC(2026,10,12)});
+ b.get('s.atk=100;s.energy=1e10');
+ const before=b.get('power()');
+ b.get('rebirth()');
+ assert.equal(b.get('deepNextFloor()'),51);
+ assert.equal(b.get('s.deepShards'),100);
+ assert.ok(b.get('power()')<before);
+ assert.equal(b.get('startDeepEncounter("safe")'),true);
+ assert.equal(b.get('tickDeepEncounter(18)'),false);
+ assert.equal(b.get('s.deepFloor'),50);
+});
