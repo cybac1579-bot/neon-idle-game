@@ -579,7 +579,7 @@ test('hidden save rejection does not stop offline settlement or falsely confirm 
 
 test('battle goal stays synchronized with milestone across early, unlock and phase gates',()=>{
   for(const [stage,rebirths,phases,expected] of [
-    [1,0,0,'STAGE 5'],[14,0,0,'STAGE 15'],[179,0,0,'STAGE 180'],
+    [1,0,0,'STAGE 10'],[14,0,0,'STAGE 15'],[179,0,0,'STAGE 180'],
     [180,0,0,'재구성 누적 2회'],[180,2,0,'위상 전환 가능'],
     [180,2,1,'위상 전환 달성']
   ]){
