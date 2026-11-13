@@ -45,3 +45,8 @@ body{background:radial-gradient(ellipse 90% 38% at 50% 0%,#36234c 0%,#14172d 65%
 #deepAuto[aria-pressed="true"]{border-width:2px;border-color:#ffe17e}
 #deepMessage{min-height:2.5em;line-height:1.5;overflow-wrap:anywhere}
 @media(max-width:360px){#deepAuto{padding:12px 8px;font-size:12px}}
+
+/* Growth: keep next action scannable above upgrade cards on portrait screens. */
+#growthNext{margin:10px 0 8px;padding:10px 12px;border-left:3px solid #ffe17e;background:rgba(255,225,126,.07);font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+[data-screen="growth"] #upgrades button{min-height:58px;overflow-wrap:anywhere}
+@media(max-width:360px){#growthNext{font-size:12px;padding:9px 10px}}
