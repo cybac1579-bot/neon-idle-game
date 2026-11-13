@@ -35,6 +35,13 @@ const server = createServer((req,res)=>{
     assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1);
     assert.equal(await page.locator('#combatStage img:not([hidden])').count(),2);
     assert.equal(await page.locator('#heroImage').count(),1,'stable hero art slot');
+    const heroAsset=await page.locator('#heroImage').evaluate(img=>({loaded:img.complete&&img.naturalWidth>0,width:img.naturalWidth,height:img.naturalHeight,source:img.getAttribute('src')}));
+    assert.ok(heroAsset.loaded,'hero art file must actually load in Chromium');
+    assert.ok(heroAsset.width>0&&heroAsset.height>0,'hero art must have measurable pixel dimensions');
+    if(heroAsset.source==='hero_fantasy_fullbody.webp'){
+      assert.ok(heroAsset.width>=1000&&heroAsset.height>=1400,'production fantasy heroine must be high resolution');
+    }
+
     assert.equal(await page.locator('#heroArtRoot .hero-part[hidden]').count(),2,'future hair and coat art slots remain hidden until assets exist');
     const composition=await page.evaluate(()=>{
       const arena=document.getElementById('combatStage').getBoundingClientRect();
