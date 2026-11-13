@@ -165,3 +165,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Real browser growth / rebirth / core purchase loop
 - Expanded 360px/412px Playwright Chromium smoke: click normal attack growth purchase; set up eligible stage 110 for deterministic rebirth test; accept native confirmation dialog; assert stage/normal upgrades reset, cores/rebirth count increase, persistent deep floor/shards preserved; click permanent core power upgrade; reload and assert core and deep progress persist.
 - CI **43526531400 passed** (83 Node regressions + Chromium smoke). Stage 110 is deliberately test-fixtured, not evidence of reaching it through real-time 30-minute play. Android physical-device and 30-minute human experience remain unverified. First playable readiness 60% pending broader gameplay test.
+
+## 2026-11-14 — Foreground real-time Chromium progression vs existing 30-minute simulation
+- Added non-accelerated 2.2-second foreground Chromium checks at 360px and 412px: cache clock advances 1.5–4 seconds, credits do not decrease without user purchase, stage does not regress. The same browser smoke continues through purchases, rebirth, core upgrades and reload.
+- CI **43526704121 passed**: 83 Node regressions and Chromium browser smoke. Existing 1800-second VM proxy tests remain in the suite (manual cheapest-upgrade purchase cadence and dungeon policy comparison). Browser smoke is 2.2 seconds per viewport, **not** a real 30-minute browser run; VM model is not proof of human pacing. Readiness remains 60%.
