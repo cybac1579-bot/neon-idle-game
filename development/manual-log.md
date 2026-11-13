@@ -16,3 +16,9 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 2. Append user feedback and newly confirmed decisions with date, branch, commit, actual tests, remaining risks, and next step.
 3. Keep **manual** notes here; never claim they are a complete transcript or replace source verification.
 4. If a test fails, investigate and fix before adding new features. Never treat passing unit tests as proof of real-device visuals or fun.
+
+## 2026-11-14 — Cosmetic-only customization confirmed and implemented
+- User clarified that swapping outfits/characters is **strictly for visual variety**, not a gameplay stat, skill, growth, or balance system. Preserve this as a hard design constraint; avoid cosmetic pay-to-win mechanics or character stat variants.
+- Implemented isolated `site/cosmetics.js` registry and separate `neon_cosmetic_v1` localStorage key, with normalized fallback and storage-denial warning. Added `heroImage` and cosmetic character/outfit selectors **only in the stats tab**, not on the combat canvas. Only existing `seha_portrait.webp` is registered; no claim that new character art or outfits exist yet.
+- Commits: cosmetic registry `4c0160f2`, HTML selectors `0b39ab1f`, targeted workflow checks `062ca2eb`. Existing `site/game.js` and game-save key remain untouched. Cosmetic changes must not alter stats or require gameplay save migrations.
+- At writing: latest workflow result for these commits **not yet verified**; real Android/browser appearance and save persistence remain unverified. Next verify CI, then use actual screenshots/asset checks before integrating into main.
