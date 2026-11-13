@@ -248,3 +248,10 @@ Reference: https://ivark.github.io/AntimatterDimensions/ (official playable game
 - **Potential benefits:** (high) distinct attack versus speed versus production choices; (medium) clearer 30-minute goals; (medium) meaningful optional decision every 60s rather than forced actions.
 - **Risks/costs:** (high) copying multiple manual resource loops would violate low-input constraint; (medium) apparent strategy differences can be random loot artifacts; (medium) balancing one route may make others obsolete. Comparative VM fixture is low implementation cost; any tuning is medium cost due to combat/economy interaction.
 - **Decision:** defer balance changes until new 3-path 30-minute fixture CI and logs are verified. Reject manual tapping/resource micromanagement; retain automatic combat and visible battlefield. This pass does not establish superiority of any path.
+
+
+## 2026-11-13 20:53 KST — Universal Paperclips: milestone pacing versus opaque optimization
+- Reference: [Universal Paperclips (official playable site)](https://www.decisionproblem.com/paperclips/). This is a qualitative design comparison, **not** measured retention or a claim about its exact internal balancing.
+- Transferable idea: a small set of clear near-term goals can create anticipation while deeper systems unlock later. **Benefits:** (high) meaningful progression visibility; (medium) low-input decisions can remain occasional; (medium) staged unlocks reduce early UI clutter.
+- Tradeoffs: (high) copying its frequent decision/optimization loop could violate our passive-play promise; (medium) overly opaque unlocks obscure 30-minute goals; (medium) adding new resources raises save migration and balance costs. Cost **low** to audit existing milestone wording, **medium** to adjust unlock pacing, **high** for new currencies.
+- Decision: **defer** new systems. Apply only the principle of legible optional choices to the existing 30-minute path comparison; require numerical multi-seed evidence and mobile observation before tuning. No repetitive tapping, mandatory micromanagement or new battle-screen controls.
