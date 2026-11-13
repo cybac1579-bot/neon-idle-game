@@ -942,3 +942,17 @@ test('research max bonus is finite across ordinary and phase resets',()=>{
  assert.equal(b.get('s.deepResearch.scavenging'),5);
  assert.ok(Number.isFinite(b.get('power()')));
 });
+
+test('ten-minute controlled growth comparison: deep research does not change ordinary progression by orders of magnitude',()=>{
+ const now=Date.UTC(2026,10,12);
+ const seed={stage:1,best:1,credits:30,energy:0,atk:8,spd:5,gen:5,forge:1,rebirths:1,lastSaved:now};
+ const plain=boot({...seed,deepResearch:{scavenging:0,navigation:0,resilience:0}},now,123);
+ const researched=boot({...seed,deepResearch:{scavenging:5,navigation:5,resilience:5}},now,123);
+ for(let i=0;i<600;i++){plain.get('step(1,false)');researched.get('step(1,false)');}
+ const creditsA=plain.get('s.credits'),creditsB=researched.get('s.credits');
+ const stageA=plain.get('s.stage'),stageB=researched.get('s.stage');
+ assert.ok(creditsB>=creditsA,'research should not reduce credit growth');
+ assert.ok(creditsB/Math.max(1,creditsA)<2,'research must not multiply fixed-build credit growth by orders of magnitude');
+ assert.ok(stageB>=stageA,'research should not reduce fixed-build combat progress');
+ assert.ok(stageB<=stageA+40,'fixed-build research alone should not skip dozens of extra stages');
+});
