@@ -142,9 +142,11 @@ function tickDeepEncounter(dt){
  const e=s.deepEncounter;
  if(!e||!Number.isFinite(dt)||dt<=0)return false;
  // Current-run combat strength only. Rebirth cancels the active attempt.
- const damage=power()*(1+deepResearchBonus('navigation')*.02)*dt/Math.max(.1,attackInterval());
+ const remainingTime=Math.max(0,e.limit-e.clock);
+ const elapsed=Math.min(dt,remainingTime);
+ const damage=power()*(1+deepResearchBonus('navigation')*.02)*elapsed/Math.max(.1,attackInterval());
  e.remaining=Math.max(0,e.remaining-damage);
- e.clock+=dt;
+ e.clock+=elapsed;
  if(e.remaining<=0){
   const floor=e.floor,choice=e.choice;
   s.deepEncounter=null;
