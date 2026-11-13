@@ -1010,3 +1010,35 @@ test('rebirth retains dungeon depth but removes immediate combat strength needed
  assert.equal(b.get('tickDeepEncounter(18)'),false);
  assert.equal(b.get('s.deepFloor'),50);
 });
+
+function simulatedRebirthPolicy(threshold,seed=7123){
+ const now=Date.UTC(2026,10,12);
+ const b=boot({stage:1,best:1,credits:30,energy:0,deepFloor:0,deepShards:0,lastSaved:now},now,seed);
+ const snapshots=[];let firstEligible=null;let firstRebirth=null;let attempts=0;
+ for(let second=1;second<=1800;second++){
+  b.get('step(1,true)');
+  if(second%3===0)b.get('(()=>{const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k));options.sort((a,b)=>cost(a)-cost(b));if(options.length)purchase(options[0]);})()');
+  if(second%30===0){b.get('startDeepEncounter("safe")');attempts++;}
+  if(firstEligible===null&&b.get('gainCore()')>0)firstEligible=second;
+  if(threshold!==null&&second%5===0&&b.get('gainCore()')>=threshold){
+   if(b.get('rebirth()')&&firstRebirth===null)firstRebirth=second;
+  }
+  if(second%300===0)snapshots.push({seconds:second,stage:b.get('s.stage'),best:b.get('s.best'),rebirths:b.get('s.rebirths'),deepFloor:b.get('s.deepFloor'),shards:b.get('s.deepShards'),cores:b.get('s.cores'),power:b.get('power()')});
+ }
+ return {firstEligible,firstRebirth,attempts,snapshots};
+}
+test('30-minute active policy comparison includes manual rebirth and persistent deep floors',()=>{
+ const noReset=simulatedRebirthPolicy(null);
+ const early=simulatedRebirthPolicy(5);
+ const delayed=simulatedRebirthPolicy(30);
+ console.log('30m rebirth policies:',JSON.stringify({noReset,early,delayed}));
+ assert.equal(noReset.snapshots.length,6);
+ for(const run of [early,delayed]){
+  assert.ok(run.firstEligible!==null);
+  assert.ok(run.firstRebirth!==null);
+  assert.ok(run.snapshots.at(-1).rebirths>=1);
+  assert.ok(run.snapshots.at(-1).deepFloor>=0);
+  assert.ok(run.snapshots.every(p=>Number.isFinite(p.power)&&p.power>0));
+  assert.ok(run.snapshots.every((p,i,a)=>i===0||p.deepFloor>=a[i-1].deepFloor),'rebirth must never reduce deepest floor');
+ }
+});
