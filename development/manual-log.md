@@ -185,3 +185,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — One real minute of Chromium idle progression
 - Added a separate fresh 360px Chromium browser scenario running 62 actual seconds (no mocked clock, no injected credits): assert 60-second periodic credit cache accrues and timer wraps; claim through real growth UI; verify currency increases and cache decreases; reload and verify claimed credits persist. Also checks no browser JS errors and stage/currency nonregression.
 - CI **43527625168 passed**, alongside 83 Node regressions and the prior 360/412px browser flows. This verifies a 1-minute idle payout, not a 30-minute human play session or Galaxy device. First playable readiness 61% (a previously untested timed reward now verified end-to-end).
+
+## 2026-11-14 — Live 62-second periodic save/navigation stress
+- Expanded the real-time Chromium 62-second run into four 15.5-second checkpoints, switching growth/stats/battle/growth tabs, calling save and comparing localStorage JSON stage/credits against in-memory state, checking finite economy. Existing timed payout claim/reload checks still run at the end.
+- CI **43528003870 passed** (83 Node regressions + Chromium 360/412px flows and live 62-second stress). This is a short endurance checkpoint, not a 30-minute real browser run or Android device test. First playable readiness stays 61%.
