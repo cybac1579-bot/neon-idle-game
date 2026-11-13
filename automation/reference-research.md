@@ -220,3 +220,9 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 - **Benefits of fix:** **high** avoids lost idle progress on eviction; **high** keeps reward exactly-once across reload; **medium** improves confidence without extra input.
 - **Costs/risks:** **medium** client clock can still be manipulated and Android behavior is not simulated perfectly; **medium** 2h offline cap may need player-facing explanation; **low** localized implementation complexity.
 - **Decision:** preserve the unsettled hidden checkpoint in save and add runtime tests. Do not add active tapping, cloud save or speculative offline multiplier; next assess whether capped reward duration is visible enough on mobile.
+
+## 2026-11-13 16:56 KST — reliability before adding idle bonuses
+- Existing Rogue with the Dead / Antimatter Dimensions comparisons suggest treating reliable persistence and legible long-term progress as prerequisites for new offline reward multipliers. This is an application to our game, not a claim about their private save code.
+- **Benefit (high):** no false save success when quota is denied; **benefit (high):** a later successful retry retains already-settled progress without duplicate rewards; **benefit (medium):** no additional player tapping.
+- **Risk (high):** no local-only app can recover progress that never persisted before tab eviction; **risk (medium):** simulated browser exceptions differ from Android behavior; **cost (low):** additional regression maintenance.
+- **Decision:** add quota rejection lifecycle regression; defer new idle multiplier/forced manual save. Inspect CI before claiming coverage, then rotate to milestone choice and offline cap communication.
