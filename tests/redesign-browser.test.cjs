@@ -43,6 +43,10 @@ const server = createServer((req,res)=>{
       return {arena:{x:arena.x,y:arena.y,width:arena.width,height:arena.height},hero:{x:hero.x,y:hero.y,width:hero.width,height:hero.height},enemy:{x:enemy.x,y:enemy.y,width:enemy.width,height:enemy.height}};
     });
     assert.ok(composition.arena.height>=280,'portrait arena must be tall enough');
+    assert.ok(composition.hero.width/composition.arena.width<.65,'hero should leave room for enemies in portrait view');
+    assert.ok(composition.enemy.width/composition.arena.width<.45,'enemy should not overwhelm the hero');
+    assert.ok(composition.hero.x+composition.hero.width<composition.enemy.x+composition.enemy.width,'silhouettes must retain separate visual centers');
+
     assert.ok(composition.hero.height>composition.enemy.height,'hero art must dominate composition');
     assert.ok(composition.hero.width/composition.arena.width>.60,'legacy max-width must not shrink hero art');
     assert.ok(composition.hero.x>=composition.arena.x-1&&composition.enemy.x+composition.enemy.width<=composition.arena.x+composition.arena.width+1,'art must fit inside arena');
