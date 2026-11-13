@@ -985,6 +985,8 @@ test('30-minute scripted active-play comparison checks progression without runaw
   assert.ok(Number.isInteger(snap.deepFloor)&&snap.deepFloor>=0);
  }
  const lastBase=base.at(-1),lastMax=max.at(-1);
+ console.log('30m scripted baseline:',JSON.stringify(base));
+ console.log('30m scripted max research:',JSON.stringify(max));
  assert.ok(lastMax.stage>=lastBase.stage);
  assert.ok(lastMax.stage<=lastBase.stage+60,'max research should not skip 60+ extra stages in this scripted policy');
  assert.ok(lastMax.deepFloor<=lastBase.deepFloor+30,'max research should not trivialize 30+ additional dungeon floors');
