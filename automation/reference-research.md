@@ -233,3 +233,11 @@ Sources: official Steam description https://store.steampowered.com/app/1482860/I
 - **Benefits:** **high** visible next objective without menu hunting; **medium** rewards and unlocks become understandable during passive combat; **low implementation cost** by reusing `milestoneGoal()`.
 - **Risks:** **medium** long Korean text may wrap on small portrait screens; **medium** too much battle text could dilute visual presence; **low** rendering a read-only label each frame is redundant but already consistent with current render loop.
 - **Decision:** expose a single concise milestone label on battle, keep detailed statistics in its existing tab, add no mandatory interaction or new currencies. Verify mobile wrapping and deployment before calling it player-ready.
+
+
+## 2026-11-13 18:56 KST — Antimatter Dimensions: milestone visibility versus automation complexity
+Reference: https://ivark.github.io/AntimatterDimensions/ (official playable game).
+- Transferable concept: clear next reset or unlock goal and long-horizon scaling, while keeping routine progression automatic. **Benefits:** visible direction (high), anticipation of permanent gain (high), reduced need for frequent taps (medium).
+- Tradeoffs: many nested currencies/upgrade layers overwhelm portrait combat UI (high), opaque exponential costs can hide meaningful choice (high), fast repeated resets can undermine a 30-minute first run (high).
+- Implementation cost: low for reusing current milestone labels, medium for better path comparisons, high for new reset layers/save migration.
+- Decision: **apply only consistency verification now**; defer new currencies and reset mechanics. Existing automatic combat and optional low-frequency choices remain unchanged. Added a milestone/phase guidance regression fixture; test result pending CI.
