@@ -1,0 +1,49 @@
+name: Manual HTTPS preview deployment (approval required)
+# This workflow never deploys on push. Publish only after explicitly selecting
+# this workflow from Actions and confirming that Pages is public.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_public_preview:
+        description: 'Type PUBLISH to acknowledge this Pages preview may be publicly accessible'
+        required: true
+        type: string
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: neon-idle-manual-pages-preview
+  cancel-in-progress: false
+jobs:
+  build-and-deploy:
+    if: ${{ inputs.confirm_public_preview == 'PUBLISH' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/portrait-first-playable-20261114
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium for release build and checks
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run gameplay regression checks
+        run: node --test automation/save-regression.test.cjs
+      - name: Build exact mobile web distribution
+        run: node automation/build-mobile-web.cjs
+      - name: Validate distribution on Chromium before publishing
+        run: node automation/packaged-browser-smoke.cjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/neon-idle
+      - name: Deploy to GitHub Pages (public preview)
+        id: deployment
+        uses: actions/deploy-pages@v4
