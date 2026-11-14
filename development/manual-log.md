@@ -250,3 +250,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Expand packaged UI audit to all five tabs
 - Verified CI **43535056208** uploaded non-expired artifacts: `neon-idle-portrait-visual-evidence` (1,860,926 bytes) and `neon-idle-portrait-web-preview` (220,312 bytes). These metadata confirm uploaded files exist, not visual quality; image bytes not directly inspected here.
 - Extended `automation/packaged-browser-smoke.cjs` to navigate all five player tabs (battle/growth/reset/deep/stats), assert selected tab and visible panel, and check horizontal overflow, clipped and undersized visible buttons at 360/412 CSS px. CI pending; readiness stays **69%** until verified.
+
+## 2026-11-14 — All five portrait menus pass and gain visual artifacts
+- CI **43535320269 passed** all five-tab packaged mobile browser audit at 360/412 CSS pixels, including tab selection, visible panels, no horizontal overflow, clipped buttons, or visible buttons below 40px. This verifies only checked states, not subjective ergonomics.
+- Extended packaged screenshots from battle/deep to **battle/growth/reset/deep/stats** at both widths (10 PNGs total), including the existing PNG size/signature assertions for every view. New CI pending. Screenshots are for subsequent human design review; image contents not yet visually inspected.
+- Readiness **70%** after validated all-tab coverage; real Galaxy S25+ 30-minute play and public HTTPS preview remain pending.
