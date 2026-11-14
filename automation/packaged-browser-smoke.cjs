@@ -80,6 +80,35 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    await page.close();
    console.log('Packaged Android mobile emulation touch and pagehide save passed');
   }finally{await android.close()}
+  // Browser-process restart with the same persistent profile, rather than a simple reload.
+  // Models the common Android Chrome close/reopen path (not OS force-stop or storage eviction).
+  const os=require('node:os');
+  const profile=fs.mkdtempSync(path.join(os.tmpdir(),'neon-idle-profile-'));
+  let persistent;
+  try{
+   const config={headless:true,viewport:{width:412,height:915},deviceScaleFactor:2.625,isMobile:true,hasTouch:true,args:['--no-sandbox']};
+   persistent=await chromium.launchPersistentContext(profile,config);
+   let page=persistent.pages()[0]||await persistent.newPage();
+   await page.goto(origin+'/index.html');
+   await page.locator('[data-view="growth"]').tap();
+   await page.locator('#upgrades [data-buy="atk"]').tap();
+   assert.equal(await page.evaluate(()=>s.atk),1,'persistent profile initial upgrade');
+   await page.evaluate(()=>save());
+   const saved=await page.evaluate(()=>({atk:s.atk,credits:s.credits,stage:s.stage}));
+   await persistent.close();
+   persistent=null;
+   persistent=await chromium.launchPersistentContext(profile,config);
+   page=persistent.pages()[0]||await persistent.newPage();
+   await page.goto(origin+'/index.html');
+   const restored=await page.evaluate(()=>({atk:s.atk,credits:s.credits,stage:s.stage}));
+   assert.equal(restored.atk,saved.atk,'browser restart retains upgrade');
+   assert.ok(restored.credits>=saved.credits,'browser restart retains and may settle idle credits');
+   assert.ok(restored.stage>=saved.stage,'browser restart retains stage');
+   console.log('Packaged browser profile close/reopen persistent save passed');
+  }finally{
+   if(persistent)await persistent.close();
+   fs.rmSync(profile,{recursive:true,force:true});
+  }
  }finally{
   if(browser)await browser.close();
   await new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()));
