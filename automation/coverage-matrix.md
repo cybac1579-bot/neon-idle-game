@@ -28,6 +28,9 @@
 | Push CI after pipefail fix / seeded strategy fixture | 2026-11-14 02:51 KST, `4891e23b` | [Push run 43456982503](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43456982503) **success**, Node regression step **success**; `regression-results` artifact ID 14053499044 (3,621 B) exists; [seeded run 43428819583](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43428819583) success | **CI execution confirmed; numerical 3×3 checkpoints still not inspected**. Next obtain artifact text and evaluate strategies, not just test pass/fail. |
 | Pages workflow / live parity recheck | 2026-11-14 02:51 KST, main `df7cc3da` | Latest returned Deploy Neon Idle Game push run [43397287028](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43397287028) **success** for gameplay `795030ea`; current main documentation newer | **High:** served Pages bytes, narrow viewport, device and 30-minute feel unverified; historical deploy success only. |
 
+| Production source / portrait evidence audit | 2026-11-15 03:56 KST, base `9678ff40` | Read `site/game.js`, `site/index.html`, `automation/portrait-smoke.cjs` and manual boundary index; first-fold overlap test is source-correct but **no Chromium run/artifact observed** | **Critical:** obtain push-run result and actual screenshot; inspect sprite readability and overlay, then save/restore and live parity |
+| Reference: Cell to Singularity | 2026-11-15 03:56 KST | Design-only comparison; https://celltosingularity.com/ ; not tested hands-on | Reuse milestone clarity in existing growth/details view; defer trees/currencies and tap demands |
+
 The table tracks actual evidence, not assumed passing tests. Refer to `automation/README.md` for separation from manual logs.
 
 
