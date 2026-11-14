@@ -151,7 +151,7 @@ const server=createServer((req,res)=>{
      step(31,false);
      const locked=s.atk+s.spd+s.gen;
      s.autoLevel=1;s.autoPurchaseClock=0;
-     step(29,false);
+     step(9,false);
      const beforeInterval=s.atk+s.spd+s.gen;
      step(1.1,false);
      const afterInterval=s.atk+s.spd+s.gen;
