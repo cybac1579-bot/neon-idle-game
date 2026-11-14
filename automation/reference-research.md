@@ -436,3 +436,13 @@ Reference: https://celltosingularity.com/ (official project site; design-level c
 **Risks (impact):** (1) broad thematic tech trees inflate scope and save migration burden (high); (2) extra currencies and unlock layers obscure the first-playable goal (high); (3) manual tapping or repeated collection would violate the fixed low-input rule (critical).
 **Cost / expectation:** low for a read-only next-unlock explanation using existing state; medium for new unlock behavior and balancing; potential value is unverified until browser/device 30-minute observation.
 **Decision:** **selectively consider** concise existing-milestone guidance after current portrait CI and screenshots are verified. **Defer** new currencies, branching trees, tap actions and other new mechanics. Next verification: measure whether a player can identify the next objective in the first 60 seconds without opening several panels.
+
+
+## 2026-11-15 04:57 KST — Kittens Game: visible long-term resource bottlenecks
+Source: https://kittensgame.com/web/ (primary game website; **not independently played in this run**). Design comparison is conceptual rather than a claim of observed mechanics in the current build.
+
+**Transferable principle:** the next meaningful bottleneck should be legible while automation runs, and resource accumulation should communicate *why* an unlock matters. For Neon, existing tier-first auto-buy may create periods where affordable low-tier upgrades are ignored; this is intentional priority but could be confusing without a clear next-tier objective.
+
+**Advantages:** (1) next-tier target explanation can make passive waiting purposeful (high); (2) explicit unlock gating can help understand auto-buy choices (high); (3) no extra combat input is needed (high).
+**Disadvantages:** (1) dense resource tables would clutter portrait combat (high); (2) excessive forward previews can spoil progression (medium); (3) dynamic affordability forecasts may be unstable with variable drops (medium).
+**Implementation cost:** low-medium for a read-only next-target explanation in Growth/Stats; high for new production chains. **Decision:** consider the explanation only after verifying the highest-tier auto-buy fixture and 30-minute economy; defer new resources and any click-driven production. No gameplay changes from this research.
