@@ -10,6 +10,9 @@ on:
       - '.github/workflows/portrait-integration.yml'
 permissions:
   contents: read
+concurrency:
+  group: portrait-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   regression:
     runs-on: ubuntu-24.04
