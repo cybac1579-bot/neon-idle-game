@@ -255,3 +255,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - CI **43535320269 passed** all five-tab packaged mobile browser audit at 360/412 CSS pixels, including tab selection, visible panels, no horizontal overflow, clipped buttons, or visible buttons below 40px. This verifies only checked states, not subjective ergonomics.
 - Extended packaged screenshots from battle/deep to **battle/growth/reset/deep/stats** at both widths (10 PNGs total), including the existing PNG size/signature assertions for every view. New CI pending. Screenshots are for subsequent human design review; image contents not yet visually inspected.
 - Readiness **70%** after validated all-tab coverage; real Galaxy S25+ 30-minute play and public HTTPS preview remain pending.
+
+## 2026-11-14 — Inactive-tab visibility guard and screenshot consistency
+- Added packaged-browser assertion that **no panels belonging to other tabs remain visible** when each of five tabs is selected at 360/412 CSS px. This catches overlapping/incompletely hidden screens.
+- Removed duplicate post-purchase battle/deep screenshot overwrites so the 10 images consistently represent pre-purchase five-tab navigation state.
+- Prior 10-screenshot CI **43535634379 still running** at observation; new commit requires a fresh CI pass. Readiness remains **70%** pending confirmation. No public deployment.
