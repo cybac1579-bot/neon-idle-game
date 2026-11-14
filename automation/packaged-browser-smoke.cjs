@@ -81,8 +81,8 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
     const png=fs.readFileSync(filename);
     assert.ok(png.length>1000,'nonempty screenshot '+view+' '+width);
     assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a','PNG screenshot signature');
-    assert.equal(png.readUInt32BE(16),width,'screenshot width matches viewport');
-    assert.ok(png.readUInt32BE(20)>=850,'full-page screenshot height');
+    assert.equal(png.readUInt32BE(16),width*2,'screenshot pixel width matches viewport times deviceScaleFactor');
+    assert.ok(png.readUInt32BE(20)>=850*2,'full-page screenshot pixel height');
    }
    assert.deepEqual(errors,[],'packaged browser JS and HTTP errors');
    await page.close();
