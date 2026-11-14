@@ -329,3 +329,11 @@ Reference (official listing, not hands-on validation): https://store.steampowere
 - Cons (impact): (1) naive DPS projection misses boss gates and random effects (high); (2) extra numbers clutter narrow combat UI (high); (3) precise payback calculations may be misleading under nonlinear rewards (medium).
 - Cost: low-medium for a read-only approximate growth detail; medium for simulation-backed marginal ROI, localization and save/viewport regression. Expected effect: clearer choice, not guaranteed faster progression.
 - Decision: **defer implementation until 12-path numeric evidence is extracted**; if justified, add optional explanatory detail in growth/statistics view only. Reject click-to-attack mechanics and high-frequency interactions outright.
+
+## 2026-11-14 14:51 KST — Cell to Singularity: milestones without tapping pressure
+- Reference: https://www.celltosingularity.com/ (official game site). This is a conceptual comparison, not an instrumented gameplay session.
+- Transferable principle: distinct progression milestones can change the *meaning* of the next goal, not merely increase a number. For Neon, existing stage/boss/skill unlocks can serve as landmarks while automatic combat continues.
+- Advantages (impact): clear next unlock supports idle motivation (high); milestones can differentiate otherwise repetitive stages (medium-high); reuse existing stage state avoids extra currencies (medium).
+- Risks (impact): an overlong tech/unlock tree would overwhelm portrait UI (high); too-frequent milestones dilute boss identity (medium); copying active click incentives conflicts with no-tap constraint (critical).
+- Cost/expected effect: low to audit existing stage goals and wording; medium for new milestone effects and balancing. A clearer goal is plausible but not player-proven.
+- Decision: **apply only clarity principles** within existing growth/stats screen; defer new research trees, currencies, and tap/click production. No source assets or formulas copied. Next: measure 30-minute goal visibility and stage-unlock comprehension in portrait browser.
