@@ -34,6 +34,7 @@ jobs:
           node --check site/cosmetics.js
           node -e "const fs=require('fs');const s=fs.readFileSync('site/cosmetics.js','utf8');if(!s.includes('neon_cosmetic_v1')||s.includes('neon_rework_07'))process.exit(1)"
           node --check site/game.js
+          node --check automation/local-preview.cjs
       - name: Verify public preview cannot deploy automatically
         run: node automation/pages-release-safety.test.cjs
       - name: Existing save and gameplay regression suite
