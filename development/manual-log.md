@@ -241,3 +241,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - CI **43534748134 failed** in packaged-browser smoke because PNG screenshot physical width was 720 pixels for a 360 CSS-pixel viewport at DPR 2. The prior assertion incorrectly expected CSS width; failure was in test expectation, not evidence of UI clipping.
 - Corrected PNG dimensions to `width*2` and `850*2` for the existing `deviceScaleFactor:2` context; kept clipped/tiny touch-control checks unchanged. CI **43535056208 pending**. Next: inspect this run; fix any genuine UI defects, not relax touch thresholds.
 - First playable readiness **68%** until CI succeeds and UI audit results verified.
+
+## 2026-11-14 — DPR fix and packaged mobile control audit passed
+- CI **43535056208 completed successfully** after correcting screenshot pixel dimension assertions for DPR 2. Existing gameplay regression, 62-second real-browser idle, package generation, screenshot upload, and generated-distribution browser smoke passed.
+- Packaged browser audit now verifies 360/412 CSS-pixel battle/deep views for horizontal overflow, clipped buttons and controls smaller than 40 CSS pixels. No failures observed in those checked states. This is automated viewport validation, not human visual review or real Android hardware ergonomics.
+- First playable readiness **69%** after verified mobile control regression coverage. Next prioritize direct human visual review of CI screenshot artifacts and real device 30-minute play; do not mistake CI for that acceptance.
