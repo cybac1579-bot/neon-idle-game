@@ -202,6 +202,9 @@ const server=createServer((req,res)=>{
     balancePage.on('pageerror',e=>balanceErrors.push(e.message));
     await balancePage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
     const balance=await balancePage.evaluate(()=>{
+     // Fixed PRNG keeps economic tuning comparisons reproducible across CI runs.
+     let rng=20261114;
+     Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
      const checkpoints=[];
      let firstReconstructionAt=null;
      for(let t=1;t<=3600;t++){
