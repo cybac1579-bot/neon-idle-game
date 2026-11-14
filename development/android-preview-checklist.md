@@ -27,5 +27,5 @@
 ## PC에서 비공개로 먼저 실행하기
 1. 통합 브랜치 프로젝트를 내려받아 Node.js 22와 Chromium/Playwright 의존성을 준비한다. 이미 성공한 Actions 빌드의 `neon-idle-portrait-web-preview` 아티팩트만 받은 경우에는 `dist/neon-idle/`에 압축을 풀고 프로젝트의 `automation/local-preview.cjs`를 함께 사용한다.
 2. 소스에서 빌드할 때: `npm install --no-save --no-package-lock playwright@1.56.1`, `npx playwright install chromium`, `node automation/build-mobile-web.cjs` 순으로 실행한다.
-3. `node automation/local-preview.cjs` 실행 후 터미널에 출력된 `http://127.0.0.1:<포트>/` 주소를 **같은 PC 브라우저**에서 연다. 서버는 127.0.0.1에만 바인딩하고 종료는 Ctrl+C다. 포트는 매번 달라질 수 있어 로컬 저장 데이터가 이어지지 않을 수 있다.
+3. `node automation/local-preview.cjs` 실행 후 터미널에 출력된 `http://127.0.0.1:<포트>/` 주소를 **같은 PC 브라우저**에서 연다. 서버는 127.0.0.1에만 바인딩하고 종료는 Ctrl+C다. 포트는 4173으로 고정해 동일한 브라우저의 로컬 저장 origin을 유지한다. 다른 프로그램이 이미 해당 포트를 사용 중이면 오류가 출력된다.
 4. 이 경로는 공개 배포나 갤럭시 테스트를 대신하지 않는다. 모바일 설치와 30분 실기기 검증에는 별도 승인된 HTTPS 경로가 필요하다.
