@@ -93,7 +93,7 @@ function allocationComparison(){
 }
 const energyRate=()=> (1+s.gen*1.7)*Math.pow(1.16,s.gen)*(1+s.relay*.65)*(1+s.coreEconomy*.12)*phaseMultiplier()*(1+traitLevel('energy')*.04);
 const power=()=> Math.min(1e100,(5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(s.stage>=55&&s.allocation==='assault'?2.2:1)*(1+traitLevel('precision')*.04)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier());
-const enemyHealth=stage=>Math.min(1e100,Math.round(48*Math.pow(1.255,stage-1)*Math.pow(1.30,Math.floor((stage-1)/20)))); // 4차: 장벽 강화, 보상 목표 병행
+const enemyHealth=stage=>Math.min(1e100,Math.round(48*Math.pow(1.26,stage-1)*Math.pow(1.30,Math.floor((stage-1)/20))*Math.pow(1.4,Math.max(0,stage-100)))); // 4차: 장벽 강화, 보상 목표 병행
 const enemyReward=stage=>Math.min(1e100,Math.round(16*Math.pow(1.19,stage-1)));
 const unlockStage={atk:1,spd:1,gen:1,amp:15,relay:25,forge:45,reactor:65};
 const costs={atk:[18,1.31],spd:[28,1.36],gen:[22,1.29],amp:[130,1.43],relay:[1200,1.55],forge:[6500,1.48],reactor:[75000,1.66]};
