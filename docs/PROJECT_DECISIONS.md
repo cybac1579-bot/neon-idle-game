@@ -35,3 +35,11 @@ Updated: 2026-11-14. Status: user-confirmed direction; implementation is NOT imp
 
 ## Change protocol
 When user revises a rule, update this file with date, exact new decision and superseded rule. Never silently erase disagreements. Cross-reference docs/IMPLEMENTATION_STATUS.md and docs/DEVELOPMENT_HANDOFF.md.
+
+## Economy redesign decisions — 2026-11-14 (latest user confirmations)
+- The former single 60-second credit collection is a TEMPORARY implementation, not the intended final mechanic. Replace it with several independent time-based repeatable credit quests (e.g. 3s, 6s, 30s), each with its own duration and payout. These are timed jobs, NOT enemy-kill or milestone quests.
+- Timed quests REPLACE the existing single collection source; do not add them on top of it as a fourth credit source. Audit combat bounty, passive production, traits, permanent multipliers and timed-job income together to prevent runaway stacking.
+- Higher enemy HP and early resistance are acceptable and desirable when they make equipment, skills and timed-job credits genuinely useful. Avoid dead ends: meaningful counterplay must be available before a wall.
+- Efficient first reconstruction target remains ~60 minutes, calibrated with all growth sources, not merely HP/cost inflation.
+- Automatic purchasing prioritizes the HIGHEST UNLOCKED UPGRADE TIER (unlock-stage order), not the highest purchase price and not the cheapest purchase. Within the same tier preserve stable existing ordering; if a higher tier is unaffordable, fall back to the highest affordable tier. Implemented on integration branch at be86f7e177d0068a65be3de53ca34ac0a82776d9.
+- Do not request additional user settings before investigating and balancing; make evidence-based tuning decisions and report measured results separately from estimates.
