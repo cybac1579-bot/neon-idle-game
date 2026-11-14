@@ -20,6 +20,18 @@ html{-webkit-text-size-adjust:100%;touch-action:manipulation}body{min-width:0}ma
 @keyframes hero-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes enemy-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes boss-presence{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.035)}}
+
+/* Integration v1: visual-only portrait combat hierarchy; gameplay bindings untouched. */
+@media (max-width:520px){
+ [data-screen="battle"]{background:linear-gradient(180deg,#26213f,#17213b 65%,#13192c);border-color:#685b87;box-shadow:0 12px 30px #0006}
+ [data-screen="battle"] .fight{position:relative;min-height:clamp(265px,40svh,390px);align-items:flex-end;gap:2px;padding:20px 4px 18px;border:1px solid #6de5e433;border-radius:14px;background:radial-gradient(ellipse at 50% 88%,#2bb8bb35,transparent 55%),linear-gradient(180deg,#171a36,#222344)}
+ [data-screen="battle"] .fight img{height:clamp(220px,36svh,350px);width:49%;max-width:49%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 12px 12px #0009)}
+ [data-screen="battle"] .stats{position:relative;z-index:1;gap:5px}
+ [data-screen="battle"] .stat{background:#111b34cc;border:1px solid #60739955}
+ [data-screen="battle"] .bar{height:12px;border:1px solid #785f87}
+}
+@media (max-height:650px) and (max-width:520px){[data-screen="battle"] .fight{min-height:205px}[data-screen="battle"] .fight img{height:195px}}
+@media (prefers-reduced-motion:reduce){[data-screen="battle"] .fight img{animation:none!important;transition:none!important}}
 </style></head><body><main>
 <h1>✦ 네온 방치단 <span class="pill">MOBILE 40</span></h1><p class="sub">환생 · 생산 계층 · 단계별 자동화 중심의 새로운 실험 빌드</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
