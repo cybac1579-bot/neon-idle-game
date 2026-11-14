@@ -215,3 +215,9 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - Added generated-bundle Chromium smoke for simulated static hosting at `/neon-idle-game/`: relative scripts, CSS, standalone manifest scope/start URL, PNG icons, first purchase and localStorage save/reload. CI **43531970060 passed**, including existing regressions, live idle test, and artifact upload.
 - Added `development/android-preview-checklist.md`: HTTPS hosting prerequisites, Android Galaxy portrait 30-minute test plan, origin-bound save caveats, acceptance criteria. No public hosting deployed, no HTTPS certificate or real device installation tested.
 - First playable readiness **67%** for validated nested-path hosting compatibility; 30-minute hands-on gameplay and Android real-device remain open.
+
+## 2026-11-14 — Manual Pages release safety guard
+- Previous integration CI **43532337471 passed** after adding manual Pages workflow.
+- GitHub Pages settings endpoint could not be accessed through the available GitHub connector (HTTP 400 unsupported endpoint); **existing Pages source, live URL, and overwrite safety remain unverified**. Public deployment remains unexecuted.
+- Added `automation/pages-release-safety.test.cjs` to normal CI to assert manual-only `workflow_dispatch`, explicit `PUBLISH` gate, gameplay and packaged-browser checks before deploy, fixed integration branch, and no Pages write permission on regular CI. Test does not prove Pages settings or live HTTPS access.
+- Readiness stays **67%** pending passing CI and actual preview availability; next inspect new CI and obtain approval before any public publishing.
