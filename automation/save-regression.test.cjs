@@ -1336,3 +1336,23 @@ test('removed time compression refunds once on repeated reload',()=>{
  const resumed=boot(saved,now);
  assert.equal(resumed.get('s.cores'),amount);
 });
+
+test('weapon traits create measurable tradeoffs without rewriting saved trait levels',()=>{
+ const now=Date.UTC(2026,10,12);
+ const b=boot({stage:20,best:20,heroLevel:20,traitPointsEarned:19,traits:{double:3,boss:2,bounty:4},weapon:{tier:1,stage:20,role:'assault'},weaponStash:[{tier:1,stage:20,role:'breaker'},{tier:1,stage:20,role:'scavenger'}],lastSaved:now},now);
+ assert.equal(b.get('traitLevel("double")'),3);
+ assert.ok(Math.abs(b.get('extraHitChance()')-.165)<1e-9);
+ const assault=b.get('weaponMultiplier()');
+ assert.equal(b.get('equipWeapon("breaker")'),true);
+ assert.ok(Math.abs(b.get('extraHitChance()')-.09)<1e-9);
+ assert.ok(Math.abs(b.get('bossTraitMultiplier()')-1.32)<1e-9);
+ assert.ok(b.get('weaponMultiplier()')>assault);
+ assert.equal(b.get('equipWeapon("scavenger")'),true);
+ assert.ok(Math.abs(b.get('weaponCreditMultiplier()')-1.59)<1e-9);
+ assert.equal(b.get('traitLevel("bounty")'),4);
+ b.get('save()');
+ const resumed=boot(JSON.parse(b.values.get('neon_rework_07')),now);
+ assert.equal(resumed.get('s.weapon.role'),'scavenger');
+ assert.equal(resumed.get('traitLevel("boss")'),2);
+ assert.equal(resumed.get('traitLevel("double")'),3);
+});
