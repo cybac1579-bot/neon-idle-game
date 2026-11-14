@@ -1405,3 +1405,44 @@ test('equipment-trait synergy does not bypass basic upgrade cost or overpower ba
  }
  assert.ok(b.get('attackInterval()')>=.1-1e-10);
 });
+
+test('base progression audit: enemy health, rewards, basic costs and upgrade effects stay finite and monotonic',()=>{
+ const b=boot({lastSaved:Date.UTC(2026,10,12)});
+ const levels=[1,10,15,20,21,25,45,55,65,80,100,120,180];
+ const data=levels.map(stage=>({stage,hp:b.get('enemyHealth('+stage+')'),reward:b.get('enemyReward('+stage+')')}));
+ for(let i=1;i<data.length;i++){
+  assert.ok(data[i].hp>data[i-1].hp);
+  assert.ok(data[i].reward>=data[i-1].reward);
+ }
+ for(const type of ['atk','spd','gen','amp','relay','forge','reactor']){
+  let previous=0;
+  for(const level of [0,1,5,10,20,40]){
+   const cost=b.get('(()=>{s['+JSON.stringify(type)+']='+level+';return cost('+JSON.stringify(type)+')})()');
+   assert.ok(Number.isFinite(cost)&&cost>previous,'cost monotonic '+type+' '+level);
+   previous=cost;
+  }
+ }
+ b.get('s.stage=65;s.best=65;s.credits=1e30;s.atk=0;s.spd=0;s.gen=0;s.amp=0;s.relay=0;s.forge=0;s.reactor=0');
+ const effects=[];
+ for(const type of ['atk','spd','gen','amp','relay','forge','reactor']){
+  const before=b.get('({power:power(),interval:attackInterval(),energy:energyRate(),credits:creditRate()})');
+  assert.equal(b.get('purchase('+JSON.stringify(type)+')'),true);
+  const after=b.get('({power:power(),interval:attackInterval(),energy:energyRate(),credits:creditRate()})');
+  assert.ok(after.power>=before.power&&after.interval<=before.interval&&after.energy>=before.energy&&after.credits>=before.credits,'basic upgrade must not worsen production '+type);
+  assert.ok(after.power>before.power||after.interval<before.interval||after.energy>before.energy||after.credits>before.credits,'basic upgrade must have immediate effect '+type);
+  effects.push({type,before,after});
+ }
+ console.log('base progression audit:',JSON.stringify({stages:data,effects}));
+});
+test('base curve discontinuities are visible and not extreme at 20-stage boundaries',()=>{
+ const b=boot({lastSaved:Date.UTC(2026,10,12)});
+ const ratios=[];
+ for(const stage of [20,40,60,80,100,120,140,160,180]){
+  const hpRatio=b.get('enemyHealth('+stage+')/enemyHealth('+(stage-1)+')');
+  const rewardRatio=b.get('enemyReward('+stage+')/enemyReward('+(stage-1)+')');
+  ratios.push({stage,hpRatio,rewardRatio});
+  assert.ok(hpRatio<1.7,'health discontinuity at '+stage+': '+hpRatio);
+  assert.ok(rewardRatio<1.4,'reward discontinuity at '+stage+': '+rewardRatio);
+ }
+ console.log('base curve 20-stage boundaries:',JSON.stringify(ratios));
+});
