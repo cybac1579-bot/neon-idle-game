@@ -210,3 +210,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - CI **43530778563 passed**: generated distribution over HTTP, Android-like Chrome UA/touch/DPR, first touch purchase, navigation and saved state, dungeon entry. This is emulation, not real Galaxy hardware.
 - CI **43530857867 passed**: additional Chromium persistent user-data profile closes the browser context, relaunches with the same profile, and confirms upgrade, credits and stage survive full browser restart. Tests do not establish resistance to OS data clearing, browser storage eviction or HTTPS installability.
 - First playable readiness **66%** after durable restart coverage. Next: prepare safe HTTPS preview path and real-device installation/player-experience checks. Do not distribute ZIP until requested for playtest.
+
+## 2026-11-14 — Nested project path deployment readiness
+- Added generated-bundle Chromium smoke for simulated static hosting at `/neon-idle-game/`: relative scripts, CSS, standalone manifest scope/start URL, PNG icons, first purchase and localStorage save/reload. CI **43531970060 passed**, including existing regressions, live idle test, and artifact upload.
+- Added `development/android-preview-checklist.md`: HTTPS hosting prerequisites, Android Galaxy portrait 30-minute test plan, origin-bound save caveats, acceptance criteria. No public hosting deployed, no HTTPS certificate or real device installation tested.
+- First playable readiness **67%** for validated nested-path hosting compatibility; 30-minute hands-on gameplay and Android real-device remain open.
