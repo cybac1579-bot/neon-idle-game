@@ -1356,3 +1356,52 @@ test('weapon traits create measurable tradeoffs without rewriting saved trait le
  assert.equal(resumed.get('traitLevel("boss")'),2);
  assert.equal(resumed.get('traitLevel("double")'),3);
 });
+
+function simulateBuildWithBasicPurchases(role,seed=7123){
+ const now=Date.UTC(2026,10,12);
+ const weapon=role?{tier:0,stage:15,role}:null;
+ const traits=role==='assault'?{double:3}:role==='breaker'?{boss:2}:role==='scavenger'?{bounty:3}:{};
+ const b=boot({stage:15,best:15,heroLevel:16,traitPointsEarned:15,traits,weapon,credits:300,lastSaved:now},now,seed);
+ const snapshots=[];let purchases=0;
+ for(let second=1;second<=1800;second++){
+  b.get('step(1,false)');
+  if(second%5===0){
+   const bought=b.get('(()=>{const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>cost(a)-cost(b));return options.length?purchase(options[0]):false})()');
+   if(bought)purchases++;
+  }
+  if(second%300===0)snapshots.push({minute:second/60,stage:b.get('s.stage'),best:b.get('s.best'),kills:b.get('s.kills'),credits:b.get('s.credits'),atk:b.get('s.atk'),spd:b.get('s.spd'),gen:b.get('s.gen'),power:b.get('power()'),purchases});
+ }
+ return {role:role||'none',snapshots};
+}
+test('30-minute build comparison includes cheapest basic purchases and catches runaway growth',()=>{
+ const results=[null,'assault','breaker','scavenger'].map(role=>simulateBuildWithBasicPurchases(role));
+ const baseline=results[0].snapshots.at(-1);
+ console.log('30m weapon/trait/basic-purchase comparison:',JSON.stringify(results));
+ for(const run of results){
+  const last=run.snapshots.at(-1);
+  assert.equal(run.snapshots.length,6);
+  assert.ok(last.purchases>0,'basic purchases must be part of simulation');
+  assert.ok(last.atk+last.spd+last.gen>0);
+  assert.ok(run.snapshots.every(p=>Number.isFinite(p.power)&&p.power>0&&Number.isFinite(p.credits)&&p.credits>=0));
+  assert.ok(last.best<=baseline.best+40,'build runaway stage acceleration: '+JSON.stringify({role:run.role,baseline,last}));
+  assert.ok(last.purchases<=baseline.purchases*2+20,'build runaway basic-upgrade purchases: '+JSON.stringify({role:run.role,baseline,last}));
+ }
+});
+test('equipment-trait synergy does not bypass basic upgrade cost or overpower basic purchases',()=>{
+ const b=boot({stage:20,best:20,heroLevel:30,traitPointsEarned:29,traits:{double:5,boss:3,bounty:5},credits:1e7,lastSaved:Date.UTC(2026,10,12)});
+ const base=b.get('power()'),baseReward=b.get('enemyReward(20)');
+ const beforeCost=b.get('cost("atk")');
+ assert.equal(b.get('purchase("atk")'),true);
+ assert.equal(b.get('s.atk'),1);
+ assert.ok(b.get('power()')>base);
+ assert.ok(b.get('cost("atk")')>beforeCost);
+ const upgraded=b.get('power()');
+ for(const role of ['assault','breaker','scavenger']){
+  b.get('s.weapon={tier:0,stage:15,role:'+JSON.stringify(role)+'}');
+  const ratio=b.get('power()')/upgraded;
+  const rewardRatio=b.get('enemyReward(20)')/baseReward;
+  assert.ok(ratio<=2.6,'combat bonus runaway for '+role+': '+ratio);
+  assert.ok(rewardRatio<=1.7,'reward bonus runaway for '+role+': '+rewardRatio);
+ }
+ assert.ok(b.get('attackInterval()')>=.1-1e-10);
+});
