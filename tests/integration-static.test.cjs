@@ -13,9 +13,10 @@ const tests=[
  ['game DOM bindings exist',()=>assert.deepEqual([...new Set(refs)].filter(x=>!ids.includes(x)),[])],
  ['four existing navigation tabs',()=>assert.deepEqual([...html.matchAll(/<button data-view="([^"]+)"/g)].map(x=>x[1]),['battle','growth','reset','stats'])],
  ['save button is inside stats screen',()=>{
-   const stats=html.indexOf('<section data-screen="stats"');
    const save=html.indexOf('id="save"');
-   assert.ok(stats>=0&&save>stats&&save<html.indexOf('</section>',stats));
+   const stats=html.lastIndexOf('<section data-screen="stats"',save);
+   const sectionEnd=html.indexOf('</section>',stats);
+   assert.ok(save>=0&&stats>=0&&save<sectionEnd,'save must be inside a stats section');
  }],
  ['browser smoke opens stats immediately before save',()=>{
    const smoke=fs.readFileSync('tests/integration-portrait.test.cjs','utf8');
