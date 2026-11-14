@@ -271,3 +271,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - Added `automation/local-preview.cjs`: serves the actual `dist/neon-idle` package on **127.0.0.1:4173** only, with MIME mapping, no-store responses, path traversal rejection and clear missing-build/port errors. Fixed port preserves the browser storage origin between local PC sessions.
 - Added PC setup and usage instructions to `development/android-preview-checklist.md`; regular CI now checks server script syntax. This is a safe local PC path, not public HTTPS, phone access or an APK.
 - CI for latest changes pending. First-playable readiness stays **70%** until verified and human play. Next check CI, validate local preview use and plan actual 30-minute device play with consent for any public deployment.
+
+## 2026-11-14 — Local preview integration test
+- Added `automation/local-preview-smoke.cjs` which launches the exact `automation/local-preview.cjs` on loopback port 4173, checks packaged HTML/JS/manifest/PNG status and MIME, no-store response, 404 and traversal rejection, then stops server.
+- Wired the smoke test into `.github/workflows/portrait-integration.yml` after static bundle build. CI pending; no direct PC user play has occurred. Readiness remains **70%** until CI confirms the new test.
