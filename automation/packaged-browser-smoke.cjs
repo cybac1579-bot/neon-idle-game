@@ -61,6 +61,14 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
     assert.ok(result.controls>=5,label+' interactive controls visible');
    };
    await audit('battle '+width);
+   // Check every player-facing tab, not only battle and dungeon. Switching tabs
+   // must expose the requested screen and leave all visible controls reachable.
+   for(const view of ['growth','reset','deep','stats','battle']){
+    await page.locator('[data-view="'+view+'"]').click();
+    assert.equal(await page.locator('[data-view="'+view+'"]').getAttribute('aria-pressed'),'true',view+' tab selected');
+    assert.ok(await page.locator('[data-screen="'+view+'"]:visible').count()>0,view+' screen visible');
+    await audit(view+' '+width);
+   }
    // CI visual evidence of the exact distribution at both portrait sizes.
    const screenshots=path.resolve(__dirname,'../dist/preview-screenshots');
    fs.mkdirSync(screenshots,{recursive:true});
