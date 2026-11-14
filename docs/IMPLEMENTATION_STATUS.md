@@ -28,3 +28,9 @@ Snapshot: 2026-11-14. Evidence is scoped to what was actually inspected.
 
 ## Progress
 Previous ~67% is historical estimate only; no current evidence-based revised percentage. Do not advance readiness merely for writing docs or creating a branch.
+
+## Integration v1 — 2026-11-14
+- Commit 75fd7c941450f8a8d576e757600a6296ffe09b16 on integration branch: selectively added portrait battle CSS in site/index.html. No site/game.js edit; gameplay script section in HTML byte-for-byte unchanged by this edit.
+- Read-back confirmed CSS marker present. Static inspection of current HTML/JS: 0 getElementById references, 0 missing referenced IDs, 0 duplicate IDs. This is a limited static check, NOT browser execution or regression suite.
+- Browser/CI/real-device tests NOT RUN in this session. No production artwork added; no main/deployment change.
+- Next: run CI/browser suite, verify actual rendering, then transplant other visual elements only if tests pass.
