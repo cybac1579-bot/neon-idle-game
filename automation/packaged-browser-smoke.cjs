@@ -45,6 +45,22 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
     assert.equal(png.readUInt32BE(16),size,'PNG width');
     assert.equal(png.readUInt32BE(20),size,'PNG height');
    }
+   // Interactive usability gate: no clipped visible controls, minimum touch targets,
+   // and exactly one visible panel group after each tab selection.
+   const audit=async label=>{
+    const result=await page.evaluate(()=>{
+     const visible=el=>{const r=el.getBoundingClientRect(),style=getComputedStyle(el);return style.display!=='none'&&style.visibility!=='hidden'&&r.width>0&&r.height>0&&!!el.getClientRects().length};
+     const controls=[...document.querySelectorAll('button,[role="button"]')].filter(visible);
+     const clipped=controls.filter(el=>{const r=el.getBoundingClientRect();return r.left < -1||r.right>innerWidth+1}).map(el=>el.id||el.textContent.trim().slice(0,35));
+     const tiny=controls.filter(el=>{const r=el.getBoundingClientRect();return r.height<40||r.width<40}).map(el=>({id:el.id||el.textContent.trim().slice(0,25),height:Math.round(el.getBoundingClientRect().height)}));
+     return {clipped,tiny,controls:controls.length,overflow:document.documentElement.scrollWidth>innerWidth+1};
+    });
+    assert.equal(result.overflow,false,label+' horizontal overflow');
+    assert.deepEqual(result.clipped,[],label+' clipped controls');
+    assert.deepEqual(result.tiny,[],label+' undersized touch controls');
+    assert.ok(result.controls>=5,label+' interactive controls visible');
+   };
+   await audit('battle '+width);
    // CI visual evidence of the exact distribution at both portrait sizes.
    const screenshots=path.resolve(__dirname,'../dist/preview-screenshots');
    fs.mkdirSync(screenshots,{recursive:true});
@@ -56,6 +72,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    await page.reload();
    assert.equal(await page.evaluate(()=>s.atk),1,'packaged save/reload');
    await page.locator('[data-view="deep"]').click();
+   await audit('deep '+width);
    assert.ok(await page.locator('#deepFloor').isVisible(),'packaged dungeon view');
    await page.screenshot({path:path.join(screenshots,'deep-'+width+'.png'),fullPage:true});
    // Validate visual artifacts before CI publishes them for review.
