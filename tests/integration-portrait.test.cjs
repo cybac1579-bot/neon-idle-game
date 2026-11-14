@@ -189,6 +189,7 @@ const server=createServer((req,res)=>{
     });
     assert.equal(balance.checkpoints.length,6,'balance checkpoints missing');
     assert.ok(balance.finalStage>=1&&Number.isFinite(balance.finalStage),'invalid simulated stage');
+    assert.ok(balance.checkpoints.every(c=>Number.isFinite(c.credits)&&Number.isFinite(c.heroLevel)),'non-finite simulated credits or hero level');
     assert.deepEqual(balanceErrors,[],'balance simulation browser errors');
     console.log('BALANCE_BASELINE_60M '+JSON.stringify(balance));
     await balancePage.close();
