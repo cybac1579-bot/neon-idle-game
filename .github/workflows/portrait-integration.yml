@@ -7,6 +7,7 @@ on:
     paths:
       - 'site/**'
       - 'automation/save-regression.test.cjs'
+      - 'automation/quality-gates.test.cjs'
       - '.github/workflows/portrait-integration.yml'
 permissions:
   contents: read
@@ -39,6 +40,15 @@ jobs:
         run: node automation/pages-release-safety.test.cjs
       - name: Existing save and gameplay regression suite
         run: node --test automation/save-regression.test.cjs
+      - name: Known-defect quality gates (diagnostic until fixes land)
+        id: quality_gates
+        continue-on-error: true
+        run: node --test automation/quality-gates.test.cjs
+      - name: Report quality gate status
+        if: always()
+        run: |
+          echo 'Quality gates outcome: ${{ steps.quality_gates.outcome }}' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Known failures are not a passing quality certification.' >> "$GITHUB_STEP_SUMMARY"
       - name: Install browser smoke dependency and Chromium
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1
