@@ -425,3 +425,14 @@ Sources (community maintained, not hands-on verification): https://idle-brick-br
 - Risks (impact): (1) **high** copying many parallel skills adds complexity and balance cost; (2) **high** large skill grids crowd a portrait battle screen; (3) **medium** too many milestones distract from the first 30-minute goal.
 - Cost/value: low to audit existing skill unlock and goal labels, medium to polish existing milestone messaging, high to add multiple independent skill tracks. Expected effect unverified.
 - Decision: **retain passive milestone readability as a test criterion**, defer parallel skill systems and extra currencies. No manual tapping or fast reaction mechanics, no borrowed assets/formulas, no gameplay change.
+
+
+## 2026-11-15 03:56 KST — Cell to Singularity: thematic milestone visibility
+Reference: https://celltosingularity.com/ (official project site; design-level comparison, no hands-on test this run).
+
+**Transferable hypothesis:** milestone framing can make passive accumulation feel purposeful when the next unlock and its consequence are understandable. This is not evidence of any current Neon usability improvement.
+
+**Advantages (impact):** (1) next-goal visibility may make 30-minute waits meaningful (high); (2) milestones can reuse existing stage/skill thresholds (medium-high); (3) concise text in growth/details keeps automatic battle visually prominent (medium).
+**Risks (impact):** (1) broad thematic tech trees inflate scope and save migration burden (high); (2) extra currencies and unlock layers obscure the first-playable goal (high); (3) manual tapping or repeated collection would violate the fixed low-input rule (critical).
+**Cost / expectation:** low for a read-only next-unlock explanation using existing state; medium for new unlock behavior and balancing; potential value is unverified until browser/device 30-minute observation.
+**Decision:** **selectively consider** concise existing-milestone guidance after current portrait CI and screenshots are verified. **Defer** new currencies, branching trees, tap actions and other new mechanics. Next verification: measure whether a player can identify the next objective in the first 60 seconds without opening several panels.
