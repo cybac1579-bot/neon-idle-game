@@ -117,7 +117,7 @@ function resolveEnemyDefeat(){if(!Number.isFinite(enemyHp)||enemyHp>0)return fal
 // 전투/주조기와 독립적인 정기 회수 보상. 5회분까지만 축적한다.
 const QUESTS=[['긴급 배송',6,1,3],['부품 회수',30,12,1],['장거리 운송',120,40,1]];
 function questPayout(i){const q=QUESTS[i];return Math.max(1,Math.floor(q[2]*Math.pow(1.11,Math.min(60,s.best)-1)));}
-function questTick(dt){for(let i=0;i<QUESTS.length;i++){const q=QUESTS[i];if(s.best<q[3])continue;const total=s.questClocks[i]+dt;const cycles=Math.floor((total+1e-7)/q[1]);s.questClocks[i]=total-cycles*q[1];if(cycles>0)s.questCredits[i]=Math.min(1e100,s.questCredits[i]+Math.min(cycles,5)*questPayout(i));}}
+function questTick(dt){for(let i=0;i<QUESTS.length;i++){const q=QUESTS[i];if(s.best<q[3])continue;const total=s.questClocks[i]+dt;const cycles=Math.floor((total+1e-7)/q[1]);s.questClocks[i]=total-cycles*q[1];if(cycles>0)s.questCredits[i]=Math.min(questPayout(i)*5,s.questCredits[i]+cycles*questPayout(i));}}
 // UI와 무관한 공통 회수 처리: 향후 자동 회수도 이 함수를 호출한다.
 function transferCacheCredits(){const amount=s.questCredits.reduce((a,b)=>a+b,0);if(amount<1)return 0;s.credits=Math.min(1e100,s.credits+amount);s.questCredits=[0,0,0];return amount;}
 function claimCache(){const amount=transferCacheCredits();if(!amount)return false;logText='시간제 퀘스트 보상 +'+fmt(amount);save();render();return true;}
