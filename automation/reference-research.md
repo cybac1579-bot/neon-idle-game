@@ -401,3 +401,11 @@ Sources (community maintained, not hands-on verification): https://idle-brick-br
 - Drawbacks (impact): (1) stacked currencies/systems create steep onboarding and balance costs (high); (2) dense upgrade panels conflict with narrow mobile battle hierarchy (high); (3) active clicking or rapid manual optimization conflicts with low-input requirement (critical).
 - Cost/expected effect: low for checking existing stage/skill/rebirth goal labels; medium for read-only next-unlock explanation in growth/stats; high for parallel new progression layers and migrations. Expected comprehension gain remains untested.
 - Decision: **defer new currencies/layers and active mechanics**. Prioritize actual production portrait evidence and 30-minute goal readability, retaining automatic combat and optional infrequent decisions. No borrowed art, formulas, or game changes.
+
+
+## 2026-11-15 00:54 KST — Realm Grinder: faction identity versus first-session overload
+- Reference: https://store.steampowered.com/app/610080/Realm_Grinder/ (store listing; conceptual comparison only, no hands-on current-version test). Different angle: specialization and long-run replay identity rather than portrait graphics.
+- Benefits (impact): (1) high: differentiated build paths make reset cycles feel distinct; (2) medium: persistent progression can shorten previously difficult segments; (3) medium: passive choice intervals fit low-input play.
+- Risks (impact): (1) high: new factions and currencies overwhelm a 30-minute first session; (2) high: cross-faction balancing and save migration create regression risk; (3) medium-high: nested menus obscure battle on mobile.
+- Cost/expected effect: low to compare current trait/skill choices, medium to improve existing unlock messaging, high to implement faction trees. No measured benefit yet.
+- Decision: **defer factions/currencies**. Preserve automatic combat and existing trait/skill specialization; first obtain production first-fold battle evidence and test low-frequency choice clarity. No mechanics or assets copied.
