@@ -114,6 +114,36 @@ const server=createServer((req,res)=>{
    assert.ok(!('overload' in reconstructed.skillLevels),'non-inherited skill level retained at '+width);
    assert.deepEqual(resetErrors,[],'reconstruction browser errors at '+width);
    await resetPage.close();
+   // Permanent hero level determines equipped skill slots (1, 10, 25, 40, 60).
+   // The level-60 inheritance trait expands the inherited-skill limit to two.
+   if(width===390){
+    for(const [level,expectedSlots,expectedInheritance] of [[1,1,1],[9,1,1],[10,2,1],[24,2,1],[25,3,1],[39,3,1],[40,4,1],[59,4,1],[60,5,2]]){
+     const slotPage=await browser.newPage({viewport:{width,height:844}});
+     const slotErrors=[];
+     slotPage.on('pageerror',e=>slotErrors.push(e.message));
+     await slotPage.addInitScript(level=>{
+      localStorage.setItem('neon_rework_07',JSON.stringify({
+       heroLevel:level,traitPointsEarned:level,traits:level>=60?{inherit:1}:{},
+       skillsOwned:['overload','chain','bountySkill'],
+       skillsEquipped:['overload','chain','bountySkill'],
+       skillsInherited:['overload','chain'],
+       lastSaved:Date.now()
+      }));
+     },level);
+     await slotPage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
+     const actual=await slotPage.evaluate(()=>({
+      slots:skillSlotCount(),inheritance:inheritanceSlots(),
+      state:JSON.parse(localStorage.getItem('neon_rework_07'))
+     }));
+     assert.equal(actual.slots,expectedSlots,'equipped skill slots at hero level '+level);
+     assert.equal(actual.inheritance,expectedInheritance,'inheritance slots at hero level '+level);
+     assert.ok(actual.state.skillsEquipped.length<=expectedSlots,'equipped skill overflow at '+level);
+     assert.ok(actual.state.skillsInherited.length<=expectedInheritance,'inherited skill overflow at '+level);
+     assert.deepEqual(slotErrors,[],'skill-slot browser errors at level '+level);
+     await slotPage.close();
+    }
+   }
+
    console.log('PASS portrait + save/reload '+width,JSON.stringify(layout));
    await page.close();
   }
