@@ -114,6 +114,34 @@ const server=createServer((req,res)=>{
    assert.ok(!('overload' in reconstructed.skillLevels),'non-inherited skill level retained at '+width);
    assert.deepEqual(resetErrors,[],'reconstruction browser errors at '+width);
    await resetPage.close();
+   // Scheduled-credit facility: one minute accrues a claimable payout,
+   // claiming transfers it exactly once, and the next claim gives nothing.
+   if(width===390){
+    const cachePage=await browser.newPage({viewport:{width,height:844}});
+    const cacheErrors=[];
+    cachePage.on('pageerror',e=>cacheErrors.push(e.message));
+    await cachePage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
+    const cacheResult=await cachePage.evaluate(()=>{
+     const initialCredits=s.credits;
+     const before=s.cacheCredits;
+     s.cacheClock=59.9;
+     step(.2,false);
+     const accrued=s.cacheCredits-before;
+     const creditsBeforeClaim=s.credits;
+     const first=transferCacheCredits();
+     const creditsAfterClaim=s.credits;
+     const second=transferCacheCredits();
+     return {initialCredits,accrued,first,second,creditsBeforeClaim,creditsAfterClaim,remaining:s.cacheCredits};
+    });
+    assert.ok(cacheResult.accrued>=10,'scheduled credit did not accrue');
+    assert.equal(cacheResult.first,cacheResult.accrued,'claimed amount differs from accrual');
+    assert.equal(cacheResult.creditsAfterClaim,cacheResult.creditsBeforeClaim+cacheResult.first,'claim did not credit balance');
+    assert.equal(cacheResult.second,0,'scheduled credit double-claimed');
+    assert.equal(cacheResult.remaining,0,'scheduled credit remained after claim');
+    assert.deepEqual(cacheErrors,[],'scheduled credit browser errors');
+    await cachePage.close();
+   }
+
    // Permanent hero level determines equipped skill slots (1, 10, 25, 40, 60).
    // The level-60 inheritance trait expands the inherited-skill limit to two.
    if(width===390){
