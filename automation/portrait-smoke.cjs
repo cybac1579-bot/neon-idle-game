@@ -6,6 +6,7 @@ const fs = require('node:fs');
   const dir=path.join(__dirname,'portrait-evidence');
   fs.mkdirSync(dir,{recursive:true});
   const metrics=[];
+  const writeMetrics=()=>fs.writeFileSync(path.join(dir,'metrics.json'),JSON.stringify(metrics,null,2));
   try {
     for(const [width,height] of [[360,740],[412,915]]) {
       const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1,isMobile:true,hasTouch:true});
@@ -22,12 +23,14 @@ const fs = require('node:fs');
       });
       await page.screenshot({path:path.join(dir,`battle-${width}x${height}.png`),fullPage:true});
       metrics.push({...result,errors});
+      writeMetrics(); // Preserve measured geometry even if a later assertion fails.
       if(errors.length||result.documentScrollWidth>width+1||result.active!=='battle'||result.fight.height<200||result.images.some(i=>!i.loaded||i.width<60)) throw Error('Portrait smoke failed '+JSON.stringify(metrics.at(-1)));
       await page.getByRole('button',{name:'성장',exact:true}).click();
       if(!(await page.locator('[data-screen="growth"]').first().isVisible())) throw Error('Growth navigation failed');
+      await page.screenshot({path:path.join(dir,`growth-${width}x${height}.png`),fullPage:false});
       await page.close();
     }
-    fs.writeFileSync(path.join(dir,'metrics.json'),JSON.stringify(metrics,null,2));
+    writeMetrics();
     console.log(JSON.stringify(metrics));
   } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
