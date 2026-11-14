@@ -1,5 +1,8 @@
 name: Integration portrait browser smoke
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - development/main-redesign-integration-20261114
