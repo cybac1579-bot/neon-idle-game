@@ -58,6 +58,15 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    await page.locator('[data-view="deep"]').click();
    assert.ok(await page.locator('#deepFloor').isVisible(),'packaged dungeon view');
    await page.screenshot({path:path.join(screenshots,'deep-'+width+'.png'),fullPage:true});
+   // Validate visual artifacts before CI publishes them for review.
+   for(const view of ['battle','deep']){
+    const filename=path.join(screenshots,view+'-'+width+'.png');
+    const png=fs.readFileSync(filename);
+    assert.ok(png.length>1000,'nonempty screenshot '+view+' '+width);
+    assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a','PNG screenshot signature');
+    assert.equal(png.readUInt32BE(16),width,'screenshot width matches viewport');
+    assert.ok(png.readUInt32BE(20)>=850,'full-page screenshot height');
+   }
    assert.deepEqual(errors,[],'packaged browser JS and HTTP errors');
    await page.close();
    console.log('Packaged HTTP browser smoke passed at '+width+'px');
