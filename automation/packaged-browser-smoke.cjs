@@ -45,6 +45,10 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
     assert.equal(png.readUInt32BE(16),size,'PNG width');
     assert.equal(png.readUInt32BE(20),size,'PNG height');
    }
+   // CI visual evidence of the exact distribution at both portrait sizes.
+   const screenshots=path.resolve(__dirname,'../dist/preview-screenshots');
+   fs.mkdirSync(screenshots,{recursive:true});
+   await page.screenshot({path:path.join(screenshots,'battle-'+width+'.png'),fullPage:true});
    await page.locator('[data-view="growth"]').click();
    await page.locator('#upgrades [data-buy="atk"]').click();
    assert.equal(await page.evaluate(()=>s.atk),1,'packaged first purchase');
@@ -53,6 +57,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    assert.equal(await page.evaluate(()=>s.atk),1,'packaged save/reload');
    await page.locator('[data-view="deep"]').click();
    assert.ok(await page.locator('#deepFloor').isVisible(),'packaged dungeon view');
+   await page.screenshot({path:path.join(screenshots,'deep-'+width+'.png'),fullPage:true});
    assert.deepEqual(errors,[],'packaged browser JS and HTTP errors');
    await page.close();
    console.log('Packaged HTTP browser smoke passed at '+width+'px');
