@@ -29,7 +29,7 @@ const server=createServer((req,res)=>{
    page.on('pageerror',e=>errors.push(e.message));
    page.on('response',r=>{if(r.status()>=400&&!r.url().endsWith('/favicon.ico'))errors.push(r.status()+' '+r.url())});
    await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
-   await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0,{timeout:12000});
+   await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0,null,{timeout:12000});
    assert.equal(await page.locator('[data-screen="battle"]:not(.view-hidden)').count(),1);
    const layout=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,arena:document.querySelector('[data-screen="battle"] .fight').getBoundingClientRect().height,images:[...document.querySelectorAll('[data-screen="battle"] .fight img')].map(i=>({ok:i.complete&&i.naturalWidth>0,src:i.getAttribute('src')}))}));
    assert.equal(layout.overflow,false,'horizontal overflow at '+width);
@@ -40,7 +40,18 @@ const server=createServer((req,res)=>{
     await page.locator('[data-view="'+view+'"]').first().click();
     assert.ok(await page.locator('[data-screen="'+view+'"]:not(.view-hidden)').count()>0,'navigation failed '+view);
    }
-   console.log('PASS portrait '+width,JSON.stringify(layout));
+   // Persistence smoke: the existing save button must create a readable state,
+   // and a fresh document load must restore it without runtime errors.
+   await page.locator('#save').click();
+   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_rework_07')||'null'));
+   assert.ok(saved&&Number.isFinite(saved.credits)&&Number.isFinite(saved.stage),'save state missing at '+width);
+   assert.ok(saved.stage>=1&&saved.credits>=0,'invalid saved progression at '+width);
+   await page.reload({waitUntil:'load'});
+   await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0,null,{timeout:12000});
+   const restored=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_rework_07')||'null'));
+   assert.ok(restored&&restored.best>=saved.best&&restored.rebirths===saved.rebirths,'save restoration failed at '+width);
+   assert.deepEqual(errors,[],'browser errors after save/reload at '+width);
+   console.log('PASS portrait + save/reload '+width,JSON.stringify(layout));
    await page.close();
   }
  }catch(e){console.error(e);process.exitCode=1}
