@@ -48,6 +48,28 @@ const server=createServer((req,res)=>{
    assert.equal(questLayout.overflow,false,'growth view horizontal overflow at '+width);
    assert.equal(questLayout.rowOverflow,false,'quest row text overflow at '+width);
    assert.ok(questLayout.text.every(x=>x.length>0),'quest status missing at '+width);
+   const questClaim=await page.evaluate(()=>{
+    s.best=Math.max(s.best,3);
+    s.questClocks=[0,0,0];
+    s.questCredits=[0,0,0];
+    questTick(120);
+    render();
+    const before=s.credits;
+    const pending=s.questCredits.reduce((a,b)=>a+b,0);
+    const rows=[...document.querySelectorAll('#cacheTimer .quest-row')].map(x=>x.textContent);
+    const claimEnabled=!document.getElementById('claimCache').disabled;
+    const first=transferCacheCredits();
+    const second=transferCacheCredits();
+    render();
+    return {before,pending,first,second,after:s.credits,claimEnabled,rows,
+      disabledAfter:document.getElementById('claimCache').disabled};
+   });
+   assert.ok(questClaim.pending>0&&questClaim.claimEnabled,'quest claim must be available at '+width);
+   assert.equal(questClaim.first,questClaim.pending,'quest claim must transfer all pending rewards at '+width);
+   assert.equal(questClaim.second,0,'quest claim must not duplicate rewards at '+width);
+   assert.equal(questClaim.after,questClaim.before+questClaim.pending,'quest credits must reach wallet at '+width);
+   assert.equal(questClaim.disabledAfter,true,'claim button must disable after collection at '+width);
+   assert.equal(questClaim.rows.length,3,'quest statuses must survive reward collection at '+width);
    for(const view of ['growth','reset','stats','battle']){
     await page.locator('[data-view="'+view+'"]').first().click();
     assert.ok(await page.locator('[data-screen="'+view+'"]:not(.view-hidden)').count()>0,'navigation failed '+view);
