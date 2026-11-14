@@ -9,10 +9,10 @@ function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(!v||typeof 
 // 12차 임시 특성: 사용자 승인 하에 테스트용. 미구현 스킬/장비 특성은 투자 차단.
 const TRAITS=[
  ['precision','정밀 타격',5,'기본 공격 피해 +4%/단계'],
- ['double','연속 사격',5,'추가 타격 확률 +3%p/단계'],
+ ['double','연속 사격',5,'추가 타격 확률 +3%p/단계 · 돌격형 장착 시 +5.5%p/단계'],
  ['haste','스킬 가속',5,'장착 스킬 재사용 대기시간 -3%/단계'],
- ['boss','약점 분석',3,'10단계마다 등장하는 보스 피해 +8%/단계'],
- ['bounty','현장 수당',5,'처치 크레딧 +5%/단계'],
+ ['boss','약점 분석',3,'보스 피해 +8%/단계 · 파쇄형 장착 시 +16%/단계'],
+ ['bounty','현장 수당',5,'처치 크레딧 +5%/단계 · 회수형 장착 시 추가 +6%/단계'],
  ['training','숙련 훈련',5,'처치 경험치 +5%/단계'],
  ['loot','장비 탐색',5,'무기 드롭 확률 상대 +6%/단계'],
  ['energy','에너지 최적화',5,'에너지 생산 +4%/단계'],
@@ -22,7 +22,7 @@ const TRAITS=[
 // 14차 실험용: 무기 1칸, 스킬 4종. 수치는 실플레이 후 조정.
 const SKILLS={overload:['과부하 사격','기본 공격 3배 피해',9],chain:['연쇄 방전','기본 공격 1.7배 피해',6],bountySkill:['현상금 추적','발동 후 12초 동안 처치 크레딧 +25%',20]};
 const WEAPON_TIERS=[['일반',1.12],['희귀',1.28],['영웅',1.55]];
-const WEAPON_ROLES={assault:['돌격형','일반 공격 +20%'],breaker:['파쇄형','보스 피해 +55%'],scavenger:['회수형','처치 크레딧 +35%']};
+const WEAPON_ROLES={assault:['돌격형','공격 +20% · 연속 사격 특성 강화'],breaker:['파쇄형','보스 피해 +55% · 약점 분석 특성 강화'],scavenger:['회수형','처치 크레딧 +35% · 현장 수당 특성 강화']};
 const normalizeWeapon=w=>w&&typeof w==='object'&&Number.isInteger(w.tier)&&w.tier>=0&&w.tier<3&&Number.isInteger(w.stage)&&w.stage>=1?{tier:w.tier,stage:Math.min(10000,w.stage),role:WEAPON_ROLES[w.role]?w.role:'assault'}:null;
 function normalizeGearSkills(){
  s.weapon=normalizeWeapon(s.weapon);
@@ -45,7 +45,9 @@ function normalizeGearSkills(){
 }
 const weaponScore=w=>w?WEAPON_TIERS[w.tier][1]*(1+Math.min(100,w.stage)*.003):1;
 const weaponMultiplier=()=>weaponScore(s.weapon)*(s.weapon?.role==='assault'?1.2:s.weapon?.role==='breaker'&&s.stage%10===0?1.55:1);
-const weaponCreditMultiplier=()=>s.weapon?.role==='scavenger'?1.35:1;
+const weaponCreditMultiplier=()=>s.weapon?.role==='scavenger'?1.35+traitLevel('bounty')*.06:1;
+const extraHitChance=()=>Math.min(.75,traitLevel('double')*(s.weapon?.role==='assault'?.055:.03));
+const bossTraitMultiplier=()=>1+traitLevel('boss')*(s.weapon?.role==='breaker'?.16:.08);
 function acquireWeapon(candidate){const item=normalizeWeapon(candidate);if(!item)return false;const pool=[...s.weaponStash,...(s.weapon?[s.weapon]:[]),item];const byRole=new Map();for(const w of pool){const old=byRole.get(w.role);if(!old||weaponScore(w)>weaponScore(old))byRole.set(w.role,w);}const chosen=s.weapon?.role||item.role;const equipped=byRole.get(chosen)||item;s.weapon=equipped;s.weaponStash=[...byRole.values()].filter(w=>w!==equipped).slice(0,2);return equipped===item||s.weaponStash.includes(item);}
 function equipWeapon(role){const index=s.weaponStash.findIndex(w=>w.role===role);if(index<0)return false;const next=s.weaponStash.splice(index,1)[0];if(s.weapon)s.weaponStash.push(s.weapon);s.weapon=next;save();render();return true;}
 function grantDrop(){
@@ -90,7 +92,7 @@ const creditRate=()=> (.8+s.forge*3.5*Math.pow(1.23,s.forge))*(1+Math.min(2,s.ge
 // 9차: 전선 선택 전 효과를 수치로 비교한다. 실제 배율 공식과 동일한 계산을 사용한다.
 function allocationComparison(){
  const baseCredits=(.8+s.forge*3.5*Math.pow(1.23,s.forge))*(1+Math.min(2,s.gen*.08))*(1+s.coreEconomy*.6)*phaseMultiplier();
- const basePower=(5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(1+traitLevel('precision')*.04)*(1+deepResearchBonus('resilience')*.03)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier();
+ const basePower=(5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(1+traitLevel('precision')*.04)*(1+deepResearchBonus('resilience')*.03)*(s.stage%10===0?bossTraitMultiplier():1)*weaponMultiplier();
  return [
   ['균형',basePower,baseCredits],
   ['공격 집중',basePower*2.2,baseCredits],
@@ -98,7 +100,7 @@ function allocationComparison(){
  ];
 }
 const energyRate=()=> (1+s.gen*1.7)*Math.pow(1.16,s.gen)*(1+s.relay*.65)*(1+s.coreEconomy*.12)*(1+s.coreEnergy*.18)*phaseMultiplier()*(1+traitLevel('energy')*.04);
-const power=()=> (5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(s.stage>=55&&s.allocation==='assault'?2.2:1)*(1+traitLevel('precision')*.04)*(1+deepResearchBonus('resilience')*.03)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier();
+const power=()=> (5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(s.stage>=55&&s.allocation==='assault'?2.2:1)*(1+traitLevel('precision')*.04)*(1+deepResearchBonus('resilience')*.03)*(s.stage%10===0?bossTraitMultiplier():1)*weaponMultiplier();
 const enemyHealth=stage=>Math.round(48*Math.pow(1.22,stage-1)*Math.pow(1.30,Math.floor((stage-1)/20))); // 4차: 장벽 강화, 보상 목표 병행
 const enemyReward=stage=>Math.round(16*Math.pow(1.19,stage-1)*(1+s.coreBounty*.12)*weaponCreditMultiplier());
 const unlockStage={atk:1,spd:1,gen:1,amp:15,relay:25,forge:45,reactor:65};
@@ -217,7 +219,7 @@ function cachePayout(){return Math.max(10,Math.floor(enemyReward(Math.min(60,Mat
 function transferCacheCredits(){const amount=Math.max(0,Math.floor(s.cacheCredits||0));if(!amount)return 0;s.credits=Math.min(1e100,s.credits+amount);s.cacheCredits=0;return amount;}
 function claimCache(){const amount=transferCacheCredits();if(!amount)return false;logText='정기 회수 크레딧 +'+fmt(amount);save();render();return true;}
 const autoPurchaseInterval=()=>[30,10,8,6,4,3][Math.min(5,Math.max(0,s.autoLevel))];
-function step(dt,allowAutoRebirth=true){if(allowAutoRebirth){if(s.deepAuto&&!s.deepEncounter){s.deepAutoClock=Math.min(30,s.deepAutoClock+dt);if(s.deepAutoClock>=30){s.deepAutoClock=0;startDeepEncounter('safe');}}tickDeepEncounter(dt);}s.cacheClock+=dt;while(s.cacheClock>=60-1e-7){s.cacheClock=Math.max(0,s.cacheClock-60);s.cacheCredits=Math.min(cachePayout()*5,s.cacheCredits+cachePayout());}s.energy=Math.min(1e100,s.energy+energyRate()*dt);s.phaseFlux=Math.min(1e100,s.phaseFlux+fluxRate()*dt);s.credits=Math.min(1e100,s.credits+creditRate()*dt);skillTick(dt);resolveEnemyDefeat();attackClock+=dt;enemyClock+=dt;let hits=0;while(attackClock>=attackInterval()&&hits++<30){attackClock-=attackInterval();enemyHp-=power()*(Math.random()<traitLevel('double')*.03?2:1);resolveEnemyDefeat();}
+function step(dt,allowAutoRebirth=true){if(allowAutoRebirth){if(s.deepAuto&&!s.deepEncounter){s.deepAutoClock=Math.min(30,s.deepAutoClock+dt);if(s.deepAutoClock>=30){s.deepAutoClock=0;startDeepEncounter('safe');}}tickDeepEncounter(dt);}s.cacheClock+=dt;while(s.cacheClock>=60-1e-7){s.cacheClock=Math.max(0,s.cacheClock-60);s.cacheCredits=Math.min(cachePayout()*5,s.cacheCredits+cachePayout());}s.energy=Math.min(1e100,s.energy+energyRate()*dt);s.phaseFlux=Math.min(1e100,s.phaseFlux+fluxRate()*dt);s.credits=Math.min(1e100,s.credits+creditRate()*dt);skillTick(dt);resolveEnemyDefeat();attackClock+=dt;enemyClock+=dt;let hits=0;while(attackClock>=attackInterval()&&hits++<30){attackClock-=attackInterval();enemyHp-=power()*(Math.random()<extraHitChance()?2:1);resolveEnemyDefeat();}
 if(s.autoBuy&&s.autoLevel>0){s.autoPurchaseClock=(s.autoPurchaseClock||0)+dt;if(s.autoPurchaseClock>=autoPurchaseInterval()){s.autoPurchaseClock%=autoPurchaseInterval();let attempts=0;while(attempts++<Math.min(100,3+s.autoLevel*8)){const choices=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>cost(a)-cost(b));if(!choices.length)break;purchase(choices[0]);}}}
 if(allowAutoRebirth&&s.autoRebirth&&s.autoLevel>=3&&gainCore()>=Math.max(3,Math.ceil(s.totalCores*.15)))rebirth(true);
 }
