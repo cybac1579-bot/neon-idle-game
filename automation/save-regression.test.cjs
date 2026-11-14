@@ -1422,7 +1422,7 @@ test('base progression audit: enemy health, rewards, basic costs and upgrade eff
    previous=cost;
   }
  }
- b.get('s.stage=65;s.best=65;s.credits=1e30;s.atk=0;s.spd=0;s.gen=0;s.amp=0;s.relay=0;s.forge=0;s.reactor=0');
+ b.get('s.stage=65;s.best=65;s.credits=1e30;s.energy=100;s.atk=0;s.spd=0;s.gen=0;s.amp=0;s.relay=0;s.forge=0;s.reactor=0');
  const effects=[];
  for(const type of ['atk','spd','gen','amp','relay','forge','reactor']){
   const before=b.get('({power:power(),interval:attackInterval(),energy:energyRate(),credits:creditRate()})');
