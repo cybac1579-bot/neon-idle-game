@@ -97,6 +97,32 @@ test('timed quests accumulate independently and claim exactly once',()=>{
   assert.equal(b.get('transferCacheCredits()'),0);
 });
 
+test('timed quest reserves cap across repeated ticks and claim without duplication',()=>{
+ const b=boot({stage:3,best:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ for(let n=0;n<30;n++)b.get('step(120,false)');
+ assert.ok(b.get('s.questCredits.every((x,i)=>x<=questPayout(i)*5)'),'each quest must cap at five payouts');
+ const reserved=b.get('s.questCredits.reduce((a,x)=>a+x,0)');
+ const before=b.get('s.credits');
+ assert.equal(b.get('transferCacheCredits()'),reserved);
+ assert.equal(b.get('transferCacheCredits()'),0);
+ assert.equal(b.get('s.credits'),before+reserved);
+});
+test('legacy credit cache migrates into timed quest reserves',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:3,best:3,cacheCredits:123,cacheClock:12,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.questCredits[1]'),123);
+ assert.equal(b.get('s.questClocks[1]'),12);
+ assert.equal(b.get('s.cacheCredits'),0);
+ assert.equal(b.get('transferCacheCredits()'),123);
+});
+test('phase transition clears timed quest clocks and reserves',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:180,best:180,rebirths:2,questCredits:[11,22,33],questClocks:[2,3,4],lastSaved:stamp},stamp);
+ assert.ok(b.get('gainPhase()')>0);
+ b.get('phase()');
+ assert.equal(b.get('s.questCredits.reduce((a,x)=>a+x,0)'),0);
+ assert.equal(b.get('s.questClocks.reduce((a,x)=>a+x,0)'),0);
+});
 test('upgrade purchase respects unlock, price and speed cap',()=>{
   const b=boot({stage:1,best:1,credits:1000,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   assert.equal(b.get('purchase("amp")'),false,'locked upgrade must be unavailable');
