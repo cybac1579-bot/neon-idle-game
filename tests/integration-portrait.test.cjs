@@ -223,6 +223,40 @@ const server=createServer((req,res)=>{
      }
      return {firstReconstructionAt,checkpoints,finalStage:s.stage,rebirthReady:gainCore()>0};
     });
+    // Compare several purchase policies under the same deterministic RNG.
+    // This is a bounded strategy sweep, not a claim of mathematically optimal play.
+    const strategies=await balancePage.evaluate(()=>{
+     const policies={
+      highestTier:(a,b)=>unlockStage[b]-unlockStage[a],
+      cheapest:(a,b)=>cost(a)-cost(b),
+      attackFirst:(a,b)=>(a==='atk'?-1:b==='atk'?1:cost(a)-cost(b)),
+      economyFirst:(a,b)=>(a==='gen'?-1:b==='gen'?1:cost(a)-cost(b))
+     };
+     const output={};
+     for(const [name,compare] of Object.entries(policies)){
+      s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
+      let rng=20261114;
+      Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
+      let first=null;
+      for(let t=1;t<=3600;t++){
+       step(1,false);
+       if(t%10===0){
+        transferCacheCredits();
+        for(let n=0;n<30;n++){
+         const available=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k)).sort(compare);
+         if(!available.length)break;
+         purchase(available[0]);
+        }
+       }
+       if(first===null&&gainCore()>0)first=t;
+      }
+      output[name]={firstReconstructionAt:first,finalStage:s.stage};
+     }
+     return output;
+    });
+    assert.equal(Object.keys(strategies).length,4,'strategy sweep incomplete');
+    assert.ok(Object.values(strategies).every(x=>x.finalStage>=1&&Number.isFinite(x.finalStage)),'invalid strategy telemetry');
+    console.log('BALANCE_STRATEGIES_60M '+JSON.stringify(strategies));
     assert.equal(balance.checkpoints.length,6,'balance checkpoints missing');
     assert.ok(balance.finalStage>=1&&Number.isFinite(balance.finalStage),'invalid simulated stage');
     assert.ok(balance.checkpoints.every(c=>Number.isFinite(c.credits)&&Number.isFinite(c.heroLevel)),'non-finite simulated credits or hero level');
