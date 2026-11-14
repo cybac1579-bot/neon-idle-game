@@ -1272,3 +1272,26 @@ test('brand-new save initializes deep automation as off and button state as fals
  assert.equal(b.get('s.deepAutoClock'),0);
  assert.equal(b.document.getElementById('deepAuto').getAttribute('aria-pressed'),'false');
 });
+
+
+test('player-reported economy-first and higher-tier upgrade strategy: first rebirth timing',()=>{
+ const b=boot({stage:1,best:1,credits:30,energy:0,lastSaved:Date.UTC(2026,10,12)},Date.UTC(2026,10,12),7123);
+ const milestones=[];let eligible=null,rebirthAt=null;
+ const unlockOrder=['reactor','forge','relay','amp','gen','atk','spd'];
+ for(let second=1;second<=1800;second++){
+  b.get('step(1,true)');
+  if(second%3===0){
+   // Early: prioritize money-making generation; once income grows, buy newest unlocked upgrades.
+   b.get('(()=>{const economic=["gen","forge","relay"];const unlocked=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50));const affordable=unlocked.filter(k=>s.credits>=cost(k));if(!affordable.length)return;const rich=s.credits>=Math.max(3000,creditRate()*15);let pick;if(!rich){pick=economic.find(k=>affordable.includes(k))||affordable.sort((a,b)=>cost(a)-cost(b))[0];}else{pick='+JSON.stringify(unlockOrder)+'.find(k=>affordable.includes(k));}if(pick)purchase(pick);})()');
+  }
+  if(second%3===0){
+   b.get('(()=>{for(const id of ["precision","double","boss"]){while(availablePoints()>0&&buyTrait(id)){} }})()');
+  }
+  if(eligible===null&&b.get('gainCore()')>0)eligible=second;
+  if(eligible!==null&&rebirthAt===null){b.get('rebirth()');rebirthAt=second;}
+  if(second%60===0)milestones.push({minute:second/60,stage:b.get('s.stage'),credits:Math.round(b.get('s.credits')),rebirths:b.get('s.rebirths'),traitPrecision:b.get('traitLevel("precision")')});
+  if(rebirthAt!==null)break;
+ }
+ console.log('player-style first rebirth:',JSON.stringify({eligible,rebirthAt,minutes:rebirthAt/60,milestones}));
+ assert.ok(rebirthAt!==null,'player-style policy should reach first rebirth within 30m');
+});
