@@ -784,9 +784,20 @@ test('expanded core shop: all six paths have finite caps and retain progress acr
   assert.equal(b.get('s["'+id+'"]'),cap,'must not exceed cap: '+id);
   assert.equal(b.get('s.cores'),before,'capped investment must not spend: '+id);
  }
- b.get('s.corePower=1;s.coreEconomy=1;s.coreEnergy=1;s.coreStart=1;s.coreBounty=1;s.s.autoLevel=1');
+ b.get('s.corePower=1;s.coreEconomy=1;s.coreEnergy=1;s.coreStart=1;s.coreBounty=1;s.autoLevel=1');
  assert.equal(b.get('rebirth()'),true);
  for(const id of ids)assert.equal(b.get('s["'+id+'"]'),1,'rebirth should preserve '+id);
+});
+test('legacy time compression is refunded once and never purchasable',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:100,best:100,cores:5,totalCores:100,coreTempo:3,spd:50,lastSaved:now},now);
+ const refund=[0,1,2].reduce((sum,i)=>sum+Math.ceil(3*Math.pow(1.85,i)),0);
+ assert.equal(b.get('s.cores'),5+refund);
+ assert.equal(b.get('s.coreTempo'),undefined);
+ assert.equal(b.get('coreDefinition("coreTempo")'),undefined);
+ assert.ok(b.get('attackInterval()')>=.1-1e-9);
+ b.get('buyCore("coreTempo")');
+ assert.equal(b.get('s.cores'),5+refund);
 });
 test('new core investment effects are real and distinct',()=>{
  const b=boot({stage:100,best:100,lastSaved:Date.UTC(2026,10,12,0,0,0)});
@@ -1056,7 +1067,7 @@ function simulatedSpendingPolicy({rebirthThreshold=5,spendCores=false,spendShard
   }
   if(second%10===0&&spendCores){
    const before=b.get('s.cores');
-   b.get('(()=>{const ids=["corePower","coreEconomy","coreEnergy","coreStart","coreBounty","coreTempo"];const options=ids.filter(id=>s[id]<coreDefinition(id)[3]&&s.cores>=coreCost(id));options.sort((a,b)=>coreCost(a)-coreCost(b));if(options.length)buyCore(options[0]);})()');
+   b.get('(()=>{const ids=["corePower","coreEconomy","coreEnergy","coreStart","coreBounty"];const options=ids.filter(id=>s[id]<coreDefinition(id)[3]&&s.cores>=coreCost(id));options.sort((a,b)=>coreCost(a)-coreCost(b));if(options.length)buyCore(options[0]);})()');
    if(b.get('s.cores')<before)corePurchases++;
   }
   if(second%10===0&&spendShards){
