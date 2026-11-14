@@ -40,3 +40,13 @@ Previous ~67% is historical estimate only; no current evidence-based revised per
 - Added .github/workflows/integration-portrait.yml at commit 1d19bab53ea3d8c12415cc5911486fdd9021508f, configured to run on integration branch pushes.
 - Test and workflow files were committed, but GitHub Actions completion and PASS/FAIL have NOT been observed yet. Local environment cannot reach github.com (DNS), so no local repository checkout or Chromium execution was performed.
 - This browser smoke does not cover save/offline/reconstruction/economy; additional regression evidence required before merge.
+
+
+## Verified integration status — 2026-11-14 (supersedes older pending notes above)
+- PR #2 `integration/reconcile-main-redesign-20261114` -> `main` remains unmerged; latest inspected comparison was clean, ahead 13 / behind 0 before subsequent test commits. Recheck before merge.
+- Save regression #89 passed 49/49 on commit `7532a46`; portrait Chromium #73 passed at 360/390/412px, including quest rows, claim semantics, persistence, and 60-minute telemetry. No physical Android device verification.
+- First-reconstruction telemetry at #73: 2859 seconds (47m39s), but RNG was not seeded; this is NOT a reproducible economic baseline.
+- Commit `6c87667` seeds the browser balance simulation with deterministic PRNG; save regression #90 passed 49/49, while portrait #74 result was pending when this note was written. Consult latest Actions results before claiming it passed.
+- Current experimental economy: 71-100 enemy HP gradually increased by 1.015 per stage over stage 70, while early 1-70 behavior is unchanged. Target first reconstruction ~60 minutes under best practical strategy, not an artificial timer. Seeded simulation is a comparison tool, not proof of optimal strategy or real-world play duration.
+- Outstanding before merge: deterministic simulation results and multi-strategy balance validation; real-device portrait gameplay; production deployment and Pages parity verification. No live production deployment claimed.
+- Readiness remains 58% provisional; do not advance from passing smoke tests alone.
