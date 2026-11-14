@@ -454,3 +454,14 @@ Reference: https://exponentialidle.com/ (official project homepage; **not indepe
 **Disadvantages / impact:** (1) inaccurate ETA forecasts from variable rewards would mislead (high); (2) too much mathematical optimization information overwhelms early players (high); (3) copying a prestige equation or adding new meta-currency would increase balance scope (high).
 **Cost and expected value:** low for read-only current tier and next cost, medium for an accurate forecast or multi-system comparison; clarity benefit plausible but not player-validated.
 **Decision:** **defer implementation** until current portrait screenshots and 30-minute tier-first economic pacing are measured. If needed, apply only a compact target/cost explanation on the existing growth/details screen; never import repeated taps, mandatory reactions, formula copies or new currencies.
+
+
+## 2026-11-15 06:55 KST — Trimps: milestone gates versus single-stat optimization
+Reference: https://trimps.github.io/ (original browser game; **conceptual comparison, not independently played or fetched this run**).
+
+**Question prompted by Neon evidence:** a successful 47-case regression run yielded attack-only stage 46–48 at 30 minutes, versus attack+speed stage 43 and balanced ROI stage 41 in simplified 60-second purchase policies. Does the early game communicate why non-attack investments matter? These results are limited proxies and do not justify copying Trimps mechanics.
+
+**Potential strengths / impact:** (1) visible near-term zone/goal gates can orient passive play without extra taps (**high**); (2) different upgrade roles can become meaningful through clearly differentiated later bottlenecks (**high**); (3) progress after a reset can be expressed as earlier bottlenecks becoming easier (**medium-high**).
+**Risks / impact:** (1) introducing additional resource-production systems would inflate mobile UI and balancing complexity (**high**); (2) hard counters/gates can make the player feel forced into specific builds (**high**); (3) importing active management or rapid input conflicts with the fixed automatic-combat constraint (**critical**).
+**Cost / expected benefit:** low to annotate existing milestone/upgrade goals in Growth/Stats, medium to tune attack/speed/energy roles after integrated simulations, high for new economy layers. Benefit to Neon remains hypothetical until actual 30-minute session and full-feature fixtures.
+**Decision:** **defer new mechanics and rebalance**; first compare integrated highest-tier auto-buy, equipment, skill and trait effects at low input frequency. If attack dominates there too, consider a targeted existing-system adjustment with regression and save compatibility tests. Keep battle canvas prominent, no tapping, no copied formulas/art.
