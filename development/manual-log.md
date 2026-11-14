@@ -226,3 +226,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - CI **43533703624** manual Pages release guard step passed; public Pages deploy not triggered.
 - Added screenshot capture to `automation/packaged-browser-smoke.cjs`: generated distribution battle/deep views at 360px and 412px, saved under `dist/preview-screenshots/` after real browser loading/navigation. CI now uploads separate `neon-idle-portrait-visual-evidence` artifact for human visual inspection; this does not automatically judge art quality or substitute for Android hardware.
 - Latest CI pending. Readiness remains **67%** until full successful validation and review. No public Pages changes or game ZIP delivery.
+
+## 2026-11-14 — Screenshot integrity gate verified
+- CI **43533944859 passed** generated distribution screenshots and uploaded `neon-idle-portrait-visual-evidence` artifact (battle/deep at 360/412px).
+- Added PNG signature, nontrivial byte size, exact viewport width, and full-page height assertions for all four images before artifact upload. CI **43533977709 passed** including this gate and existing tests.
+- Readiness **68%** for reliable visual review evidence. Visual design quality, real Galaxy interaction, public HTTPS hosting and 30-minute human play are not verified.
