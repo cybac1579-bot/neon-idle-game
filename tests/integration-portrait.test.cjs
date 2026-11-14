@@ -75,7 +75,7 @@ const server=createServer((req,res)=>{
    assert.equal(offline.rebirths,offlineSeed.rebirths,'offline auto-rebirth occurred at '+width);
    assert.ok(offline.stage>=offlineSeed.stage,'offline stage regressed at '+width);
    assert.match(offline.log,/방치 진행/,'offline settlement missing at '+width);
-   const settledSeconds=Number(offline.log.match(/방치 진행 (\\d+)초/)?.[1]);
+   const settledSeconds=Number(offline.log.match(/방치 진행 (\d+)초/)?.[1]);
    assert.ok(settledSeconds>=25&&settledSeconds<=120,'unexpected offline duration at '+width+': '+offline.log);
    assert.deepEqual(errors,[],'browser errors after save/reload at '+width);
    console.log('PASS portrait + save/reload '+width,JSON.stringify(layout));
