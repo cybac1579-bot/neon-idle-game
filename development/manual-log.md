@@ -246,3 +246,7 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - CI **43535056208 completed successfully** after correcting screenshot pixel dimension assertions for DPR 2. Existing gameplay regression, 62-second real-browser idle, package generation, screenshot upload, and generated-distribution browser smoke passed.
 - Packaged browser audit now verifies 360/412 CSS-pixel battle/deep views for horizontal overflow, clipped buttons and controls smaller than 40 CSS pixels. No failures observed in those checked states. This is automated viewport validation, not human visual review or real Android hardware ergonomics.
 - First playable readiness **69%** after verified mobile control regression coverage. Next prioritize direct human visual review of CI screenshot artifacts and real device 30-minute play; do not mistake CI for that acceptance.
+
+## 2026-11-14 — Expand packaged UI audit to all five tabs
+- Verified CI **43535056208** uploaded non-expired artifacts: `neon-idle-portrait-visual-evidence` (1,860,926 bytes) and `neon-idle-portrait-web-preview` (220,312 bytes). These metadata confirm uploaded files exist, not visual quality; image bytes not directly inspected here.
+- Extended `automation/packaged-browser-smoke.cjs` to navigate all five player tabs (battle/growth/reset/deep/stats), assert selected tab and visible panel, and check horizontal overflow, clipped and undersized visible buttons at 360/412 CSS px. CI pending; readiness stays **69%** until verified.
