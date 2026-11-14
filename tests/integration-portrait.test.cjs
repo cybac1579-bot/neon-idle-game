@@ -173,6 +173,7 @@ const server=createServer((req,res)=>{
      for(let t=1;t<=3600;t++){
       step(1,false);
       if(t%10===0){
+       transferCacheCredits();
        for(let n=0;n<30;n++){
         const affordable=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k))
           .sort((a,b)=>unlockStage[b]-unlockStage[a]);
@@ -189,7 +190,7 @@ const server=createServer((req,res)=>{
     assert.ok(balance.finalStage>=1&&Number.isFinite(balance.finalStage),'invalid simulated stage');
     assert.ok(balance.checkpoints.every(c=>Number.isFinite(c.credits)&&Number.isFinite(c.heroLevel)),'non-finite simulated credits or hero level');
     assert.deepEqual(balanceErrors,[],'balance simulation browser errors');
-    console.log('BALANCE_BASELINE_60M '+JSON.stringify(balance));
+    console.log('BALANCE_QUEST_CLAIM_60M '+JSON.stringify(balance));
     await balancePage.close();
 
 
