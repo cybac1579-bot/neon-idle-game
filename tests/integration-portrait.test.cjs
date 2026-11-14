@@ -140,6 +140,29 @@ const server=createServer((req,res)=>{
     assert.equal(cacheResult.remaining,0,'scheduled credit remained after claim');
     assert.deepEqual(cacheErrors,[],'scheduled credit browser errors');
     await cachePage.close();
+    // Automated purchases must be gated by research and obey their cadence.
+    const autoPage=await browser.newPage({viewport:{width,height:844}});
+    const autoErrors=[];
+    autoPage.on('pageerror',e=>autoErrors.push(e.message));
+    await autoPage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
+    const automation=await autoPage.evaluate(()=>{
+     s.credits=1e8;s.best=1;s.autoBuy=true;s.autoLevel=0;
+     const before=s.atk+s.spd+s.gen;
+     step(31,false);
+     const locked=s.atk+s.spd+s.gen;
+     s.autoLevel=1;s.autoPurchaseClock=0;
+     step(29,false);
+     const beforeInterval=s.atk+s.spd+s.gen;
+     step(1.1,false);
+     const afterInterval=s.atk+s.spd+s.gen;
+     return {before,locked,beforeInterval,afterInterval};
+    });
+    assert.equal(automation.locked,automation.before,'auto purchase bypassed research');
+    assert.equal(automation.beforeInterval,automation.locked,'auto purchase fired before research interval');
+    assert.ok(automation.afterInterval>automation.beforeInterval,'auto purchase failed after interval');
+    assert.deepEqual(autoErrors,[],'auto purchase browser errors');
+    await autoPage.close();
+
    }
 
    // Permanent hero level determines equipped skill slots (1, 10, 25, 40, 60).
