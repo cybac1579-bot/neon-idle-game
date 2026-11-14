@@ -205,3 +205,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 ## 2026-11-14 — Generated distribution browser smoke verified
 - CI **43530486452 completed successfully**. Added `automation/packaged-browser-smoke.cjs` and a required workflow gate before preview artifact upload: serve `dist/neon-idle/` over HTTP; Chromium 360/412px checks initialization, overflow, PNG icon HTTP/content-type/dimensions, portrait standalone manifest, first real upgrade, save/reload and dungeon navigation. Existing 83 Node regressions and 62-second browser idle test also passed.
 - First playable readiness **65%** (actual generated distribution tested), not Android hardware, HTTPS deployment or 30-minute human play. Next prioritize installable HTTPS preview and device validation; don't distribute ZIP until requested for playtesting.
+
+## 2026-11-14 — Android mobile emulation and persistent browser restart
+- CI **43530778563 passed**: generated distribution over HTTP, Android-like Chrome UA/touch/DPR, first touch purchase, navigation and saved state, dungeon entry. This is emulation, not real Galaxy hardware.
+- CI **43530857867 passed**: additional Chromium persistent user-data profile closes the browser context, relaunches with the same profile, and confirms upgrade, credits and stage survive full browser restart. Tests do not establish resistance to OS data clearing, browser storage eviction or HTTPS installability.
+- First playable readiness **66%** after durable restart coverage. Next: prepare safe HTTPS preview path and real-device installation/player-experience checks. Do not distribute ZIP until requested for playtest.
