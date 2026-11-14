@@ -260,3 +260,9 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - Added packaged-browser assertion that **no panels belonging to other tabs remain visible** when each of five tabs is selected at 360/412 CSS px. This catches overlapping/incompletely hidden screens.
 - Removed duplicate post-purchase battle/deep screenshot overwrites so the 10 images consistently represent pre-purchase five-tab navigation state.
 - Prior 10-screenshot CI **43535634379 still running** at observation; new commit requires a fresh CI pass. Readiness remains **70%** pending confirmation. No public deployment.
+
+## 2026-11-14 — Risk review and redundant CI mitigation
+- CI **43535634379 passed** 10-view screenshot checks. Later CI **43535648767** and **43535801216** were still running at observation; no failure was confirmed at that point. Previously observed screenshot width mismatch was a test DPR bug, fixed and validated in CI 43535056208.
+- Real risks remain: screenshot files exist but image quality not directly reviewed; actual Galaxy S25+ portrait 30-minute play, progression pacing and ergonomics remain unverified; manual public Pages preview remains intentionally unpublished because existing Pages configuration/overwrite risk was not confirmed.
+- Multiple rapid commits launched overlapping expensive Chromium CI jobs. Added branch/ref scoped workflow concurrency with `cancel-in-progress: true` to cancel superseded integration runs; cancellation is intentional and should not be reported as a gameplay regression. Verify latest run before claiming success.
+- First playable readiness **70%** pending latest CI and human testing.
