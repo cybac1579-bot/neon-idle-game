@@ -12,6 +12,16 @@ const tests=[
  ['unique DOM IDs',()=>assert.equal(new Set(ids).size,ids.length)],
  ['game DOM bindings exist',()=>assert.deepEqual([...new Set(refs)].filter(x=>!ids.includes(x)),[])],
  ['four existing navigation tabs',()=>assert.deepEqual([...html.matchAll(/<button data-view="([^"]+)"/g)].map(x=>x[1]),['battle','growth','reset','stats'])],
+ ['save button is inside stats screen',()=>{
+   const stats=html.indexOf('<section data-screen="stats"');
+   const save=html.indexOf('id="save"');
+   assert.ok(stats>=0&&save>stats&&save<html.indexOf('</section>',stats));
+ }],
+ ['browser smoke opens stats before save',()=>{
+   const smoke=fs.readFileSync('tests/integration-portrait.test.cjs','utf8');
+   assert.match(smoke,/data-view=\\\"stats\\\"/);
+   assert.ok(smoke.indexOf("page.locator('#save').click()")>smoke.indexOf("page.locator('[data-view=\\\"stats\\\"]').first().click();"));
+ }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
