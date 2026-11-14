@@ -231,3 +231,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - CI **43533944859 passed** generated distribution screenshots and uploaded `neon-idle-portrait-visual-evidence` artifact (battle/deep at 360/412px).
 - Added PNG signature, nontrivial byte size, exact viewport width, and full-page height assertions for all four images before artifact upload. CI **43533977709 passed** including this gate and existing tests.
 - Readiness **68%** for reliable visual review evidence. Visual design quality, real Galaxy interaction, public HTTPS hosting and 30-minute human play are not verified.
+
+## 2026-11-14 — Packaged portrait interactive control audit
+- Added browser checks at 360/412px for battle and deep screens: no horizontal overflow, visible buttons remain inside viewport, interactive controls have at least 40px width and height, and controls are present. This supplements screenshot evidence with executable touch-usability assertions.
+- CI **43534748134 pending** at time of this log. If audit fails, inspect actual controls and fix UI or adjust overly broad assumptions based on evidence; do not count as passed before run completes.
+- First playable readiness stays **68%** pending CI. Real Galaxy ergonomics and human 30-minute play remain untested.
