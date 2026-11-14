@@ -465,3 +465,14 @@ Reference: https://trimps.github.io/ (original browser game; **conceptual compar
 **Risks / impact:** (1) introducing additional resource-production systems would inflate mobile UI and balancing complexity (**high**); (2) hard counters/gates can make the player feel forced into specific builds (**high**); (3) importing active management or rapid input conflicts with the fixed automatic-combat constraint (**critical**).
 **Cost / expected benefit:** low to annotate existing milestone/upgrade goals in Growth/Stats, medium to tune attack/speed/energy roles after integrated simulations, high for new economy layers. Benefit to Neon remains hypothetical until actual 30-minute session and full-feature fixtures.
 **Decision:** **defer new mechanics and rebalance**; first compare integrated highest-tier auto-buy, equipment, skill and trait effects at low input frequency. If attack dominates there too, consider a targeted existing-system adjustment with regression and save compatibility tests. Keep battle canvas prominent, no tapping, no copied formulas/art.
+
+
+## 2026-11-15 07:55 KST — Universal Paperclips: automatic choice legibility
+Reference: https://www.decisionproblem.com/paperclips/index2.html (original game site; **conceptual design comparison, not a current-build hands-on test**).
+
+**Question:** when an automated system chooses upgrades, does the interface explain the next actual target rather than a different cheapest item?
+
+**Benefits / impact:** (1) visible automation intent helps users trust unattended progress (**high**); (2) short read-only target text fits Growth/Stats without shrinking combat (**high**); (3) using existing costs and unlock levels avoids new currencies and save migration (**medium-high**).
+**Risks / impact:** (1) presenting an unaffordable top tier as the only possible purchase can misrepresent fallback purchasing (**high**); (2) too many economic forecasts distract from battle (**medium**); (3) rapidly changing target text could feel unstable (**medium**).
+**Cost / expected effect:** low for matching existing tier-first selection and explaining the active purchase mode; medium for testing affordability transitions across unlocks; high for introducing new automation planning mechanics. Benefit is plausible, not player-validated.
+**Decision:** apply only a small existing-state goal-description correction; do not copy game mechanics or add clicking, manual production chains, currencies or dense dashboards. Verify the current game's actual selection logic in CI/browser before claiming success.
