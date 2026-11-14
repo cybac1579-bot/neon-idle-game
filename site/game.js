@@ -118,7 +118,7 @@ function actionableGoal(){
  // Keep the read-only target consistent with the actual tier-first auto-buy policy.
  const automated=s.autoBuy&&s.autoLevel>0;
  const sorted=options.sort(automated?(a,b)=>unlockStage[b.k]-unlockStage[a.k]||b.price-a.price:(a,b)=>a.price-b.price);
- const next=automated?(sorted.find(o=>s.credits>=o.price)||sorted[0]):(sorted.find(o=>s.credits>=o.price)||sorted[0]);
+ const next=sorted.find(o=>s.credits>=o.price)||sorted[0];
  const deficit=Math.max(0,next.price-s.credits),rate=creditRate(),estimate=rate>0?Math.ceil(deficit/rate):null;
  const label=automated?'자동 구매 목표 (해금 등급 우선)':'수동 구매 참고 (최저가)';
  return `${label}: ${names[next.k]} · ${fmt(next.price)} 크레딧 / 보유 ${fmt(s.credits)} · ${deficit===0?'구매 가능':rate>0?`기본 생산 기준 약 ${estimate}초 (전투 보상으로 단축 가능)`:'크레딧 생산을 강화해'}`;
