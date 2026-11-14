@@ -236,3 +236,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - Added browser checks at 360/412px for battle and deep screens: no horizontal overflow, visible buttons remain inside viewport, interactive controls have at least 40px width and height, and controls are present. This supplements screenshot evidence with executable touch-usability assertions.
 - CI **43534748134 pending** at time of this log. If audit fails, inspect actual controls and fix UI or adjust overly broad assumptions based on evidence; do not count as passed before run completes.
 - First playable readiness stays **68%** pending CI. Real Galaxy ergonomics and human 30-minute play remain untested.
+
+## 2026-11-14 — Fix screenshot DPR assertion failure
+- CI **43534748134 failed** in packaged-browser smoke because PNG screenshot physical width was 720 pixels for a 360 CSS-pixel viewport at DPR 2. The prior assertion incorrectly expected CSS width; failure was in test expectation, not evidence of UI clipping.
+- Corrected PNG dimensions to `width*2` and `850*2` for the existing `deviceScaleFactor:2` context; kept clipped/tiny touch-control checks unchanged. CI **43535056208 pending**. Next: inspect this run; fix any genuine UI defects, not relax touch thresholds.
+- First playable readiness **68%** until CI succeeds and UI audit results verified.
