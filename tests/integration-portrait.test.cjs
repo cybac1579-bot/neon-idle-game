@@ -51,6 +51,26 @@ const server=createServer((req,res)=>{
    await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0,null,{timeout:12000});
    const restored=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_rework_07')||'null'));
    assert.ok(restored&&restored.best>=saved.best&&restored.rebirths===saved.rebirths,'save restoration failed at '+width);
+   // Simulate a short background interval without waiting in real time.
+   // This verifies the existing offline settlement path and forbids auto-rebirth.
+   const offlineSeed=await page.evaluate(()=>{
+    const key='neon_rework_07';
+    const state=JSON.parse(localStorage.getItem(key));
+    state.lastSaved=Date.now()-30000;
+    state.autoRebirth=true;
+    state.autoLevel=Math.max(3,state.autoLevel);
+    localStorage.setItem(key,JSON.stringify(state));
+    return {rebirths:state.rebirths,stage:state.stage};
+   });
+   await page.reload({waitUntil:'load'});
+   await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0,null,{timeout:12000});
+   const offline=await page.evaluate(()=>{
+    const state=JSON.parse(localStorage.getItem('neon_rework_07'));
+    return {rebirths:state.rebirths,stage:state.stage,log:document.querySelector('#log').textContent};
+   });
+   assert.equal(offline.rebirths,offlineSeed.rebirths,'offline auto-rebirth occurred at '+width);
+   assert.ok(offline.stage>=offlineSeed.stage,'offline stage regressed at '+width);
+   assert.match(offline.log,/방치 진행/,'offline settlement missing at '+width);
    assert.deepEqual(errors,[],'browser errors after save/reload at '+width);
    console.log('PASS portrait + save/reload '+width,JSON.stringify(layout));
    await page.close();
