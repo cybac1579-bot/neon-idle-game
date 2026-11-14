@@ -654,3 +654,14 @@ test('two-hour offline restore reports runtime and preserves settlement cap with
  assert.match(b.get('logText'),/방치 진행 7200초 반영/);
  console.log('two-hour offline restore benchmark:',JSON.stringify({elapsedMs:Math.round(elapsedMs),stage:state.stage,best:state.best,rebirths:state.rebirths}));
 });
+
+
+test('auto-buy prioritizes highest unlocked affordable tier, not cheapest cost',()=>{
+ const b=boot({stage:65,best:65,credits:80000,autoLevel:1,autoBuy:true,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ const before=b.get('({reactor:s.reactor,atk:s.atk,credits:s.credits})');
+ b.get('step(10,false)');
+ const after=b.get('({reactor:s.reactor,atk:s.atk,credits:s.credits})');
+ assert.equal(before.reactor,0);
+ assert.ok(after.reactor>=1,'reactor tier (stage 65) must win over cheap unlocked upgrades');
+ assert.ok(Number.isFinite(after.credits)&&after.credits>=0);
+});
