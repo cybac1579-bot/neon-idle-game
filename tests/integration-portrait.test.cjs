@@ -36,6 +36,18 @@ const server=createServer((req,res)=>{
    assert.ok(layout.arena>=205,'combat arena too short at '+width);
    assert.ok(layout.images.length>=2&&layout.images.every(i=>i.ok),'battle images missing at '+width+': '+JSON.stringify(layout.images));
    assert.deepEqual(errors,[],'browser errors at '+width);
+   await page.locator('[data-view="growth"]').first().click();
+   const questLayout=await page.evaluate(()=>{
+    const list=document.getElementById('cacheTimer');
+    const rows=[...list.querySelectorAll('.quest-row')];
+    return {count:rows.length,overflow:document.documentElement.scrollWidth>innerWidth+1,
+     rowOverflow:rows.some(row=>row.scrollWidth>row.clientWidth+1),
+     text:rows.map(row=>row.textContent.trim())};
+   });
+   assert.equal(questLayout.count,3,'three independent quest rows must render at '+width);
+   assert.equal(questLayout.overflow,false,'growth view horizontal overflow at '+width);
+   assert.equal(questLayout.rowOverflow,false,'quest row text overflow at '+width);
+   assert.ok(questLayout.text.every(x=>x.length>0),'quest status missing at '+width);
    for(const view of ['growth','reset','stats','battle']){
     await page.locator('[data-view="'+view+'"]').first().click();
     assert.ok(await page.locator('[data-screen="'+view+'"]:not(.view-hidden)').count()>0,'navigation failed '+view);
