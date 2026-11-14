@@ -114,32 +114,30 @@ const server=createServer((req,res)=>{
    assert.ok(!('overload' in reconstructed.skillLevels),'non-inherited skill level retained at '+width);
    assert.deepEqual(resetErrors,[],'reconstruction browser errors at '+width);
    await resetPage.close();
-   // Scheduled-credit facility: one minute accrues a claimable payout,
-   // claiming transfers it exactly once, and the next claim gives nothing.
+   // Timed quests accrue independently, then transfer rewards exactly once.
    if(width===390){
-    const cachePage=await browser.newPage({viewport:{width,height:844}});
-    const cacheErrors=[];
-    cachePage.on('pageerror',e=>cacheErrors.push(e.message));
-    await cachePage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
-    const cacheResult=await cachePage.evaluate(()=>{
-     const initialCredits=s.credits;
-     const before=s.cacheCredits;
-     s.cacheClock=59.9;
+    const questPage=await browser.newPage({viewport:{width,height:844}});
+    const questErrors=[];
+    questPage.on('pageerror',e=>questErrors.push(e.message));
+    await questPage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
+    const questResult=await questPage.evaluate(()=>{
+     s.best=3;s.questClocks=[5.9,29.9,119.9];
+     const before=s.questCredits.slice();
      step(.2,false);
-     const accrued=s.cacheCredits-before;
+     const accrued=s.questCredits.map((x,i)=>x-before[i]);
      const creditsBeforeClaim=s.credits;
      const first=transferCacheCredits();
      const creditsAfterClaim=s.credits;
      const second=transferCacheCredits();
-     return {initialCredits,accrued,first,second,creditsBeforeClaim,creditsAfterClaim,remaining:s.cacheCredits};
+     return {accrued,first,second,creditsBeforeClaim,creditsAfterClaim,remaining:s.questCredits.reduce((a,b)=>a+b,0)};
     });
-    assert.ok(cacheResult.accrued>=10,'scheduled credit did not accrue');
-    assert.equal(cacheResult.first,cacheResult.accrued,'claimed amount differs from accrual');
-    assert.equal(cacheResult.creditsAfterClaim,cacheResult.creditsBeforeClaim+cacheResult.first,'claim did not credit balance');
-    assert.equal(cacheResult.second,0,'scheduled credit double-claimed');
-    assert.equal(cacheResult.remaining,0,'scheduled credit remained after claim');
-    assert.deepEqual(cacheErrors,[],'scheduled credit browser errors');
-    await cachePage.close();
+    assert.ok(questResult.accrued.every(x=>x>0),'timed quest reward did not accrue');
+    assert.equal(questResult.first,questResult.accrued.reduce((a,b)=>a+b,0),'claimed amount differs from quest accrual');
+    assert.equal(questResult.creditsAfterClaim,questResult.creditsBeforeClaim+questResult.first,'quest claim did not credit balance');
+    assert.equal(questResult.second,0,'quest reward double-claimed');
+    assert.equal(questResult.remaining,0,'quest rewards remained after claim');
+    assert.deepEqual(questErrors,[],'timed quest browser errors');
+    await questPage.close();
     // Automated purchases must be gated by research and obey their cadence.
     const autoPage=await browser.newPage({viewport:{width,height:844}});
     const autoErrors=[];
