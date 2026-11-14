@@ -19,3 +19,9 @@ Status: **not accepted** as of 2026-11-13 22:55 KST. Provisional readiness: **58
 
 ## After acceptance
 Stop speculative feature expansion and await player feedback; retain scheduled regression/deployment checks. Keep automation records under `automation/` and manual development under `development/`.
+
+## 2026-11-14 19:00 KST evidence update
+- Latest observed main `7e519fd58b4e2c701b6a5d3a1c29711a94434fc1` (automation documentation); latest gameplay `998dc68eb7bd8748d67d25b48c0d5b9bb87a99aa` (footer cleanup). Prior Pages run [43563603347](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43563603347) deploy job was queried again and is **success**, but it predates the footer change. Latest post-footer Pages and served HTML/JS parity are **unverified** (public DNS access failed).
+- Latest confirmed CI remains [43496898561](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43496898561), 45/45 tests, predating the HTML edit. Mixed-investment 30m simulation: attack 46/46/48, attack+speed 43/43/43, attack+energy 42/44/44, ROI 41/41/42. This does not prove real-player fun or longer-run ROI.
+- **New explicit performance acceptance criterion:** measure worst-case 7200-second offline resume elapsed wall time on a throttled browser/mobile CPU, including render/save and storage-denied behavior. Current `.85s` step loop implies ~8,471 synchronous iterations; this is a risk hypothesis, not a confirmed stall. Capture actual timing and ensure no double-settlement on reload before optimizing the simulation algorithm.
+- No device/browser screenshots, performance measurement, or post-footer live parity evidence obtained in this run. **Readiness 58% (delta 0pp).**
