@@ -22,7 +22,6 @@ const tests=[
    const open=smoke.indexOf("await page.locator('[data-view=");
    const save=smoke.indexOf("await page.locator('#save').click()");
    assert.ok(open>=0&&save>open,'save click must follow navigation');
-   assert.match(smoke,/await page\.locator\('#save'\)\.click\(\)/);
  }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
