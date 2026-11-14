@@ -20,7 +20,7 @@ const tests=[
  ['browser smoke opens stats immediately before save',()=>{
    const smoke=fs.readFileSync('tests/integration-portrait.test.cjs','utf8');
    const save=smoke.indexOf("await page.locator('#save').click()");
-   const stats=smoke.lastIndexOf("await page.locator('[data-view=\\\"stats\\\"]').first().click()",save);
+   const stats=smoke.lastIndexOf(`await page.locator('[data-view="stats"]').first().click()`,save);
    assert.ok(save>=0&&stats>=0&&stats<save,'save click must follow stats navigation');
  }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
