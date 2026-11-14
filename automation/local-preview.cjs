@@ -17,8 +17,10 @@ const server=http.createServer((req,res)=>{
   res.end(body);
  });
 });
-server.listen(0,'127.0.0.1',()=>{
+server.listen(4173,'127.0.0.1',()=>{
  const a=server.address();
  console.log('Local PC preview: http://127.0.0.1:'+a.port+'/');
  console.log('Ctrl+C to stop. Loopback only; not reachable from your phone.');
 });
+
+server.on('error',err=>{console.error('Local preview unavailable: '+err.message);process.exitCode=1});
