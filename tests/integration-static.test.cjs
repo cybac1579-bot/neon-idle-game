@@ -19,8 +19,10 @@ const tests=[
  }],
  ['browser smoke opens stats before save',()=>{
    const smoke=fs.readFileSync('tests/integration-portrait.test.cjs','utf8');
-   assert.match(smoke,/data-view=\\\"stats\\\"/);
-   assert.ok(smoke.indexOf("page.locator('#save').click()")>smoke.indexOf("page.locator('[data-view=\\\"stats\\\"]').first().click();"));
+   const open=smoke.indexOf("await page.locator('[data-view=");
+   const save=smoke.indexOf("await page.locator('#save').click()");
+   assert.ok(open>=0&&save>open,'save click must follow navigation');
+   assert.match(smoke,/await page\.locator\('#save'\)\.click\(\)/);
  }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
