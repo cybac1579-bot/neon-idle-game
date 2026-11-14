@@ -6,6 +6,8 @@ const fs = require('node:fs');
   const dir=path.join(__dirname,'portrait-evidence');
   fs.mkdirSync(dir,{recursive:true});
   const metrics=[];
+  // Capture the actual first screen, not only a stitched full-page image.
+  // Keep evidence even if an assertion fails after capture.
   const writeMetrics=()=>fs.writeFileSync(path.join(dir,'metrics.json'),JSON.stringify(metrics,null,2));
   try {
     for(const [width,height] of [[360,740],[412,915]]) {
@@ -19,12 +21,13 @@ const fs = require('node:fs');
         const fight=battle.querySelector('.fight');
         const images=[...fight.querySelectorAll('img')];
         const r=e=>{const x=e.getBoundingClientRect();return {top:x.top,bottom:x.bottom,width:x.width,height:x.height}};
-        return {viewport:{w:innerWidth,h:innerHeight},bodyScrollWidth:document.body.scrollWidth,documentScrollWidth:document.documentElement.scrollWidth,battle:r(battle),fight:r(fight),images:images.map(i=>({...r(i),loaded:i.complete&&i.naturalWidth>0,src:i.getAttribute('src')})),nav:r(document.querySelector('.nav')),active:document.querySelector('[data-view].active')?.dataset.view};
+        return {viewport:{w:innerWidth,h:innerHeight},bodyScrollWidth:document.body.scrollWidth,documentScrollWidth:document.documentElement.scrollWidth,battle:r(battle),fight:r(fight),images:images.map(i=>({...r(i),loaded:i.complete&&i.naturalWidth>0,src:i.getAttribute('src')})),nav:r(document.querySelector('.nav')),fightVisibleFirstFold:Math.max(0,Math.min(height,innerHeight)-Math.max(0,fight.getBoundingClientRect().top)),active:document.querySelector('[data-view].active')?.dataset.view};
       });
       await page.screenshot({path:path.join(dir,`battle-${width}x${height}.png`),fullPage:true});
+      await page.screenshot({path:path.join(dir,`battle-firstfold-${width}x${height}.png`),fullPage:false});
       metrics.push({...result,errors});
       writeMetrics(); // Preserve measured geometry even if a later assertion fails.
-      if(errors.length||result.documentScrollWidth>width+1||result.active!=='battle'||result.fight.height<200||result.images.some(i=>!i.loaded||i.width<60)) throw Error('Portrait smoke failed '+JSON.stringify(metrics.at(-1)));
+      if(errors.length||result.documentScrollWidth>width+1||result.active!=='battle'||result.fight.height<200||result.fightVisibleFirstFold<120||result.images.some(i=>!i.loaded||i.width<60)) throw Error('Portrait smoke failed '+JSON.stringify(metrics.at(-1)));
       await page.getByRole('button',{name:'성장',exact:true}).click();
       if(!(await page.locator('[data-screen="growth"]').first().isVisible())) throw Error('Growth navigation failed');
       await page.screenshot({path:path.join(dir,`growth-${width}x${height}.png`),fullPage:false});
