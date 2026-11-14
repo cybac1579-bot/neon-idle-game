@@ -162,6 +162,37 @@ const server=createServer((req,res)=>{
     assert.ok(automation.afterInterval>automation.beforeInterval,'auto purchase failed after interval');
     assert.deepEqual(autoErrors,[],'auto purchase browser errors');
     await autoPage.close();
+    // Baseline balance telemetry (NOT a 60-minute pass criterion yet).
+    // Virtual-time simulation includes enemy kills, passive income, and purchases.
+    // It intentionally does not assume unimplemented timed quests or optimal skill play.
+    const balancePage=await browser.newPage({viewport:{width,height:844}});
+    const balanceErrors=[];
+    balancePage.on('pageerror',e=>balanceErrors.push(e.message));
+    await balancePage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
+    const balance=await balancePage.evaluate(()=>{
+     const checkpoints=[];
+     let firstReconstructionAt=null;
+     for(let t=1;t<=3600;t++){
+      step(1,false);
+      if(t%10===0){
+       for(let n=0;n<30;n++){
+        const affordable=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k))
+          .sort((a,b)=>unlockStage[b]-unlockStage[a]);
+        if(!affordable.length)break;
+        purchase(affordable[0]);
+       }
+      }
+      if(firstReconstructionAt===null&&gainCore()>0)firstReconstructionAt=t;
+      if(t%600===0)checkpoints.push({minute:t/60,stage:s.stage,best:s.best,heroLevel:s.heroLevel,credits:Math.floor(s.credits),kills:s.kills,weapon:!!s.weapon,skills:s.skillsOwned.length});
+     }
+     return {firstReconstructionAt,checkpoints,finalStage:s.stage,rebirthReady:gainCore()>0};
+    });
+    assert.equal(balance.checkpoints.length,6,'balance checkpoints missing');
+    assert.ok(balance.finalStage>=1&&Number.isFinite(balance.finalStage),'invalid simulated stage');
+    assert.deepEqual(balanceErrors,[],'balance simulation browser errors');
+    console.log('BALANCE_BASELINE_60M '+JSON.stringify(balance));
+    await balancePage.close();
+
 
    }
 
