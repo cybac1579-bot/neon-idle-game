@@ -1295,3 +1295,44 @@ test('player-reported economy-first and higher-tier upgrade strategy: first rebi
  console.log('player-style first rebirth:',JSON.stringify({eligible,rebirthAt,minutes:rebirthAt/60,milestones}));
  assert.ok(rebirthAt!==null,'player-style policy should reach first rebirth within 30m');
 });
+
+test('weapon archetypes offer selectable tradeoffs and survive reload',()=>{
+ const now=Date.UTC(2026,10,12);
+ const b=boot({stage:20,best:20,lastSaved:now},now);
+ assert.equal(b.get('acquireWeapon({tier:1,stage:20,role:"assault"})'),true);
+ assert.equal(b.get('acquireWeapon({tier:1,stage:20,role:"breaker"})'),true);
+ assert.equal(b.get('acquireWeapon({tier:1,stage:20,role:"scavenger"})'),true);
+ assert.equal(b.get('s.weaponStash.length'),2);
+ b.get('s.stage=20');
+ const assault=b.get('weaponMultiplier()');
+ assert.equal(b.get('equipWeapon("breaker")'),true);
+ assert.ok(b.get('weaponMultiplier()')>assault,'breaker should win against bosses');
+ b.get('s.stage=21');
+ assert.ok(b.get('weaponMultiplier()')<assault,'assault should win against regular enemies');
+ assert.equal(b.get('equipWeapon("scavenger")'),true);
+ assert.equal(b.get('weaponCreditMultiplier()'),1.35);
+ b.get('save()');
+ const restored=boot(JSON.parse(b.values.get('neon_rework_07')),now);
+ assert.equal(restored.get('s.weapon.role'),'scavenger');
+ assert.equal(restored.get('s.weaponStash.length'),2);
+ assert.equal(restored.get('equipWeapon("assault")'),true);
+});
+test('legacy weapon is assigned assault role and rebirth clears all weapons',()=>{
+ const b=boot({stage:110,best:110,weapon:{tier:2,stage:45},lastSaved:Date.UTC(2026,10,12)});
+ assert.equal(b.get('s.weapon.role'),'assault');
+ b.get('acquireWeapon({tier:1,stage:40,role:"breaker"})');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.weapon'),null);
+ assert.equal(b.get('s.weaponStash.length'),0);
+});
+test('removed time compression refunds once on repeated reload',()=>{
+ const now=Date.UTC(2026,10,12);
+ const b=boot({coreTempo:2,cores:5,lastSaved:now},now);
+ const amount=b.get('s.cores');
+ assert.ok(amount>5);
+ b.get('save()');
+ const saved=JSON.parse(b.values.get('neon_rework_07'));
+ assert.equal(Object.hasOwn(saved,'coreTempo'),false);
+ const resumed=boot(saved,now);
+ assert.equal(resumed.get('s.cores'),amount);
+});
