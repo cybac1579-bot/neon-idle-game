@@ -417,3 +417,11 @@ Sources (community maintained, not hands-on verification): https://idle-brick-br
 - Risks/impact: (1) **critical** copying click-driven play or timed golden-cookie reactions violates the no-tap/low-frequency rule; (2) **high** more upgrade panels and currencies would crowd mobile combat; (3) **medium** chasing every minor unlock may weaken the larger 30-minute goal.
 - Cost/value: **low** to audit existing battle goal and stage 15/20 equipment/skill unlock text; **medium** to improve existing milestone feedback without extra controls; **high** for any new production layer. Benefit is a hypothesis pending player test.
 - Decision: **apply only passive goal clarity as an evaluation criterion**, no clicking, timers requiring reaction, new currencies or borrowed art. Current battle already has `#battleGoal` and growth shows stage 15/20 unlocks; verify actual readability before editing. No gameplay code changed.
+
+
+## 2026-11-15 02:51 KST — Melvor Idle: passive skill milestone visibility
+- Reference: https://melvoridle.com/ (official site; conceptual comparison, no current-build hands-on test). Distinct focus: making unattended progression meaningful through skill-level milestones rather than combat animation.
+- Benefits (impact): (1) **high** next unlock clarity gives a reason to return without frequent interaction; (2) **medium** persistent mastery can make later runs feel faster; (3) **medium** skill-specific progress offers varied long-term goals.
+- Risks (impact): (1) **high** copying many parallel skills adds complexity and balance cost; (2) **high** large skill grids crowd a portrait battle screen; (3) **medium** too many milestones distract from the first 30-minute goal.
+- Cost/value: low to audit existing skill unlock and goal labels, medium to polish existing milestone messaging, high to add multiple independent skill tracks. Expected effect unverified.
+- Decision: **retain passive milestone readability as a test criterion**, defer parallel skill systems and extra currencies. No manual tapping or fast reaction mechanics, no borrowed assets/formulas, no gameplay change.
