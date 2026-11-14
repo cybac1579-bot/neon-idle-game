@@ -34,3 +34,9 @@ Previous ~67% is historical estimate only; no current evidence-based revised per
 - Read-back confirmed CSS marker present. Static inspection of current HTML/JS: 0 getElementById references, 0 missing referenced IDs, 0 duplicate IDs. This is a limited static check, NOT browser execution or regression suite.
 - Browser/CI/real-device tests NOT RUN in this session. No production artwork added; no main/deployment change.
 - Next: run CI/browser suite, verify actual rendering, then transplant other visual elements only if tests pass.
+
+## Browser verification infrastructure — 2026-11-14
+- Added tests/integration-portrait.test.cjs at commit 1acff01b70826f242a0f34653e661c5ee1e142ed. Checks 360/390/412px Chromium startup, image load, horizontal overflow, arena height, navigation and browser errors.
+- Added .github/workflows/integration-portrait.yml at commit 1d19bab53ea3d8c12415cc5911486fdd9021508f, configured to run on integration branch pushes.
+- Test and workflow files were committed, but GitHub Actions completion and PASS/FAIL have NOT been observed yet. Local environment cannot reach github.com (DNS), so no local repository checkout or Chromium execution was performed.
+- This browser smoke does not cover save/offline/reconstruction/economy; additional regression evidence required before merge.
