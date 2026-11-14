@@ -250,7 +250,7 @@ const server=createServer((req,res)=>{
        }
        if(first===null&&gainCore()>0)first=t;
       }
-      output[name]={firstReconstructionAt:first,finalStage:s.stage};
+      output[name]={firstReconstructionAt:first,finalStage:s.stage,upgrades:{atk:s.atk,spd:s.spd,gen:s.gen,amp:s.amp,relay:s.relay,forge:s.forge,reactor:s.reactor},heroLevel:s.heroLevel,weapon:!!s.weapon,skills:s.skillsOwned.length};
      }
      return output;
     });
