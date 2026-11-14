@@ -409,3 +409,11 @@ Sources (community maintained, not hands-on verification): https://idle-brick-br
 - Risks (impact): (1) high: new factions and currencies overwhelm a 30-minute first session; (2) high: cross-faction balancing and save migration create regression risk; (3) medium-high: nested menus obscure battle on mobile.
 - Cost/expected effect: low to compare current trait/skill choices, medium to improve existing unlock messaging, high to implement faction trees. No measured benefit yet.
 - Decision: **defer factions/currencies**. Preserve automatic combat and existing trait/skill specialization; first obtain production first-fold battle evidence and test low-frequency choice clarity. No mechanics or assets copied.
+
+
+## 2026-11-15 01:51 KST — Cookie Clicker: passive milestone anticipation, excluding active clicking
+- Reference: https://orteil.dashnet.org/cookieclicker/ (official game; conceptual mechanics comparison, not current-version hands-on test). New focus: communicating the next unlock during unattended resource accumulation.
+- Benefits/impact: (1) **high** visible upcoming unlocks can make a waiting interval purposeful; (2) **medium** discrete milestone rewards can distinguish 5/15/30-minute progression; (3) **medium** persistent progress after resets can make repeat runs shorter.
+- Risks/impact: (1) **critical** copying click-driven play or timed golden-cookie reactions violates the no-tap/low-frequency rule; (2) **high** more upgrade panels and currencies would crowd mobile combat; (3) **medium** chasing every minor unlock may weaken the larger 30-minute goal.
+- Cost/value: **low** to audit existing battle goal and stage 15/20 equipment/skill unlock text; **medium** to improve existing milestone feedback without extra controls; **high** for any new production layer. Benefit is a hypothesis pending player test.
+- Decision: **apply only passive goal clarity as an evaluation criterion**, no clicking, timers requiring reaction, new currencies or borrowed art. Current battle already has `#battleGoal` and growth shows stage 15/20 unlocks; verify actual readability before editing. No gameplay code changed.
