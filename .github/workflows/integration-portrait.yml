@@ -1,0 +1,26 @@
+name: Integration portrait browser smoke
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - development/main-redesign-integration-20261114
+  workflow_dispatch:
+jobs:
+  portrait:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify game compatibility and static integration
+        run: node tests/integration-static.test.cjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run 360/390/412 portrait integration smoke
+        run: timeout --signal=TERM --kill-after=10s 120s node tests/integration-portrait.test.cjs

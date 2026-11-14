@@ -85,17 +85,44 @@ test('combat skill damages enemy and respects cooldown',()=>{
   b.get('skillTick(1)');
   assert.equal(b.get('enemyHp'),after,'skill must not fire again before cooldown');
 });
-test('periodic credit cache accumulates at most five payouts and claims once',()=>{
-  const b=boot({stage:1,best:1,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+test('timed quests accumulate independently and claim exactly once',()=>{
+  const b=boot({stage:1,best:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   b.get('step(360,false)');
-  const payout=b.get('cachePayout()');
-  assert.equal(b.get('s.cacheCredits'),payout*5);
+  const rewards=b.get('s.questCredits.slice()');
+  assert.ok(rewards.every(x=>x>0),'all unlocked quests should accumulate rewards');
   const before=b.get('s.credits');
-  assert.equal(b.get('transferCacheCredits()'),payout*5);
-  assert.equal(b.get('s.credits'),before+payout*5);
+  const amount=rewards.reduce((a,x)=>a+x,0);
+  assert.equal(b.get('transferCacheCredits()'),amount);
+  assert.equal(b.get('s.credits'),before+amount);
   assert.equal(b.get('transferCacheCredits()'),0);
 });
 
+test('timed quest reserves cap across repeated ticks and claim without duplication',()=>{
+ const b=boot({stage:3,best:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ for(let n=0;n<30;n++)b.get('step(120,false)');
+ assert.ok(b.get('s.questCredits.every((x,i)=>x<=questPayout(i)*5)'),'each quest must cap at five payouts');
+ const reserved=b.get('s.questCredits.reduce((a,x)=>a+x,0)');
+ const before=b.get('s.credits');
+ assert.equal(b.get('transferCacheCredits()'),reserved);
+ assert.equal(b.get('transferCacheCredits()'),0);
+ assert.equal(b.get('s.credits'),before+reserved);
+});
+test('legacy credit cache migrates into timed quest reserves',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:3,best:3,cacheCredits:123,cacheClock:12,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.questCredits[1]'),123);
+ assert.equal(b.get('s.questClocks[1]'),12);
+ assert.equal(b.get('s.cacheCredits'),0);
+ assert.equal(b.get('transferCacheCredits()'),123);
+});
+test('phase transition clears timed quest clocks and reserves',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:180,best:180,rebirths:2,questCredits:[11,22,33],questClocks:[2,3,4],lastSaved:stamp},stamp);
+ assert.ok(b.get('gainPhase()')>0);
+ b.get('phase()');
+ assert.equal(b.get('s.questCredits.reduce((a,x)=>a+x,0)'),0);
+ assert.equal(b.get('s.questClocks.reduce((a,x)=>a+x,0)'),0);
+});
 test('upgrade purchase respects unlock, price and speed cap',()=>{
   const b=boot({stage:1,best:1,credits:1000,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   assert.equal(b.get('purchase("amp")'),false,'locked upgrade must be unavailable');
@@ -300,7 +327,7 @@ test('offline settlement caps credited time at 7200 seconds and never auto-rebir
   assert.equal(credited,7200,'offline credited time must be capped at two hours');
   assert.equal(b.get('s.rebirths'),before,'offline settlement must not trigger automatic rebirth');
   assert.match(b.get('logText'),/방치 진행 7200초 반영/,'return log must report credited, not wall time');
-  assert.ok(b.get('s.cacheCredits')<=b.get('cachePayout()*5'),'offline cache must respect five-payout cap');
+  assert.ok(b.get('s.questCredits.every((x,i)=>x<=questPayout(i)*5)'),'offline quest reserves must respect five-payout cap');
 });
 
 
@@ -312,12 +339,12 @@ test('visibility resume settles hidden time once without duplicate cache payout'
   b.setNow(start+60000);
   b.document.hidden=false;
   b.listeners.visibilitychange();
-  const first=b.get('s.cacheCredits');
+  const first=b.get('s.questCredits.reduce((a,x)=>a+x,0)');
   assert.ok(first>0,'one minute hidden should generate a cache payout');
   const savedAt=b.get('s.lastSaved');
   assert.equal(savedAt,start+60000,'settlement must save its credited timestamp');
   b.listeners.visibilitychange();
-  assert.equal(b.get('s.cacheCredits'),first,'duplicate visible event must not credit cache twice');
+  assert.equal(b.get('s.questCredits.reduce((a,x)=>a+x,0)'),first,'duplicate visible event must not credit cache twice');
   assert.equal(b.get('s.lastSaved'),savedAt);
 });
 
@@ -332,7 +359,7 @@ test('repeated hidden events preserve original background start for offline sett
   b.setNow(start+60000);
   b.document.hidden=false;
   b.listeners.visibilitychange();
-  assert.ok(b.get('s.cacheCredits')>0,'two hidden events must not discard the first 30 seconds');
+  assert.ok(b.get('s.questCredits.reduce((a,x)=>a+x,0)')>0,'two hidden events must not discard the first 30 seconds');
   assert.equal(b.get('s.lastSaved'),start+60000);
 });
 
