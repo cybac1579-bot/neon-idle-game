@@ -148,3 +148,7 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | First-fold intersection calculation correctness | 2026-11-15 02:51 KST, fixture `43dcf96f` | Corrected visibility formula to intersect fight rectangle with [0, viewport height]; previous formula could overcount a short fight. Source write accepted; **runtime CI/screenshots unverified**. | **Critical:** inspect new production-portrait push run and actual screenshots/metrics; address any failure before gameplay changes. |
+
+
+| Production portrait CI installation failure | 2026-11-15 04:57 KST, base `6cc4b592`, fix `740b3269` | [Failed run 43634649168](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43634649168), job 132568678957: Playwright 1.56.1 rejects Ubuntu 26.04; workflow pinned to Ubuntu 24.04 | **Critical:** obtain new workflow result; screenshot/layout tests were skipped in failed runs; fix not yet validated |
+| Latest auto-buy and release | 2026-11-15 04:57 KST, `6cc4b592` | [Save CI 43634662026](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43634662026) success; [Pages 43634649154](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43634649154) success for `87dd4db2` | **High:** live asset parity, real 30-minute tier-priority economic pacing and device storage unverified |
