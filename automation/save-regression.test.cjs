@@ -1274,15 +1274,16 @@ test('brand-new save initializes deep automation as off and button state as fals
 });
 
 
-test('player-reported economy-first and higher-tier upgrade strategy: first rebirth timing',()=>{
+test('player-reported buy-affordable then most-expensive strategy: first rebirth timing',()=>{
  const b=boot({stage:1,best:1,credits:30,energy:0,lastSaved:Date.UTC(2026,10,12)},Date.UTC(2026,10,12),7123);
  const milestones=[];let eligible=null,rebirthAt=null;
- const unlockOrder=['reactor','forge','relay','amp','gen','atk','spd'];
+ // No economic preference: when credits are scarce buy the cheapest affordable upgrade;
+ // when abundant, buy the most expensive affordable upgrade.
  for(let second=1;second<=1800;second++){
   b.get('step(1,true)');
   if(second%3===0){
-   // Early: prioritize money-making generation; once income grows, buy newest unlocked upgrades.
-   b.get('(()=>{const economic=["gen","forge","relay"];const unlocked=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50));const affordable=unlocked.filter(k=>s.credits>=cost(k));if(!affordable.length)return;const rich=s.credits>=Math.max(3000,creditRate()*15);let pick;if(!rich){pick=economic.find(k=>affordable.includes(k))||affordable.sort((a,b)=>cost(a)-cost(b))[0];}else{pick='+JSON.stringify(unlockOrder)+'.find(k=>affordable.includes(k));}if(pick)purchase(pick);})()');
+   // Early: buy any affordable low-cost upgrade; when credits feel abundant, choose the highest-priced affordable upgrade.
+   b.get('(()=>{const unlocked=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50));const affordable=unlocked.filter(k=>s.credits>=cost(k));if(!affordable.length)return;const rich=s.credits>=Math.max(3000,creditRate()*15);const pick=affordable.sort((a,b)=>rich?cost(b)-cost(a):cost(a)-cost(b))[0];if(pick)purchase(pick);})()');
   }
   if(second%3===0){
    b.get('(()=>{for(const id of ["precision","double","boss"]){while(availablePoints()>0&&buyTrait(id)){} }})()');
