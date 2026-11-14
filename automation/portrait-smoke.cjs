@@ -21,7 +21,7 @@ const fs = require('node:fs');
         const fight=battle.querySelector('.fight');
         const images=[...fight.querySelectorAll('img')];
         const r=e=>{const x=e.getBoundingClientRect();return {top:x.top,bottom:x.bottom,width:x.width,height:x.height}};
-        return {viewport:{w:innerWidth,h:innerHeight},bodyScrollWidth:document.body.scrollWidth,documentScrollWidth:document.documentElement.scrollWidth,battle:r(battle),fight:r(fight),images:images.map(i=>({...r(i),loaded:i.complete&&i.naturalWidth>0,src:i.getAttribute('src')})),nav:r(document.querySelector('.nav')),fightVisibleFirstFold:Math.max(0,Math.min(height,innerHeight)-Math.max(0,fight.getBoundingClientRect().top)),active:document.querySelector('[data-view].active')?.dataset.view};
+        return {viewport:{w:innerWidth,h:innerHeight},bodyScrollWidth:document.body.scrollWidth,documentScrollWidth:document.documentElement.scrollWidth,battle:r(battle),fight:r(fight),images:images.map(i=>({...r(i),loaded:i.complete&&i.naturalWidth>0,src:i.getAttribute('src')})),nav:r(document.querySelector('.nav')),fightVisibleFirstFold:Math.max(0,innerHeight-Math.max(0,fight.getBoundingClientRect().top)),active:document.querySelector('[data-view].active')?.dataset.view};
       });
       await page.screenshot({path:path.join(dir,`battle-${width}x${height}.png`),fullPage:true});
       await page.screenshot({path:path.join(dir,`battle-firstfold-${width}x${height}.png`),fullPage:false});
