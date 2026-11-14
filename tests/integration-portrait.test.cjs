@@ -51,16 +51,20 @@ const server=createServer((req,res)=>{
    await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0,null,{timeout:12000});
    const restored=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_rework_07')||'null'));
    assert.ok(restored&&restored.best>=saved.best&&restored.rebirths===saved.rebirths,'save restoration failed at '+width);
-   // Simulate a short background interval without waiting in real time.
-   // This verifies the existing offline settlement path and forbids auto-rebirth.
+   // The game's pagehide handler saves a fresh timestamp during reload.
+   // Seed stale storage at document start, AFTER pagehide but BEFORE game.js loads.
    const offlineSeed=await page.evaluate(()=>{
+    const state=JSON.parse(localStorage.getItem('neon_rework_07'));
+    return {rebirths:state.rebirths,stage:state.stage};
+   });
+   await page.addInitScript(()=>{
     const key='neon_rework_07';
     const state=JSON.parse(localStorage.getItem(key));
+    if(!state)return;
     state.lastSaved=Date.now()-30000;
     state.autoRebirth=true;
     state.autoLevel=Math.max(3,state.autoLevel);
     localStorage.setItem(key,JSON.stringify(state));
-    return {rebirths:state.rebirths,stage:state.stage};
    });
    await page.reload({waitUntil:'load'});
    await page.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0,null,{timeout:12000});
