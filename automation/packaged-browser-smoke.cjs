@@ -68,6 +68,10 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
     assert.equal(await page.locator('[data-view="'+view+'"]').getAttribute('aria-pressed'),'true',view+' tab selected');
     assert.ok(await page.locator('[data-screen="'+view+'"]:visible').count()>0,view+' screen visible');
     await audit(view+' '+width);
+    // Keep review evidence for every player-facing tab, not only battle/deep.
+    const screenshotDir=path.resolve(__dirname,'../dist/preview-screenshots');
+    fs.mkdirSync(screenshotDir,{recursive:true});
+    await page.screenshot({path:path.join(screenshotDir,view+'-'+width+'.png'),fullPage:true});
    }
    // CI visual evidence of the exact distribution at both portrait sizes.
    const screenshots=path.resolve(__dirname,'../dist/preview-screenshots');
@@ -84,7 +88,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    assert.ok(await page.locator('#deepFloor').isVisible(),'packaged dungeon view');
    await page.screenshot({path:path.join(screenshots,'deep-'+width+'.png'),fullPage:true});
    // Validate visual artifacts before CI publishes them for review.
-   for(const view of ['battle','deep']){
+   for(const view of ['battle','growth','reset','deep','stats']){
     const filename=path.join(screenshots,view+'-'+width+'.png');
     const png=fs.readFileSync(filename);
     assert.ok(png.length>1000,'nonempty screenshot '+view+' '+width);
