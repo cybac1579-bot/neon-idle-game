@@ -266,3 +266,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - Real risks remain: screenshot files exist but image quality not directly reviewed; actual Galaxy S25+ portrait 30-minute play, progression pacing and ergonomics remain unverified; manual public Pages preview remains intentionally unpublished because existing Pages configuration/overwrite risk was not confirmed.
 - Multiple rapid commits launched overlapping expensive Chromium CI jobs. Added branch/ref scoped workflow concurrency with `cancel-in-progress: true` to cancel superseded integration runs; cancellation is intentional and should not be reported as a gameplay regression. Verify latest run before claiming success.
 - First playable readiness **70%** pending latest CI and human testing.
+
+## 2026-11-14 — First-playable local PC access path
+- Added `automation/local-preview.cjs`: serves the actual `dist/neon-idle` package on **127.0.0.1:4173** only, with MIME mapping, no-store responses, path traversal rejection and clear missing-build/port errors. Fixed port preserves the browser storage origin between local PC sessions.
+- Added PC setup and usage instructions to `development/android-preview-checklist.md`; regular CI now checks server script syntax. This is a safe local PC path, not public HTTPS, phone access or an APK.
+- CI for latest changes pending. First-playable readiness stays **70%** until verified and human play. Next check CI, validate local preview use and plan actual 30-minute device play with consent for any public deployment.
