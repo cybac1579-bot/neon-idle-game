@@ -784,7 +784,7 @@ test('expanded core shop: all six paths have finite caps and retain progress acr
   assert.equal(b.get('s["'+id+'"]'),cap,'must not exceed cap: '+id);
   assert.equal(b.get('s.cores'),before,'capped investment must not spend: '+id);
  }
- b.get('s.corePower=1;s.coreEconomy=1;s.coreEnergy=1;s.coreStart=1;s.coreBounty=1;s.autoLevel=1');
+ b.get('s.corePower=1;s.coreEconomy=1;s.coreEnergy=1;s.coreStart=1;s.coreBounty=1;autoLevel=1');
  assert.equal(b.get('rebirth()'),true);
  for(const id of ids)assert.equal(b.get('s["'+id+'"]'),1,'rebirth should preserve '+id);
 });
