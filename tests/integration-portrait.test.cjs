@@ -42,6 +42,7 @@ const server=createServer((req,res)=>{
    }
    // Persistence smoke: the existing save button must create a readable state,
    // and a fresh document load must restore it without runtime errors.
+   await page.locator('[data-view="stats"]').first().click();
    await page.locator('#save').click();
    const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_rework_07')||'null'));
    assert.ok(saved&&Number.isFinite(saved.credits)&&Number.isFinite(saved.stage),'save state missing at '+width);
