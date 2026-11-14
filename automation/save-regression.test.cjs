@@ -1452,20 +1452,20 @@ function adversarialFirstRebirth(policy,seed=7123){
  const now=Date.UTC(2026,10,12);
  const b=boot({stage:1,best:1,credits:30,energy:0,lastSaved:now},now,seed);
  let eligible=null,purchases=0;const checkpoints=[];
- for(let second=1;second<=1800;second++){
-  b.get('step(1,false)');
+ for(let second=1;second<=3600;second++){
+  b.get('step(1,true)');
   if(second%1===0){
    const bought=b.get('(()=>{const policy='+JSON.stringify(policy)+';const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)&&s.credits>=cost(k));if(!options.length)return false;const score=k=>{const c=cost(k),p=power(),r=creditRate(),e=energyRate(),a=attackInterval();s[k]++;const dp=power()/p-1,dr=creditRate()/Math.max(.01,r)-1,de=energyRate()/Math.max(.01,e)-1,da=a/attackInterval()-1;s[k]--;const combat=dp+da,eco=dr+de*.15;return (policy==="combat"?combat:policy==="economy"?eco:policy==="hybrid"?combat+eco*.65:policy==="roi"?(combat+eco*.45)/Math.sqrt(c):policy==="expensive"?c:policy==="cheap"?-c:combat+eco)/Math.max(1,policy==="expensive"||policy==="cheap"?1:Math.log2(c+2));};options.sort((a,b)=>score(b)-score(a));return purchase(options[0]);})()');
    if(bought)purchases++;
   }
   if(second%3===0)b.get('(()=>{for(const id of '+JSON.stringify(policy==='economy'?['bounty','energy','precision','double','boss']:['precision','double','boss','bounty','energy'])+'){while(availablePoints()>0&&buyTrait(id)){} }})()');
   if(eligible===null&&b.get('gainCore()')>0)eligible=second;
-  if(second%300===0)checkpoints.push({minute:second/60,stage:b.get('s.stage'),purchases,power:b.get('power()')});
+  if(second%300===0)checkpoints.push({minute:second/60,stage:b.get('s.stage'),purchases,power:b.get('power()'),weapon:b.get('s.weapon?.role||null'),skills:b.get('s.skillsOwned.length')});
   if(eligible!==null)break;
  }
- return {policy,eligible,purchases,checkpoints,finalStage:b.get('s.stage')};
+ return {policy,eligible,purchases,checkpoints,finalStage:b.get('s.stage'),weapon:b.get('s.weapon?.role||null'),skills:b.get('s.skillsOwned.length')};
 }
-test('adversarial fastest-first-rebirth benchmark compares competing basic purchase strategies',()=>{
+test('60-minute adversarial first-rebirth benchmark includes equipment and skill drops',()=>{
  const strategies=['combat','economy','hybrid','roi','expensive','cheap'];
  const runs=strategies.map(policy=>adversarialFirstRebirth(policy));
  const reached=runs.filter(x=>x.eligible!==null).sort((a,b)=>a.eligible-b.eligible);
@@ -1473,4 +1473,6 @@ test('adversarial fastest-first-rebirth benchmark compares competing basic purch
  assert.equal(runs.length,6);
  assert.ok(runs.every(x=>x.purchases>0&&x.finalStage>=1));
  assert.ok(runs.every(x=>x.eligible===null||x.eligible>=1));
+ assert.ok(runs.every(x=>x.checkpoints.every(p=>Number.isFinite(p.power)&&p.power>0)));
+ console.log('60m target assessment:',JSON.stringify({targetSeconds:3600,fastestEligibleSeconds:reached[0]?.eligible??null,deltaSeconds:reached[0]?reached[0].eligible-3600:null,includesNaturalDrops:true}));
 });
