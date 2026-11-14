@@ -639,3 +639,18 @@ test('30-minute mixed investment paths quantify speed and production complementa
  assert.equal(rows.length,12);
  console.log('30-minute mixed strategy comparison:',JSON.stringify(rows));
 });
+
+
+test('two-hour offline restore reports runtime and preserves settlement cap without auto rebirth',()=>{
+ const start=Date.UTC(2026,10,12,0,0,0);
+ const saved={stage:8,best:8,credits:500,autoRebirth:true,lastSaved:start};
+ const t0=process.hrtime.bigint();
+ const b=boot(saved,start+7200000,17);
+ const elapsedMs=Number(process.hrtime.bigint()-t0)/1e6;
+ const state=b.get('({stage:s.stage,best:s.best,rebirths:s.rebirths,credits:s.credits,lastSaved:s.lastSaved})');
+ assert.equal(state.rebirths,0,'offline settlement must not trigger automatic rebirth');
+ assert.equal(state.lastSaved,start+7200000);
+ assert.ok(Number.isFinite(state.credits));
+ assert.match(b.get('logText'),/방치 진행 7200초 반영/);
+ console.log('two-hour offline restore benchmark:',JSON.stringify({elapsedMs:Math.round(elapsedMs),stage:state.stage,best:state.best,rebirths:state.rebirths}));
+});
