@@ -221,3 +221,8 @@ This log is for **user-directed work and decisions**; scheduled automation resul
 - GitHub Pages settings endpoint could not be accessed through the available GitHub connector (HTTP 400 unsupported endpoint); **existing Pages source, live URL, and overwrite safety remain unverified**. Public deployment remains unexecuted.
 - Added `automation/pages-release-safety.test.cjs` to normal CI to assert manual-only `workflow_dispatch`, explicit `PUBLISH` gate, gameplay and packaged-browser checks before deploy, fixed integration branch, and no Pages write permission on regular CI. Test does not prove Pages settings or live HTTPS access.
 - Readiness stays **67%** pending passing CI and actual preview availability; next inspect new CI and obtain approval before any public publishing.
+
+## 2026-11-14 — Visual review artifacts from generated distribution
+- CI **43533703624** manual Pages release guard step passed; public Pages deploy not triggered.
+- Added screenshot capture to `automation/packaged-browser-smoke.cjs`: generated distribution battle/deep views at 360px and 412px, saved under `dist/preview-screenshots/` after real browser loading/navigation. CI now uploads separate `neon-idle-portrait-visual-evidence` artifact for human visual inspection; this does not automatically judge art quality or substitute for Android hardware.
+- Latest CI pending. Readiness remains **67%** until full successful validation and review. No public Pages changes or game ZIP delivery.
