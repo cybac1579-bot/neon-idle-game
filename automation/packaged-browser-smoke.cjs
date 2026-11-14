@@ -10,7 +10,9 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
  const server=http.createServer((req,res)=>{
   let pathname;
   try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{res.writeHead(400);res.end();return}
-  const file=path.resolve(root,'.'+pathname);
+  // Simulate GitHub Pages project hosting at /neon-idle-game/ as well as root hosting.
+  const mapped=pathname.startsWith('/neon-idle-game/')?pathname.slice('/neon-idle-game'.length):pathname;
+  const file=path.resolve(root,'.'+mapped);
   if(!file.startsWith(root+path.sep)){res.writeHead(403);res.end();return}
   fs.readFile(file,(err,body)=>{
    if(err){res.writeHead(404);res.end();return}
@@ -80,6 +82,32 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    await page.close();
    console.log('Packaged Android mobile emulation touch and pagehide save passed');
   }finally{await android.close()}
+  // Project-site subdirectory hosting must not break relative game assets, icons or saves.
+  const nested=await browser.newPage({viewport:{width:412,height:915},isMobile:true,hasTouch:true});
+  try{
+   const failures=[];
+   nested.on('pageerror',e=>failures.push('JS '+e.message));
+   nested.on('response',r=>{if(r.status()>=400&&!r.url().endsWith('/favicon.ico'))failures.push('HTTP '+r.status()+' '+r.url())});
+   const base=origin+'/neon-idle-game/';
+   await nested.goto(base+'index.html');
+   assert.equal(await nested.evaluate(()=>typeof s),'object','nested deployment starts');
+   assert.equal(await nested.locator('link[rel="manifest"]').getAttribute('href'),'manifest.webmanifest');
+   const nestedManifest=await (await nested.request.get(base+'manifest.webmanifest')).json();
+   assert.equal(new URL(nestedManifest.start_url,base).href,base+'index.html','manifest start URL stays in project path');
+   assert.equal(new URL(nestedManifest.scope,base).href,base,'manifest scope stays in project path');
+   for(const icon of nestedManifest.icons){
+    const response=await nested.request.get(new URL(icon.src,base).href);
+    assert.equal(response.status(),200,'nested icon reachable');
+   }
+   await nested.locator('[data-view="growth"]').click();
+   await nested.locator('#upgrades [data-buy="atk"]').click();
+   assert.equal(await nested.evaluate(()=>s.atk),1,'nested deployment purchase');
+   await nested.evaluate(()=>save());
+   await nested.reload();
+   assert.equal(await nested.evaluate(()=>s.atk),1,'nested deployment saved progress');
+   assert.deepEqual(failures,[],'nested deployment assets and scripts');
+   console.log('Packaged nested-path static hosting smoke passed');
+  }finally{await nested.close()}
   // Browser-process restart with the same persistent profile, rather than a simple reload.
   // Models the common Android Chrome close/reopen path (not OS force-stop or storage eviction).
   const os=require('node:os');
