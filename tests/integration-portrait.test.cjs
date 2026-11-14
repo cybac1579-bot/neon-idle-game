@@ -78,6 +78,33 @@ const server=createServer((req,res)=>{
    const settledSeconds=Number(offline.log.match(/방치 진행 (\d+)초/)?.[1]);
    assert.ok(settledSeconds>=25&&settledSeconds<=120,'unexpected offline duration at '+width+': '+offline.log);
    assert.deepEqual(errors,[],'browser errors after save/reload at '+width);
+   // Reconstruction smoke: a seeded eligible save must reset temporary progress
+   // while preserving permanent hero growth and granting the expected cores.
+   const resetPage=await browser.newPage({viewport:{width,height:844}});
+   const resetErrors=[];
+   resetPage.on('pageerror',e=>resetErrors.push(e.message));
+   await resetPage.addInitScript(()=>{
+    localStorage.setItem('neon_rework_07',JSON.stringify({
+     stage:100,best:100,credits:1000,atk:3,spd:2,gen:2,
+     heroLevel:12,traitPointsEarned:11,traits:{precision:2},
+     traitPointsSpent:2,rebirths:0,cores:0,totalCores:0,
+     lastSaved:Date.now()
+    }));
+   });
+   resetPage.on('dialog',dialog=>dialog.accept());
+   await resetPage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
+   await resetPage.locator('[data-view="reset"]').first().click();
+   assert.equal(await resetPage.locator('#rebirth').isDisabled(),false,'eligible reconstruction disabled at '+width);
+   await resetPage.locator('#rebirth').click();
+   const reconstructed=await resetPage.evaluate(()=>JSON.parse(localStorage.getItem('neon_rework_07')));
+   assert.equal(reconstructed.rebirths,1,'reconstruction count at '+width);
+   assert.equal(reconstructed.stage,1,'stage not reset at '+width);
+   assert.equal(reconstructed.atk,0,'temporary attack upgrade retained at '+width);
+   assert.equal(reconstructed.heroLevel,12,'permanent hero level lost at '+width);
+   assert.equal(reconstructed.traits.precision,2,'permanent trait lost at '+width);
+   assert.ok(reconstructed.cores>=5,'reconstruction core reward missing at '+width);
+   assert.deepEqual(resetErrors,[],'reconstruction browser errors at '+width);
+   await resetPage.close();
    console.log('PASS portrait + save/reload '+width,JSON.stringify(layout));
    await page.close();
   }
