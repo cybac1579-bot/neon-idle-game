@@ -67,6 +67,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
     await page.locator('[data-view="'+view+'"]').click();
     assert.equal(await page.locator('[data-view="'+view+'"]').getAttribute('aria-pressed'),'true',view+' tab selected');
     assert.ok(await page.locator('[data-screen="'+view+'"]:visible').count()>0,view+' screen visible');
+    assert.equal(await page.locator('[data-screen]:visible:not([data-screen="'+view+'"])').count(),0,view+' must hide other tabs');
     await audit(view+' '+width);
     // Keep review evidence for every player-facing tab, not only battle/deep.
     const screenshotDir=path.resolve(__dirname,'../dist/preview-screenshots');
@@ -76,7 +77,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    // CI visual evidence of the exact distribution at both portrait sizes.
    const screenshots=path.resolve(__dirname,'../dist/preview-screenshots');
    fs.mkdirSync(screenshots,{recursive:true});
-   await page.screenshot({path:path.join(screenshots,'battle-'+width+'.png'),fullPage:true});
+   // Battle screenshot already captured during the five-tab audit above.
    await page.locator('[data-view="growth"]').click();
    await page.locator('#upgrades [data-buy="atk"]').click();
    assert.equal(await page.evaluate(()=>s.atk),1,'packaged first purchase');
@@ -86,7 +87,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
    await page.locator('[data-view="deep"]').click();
    await audit('deep '+width);
    assert.ok(await page.locator('#deepFloor').isVisible(),'packaged dungeon view');
-   await page.screenshot({path:path.join(screenshots,'deep-'+width+'.png'),fullPage:true});
+   // Deep screenshot already captured before the purchase/reload smoke above.
    // Validate visual artifacts before CI publishes them for review.
    for(const view of ['battle','growth','reset','deep','stats']){
     const filename=path.join(screenshots,view+'-'+width+'.png');
