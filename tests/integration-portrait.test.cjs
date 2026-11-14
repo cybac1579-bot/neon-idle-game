@@ -133,7 +133,7 @@ const server=createServer((req,res)=>{
      await slotPage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
      const actual=await slotPage.evaluate(()=>({
       slots:skillSlotCount(),inheritance:inheritanceSlots(),
-      state:JSON.parse(localStorage.getItem('neon_rework_07'))
+      state:{skillsEquipped:[...s.skillsEquipped],skillsInherited:[...s.skillsInherited]}
      }));
      assert.equal(actual.slots,expectedSlots,'equipped skill slots at hero level '+level);
      assert.equal(actual.inheritance,expectedInheritance,'inheritance slots at hero level '+level);
