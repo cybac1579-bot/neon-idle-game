@@ -88,6 +88,9 @@ const server=createServer((req,res)=>{
      stage:100,best:100,credits:1000,atk:3,spd:2,gen:2,
      heroLevel:12,traitPointsEarned:11,traits:{precision:2},
      traitPointsSpent:2,rebirths:0,cores:0,totalCores:0,
+     weapon:{tier:1,stage:95},skillsOwned:['overload','chain'],
+     skillsEquipped:['overload','chain'],skillsInherited:['chain'],
+     skillLevels:{overload:8,chain:6},skillXp:{overload:3,chain:5},
      lastSaved:Date.now()
     }));
    });
@@ -103,6 +106,12 @@ const server=createServer((req,res)=>{
    assert.equal(reconstructed.heroLevel,12,'permanent hero level lost at '+width);
    assert.equal(reconstructed.traits.precision,2,'permanent trait lost at '+width);
    assert.ok(reconstructed.cores>=5,'reconstruction core reward missing at '+width);
+   assert.equal(reconstructed.weapon,null,'weapon carried across reconstruction at '+width);
+   assert.deepEqual(reconstructed.skillsOwned,['chain'],'wrong inherited skill set at '+width);
+   assert.deepEqual(reconstructed.skillsEquipped,['chain'],'inherited skill not equipped at '+width);
+   assert.deepEqual(reconstructed.skillsInherited,['chain'],'inheritance selection lost at '+width);
+   assert.equal(reconstructed.skillLevels.chain,1,'inherited skill level not reset at '+width);
+   assert.ok(!('overload' in reconstructed.skillLevels),'non-inherited skill level retained at '+width);
    assert.deepEqual(resetErrors,[],'reconstruction browser errors at '+width);
    await resetPage.close();
    console.log('PASS portrait + save/reload '+width,JSON.stringify(layout));
