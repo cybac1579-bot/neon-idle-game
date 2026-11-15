@@ -256,13 +256,13 @@ const server=createServer((req,res)=>{
      }
      return output;
     });
-    // Experimental attack-growth sensitivity: restore the production formula after
+    // Experimental attack-cost sensitivity: restore the production formula after
     // each seeded run. Do not change live balance before measuring the tradeoff.
     const sensitivity=await balancePage.evaluate(()=>{
-     const originalPower=power;
+     const originalCostGrowth=costs.atk[1];
      const results={};
-     for(const growth of [1.115,1.11,1.105]){
-      power=()=>Math.min(1e100,(5+s.atk*4)*Math.pow(growth,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(s.stage>=55&&s.allocation==='assault'?2.2:1)*(1+traitLevel('precision')*.04)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier());
+     for(const growth of [1.31,1.33,1.35]){
+      costs.atk[1]=growth;
       s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
       let rng=20261114;
       Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
@@ -281,11 +281,11 @@ const server=createServer((req,res)=>{
       }
       results[growth]={firstReconstructionAt:first,finalStage:s.stage};
      }
-     power=originalPower;
+     costs.atk[1]=originalCostGrowth;
      return results;
     });
-    assert.equal(Object.keys(sensitivity).length,3,'attack-growth sensitivity incomplete');
-    console.log('BALANCE_ATTACK_GROWTH_SENSITIVITY '+JSON.stringify(sensitivity));
+    assert.equal(Object.keys(sensitivity).length,3,'attack-cost sensitivity incomplete');
+    console.log('BALANCE_ATTACK_COST_SENSITIVITY '+JSON.stringify(sensitivity));
     assert.equal(Object.keys(strategies).length,4,'strategy sweep incomplete');
     assert.ok(Object.values(strategies).every(x=>x.finalStage>=1&&Number.isFinite(x.finalStage)),'invalid strategy telemetry');
     console.log('BALANCE_STRATEGIES_60M '+JSON.stringify(strategies));
