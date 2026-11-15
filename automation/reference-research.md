@@ -548,3 +548,16 @@ Reference: https://www.grumpyrhinogames.com/idle-apocalypse/ (developer website;
 **Cost / expected effect:** low for comparing Neon's existing generator/attack/skill upgrade checkpoint traces; medium for improving existing growth goal wording; high for a new production chain or currency. Expected benefit remains hypothetical without actual 30-minute play evidence.
 
 **Decision:** **evaluate only**, do not copy resources, art, progression numbers or tapping loops. Use the new integrated scenario to examine whether existing attack and production choices change stage progress; defer all new systems until CI and mobile evaluation.
+
+## 2026-11-15 14:51 KST — Soda Dungeon 2: automatic combat and low-frequency loadout planning
+Reference: https://www.sodadungeon.com/ (developer site; conceptual comparison, **not** hands-on gameplay verification in this run).
+
+**Question:** how can auto-battle stay visually interesting while equipment/skill preparation, not rapid inputs, determines outcomes? The transferable design hypothesis is to make existing weapon/skill/trait combinations readable in the battle view and let players adjust them infrequently in a separate panel.
+
+**Potential benefits / impact:** (1) recognizable skill effects help automatic battles communicate decisions (**high**); (2) occasional loadout choices add meaningful mid-run variety (**high**); (3) separating management from combat avoids portrait UI clutter (**medium-high**).
+
+**Risks / impact:** (1) adding party members or scripting would expand implementation and testing scope (**high**); (2) too many effect overlays obscure enemies and bosses (**high**); (3) any mandatory mid-battle commands undermine low-input play (**critical**).
+
+**Estimated cost / expected effect:** low to audit existing three-skill cue visibility and add browser screenshot assertions; medium for restrained differentiated effects with reduced-motion safeguards; high for party AI, scripting, or new equipment layers. Visual benefit remains unproven until screenshots and device assessment.
+
+**Decision:** **evaluate existing battle skill cues first; defer** party systems, scripting and mandatory tapping. No gameplay change justified solely by this comparison. Next: capture actual portrait battle at ordinary and boss encounters, verify reduced-motion and combat visibility, and correlate skill-equipped states with visible feedback.
