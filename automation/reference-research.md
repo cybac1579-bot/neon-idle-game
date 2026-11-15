@@ -507,3 +507,17 @@ Reference: https://adarkroom.doublespeakgames.com/ (original game site; not hand
 **Risks / impact:** (1) copying minimal presentation would erase Neon's intended visible auto-combat (**critical**); (2) withholding key information may make the economy opaque (**high**); (3) scripted surprises can become repetitive on rebirth (**medium**).
 **Cost / expected value:** low for auditing existing stage-15/25/45/55/65 milestone clarity, medium for existing-skill/gear discovery feedback and test coverage, high for a bespoke event narrative. Benefit hypothetical until 30-minute play assessment.
 **Decision:** compare milestone clarity in future full-feature scenario; **defer** narrative system or minimalist combat replacement. Keep combat prominent, automatic, and low-input; no copying mechanics or art.
+
+
+## 2026-11-15 11:59 KST — Realm Grinder: meaningful infrequent strategic specialization
+Reference: https://store.steampowered.com/app/610080/Realm_Grinder/ (Steam store; conceptual comparison, not hands-on testing this run).
+
+**Transferable question:** can a player make occasional impactful specialization decisions without needing repeated inputs? Realm Grinder's faction-oriented idle progression suggests contrasting build identities, but its large number of layered systems is a scope warning for a 30-minute mobile evaluation build.
+
+**Benefits (impact):** (1) a recognizable strategic identity can make a reset feel different (**high**); (2) distinct production-versus-combat priorities help choices feel consequential (**medium-high**); (3) a short next-choice explanation can fit a separate growth panel (**medium**).
+
+**Risks (impact):** (1) adding factions or multiple currencies greatly expands balance/save migration (**high**); (2) too many build options overwhelm portrait UI (**high**); (3) active-clicking incentives would violate the fixed low-input constraint (**critical**).
+
+**Cost / expected benefit:** low to analyze existing assault/supply/balanced allocation, skill loadouts and traits in seeded 30-minute tests; medium to adjust existing bonuses after proof; high to introduce faction mechanics. Expected benefit is unproven until integrated simulation and mobile player feedback.
+
+**Decision:** **apply only the evaluation principle**: test whether current existing allocation, skills and traits create at least two meaningfully different low-input paths. **Defer** new factions, currencies, prestige tiers and mandatory taps. Keep automatic combat visually prominent and avoid copying formulas or art.
