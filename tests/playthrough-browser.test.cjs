@@ -156,6 +156,7 @@ const server=createServer((req,res)=>{
     const rebornSaved=await page.evaluate(()=>({stage:s.stage,hero:s.heroLevel,chosen:s.skillChoiceUsed}));
     assert.equal(rebornSaved.hero,11);
     assert.equal(rebornSaved.chosen,false);
+    await page.locator('[data-view="reset"]').tap();
     await page.locator('[data-screen="reset"]').first().screenshot({path:path.join(output,'rebirth-controls-390.png')});
     summary.rebirth={reborn,rebornSaved};
     console.log('PASS TOUCH_REBIRTH '+JSON.stringify(summary.rebirth));
