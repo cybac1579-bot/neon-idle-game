@@ -89,7 +89,7 @@
 | S-07 | 회수 중복 수령 방지/퀘스트 한도 | `transferCacheCredits` 회수 후 슬롯 0, 각 퀘스트 5회 상한 | 일반 케이스 기존 CI PASS |
 | S-08 | 구버전 단일 회수 저장 마이그레이션 | `cacheCredits`를 `questCredits[1]`에 이전 | **잔액 손실 경로 발견** (AUD-11) |
 | S-09 | 스킬 구버전 정규화 | 기존 `hasteSkill`→`bountySkill`; 스킬 맵 오염시 초기값 처리 | 기존 CI PASS, 스킬 한도 불일치 AUD-07 확인 |
-| S-10 | 자동화 구세이브 5레벨 상한 | `load()`에서 `autoLevel=Math.min(5,...)\`, 기존 CI 테스트 #50/#51 | 기존 CI PASS |
+| S-10 | 자동화 구세이브 5레벨 상한 | `load()`에서 `autoLevel=Math.min(5,...)`, 기존 CI 테스트 #50/#51 | 기존 CI PASS |
 | S-11 | 저장 거부/저장 공간 부족 | `save()` 실패 반환 및 경고, 게임 지속 | 기존 CI PASS |
 | S-12 | 오염된 숫자·미래 시각 | `safeNumber`, 음수 방지, 음수 오프라인 무시 | 기본 케이스 기존 CI PASS |
 | S-13 | 실제 Galaxy S25+ OS 강제 종료/복귀 | 물리 기기에서 아직 수행하지 않음 | 미검증 |
