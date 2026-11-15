@@ -190,13 +190,34 @@ const server=createServer((req,res)=>{
       assert.equal(unlocked.slots,2);
       assert.deepEqual(unlocked.equipped,['chain','overload']);
       assert.match(unlocked.reward,/자동 장착/);
+      const layoutChecks=[];
+      for(const width of [360,390,412]){
+        await slotPage.setViewportSize({width,height:844});
+        const layout=await slotPage.evaluate(()=>{
+          const cards=[...document.querySelectorAll('#skillList>[data-skill]')];
+          const intersects=(a,b)=>Math.min(a.right,b.right)-Math.max(a.left,b.left)>0.5&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>0.5;
+          return cards.map((card,i)=>{
+            const name=card.querySelector('strong'),buttons=[...card.querySelectorAll('button')];
+            const title=name.getBoundingClientRect(),actions=buttons.map(b=>b.getBoundingClientRect());
+            return {skill:card.dataset.skill,textOverButtons:actions.some(r=>intersects(title,r)),
+              buttonOverlap:intersects(actions[0],actions[1]),
+              nextCardOverlap:!!cards[i+1]&&intersects(card.getBoundingClientRect(),cards[i+1].getBoundingClientRect()),
+              textClipped:name.scrollWidth>name.clientWidth+1,cardClipped:card.scrollWidth>card.clientWidth+1};
+          });
+        });
+        assert.equal(layout.length,2,'two equipped/owned skill cards should render at width '+width);
+        assert.ok(layout.every(card=>!card.textOverButtons&&!card.buttonOverlap&&!card.nextCardOverlap&&!card.textClipped&&!card.cardClipped),
+          'skill descriptions/actions must not overlap or clip at width '+width+': '+JSON.stringify(layout));
+        layoutChecks.push({width,pass:true,cards:layout.length});
+      }
+      await slotPage.setViewportSize({width:390,height:844});
       await slotPage.locator('[data-screen="growth"]').first().screenshot({path:path.join(output,'slot-unlock-390.png')});
       await slotPage.reload({waitUntil:'load'});
       const restored=await slotPage.evaluate(()=>({level:s.heroLevel,slots:skillSlotCount(),equipped:s.skillsEquipped.slice()}));
       assert.equal(restored.level,10);
       assert.equal(restored.slots,2);
       assert.deepEqual(restored.equipped,['chain','overload']);
-      summary.slotUnlock={initial,unlocked,restored};
+      summary.slotUnlock={initial,unlocked,restored,layoutChecks};
       console.log('PASS HERO_SLOT_UNLOCK '+JSON.stringify(summary.slotUnlock));
       await ctx.close();
     }
