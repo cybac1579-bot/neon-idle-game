@@ -658,3 +658,12 @@ Reference: https://ivark.github.io/AntimatterDimensions/ (original playable game
 **Costs/risks/impact:** (1) multiple prestige layers and abstract number panels would obscure portrait combat (high); (2) powerful automation may make early rewards feel automatic and irrelevant (medium-high); (3) treating 10-second burst-purchase simulations as normal mobile play gives misleading timing (critical).
 **Cost/expected effect:** low to add low-input scenario evidence and compare existing UI/auto-buy; medium for restrained nonmodal goal hints; high for any new prestige layer. No claimed improvement without actual run and device validation.
 **Decision:** apply only to the verification rubric; defer additional prestige, dense menus and all tap incentives. Prioritize PR #2 integration and real low-input tests before main tuning.
+
+
+## 2026-11-16 00:53 KST — Idle Champions: background combat and event pacing (research hypothesis)
+Reference: https://www.idlechampions.com/ (official game homepage; conceptual comparison only, no hands-on or current-feature verification).
+
+**Potential advantages/impact:** (1) visually legible automated combat supports spectator engagement (high); (2) occasional meaningful formation/build decisions can create low-input agency (high); (3) limited-time goals illustrate pacing variety without continuous input (medium).
+**Risks/impact:** (1) multi-character roster/formation complexity would dilute Neon's single-hero combat identity (high); (2) frequent events and reward layers increase balance, save and UI burden (high); (3) click-to-accelerate mechanics are prohibited for Neon (critical).
+**Cost/expected effect:** low to inspect existing skill/boss cues and stage-55/60 decision cadence on the manual PR; medium to add a restrained combat-effect cue after real portrait screenshots; very high for roster/event systems. No expected benefit is proven without fresh-save browser/device play.
+**Decision:** use passive battle readability and infrequent choice cadence as assessment criteria only. Defer formations, events, currencies and all mandatory tapping. Prioritize main/PR divergence and runtime verification first.
