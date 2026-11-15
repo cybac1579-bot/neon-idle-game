@@ -534,3 +534,75 @@ Reference: https://store.steampowered.com/app/1282730/Loop_Hero/ (official store
 **Cost / expected benefit:** low for source/UI audit and targeted cue tests, medium for restrained existing battle effect changes plus reduced-motion tests, high for new map/placement systems. Visual benefit is hypothetical until screenshots, browser frame timing and player assessment.
 
 **Decision:** **selective inspiration only**: prioritize readable enemy/boss and skill impact using current combat architecture, with reduced-motion support; **defer** tile placement, new loot economy and mandatory frequent input. No production change justified by research alone.
+
+
+## 2026-11-15 13:59 KST — Idle Apocalypse: combat production dependencies versus mobile clarity
+Reference: https://www.grumpyrhinogames.com/idle-apocalypse/ (developer website; design comparison only, no hands-on test in this run).
+
+**Transferable question:** whether production upgrades visibly support battle milestones, and whether a reset feels like a meaningful new run without mandatory rapid input.
+
+**Advantages (impact):** (1) a clear relationship between resource production and combat makes passive growth legible (**high**); (2) different upgrade bottlenecks create low-frequency strategic choices (**medium-high**); (3) reset unlocks can make the previous barrier easier on later runs (**high**).
+
+**Risks (impact):** (1) layered production chains and many currencies can obscure the next objective on portrait screens (**high**); (2) frequent collection actions violate the desired low-input experience (**critical**); (3) adding another reset tier before balancing the first increases QA and save migration cost (**high**).
+
+**Cost / expected effect:** low for comparing Neon's existing generator/attack/skill upgrade checkpoint traces; medium for improving existing growth goal wording; high for a new production chain or currency. Expected benefit remains hypothetical without actual 30-minute play evidence.
+
+**Decision:** **evaluate only**, do not copy resources, art, progression numbers or tapping loops. Use the new integrated scenario to examine whether existing attack and production choices change stage progress; defer all new systems until CI and mobile evaluation.
+
+## 2026-11-15 14:51 KST — Soda Dungeon 2: automatic combat and low-frequency loadout planning
+Reference: https://www.sodadungeon.com/ (developer site; conceptual comparison, **not** hands-on gameplay verification in this run).
+
+**Question:** how can auto-battle stay visually interesting while equipment/skill preparation, not rapid inputs, determines outcomes? The transferable design hypothesis is to make existing weapon/skill/trait combinations readable in the battle view and let players adjust them infrequently in a separate panel.
+
+**Potential benefits / impact:** (1) recognizable skill effects help automatic battles communicate decisions (**high**); (2) occasional loadout choices add meaningful mid-run variety (**high**); (3) separating management from combat avoids portrait UI clutter (**medium-high**).
+
+**Risks / impact:** (1) adding party members or scripting would expand implementation and testing scope (**high**); (2) too many effect overlays obscure enemies and bosses (**high**); (3) any mandatory mid-battle commands undermine low-input play (**critical**).
+
+**Estimated cost / expected effect:** low to audit existing three-skill cue visibility and add browser screenshot assertions; medium for restrained differentiated effects with reduced-motion safeguards; high for party AI, scripting, or new equipment layers. Visual benefit remains unproven until screenshots and device assessment.
+
+**Decision:** **evaluate existing battle skill cues first; defer** party systems, scripting and mandatory tapping. No gameplay change justified solely by this comparison. Next: capture actual portrait battle at ordinary and boss encounters, verify reduced-motion and combat visibility, and correlate skill-equipped states with visible feedback.
+
+
+## 2026-11-15 15:55 KST — Idle Wizard: build diversity without mandatory interaction
+
+Sources: official wiki https://idlewizard.wiki.gg/wiki/Main_Page ; Xbox store https://www.xbox.com/en-gb/games/store/idle-wizard/9p0g32lcd7b9 (describes classes, pets, spells and equipment); developer discussion https://www.reddit.com/r/incremental_games/comments/1d0sj88/ . Research only, not hands-on gameplay.
+
+**Transferable insight:** multiple viable class/pet/spell/equipment combinations can produce different growth routes; the choice is most meaningful when players can tell what each loadout changes. Neon already has skills, equipment and traits; test their existing effects and on-screen feedback before adding new build systems.
+
+**Pros / impact:** (1) existing skill/equipment synergies can make automatic combat feel strategic (high); (2) visible build effects give the combat screen identity without tapping (high); (3) optional long-term experiments can sustain post-rebirth replay (medium).
+**Cons / impact:** (1) a large class/pet roster would overwhelm portrait UI (high); (2) more multipliers make 30-minute and 60-minute balancing harder (high); (3) active spell-casting incentives could violate the no-repeated-taps rule (critical).
+**Cost:** low-medium for read-only existing-loadout effect summaries or a focused visual cue; high for new class/pet mechanics, save migration and balance.
+**Decision:** apply the *comparison principle* to a measured audit of existing skills and weapon effect visibility; defer class/pet trees, additional currencies and any required manual casting. Next evidence: run fresh-save and pre-unlocked 30-minute fixtures with different existing skill loadouts, compare progress and battle cue visibility in real portrait browser.
+
+## 2026-11-15 16:57 KST — Cell to Singularity: milestones and reset visibility
+Reference: https://celltosingularity.com/ (official game site; conceptual design review only, no hands-on measurement).
+
+**Question:** can visible near-term unlocks and a reset preview make long passive intervals meaningful without increasing required input frequency?
+
+**Benefits / impact:** (1) recognizable milestone progression gives a passive session a direction (**high**); (2) visible next unlock/reward can distinguish meaningful waiting from unexplained stalling (**high**); (3) a clear reset benefit can communicate why the next run is faster (**medium-high**).
+
+**Drawbacks / impact:** (1) adding parallel simulation trees or currencies would dilute existing combat identity and burden portrait navigation (**high**); (2) rapid clicking/tapping incentives conflict with the hard low-input constraint (**critical**); (3) excessive milestone popups can obscure the combat screen (**high**).
+
+**Implementation cost / expected effect:** low for auditing existing next-goal/rebirth preview text and checkpoint telemetry; medium for a restrained nonmodal unlock indicator using existing UI; high for new simulation layers or economies. Benefits are hypothetical until actual 30-minute play and narrow-viewport checks.
+
+**Decision:** apply only as a **validation criterion**: during fresh-save 30-minute low-input testing, check whether each major milestone is visible, meaningful and nonintrusive. Defer new layers, tapping and modal notifications; preserve auto-combat visual presence.
+
+
+## 2026-11-15 17:56 KST — Idle Dyson Swarm: automation value versus prestige complexity
+Sources: official Steam listing https://store.steampowered.com/app/4348570/Idle_Dyson_Swarm/ (three prestige layers, offline resources, auto-buy unlocks, branching skills); historical community criticism https://www.reddit.com/r/incremental_games/comments/1gbcrh3/ (older Nanite version; not proof of current release). Research only, not hands-on play.
+
+**Pros / impact:** (1) permanent automation can make each reset noticeably less repetitive (high); (2) differentiated specialization choices support low-input strategic play (medium-high); (3) explicit next automation unlock offers a concrete near-term goal (high).
+**Cons / impact:** (1) stacking three prestige systems and 100+ skills would swamp Neon portrait UI and balancing (high); (2) older community reports criticize auto-buy prioritization and prestige incentives, highlighting a risk rather than establishing a current bug (high); (3) active click optimization would violate Neon's no-repeated-tap constraint (critical).
+**Cost and value:** low to compare existing tier-first auto-buy goal with actual purchases and display retained rebirth benefits; medium to add compact nonmodal preview; very high for new prestige tiers, currencies and skill trees. Expected benefit is hypothetical until fresh-save 30-minute evidence.
+**Decision:** selective evaluation only; no new layers, click loops or combat buttons. Next: verify actual auto-buy purchasing sequence against goal text and assess whether first reset reduces repeated input in the 30-minute/60-minute scenarios.
+
+
+## 2026-11-15 18:57 KST — Kittens Game: passive resource bottlenecks and milestone readability
+Source: original playable game https://kittensgame.com/web/ (conceptual comparison; not hands-on benchmark).
+
+**Transferable question:** when resources accumulate slowly, can a visible next milestone make waiting purposeful without requiring frequent actions? Neon should distinguish intentional waiting from missing feedback; resource scarcity alone is not a defect.
+
+**Advantages / impact:** (1) clear future construction/unlock requirements make passive accumulation legible (high); (2) constrained choices can make an infrequent purchase consequential (medium-high); (3) optional detail surfaces can separate planning from the core visual experience (medium).
+**Disadvantages / impact:** (1) dense resource lists would crowd the portrait combat scene (high); (2) adding many production chains or currencies would dilute combat/skill identity (high); (3) manual micromanagement and frequent building purchases conflict with the low-input target (high).
+**Cost / expected effect:** low to audit existing next-purchase and next-unlock text against actual 30s/60s fresh-save checkpoints; medium for a compact read-only progress indicator in the growth/details panel; high for any resource-chain redesign. Benefit is unproven until browser/phone testing.
+**Decision:** use milestone clarity as a **test criterion**, not a new system. Defer resource chains, click incentives and additional battle buttons. Verify whether automatic combat remains visually central during resource accumulation; do not rebalance merely because a purchase gap exists.

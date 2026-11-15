@@ -152,22 +152,29 @@ test('rebirth requires stage 100 and preserves permanent upgrades',()=>{
   assert.equal(b.get('s.atk'),0);
 });
 
-test('rebirth stage jumps stop at each boss instead of skipping encounters',()=>{
+test('rebirth count never grants free stage skips and bosses are visited in order',()=>{
   const b=boot({stage:8,best:8,rebirths:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   b.get('enemyHp=0;resolveEnemyDefeat()');
-  assert.equal(b.get('s.stage'),10,'stage 10 boss must not be skipped');
+  assert.equal(b.get('s.stage'),9,'STAGE 8 advances exactly one stage despite earlier rebirths');
+  assert.equal(b.document.getElementById('enemyImage').src,'enemy_agile.svg');
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),10,'STAGE 10 boss must be fought, not skipped');
   assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
   b.get('enemyHp=0;resolveEnemyDefeat()');
-  assert.equal(b.get('s.stage'),20,'next boss must be visited');
-  assert.equal(b.document.getElementById('enemyImage').src,'boss_overheat.webp');
+  assert.equal(b.get('s.stage'),11,'defeating a boss still advances one stage only');
 });
-test('jump landing on a boss still grants crossed milestone once',()=>{
+test('sequential progression awards STAGE 10 milestone exactly once',()=>{
   const b=boot({stage:8,best:8,rebirths:3,credits:0,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   b.get('enemyHp=0;resolveEnemyDefeat()');
-  assert.equal(b.get('s.knownUnlocks.filter(k=>k==="milestone-10").length'),1);
-  assert.equal(b.get('s.best'),10);
+  assert.equal(b.get('s.stage'),9);
+  assert.equal(b.get('s.knownUnlocks.filter(k==="milestone-10").length'),0);
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),10);
+  assert.equal(b.get('s.knownUnlocks.filter(k==="milestone-10").length'),1);
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),11);
+  assert.equal(b.get('s.knownUnlocks.filter(k==="milestone-10").length'),1);
 });
-
 test('auto-buy spends available credits only when enabled and unlocked',()=>{
   const stamp=Date.UTC(2026,10,12,0,0,0);
   const disabled=boot({stage:1,best:1,credits:10000,autoLevel:1,autoBuy:false,lastSaved:stamp});
@@ -705,4 +712,40 @@ test('automation research level five refuses additional purchases',()=>{
  b.get('buyCore("autoLevel")');
  assert.equal(b.get('s.autoLevel'),5);
  assert.equal(b.get('s.cores'),1e6);
+});
+
+
+test('auto-buy prioritizes highest unlocked affordable tier, not cheapest cost',()=>{
+ const b=boot({stage:65,best:65,credits:80000,autoLevel:1,autoBuy:true,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ const before=b.get('({reactor:s.reactor,atk:s.atk,credits:s.credits})');
+ b.get('step(10,false)');
+ const after=b.get('({reactor:s.reactor,atk:s.atk,credits:s.credits})');
+ assert.equal(before.reactor,0);
+ assert.ok(after.reactor>=1,'reactor tier (stage 65) must win over cheap unlocked upgrades');
+ assert.ok(Number.isFinite(after.credits)&&after.credits>=0);
+});
+
+
+test('30-minute integrated low-input auto-combat with gear, skills, traits and tier-first auto-buy remains finite',()=>{
+ const start=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:20,best:65,credits:200000,autoLevel:1,autoBuy:true,
+  heroLevel:60,traitPointsEarned:59,traits:{precision:5,haste:3,bounty:3,energy:3},
+  weapon:{tier:1,stage:20},skillsOwned:['overload','chain','bountySkill'],
+  skillsEquipped:['overload','chain','bountySkill'],skillLevels:{overload:3,chain:2,bountySkill:2},
+  lastSaved:start},start,271);
+ const checkpoints=[];
+ const initial=b.get('({stage:s.stage,best:s.best,reactor:s.reactor,kills:s.kills})');
+ for(let second=1;second<=1800;second++){
+  b.get('step(1,false)');
+  if(second%300===0)checkpoints.push(b.get('({stage:s.stage,best:s.best,kills:s.kills,credits:s.credits,energy:s.energy,reactor:s.reactor,heroLevel:s.heroLevel})'));
+ }
+ const last=checkpoints.at(-1);
+ assert.equal(checkpoints.length,6);
+ assert.ok(last.kills>initial.kills,'automatic battle must defeat enemies without input');
+ assert.ok(last.best>=initial.best,'highest stage must not regress');
+ assert.ok(last.reactor>=initial.reactor,'auto-buy must not undo purchased upgrades');
+ for(const point of checkpoints)for(const field of ['stage','best','kills','credits','energy','reactor','heroLevel'])
+  assert.ok(Number.isFinite(point[field])&&point[field]>=0,field+' must remain finite and nonnegative');
+ assert.equal(b.get('s.rebirths'),0,'the scenario must not silently rebirth');
+ console.log('30-minute integrated low-input scenario:',JSON.stringify({initial,checkpoints}));
 });
