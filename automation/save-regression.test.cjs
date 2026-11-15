@@ -115,6 +115,47 @@ test('legacy credit cache migrates into timed quest reserves',()=>{
  assert.equal(b.get('s.cacheCredits'),0);
  assert.equal(b.get('transferCacheCredits()'),123);
 });
+
+test('high-stage legacy credit cache survives payout ticks, save and load without duplication',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const oldCache=917105;
+ const b=boot({stage:60,best:60,cacheCredits:oldCache,cacheClock:0,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.questCredits[1]'),oldCache);
+ assert.ok(b.get('questPayout(1)*5')<oldCache,'legacy reserve must exceed the new quest cap');
+ b.get('questTick(30)');
+ assert.equal(b.get('s.questCredits[1]'),oldCache,'earning a new payout must not delete old saved credit');
+ b.get('save()');
+ b.get('load()');
+ assert.equal(b.get('s.questCredits[1]'),oldCache,'legacy credit must survive a second restore');
+ const creditsBefore=b.get('s.credits');
+ const credited=b.get('transferCacheCredits()');
+ assert.ok(credited>=oldCache,'claim must include at least all legacy credit');
+ assert.equal(b.get('s.credits'),creditsBefore+credited);
+ assert.equal(b.get('transferCacheCredits()'),0,'claim must not duplicate saved credit');
+});
+test('previously migrated oversized quest reserve is not clamped by the next payout',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:60,best:60,questCredits:[0,917105,0],lastSaved:stamp},stamp);
+ b.get('questTick(30)');
+ assert.equal(b.get('s.questCredits[1]'),917105);
+});
+test('loaded skill levels above the real cap normalize to twenty without resetting progress',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:72,best:90,heroLevel:12,skillsOwned:['overload'],
+  skillsEquipped:['overload'],skillLevels:{overload:80},skillXp:{overload:999},lastSaved:stamp},stamp);
+ assert.equal(b.get('s.stage'),72);
+ assert.equal(b.get('s.heroLevel'),12);
+ assert.equal(b.get('s.skillLevels.overload'),20);
+ assert.equal(b.get('s.skillXp.overload'),0);
+ assert.ok(Math.abs(b.get("skillScale('overload')")-1.76)<1e-10);
+ b.get('save()');
+ b.get('load()');
+ assert.equal(b.get('s.skillLevels.overload'),20);
+ const old=boot({stage:25,best:25,skillsOwned:['hasteSkill'],skillsEquipped:['hasteSkill'],
+  skillLevels:{hasteSkill:100},lastSaved:stamp},stamp);
+ assert.equal(old.get('s.skillLevels.bountySkill'),20,'legacy haste-skill migration must obey the same cap');
+});
+
 test('phase transition clears timed quest clocks and reserves',()=>{
  const stamp=Date.UTC(2026,10,12,0,0,0);
  const b=boot({stage:180,best:180,rebirths:2,questCredits:[11,22,33],questClocks:[2,3,4],lastSaved:stamp},stamp);
