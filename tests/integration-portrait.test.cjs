@@ -329,6 +329,53 @@ const server=createServer((req,res)=>{
      coverage:{gear:true,skills:true,traits:true,questClaim:true,heroLevels:true},
      note:'Scripted attack-first policy, not proven global optimum'
     }));
+    // Multi-rebirth economy: spend only earned cores; no automatic per-rebirth bonus.
+    const repeatedRebirths=await balancePage.evaluate(()=>{
+     const policies={
+      combat:['corePower','coreEconomy','autoLevel'],
+      economy:['coreEconomy','corePower','autoLevel'],
+      automation:['autoLevel','corePower','coreEconomy']
+     };
+     const output={};
+     for(const [policy,priority] of Object.entries(policies)){
+      let rng=20261114;
+      Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
+      s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
+      const times=[],spending=[];
+      let previous=0;
+      for(let t=1;t<=18000&&times.length<5;t++){
+       step(1,false);
+       if(t%10===0){
+        transferCacheCredits();
+        for(let n=0;n<30;n++){
+         const affordable=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>(a==='atk'?-1:b==='atk'?1:cost(a)-cost(b)));
+         if(!affordable.length)break;
+         purchase(affordable[0]);
+        }
+        const traits=['precision','double','boss','haste','bounty','training','energy','loot'];
+        for(const id of traits){const cap=TRAITS.find(x=>x[0]===id)[2];while(availablePoints()>0&&traitLevel(id)<cap){s.traits[id]=traitLevel(id)+1;s.traitPointsSpent++;}}
+        s.skillsEquipped=['overload','chain','bountySkill'].filter(id=>s.skillsOwned.includes(id)).slice(0,skillSlotCount());
+       }
+       if(gainCore()>0){
+        const earned=gainCore();
+        rebirth(false);
+        for(let n=0;n<30;n++){
+         const chosen=priority.find(id=>s.cores>=coreCost(id));
+         if(!chosen)break;
+         const costPaid=coreCost(chosen);
+         s.cores-=costPaid;s[chosen]++;
+        }
+        times.push({rebirth:times.length+1,atSeconds:t,runSeconds:t-previous,coresEarned:earned,corePower:s.corePower,coreEconomy:s.coreEconomy,autoLevel:s.autoLevel,unspentCores:s.cores});
+        previous=t;
+       }
+      }
+      output[policy]={runs:times,completed:times.length};
+     }
+     return output;
+    });
+    assert.equal(Object.keys(repeatedRebirths).length,3,'rebirth investment policies missing');
+    assert.ok(Object.values(repeatedRebirths).every(x=>x.runs.every(y=>y.runSeconds>0&&y.coresEarned>0)),'invalid repeated rebirth economy');
+    console.log('BALANCE_REPEAT_REBIRTH_5 '+JSON.stringify(repeatedRebirths));
     // Experimental attack-cost sensitivity: restore the production formula after
     // each seeded run. Do not change live balance before measuring the tradeoff.
     const sensitivity=await balancePage.evaluate(()=>{
