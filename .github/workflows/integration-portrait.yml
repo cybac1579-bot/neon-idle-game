@@ -25,3 +25,13 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run 360/390/412 portrait integration smoke
         run: timeout --signal=TERM --kill-after=10s 120s node tests/integration-portrait.test.cjs
+      - name: Exercise mobile touch playthrough
+        run: timeout --signal=TERM --kill-after=10s 100s node tests/playthrough-browser.test.cjs
+      - name: Upload actual Chromium screenshots and playthrough report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-touch-playthrough
+          path: artifacts/playthrough/
+          if-no-files-found: warn
+          retention-days: 7
