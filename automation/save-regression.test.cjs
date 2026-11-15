@@ -206,6 +206,41 @@ test('combat reward and skill cue text is transient, but earned weapon and skill
  assert.equal(b.get('s.skillsOwned.includes("chain")'),true,'earned ownership must remain');
 });
 
+test('merged auto-buy goal follows active tier-first purchasing without mislabeling manual upgrade hint',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:65,best:65,credits:80000,autoLevel:1,autoBuy:true,lastSaved:stamp},stamp);
+ const automated=b.get('actionableGoal()');
+ assert.match(automated,/자동 구매 목표 \(해금 등급 우선\)/);
+ assert.match(automated,/전투 반응로/);
+ assert.match(automated,/구매 가능/);
+ b.get('s.credits=100');
+ const small=b.get('actionableGoal()');
+ assert.match(small,/자동 구매 목표/);
+ assert.match(small,/전투 엔진/,'current auto-buy keeps insertion-order ties at stage 1');
+ b.get('s.credits=0');
+ const waiting=b.get('actionableGoal()');
+ assert.match(waiting,/자동 구매 목표/);
+ assert.match(waiting,/기본 생산 기준/);
+ assert.doesNotMatch(waiting,/구매 가능$/);
+ b.get('s.autoBuy=false;s.credits=80000');
+ const manual=b.get('actionableGoal()');
+ assert.match(manual,/현재 구매 가능한 최저가 강화/);
+ assert.match(manual,/전투 엔진/);
+ assert.doesNotMatch(manual,/자동 구매 목표/);
+});
+test('saved mid-boss HP survives reload instead of resetting boss to full health',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:10,best:10,savedEnemyHp:1,savedAttackClock:0.4,lastSaved:now},now,13);
+ assert.ok(b.get('enemyMax')>1,'boss maximum HP must be initialized');
+ assert.equal(b.get('enemyHp'),1,'reloaded boss must retain its saved remaining HP');
+ assert.equal(b.get('attackClock'),0.4,'saved attack progress must remain intact');
+ assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
+ const legacy=boot({stage:10,best:10,lastSaved:now},now,13);
+ assert.equal(legacy.get('enemyHp'),legacy.get('enemyMax'),'legacy save without remaining HP starts safely');
+ const bounded=boot({stage:10,best:10,savedEnemyHp:1e10,lastSaved:now},now,13);
+ assert.equal(bounded.get('enemyHp'),bounded.get('enemyMax'),'HP above current maximum is bounded');
+});
+
 test('STAGE 60 frontline support provides one nonblocking per-run choice and no new currency',()=>{
  const stamp=Date.UTC(2026,10,12,0,0,0);
  const b=boot({stage:59,best:59,atk:35,forge:4,lastSaved:stamp},stamp);

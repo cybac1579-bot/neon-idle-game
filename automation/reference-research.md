@@ -606,3 +606,36 @@ Source: original playable game https://kittensgame.com/web/ (conceptual comparis
 **Disadvantages / impact:** (1) dense resource lists would crowd the portrait combat scene (high); (2) adding many production chains or currencies would dilute combat/skill identity (high); (3) manual micromanagement and frequent building purchases conflict with the low-input target (high).
 **Cost / expected effect:** low to audit existing next-purchase and next-unlock text against actual 30s/60s fresh-save checkpoints; medium for a compact read-only progress indicator in the growth/details panel; high for any resource-chain redesign. Benefit is unproven until browser/phone testing.
 **Decision:** use milestone clarity as a **test criterion**, not a new system. Defer resource chains, click incentives and additional battle buttons. Verify whether automatic combat remains visually central during resource accumulation; do not rebalance merely because a purchase gap exists.
+
+
+## 2026-11-15 19:53 KST — NGU Idle: optional layered goals versus interface overload
+Reference: https://store.steampowered.com/app/1147690/NGU_IDLE/ (official Steam listing; conceptual comparison, **not** hands-on play or verified current-version feature audit).
+
+**Question:** can existing upgrade layers support medium-term goals without demanding rapid actions or obscuring auto-combat?
+**Advantages / impact:** (1) multiple distinct progression goals can make otherwise passive intervals purposeful (**high**); (2) permanent gains can make a later run visibly compress earlier barriers (**high**); (3) optional deeper details can be isolated from a clear main battle scene (**medium-high**).
+**Drawbacks / impact:** (1) too many simultaneous multipliers and menus create substantial onboarding and portrait-space costs (**high**); (2) extra reset layers multiply save migration and balancing risk (**high**); (3) frequent manual optimization would conflict with Neon's low-input constraint (**critical**).
+**Cost / expected effect:** low for measuring existing skill/trait/gear unlock cadence in fresh-save 30-minute fixtures; medium for one compact next-goal indicator in a separate growth panel if supported by evidence; high for additional upgrade layers. Benefit remains unproven without actual browser/phone play.
+**Decision:** **evaluation principle only**. Defer new layers, compulsory clicking and complex menus. Verify existing milestones, loadout impact and visible automatic battle before considering additions.
+
+
+## 2026-11-15 20:56 KST — Melvor Idle: passive combat feedback and menu separation
+Reference: https://melvoridle.com/ (official game site; conceptual comparison only, not hands-on measurement).
+
+**Transferable hypothesis:** passive combat can remain the primary visible experience while equipment and progression planning are placed in separate, optional management views. Neon already has automatic attacks, boss art, weapon, skills, and trait systems.
+
+**Advantages / impact:** (1) recognizable enemy and skill feedback makes low-input combat understandable (**high**); (2) planning outside the fight avoids portrait battle clutter (**high**); (3) passive progress with optional optimization supports long sessions (**medium-high**).
+**Drawbacks / impact:** (1) many skill categories would overload Neon's 30-minute onboarding (**high**); (2) complex equipment/loadout menus raise save and balance regression cost (**high**); (3) dense numeric information risks shrinking the enemy artwork (**high**).
+**Cost / expected effect:** low for inspecting existing boss-art and skill-feedback code; medium for a restrained nonmodal skill cue after real portrait screenshot review; high for new skill trees or crafting economies. Expected engagement improvement **unproven**.
+**Decision:** evaluate existing boss and skill visual presence before implementation; defer added categories, crafting, and frequent manual commands. Keep combat automatic and screen uncluttered.
+
+
+## 2026-11-15 21:51 KST — Trimps: automatic combat and incremental unlock pacing
+
+Reference: original playable game https://trimps.github.io/ (design comparison only; not a fresh hands-on test).
+
+**Transferable idea:** let combat and resource production continue automatically while periodic unlocks, boss thresholds and a small number of deliberate upgrade decisions mark progress. For Neon, prioritize making the current boss fight and next milestone legible rather than adding new controls.
+
+**Pros / impact:** (1) passive battle with distinct gates creates a meaningful next objective (high); (2) persistent unlocks can shorten already-cleared segments after rebirth (high); (3) staged goals help players understand a long wait without repeated taps (medium).
+**Cons / impact:** (1) importing many production resources or jobs would overwhelm portrait UI (high); (2) excessive automation may hide why a run accelerated or stalled (medium-high); (3) new prestige layers could invalidate the planned 30–60 minute first-reset balance (high).
+**Implementation cost / expected effect:** low for reusing existing boss HP, stage milestone and retained-upgrade summaries; medium for differentiated boss cues and test coverage; high for extra resource chains, worker management and prestige tiers. Clarity benefit plausible, not device-validated.
+**Decision:** selectively reuse readable boss gates and low-frequency upgrade milestones; defer Trimps-style resource/job complexity. **No mandatory tapping.** Immediate production priority remains verified save/resume correctness and fresh-save pacing, not feature expansion.
