@@ -1132,3 +1132,28 @@ test('30-minute integrated low-input auto-combat with gear, skills, traits and t
  assert.equal(b.get('s.rebirths'),0,'the scenario must not silently rebirth');
  console.log('30-minute integrated low-input scenario:',JSON.stringify({initial,checkpoints}));
 });
+
+
+test('reactor keeps two dramatic early levels then applies a gentler late multiplier',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:65,best:65,energy:10000,atk:10,lastSaved:stamp},stamp);
+ const values=[b.get('power()')];
+ for(let level=1;level<=4;level++){
+  b.get('s.reactor='+level);
+  values.push(b.get('power()'));
+ }
+ const close=(observed,expected)=>assert.ok(Math.abs(observed-expected)<1e-9,
+  'reactor ratio '+observed+' must match '+expected);
+ close(values[1]/values[0],1.8);
+ close(values[2]/values[1],1.8);
+ close(values[3]/values[2],1.3);
+ close(values[4]/values[3],1.3);
+ assert.ok(b.get('Math.abs(allocationComparison()[1][1] / power() - 2.2)')<1e-9,
+  'allocation preview must use the same reactor scaling as actual combat');
+ const button=b.document.getElementById('upgrades').children.find(x=>x.dataset.buy==='reactor');
+ assert.ok(button,'reactor upgrade remains available');
+ assert.match(button.lastElementChild.textContent,/이후 단계마다 ×1\.3/);
+ b.get('save();load()');
+ close(b.get('power()'),values[4]);
+ assert.equal(b.get('s.reactor'),4,'saved upgrade level survives reload');
+});
