@@ -49,6 +49,66 @@ test('corrupted skill maps with legacy migration do not reset saved progression'
   assert.equal(b.get('s.skillsInherited.includes("bountySkill")'),true);
   assert.equal(b.get('s.skillLevels.bountySkill'),1);
 });
+test('auto-rebirth requires BOTH minimum three cores and 15 percent of total cores',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:100,best:100,rebirths:2,totalCores:100,autoLevel:3,autoRebirth:true,lastSaved:stamp},stamp);
+  assert.equal(b.get('autoRebirthThreshold()'),15);
+  assert.equal(b.get('gainCore()'),5);
+  assert.match(b.document.getElementById('autoDetails').textContent,/모두 충족/);
+  b.get('step(0,true)');
+  assert.equal(b.get('s.rebirths'),2,'five cores are insufficient with total core 100');
+  b.get('s.stage=139;spawn()');
+  assert.ok(b.get('gainCore()')>=15);
+  b.get('step(0,true)');
+  assert.equal(b.get('s.rebirths'),3,'reconstruction occurs when both conditions are met');
+});
+test('phase focus is opt-in and guards STAGE 180 from automatic rebirth',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:179,best:179,rebirths:2,totalCores:20,autoLevel:3,autoBuy:true,autoRebirth:true,phaseFocus:true,lastSaved:stamp},stamp);
+  assert.equal(b.get('phaseFocusHolding()'),true);
+  assert.equal(b.document.getElementById('phaseFocus').checked,true);
+  assert.match(b.document.getElementById('autoDetails').textContent,/자동 환생 보류 중/);
+  b.get('enemyHp=0;step(0,true)');
+  assert.equal(b.get('s.stage'),180);
+  assert.equal(b.get('s.rebirths'),2,'automatic rebirth must not steal a phase target');
+  assert.equal(b.get('s.autoBuy'),true,'phase focus must preserve automatic purchasing');
+  assert.ok(b.get('gainPhase()')>0);
+  b.get('save();load()');
+  assert.equal(b.get('s.phaseFocus'),true,'phase target persists across reload');
+  b.get('phase()');
+  assert.equal(b.get('s.phases'),1);
+  assert.equal(b.get('s.phaseFocus'),true,'a chosen long-term target stays selected');
+  assert.equal(b.get('s.autoRebirth'),false,'phase reset retains prior automation reset policy');
+});
+test('without phase focus auto rebirth remains unchanged and can be manually overridden',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const normal=boot({stage:179,best:179,rebirths:2,totalCores:20,autoLevel:3,autoRebirth:true,lastSaved:stamp},stamp);
+  assert.equal(normal.get('s.phaseFocus'),false,'existing saves default to normal auto-rebirth');
+  normal.get('enemyHp=0;step(0,true)');
+  assert.equal(normal.get('s.stage'),1);
+  assert.equal(normal.get('s.rebirths'),3);
+  const manual=boot({stage:179,best:179,rebirths:2,totalCores:20,autoLevel:3,autoRebirth:true,phaseFocus:true,lastSaved:stamp},stamp);
+  manual.get('s.autoRebirth=false;enemyHp=0;step(0,true)');
+  assert.equal(manual.get('s.stage'),180);
+  assert.ok(manual.get('gainCore()')>0);
+  assert.equal(manual.get('rebirth()'),true,'manual reconstruction remains possible during phase focus');
+  assert.equal(manual.get('s.stage'),1);
+  assert.equal(manual.get('s.rebirths'),3);
+});
+test('phase goal focus pauses only after two reconstructions and can be toggled off',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:100,best:100,rebirths:1,totalCores:0,autoLevel:3,autoRebirth:true,phaseFocus:true,lastSaved:stamp},stamp);
+  b.get('step(0,true)');
+  assert.equal(b.get('s.rebirths'),2,'second reconstruction still happens automatically');
+  assert.equal(b.get('s.phaseFocus'),true);
+  b.get('s.stage=100;spawn();step(0,true)');
+  assert.equal(b.get('s.rebirths'),2,'auto rebirth paused after second reconstruction');
+  b.document.getElementById('phaseFocus').onchange({target:{checked:false}});
+  assert.equal(b.get('s.phaseFocus'),false);
+  b.get('step(0,true)');
+  assert.equal(b.get('s.rebirths'),3,'turning focus off restores the automatic policy');
+});
+
 test('offline settlement never auto-rebirths even when threshold is reached',()=>{
   const b=boot({stage:100,best:100,autoLevel:3,autoRebirth:true,rebirths:0,totalCores:0,
     lastSaved:Date.UTC(2026,10,12,0,0,0)});
