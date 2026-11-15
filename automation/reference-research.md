@@ -667,3 +667,12 @@ Reference: https://www.idlechampions.com/ (official game homepage; conceptual co
 **Risks/impact:** (1) multi-character roster/formation complexity would dilute Neon's single-hero combat identity (high); (2) frequent events and reward layers increase balance, save and UI burden (high); (3) click-to-accelerate mechanics are prohibited for Neon (critical).
 **Cost/expected effect:** low to inspect existing skill/boss cues and stage-55/60 decision cadence on the manual PR; medium to add a restrained combat-effect cue after real portrait screenshots; very high for roster/event systems. No expected benefit is proven without fresh-save browser/device play.
 **Decision:** use passive battle readability and infrequent choice cadence as assessment criteria only. Defer formations, events, currencies and all mandatory tapping. Prioritize main/PR divergence and runtime verification first.
+
+
+## 2026-11-16 01:57 KST — Cookie Clicker: passive production readability versus click-centric onboarding
+Reference: https://orteil.dashnet.org/cookieclicker/ (original playable game; design-level comparison only, no fresh hands-on benchmark).
+
+**Potential benefits / impact:** (1) clear production-per-second feedback makes passive accumulation understandable (high); (2) visibly distinct upgrade thresholds support medium-term goals (high); (3) optional achievements can mark progress without interrupting battle (medium).
+**Risks / impact:** (1) click-based opening and click multipliers directly violate Neon's no-mandatory-tapping rule (critical); (2) many simultaneous producer rows would shrink the portrait battle area (high); (3) extra multiplier layers complicate first-rebirth ~60m balancing and save compatibility (high).
+**Cost / expected value:** low to measure current credit income/next-affordable target and check existing battle visibility; medium for a compact read-only next milestone in the growth/stats view; high for new producer/achievement mechanics. Benefit remains unproven without fresh-save low-input and real portrait validation.
+**Decision:** assessment-only; no click mechanics, no new currencies, no production-system expansion. Prioritize testing whether current auto-buy and credits explain progress while keeping combat visually central.
