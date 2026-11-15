@@ -616,3 +616,14 @@ Reference: https://store.steampowered.com/app/1147690/NGU_IDLE/ (official Steam 
 **Drawbacks / impact:** (1) too many simultaneous multipliers and menus create substantial onboarding and portrait-space costs (**high**); (2) extra reset layers multiply save migration and balancing risk (**high**); (3) frequent manual optimization would conflict with Neon's low-input constraint (**critical**).
 **Cost / expected effect:** low for measuring existing skill/trait/gear unlock cadence in fresh-save 30-minute fixtures; medium for one compact next-goal indicator in a separate growth panel if supported by evidence; high for additional upgrade layers. Benefit remains unproven without actual browser/phone play.
 **Decision:** **evaluation principle only**. Defer new layers, compulsory clicking and complex menus. Verify existing milestones, loadout impact and visible automatic battle before considering additions.
+
+
+## 2026-11-15 20:56 KST — Melvor Idle: passive combat feedback and menu separation
+Reference: https://melvoridle.com/ (official game site; conceptual comparison only, not hands-on measurement).
+
+**Transferable hypothesis:** passive combat can remain the primary visible experience while equipment and progression planning are placed in separate, optional management views. Neon already has automatic attacks, boss art, weapon, skills, and trait systems.
+
+**Advantages / impact:** (1) recognizable enemy and skill feedback makes low-input combat understandable (**high**); (2) planning outside the fight avoids portrait battle clutter (**high**); (3) passive progress with optional optimization supports long sessions (**medium-high**).
+**Drawbacks / impact:** (1) many skill categories would overload Neon's 30-minute onboarding (**high**); (2) complex equipment/loadout menus raise save and balance regression cost (**high**); (3) dense numeric information risks shrinking the enemy artwork (**high**).
+**Cost / expected effect:** low for inspecting existing boss-art and skill-feedback code; medium for a restrained nonmodal skill cue after real portrait screenshot review; high for new skill trees or crafting economies. Expected engagement improvement **unproven**.
+**Decision:** evaluate existing boss and skill visual presence before implementation; defer added categories, crafting, and frequent manual commands. Keep combat automatic and screen uncluttered.
