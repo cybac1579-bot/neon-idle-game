@@ -128,6 +128,40 @@ const server=createServer((req,res)=>{
       await context.close();
     }
 
+    // Real mobile UI: verify delayed chain feedback and target-to-target transfer.
+    {
+      const ctx=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+      const chainPage=await ctx.newPage();
+      await chainPage.addInitScript(()=>{
+        localStorage.setItem('neon_rework_07',JSON.stringify({stage:30,best:30,skillsOwned:['chain'],
+          skillsEquipped:['chain'],skillLevels:{chain:1},lastSaved:Date.now()}));
+      });
+      await chainPage.goto(url,{waitUntil:'load'});
+      await chainPage.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
+      const chainCheck=await chainPage.evaluate(()=>{
+        const starting=enemyHp;
+        skillTick(6);render();
+        const pending=s.chainPulses;
+        const cueStart=document.getElementById('skillCue').textContent;
+        enemyHp=power()*.45;
+        skillTick(1);render();
+        const afterKill={stage:s.stage,pulses:s.chainPulses};
+        const hp=enemyHp;
+        skillTick(1);render();
+        return {starting,pending,cueStart,afterKill,hpAfterSecond:enemyHp,previousHp:hp,thirdCue:document.getElementById('skillCue').textContent};
+      });
+      assert.equal(chainCheck.pending,3);
+      assert.match(chainCheck.cueStart,/연쇄 방전/);
+      assert.equal(chainCheck.afterKill.stage,31);
+      assert.equal(chainCheck.afterKill.pulses,2);
+      assert.ok(chainCheck.hpAfterSecond<chainCheck.previousHp,'second pulse should hit the next stage');
+      assert.match(chainCheck.thirdCue,/2\/3 타격/);
+      await chainPage.locator('[data-screen="battle"]').screenshot({path:path.join(output,'chain-pulses-390.png')});
+      summary.chain=chainCheck;
+      console.log('PASS CHAIN_PULSE_UI '+JSON.stringify(chainCheck));
+      await ctx.close();
+    }
+
     // Separate save-state fixture: exercise actual reset UI and confirm persistence.
     const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
     const page=await context.newPage();

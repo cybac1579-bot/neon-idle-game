@@ -145,6 +145,67 @@ test('combat skill damages enemy and respects cooldown',()=>{
   b.get('skillTick(1)');
   assert.equal(b.get('enemyHp'),after,'skill must not fire again before cooldown');
 });
+test('overload remains a single immediate burst instead of a chain pulse',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:55,best:55,skillsOwned:['overload'],skillsEquipped:['overload'],lastSaved:stamp},stamp);
+ const oldHp=b.get('enemyHp'),strike=b.get('power()');
+ b.get('skillTick(9);render()');
+ assert.ok(Math.abs(b.get('enemyHp')-(oldHp-3*strike))<1e-7,'overload must do 3x immediate damage');
+ assert.equal(b.get('s.chainPulses'),0);
+ assert.match(b.document.getElementById('skillCue').textContent,/과부하 사격/);
+});
+test('chain schedules three separate pulses and transfers remaining hits to the next enemy',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:30,best:30,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ const before=b.get('enemyHp');
+ b.get('skillTick(6)');
+ assert.equal(b.get('s.chainPulses'),3);
+ assert.equal(b.get('enemyHp'),before,'chain starts a timed sequence, not instant damage');
+ b.get('enemyHp=power()*.45');
+ b.get('skillTick(1)');
+ assert.equal(b.get('s.stage'),31,'first pulse defeats the previous enemy');
+ assert.equal(b.get('s.chainPulses'),2);
+ const nextHp=b.get('enemyHp');
+ const nextPower=b.get('power()');
+ b.get('skillTick(1)');
+ assert.equal(b.get('s.chainPulses'),1);
+ assert.equal(b.get('s.stage'),31);
+ assert.ok(Math.abs(b.get('enemyHp')-(nextHp-nextPower*.6))<1e-7,'remaining pulse damages the new enemy');
+ b.get('skillTick(1);render()');
+ assert.equal(b.get('s.chainPulses'),0);
+ assert.match(b.document.getElementById('skillCue').textContent,/3\/3 타격/);
+});
+test('chain pulse progress survives reload and is cleared on unequip or rebirth',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:100,best:100,skillsOwned:['chain'],skillsEquipped:['chain'],skillsInherited:['chain'],lastSaved:stamp},stamp);
+ b.get('skillTick(6);skillTick(1.5)');
+ assert.equal(b.get('s.chainPulses'),2);
+ b.get('save();load()');
+ assert.equal(b.get('s.chainPulses'),2);
+ assert.ok(b.get('s.chainPulseClock')>=0.5,'partial tick is saved');
+ b.get('toggleEquipSkill("chain")');
+ assert.equal(b.get('s.chainPulses'),0,'unequip stops pending pulses');
+ b.get('toggleEquipSkill("chain");skillTick(6)');
+ assert.equal(b.get('s.chainPulses'),3);
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.chainPulses'),0,'chain does not carry in-flight pulses across rebirth');
+ assert.equal(b.get('s.skillLevels.chain'),1);
+ const legacy=boot({stage:25,best:25,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ assert.equal(legacy.get('s.chainPulses'),0,'old saves without pulse state remain compatible');
+});
+test('combat reward and skill cue text is transient, but earned weapon and skills persist',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:20,best:20,lastSaved:stamp},stamp);
+ assert.equal(b.get('chooseSkill("chain")'),true);
+ assert.match(b.document.getElementById('rewardCue').textContent,/첫 스킬 선택/);
+ b.get('skillTick(6);render()');
+ assert.match(b.document.getElementById('skillCue').textContent,/연쇄 방전/);
+ b.get('toggleEquipSkill("chain");skillTick(5);render()');
+ assert.equal(b.document.getElementById('rewardCue').textContent,'','temporary reward notice must expire');
+ assert.equal(b.document.getElementById('skillCue').textContent,'','temporary skill cue must expire');
+ assert.equal(b.get('s.skillsOwned.includes("chain")'),true,'earned ownership must remain');
+});
+
 test('STAGE 20 grants one optional skill choice and never stops idle combat',()=>{
  const b=boot({stage:19,best:19,lastSaved:Date.UTC(2026,10,12,0,0,0)});
  assert.equal(b.get("chooseSkill('trainingSkill')"),false,'choice locked before stage20');
