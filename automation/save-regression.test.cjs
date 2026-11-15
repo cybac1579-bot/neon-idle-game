@@ -671,3 +671,28 @@ test('auto-buy prioritizes highest unlocked affordable tier, not cheapest cost',
  assert.ok(after.reactor>=1,'reactor tier (stage 65) must win over cheap unlocked upgrades');
  assert.ok(Number.isFinite(after.credits)&&after.credits>=0);
 });
+
+
+test('30-minute integrated low-input auto-combat with gear, skills, traits and tier-first auto-buy remains finite',()=>{
+ const start=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:20,best:65,credits:200000,autoLevel:1,autoBuy:true,
+  heroLevel:60,traitPointsEarned:59,traits:{precision:5,haste:3,bounty:3,energy:3},
+  weapon:{tier:1,stage:20},skillsOwned:['overload','chain','bountySkill'],
+  skillsEquipped:['overload','chain','bountySkill'],skillLevels:{overload:3,chain:2,bountySkill:2},
+  lastSaved:start},start,271);
+ const checkpoints=[];
+ const initial=b.get('({stage:s.stage,best:s.best,reactor:s.reactor,kills:s.kills})');
+ for(let second=1;second<=1800;second++){
+  b.get('step(1,false)');
+  if(second%300===0)checkpoints.push(b.get('({stage:s.stage,best:s.best,kills:s.kills,credits:s.credits,energy:s.energy,reactor:s.reactor,heroLevel:s.heroLevel})'));
+ }
+ const last=checkpoints.at(-1);
+ assert.equal(checkpoints.length,6);
+ assert.ok(last.kills>initial.kills,'automatic battle must defeat enemies without input');
+ assert.ok(last.best>=initial.best,'highest stage must not regress');
+ assert.ok(last.reactor>=initial.reactor,'auto-buy must not undo purchased upgrades');
+ for(const point of checkpoints)for(const field of ['stage','best','kills','credits','energy','reactor','heroLevel'])
+  assert.ok(Number.isFinite(point[field])&&point[field]>=0,field+' must remain finite and nonnegative');
+ assert.equal(b.get('s.rebirths'),0,'the scenario must not silently rebirth');
+ console.log('30-minute integrated low-input scenario:',JSON.stringify({initial,checkpoints}));
+});
