@@ -256,6 +256,36 @@ const server=createServer((req,res)=>{
      }
      return output;
     });
+    // Experimental attack-growth sensitivity: restore the production formula after
+    // each seeded run. Do not change live balance before measuring the tradeoff.
+    const sensitivity=await balancePage.evaluate(()=>{
+     const originalPower=power;
+     const results={};
+     for(const growth of [1.115,1.11,1.105]){
+      power=()=>Math.min(1e100,(5+s.atk*4)*Math.pow(growth,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(s.stage>=55&&s.allocation==='assault'?2.2:1)*(1+traitLevel('precision')*.04)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier());
+      s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
+      let rng=20261114;
+      Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
+      let first=null;
+      for(let t=1;t<=3600;t++){
+       step(1,false);
+       if(t%10===0){
+        transferCacheCredits();
+        for(let n=0;n<30;n++){
+         const affordable=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>(a==='atk'?-1:b==='atk'?1:cost(a)-cost(b)));
+         if(!affordable.length)break;
+         purchase(affordable[0]);
+        }
+       }
+       if(first===null&&gainCore()>0)first=t;
+      }
+      results[growth]={firstReconstructionAt:first,finalStage:s.stage};
+     }
+     power=originalPower;
+     return results;
+    });
+    assert.equal(Object.keys(sensitivity).length,3,'attack-growth sensitivity incomplete');
+    console.log('BALANCE_ATTACK_GROWTH_SENSITIVITY '+JSON.stringify(sensitivity));
     assert.equal(Object.keys(strategies).length,4,'strategy sweep incomplete');
     assert.ok(Object.values(strategies).every(x=>x.finalStage>=1&&Number.isFinite(x.finalStage)),'invalid strategy telemetry');
     console.log('BALANCE_STRATEGIES_60M '+JSON.stringify(strategies));
