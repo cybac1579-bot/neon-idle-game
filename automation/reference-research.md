@@ -639,3 +639,12 @@ Reference: original playable game https://trimps.github.io/ (design comparison o
 **Cons / impact:** (1) importing many production resources or jobs would overwhelm portrait UI (high); (2) excessive automation may hide why a run accelerated or stalled (medium-high); (3) new prestige layers could invalidate the planned 30–60 minute first-reset balance (high).
 **Implementation cost / expected effect:** low for reusing existing boss HP, stage milestone and retained-upgrade summaries; medium for differentiated boss cues and test coverage; high for extra resource chains, worker management and prestige tiers. Clarity benefit plausible, not device-validated.
 **Decision:** selectively reuse readable boss gates and low-frequency upgrade milestones; defer Trimps-style resource/job complexity. **No mandatory tapping.** Immediate production priority remains verified save/resume correctness and fresh-save pacing, not feature expansion.
+
+
+## 2026-11-15 22:53 KST — Universal Paperclips: milestone pacing without compulsory input
+Reference: original playable game https://www.decisionproblem.com/paperclips/index2.html (conceptual comparison, not hands-on benchmark).
+
+**Potential benefits / impact:** (1) a clearly changing next objective can make passive accumulation purposeful (high); (2) staged unlocks create a sense of meaningful progress without a flood of permanent buttons (high); (3) the contrast between early and late capabilities can make progression feel transformative (medium-high).
+**Costs and risks / impact:** (1) importing its rapid-click opening would violate Neon's strict low-input rule (critical); (2) its abstract production presentation would diminish the combat/art identity (high); (3) abrupt phase transitions and additional resource layers would complicate the 30-minute balance and save compatibility (high).
+**Implementation cost / expected value:** low to audit existing stage milestones, next-goal text and unlock messages; medium for a single nonmodal progress cue if live portrait evidence shows confusion; high for additional economies or phases. No improvement claim without fresh-save timing and mobile screenshots.
+**Decision:** research-only evaluation criterion. Keep automatic combat and existing progression systems; **do not** add repeated clicking or a new production tree. Next verify whether milestones at stages 10/15/25 are actually reached and understood during the first 30 minutes.
