@@ -676,3 +676,11 @@ Reference: https://orteil.dashnet.org/cookieclicker/ (original playable game; de
 **Risks / impact:** (1) click-based opening and click multipliers directly violate Neon's no-mandatory-tapping rule (critical); (2) many simultaneous producer rows would shrink the portrait battle area (high); (3) extra multiplier layers complicate first-rebirth ~60m balancing and save compatibility (high).
 **Cost / expected value:** low to measure current credit income/next-affordable target and check existing battle visibility; medium for a compact read-only next milestone in the growth/stats view; high for new producer/achievement mechanics. Benefit remains unproven without fresh-save low-input and real portrait validation.
 **Decision:** assessment-only; no click mechanics, no new currencies, no production-system expansion. Prioritize testing whether current auto-buy and credits explain progress while keeping combat visually central.
+
+
+## 2026-11-16 02:54 KST — The Perfect Tower II: idle combat visibility and layered progression (design hypothesis)
+Reference: https://www.perfecttower2.com/ (official game website; no hands-on or current-feature verification in this run).
+**Potential advantages:** visible autonomous enemy waves and distinct upgrade milestones can make low-input combat watchable (high); a clear upcoming unlock gives waiting a purpose (high); optional tactical decisions can offer agency without tapping (medium-high).
+**Risks:** its many interlocking subsystems would overcomplicate Neon's first 30 minutes (high); automation that immediately resolves every choice can erase meaningful skill/build decisions (high); dense management screens compete with portrait combat space (high).
+**Implementation cost/expected value:** low to audit current stage/boss/skill cues and goal text on PR #2; medium for one compact milestone cue after actual portrait inspection; very high for additional buildings and layered currencies.
+**Decision:** assessment rubric only. Preserve automatic combat and existing art; defer added layers, manual attack clicks and interface expansion. No gameplay benefit demonstrated this run.
