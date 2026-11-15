@@ -232,7 +232,8 @@ const server=createServer((req,res)=>{
       attackFirst:(a,b)=>(a==='atk'?-1:b==='atk'?1:cost(a)-cost(b)),
       economyFirst:(a,b)=>(a==='gen'?-1:b==='gen'?1:cost(a)-cost(b)),
       attackWithTraits:(a,b)=>(a==='atk'?-1:b==='atk'?1:cost(a)-cost(b)),
-      economyWithTraits:(a,b)=>(a==='gen'?-1:b==='gen'?1:cost(a)-cost(b))
+      economyWithTraits:(a,b)=>(a==='gen'?-1:b==='gen'?1:cost(a)-cost(b)),
+      attackWithSkillChoice:(a,b)=>(a==='atk'?-1:b==='atk'?1:cost(a)-cost(b))
      };
      const output={};
      for(const [name,compare] of Object.entries(policies)){
@@ -244,9 +245,13 @@ const server=createServer((req,res)=>{
       for(let t=1;t<=3600;t++){
        step(1,false);
        if(t%10===0){
-        if(name.endsWith('WithTraits')){
-         const priority=name==='attackWithTraits'?['precision','double','boss','haste','bounty','training','energy','loot']:['bounty','energy','training','precision','double','boss','haste','loot'];
+        if(name.endsWith('WithTraits')||name==='attackWithSkillChoice'){
+         const priority=name!=='economyWithTraits'?['precision','double','boss','haste','bounty','training','energy','loot']:['bounty','energy','training','precision','double','boss','haste','loot'];
          for(const id of priority){const cap=TRAITS.find(t=>t[0]===id)[2];while(availablePoints()>0&&traitLevel(id)<cap){s.traits[id]=traitLevel(id)+1;s.traitPointsSpent++;}}
+        }
+        if(name==='attackWithSkillChoice'){
+         const priority=['overload','chain','bountySkill'];
+         s.skillsEquipped=priority.filter(id=>s.skillsOwned.includes(id)).slice(0,skillSlotCount());
         }
         transferCacheCredits();
         for(let n=0;n<30;n++){
@@ -258,7 +263,7 @@ const server=createServer((req,res)=>{
        for(const stage of [40,55,65,70,80,90,100])if(milestones[stage]===undefined&&s.stage>=stage)milestones[stage]=t;
        if(first===null&&gainCore()>0)first=t;
       }
-      output[name]={firstReconstructionAt:first,milestones,finalStage:s.stage,upgrades:{atk:s.atk,spd:s.spd,gen:s.gen,amp:s.amp,relay:s.relay,forge:s.forge,reactor:s.reactor},heroLevel:s.heroLevel,weapon:!!s.weapon,skills:s.skillsOwned.length,traits:{...s.traits},traitPointsSpent:s.traitPointsSpent};
+      output[name]={firstReconstructionAt:first,milestones,finalStage:s.stage,upgrades:{atk:s.atk,spd:s.spd,gen:s.gen,amp:s.amp,relay:s.relay,forge:s.forge,reactor:s.reactor},heroLevel:s.heroLevel,weapon:!!s.weapon,skills:s.skillsOwned.length,equipped:[...s.skillsEquipped],skillLevels:{...s.skillLevels},traits:{...s.traits},traitPointsSpent:s.traitPointsSpent};
      }
      return output;
     });
@@ -292,7 +297,7 @@ const server=createServer((req,res)=>{
     });
     assert.equal(Object.keys(sensitivity).length,5,'attack-cost sensitivity incomplete');
     console.log('BALANCE_ATTACK_COST_SENSITIVITY '+JSON.stringify(sensitivity));
-    assert.equal(Object.keys(strategies).length,6,'strategy sweep incomplete');
+    assert.equal(Object.keys(strategies).length,7,'strategy sweep incomplete');
     assert.ok(Object.values(strategies).every(x=>x.finalStage>=1&&Number.isFinite(x.finalStage)),'invalid strategy telemetry');
     console.log('BALANCE_STRATEGIES_60M '+JSON.stringify(strategies));
     assert.equal(balance.checkpoints.length,6,'balance checkpoints missing');
