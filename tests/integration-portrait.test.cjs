@@ -261,7 +261,7 @@ const server=createServer((req,res)=>{
     const sensitivity=await balancePage.evaluate(()=>{
      const originalCostGrowth=costs.atk[1];
      const results={};
-     for(const growth of [1.31,1.33,1.35]){
+     for(const growth of [1.31,1.35,1.37,1.39,1.41]){
       costs.atk[1]=growth;
       s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
       let rng=20261114;
@@ -284,7 +284,7 @@ const server=createServer((req,res)=>{
      costs.atk[1]=originalCostGrowth;
      return results;
     });
-    assert.equal(Object.keys(sensitivity).length,3,'attack-cost sensitivity incomplete');
+    assert.equal(Object.keys(sensitivity).length,5,'attack-cost sensitivity incomplete');
     console.log('BALANCE_ATTACK_COST_SENSITIVITY '+JSON.stringify(sensitivity));
     assert.equal(Object.keys(strategies).length,4,'strategy sweep incomplete');
     assert.ok(Object.values(strategies).every(x=>x.finalStage>=1&&Number.isFinite(x.finalStage)),'invalid strategy telemetry');
