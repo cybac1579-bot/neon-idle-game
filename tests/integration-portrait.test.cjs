@@ -423,6 +423,17 @@ const server=createServer((req,res)=>{
     assert.deepEqual(rebirthBenefits.passive,rebirthBenefits.base,'rebirth count or lifetime cores still grant passive benefits');
     assert.ok(rebirthBenefits.invested.power>rebirthBenefits.base.power,'purchased core attack upgrade must improve power');
     console.log('REBIRTH_REWARD_ONLY '+JSON.stringify(rebirthBenefits));
+    const automationCap=await balancePage.evaluate(()=>{
+     s=initial();s.autoLevel=5;s.cores=1000000;
+     const atCap={cost:coreCost('autoLevel'),interval:autoPurchaseInterval(),level:s.autoLevel};
+     buyCore('autoLevel');
+     return {atCap,after:{level:s.autoLevel,cores:s.cores},powerCost:coreCost('corePower'),economyCost:coreCost('coreEconomy')};
+    });
+    assert.equal(automationCap.atCap.interval,3,'automation max level must have 3s purchase interval');
+    assert.equal(automationCap.after.level,5,'automation must not spend cores past useful level 5');
+    assert.equal(automationCap.after.cores,1000000,'capped automation must not consume cores');
+    assert.ok(Number.isFinite(automationCap.powerCost)&&Number.isFinite(automationCap.economyCost),'other core investments must remain available');
+    console.log('AUTOMATION_INVESTMENT_CAP '+JSON.stringify(automationCap));
     assert.ok(strategies.attackWithSkillChoice.equipped.every(id=>strategies.attackWithSkillChoice.skillLevels[id]>=1),'selected skill levels must be tracked');
     const firstTimes=Object.values(strategies).map(x=>x.firstReconstructionAt).filter(Number.isFinite);
     const strategySpread=Math.max(...firstTimes)-Math.min(...firstTimes);
