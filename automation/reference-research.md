@@ -385,3 +385,152 @@ Reference (official listing, not hands-on validation): https://store.steampowere
 - Risks: (1) **high** multiple simultaneous enemy effects can obscure the hero and boss on 360px screens; (2) **high** adopting tower-defense upgrade density would crowd the interface and diverge from Neon RPG combat; (3) **medium-high** additional particles can harm low-end mobile performance and reduced-motion accessibility.
 - Cost/value: low to measure current hero/enemy silhouette size and first-fold visibility; medium for controlled boss-hit cues; high for wave-based tower-defense systems. Expected visual benefit is plausible, **not measured**.
 - Decision: **apply audit principle only**. Keep auto combat and optional low-frequency decisions, defer new wave/tower mechanics and manual attacks. Next evidence: actual production-main portrait screenshots at 360x740/412x915 and reduced-motion contrast/performance checks. No game code changed.
+
+
+## 2026-11-14 22:57 KST — Idle Brick Breaker: visible passive combat and prestige pacing
+Sources (community maintained, not hands-on verification): https://idle-brick-breaker.fandom.com/wiki/Badges ; https://idle-brick-breaker.fandom.com/wiki/Perks ; player performance discussion https://www.reddit.com/r/IdleBrickBreaker/comments/1k8gdbr/ .
+- Transferable: a continuously moving battle field communicates progress without rapid taps; run-specific perk choices and persistent prestige badges create a clear reset distinction. Player reports also flag severe visual performance degradation when too many moving entities accumulate; do not infer measured device benchmarks from anecdotes.
+- Benefits/impact: (1) battle motion conveys activity without player input (high); (2) persistent-versus-temporary upgrades make reset value legible (high); (3) occasional perk choice can give low-frequency agency (medium).
+- Risks/impact: (1) many simultaneous effects cause battery/FPS problems (high); (2) extra currencies, badges and perks overwhelm a 30m first playable (high); (3) optimal rapid prestige loops become repetitive manual chores (high).
+- Cost/value: low for checking existing hero/enemy animation and reduced-motion in portrait screenshot; medium for subtle effect states; high for adding new prestige trees or many entities. Expected benefit of legible battle is high but **unproven** on actual Neon phone.
+- Decision: **apply evaluation principle**, not game mechanics. Prioritize production portrait screenshot/overflow and sprite presence; **defer** new perk tiers, currencies, rapid-reset loops and dense particle effects. Keep auto combat and optional infrequent choices. Next test: compare battle first-fold prominence and frame budget in current main screenshots, then Android device.
+
+## 2026-11-14 23:55 KST — NGU Idle: persistent goals versus too many growth layers
+- Reference: https://store.steampowered.com/app/1147690/NGU_IDLE/ (Steam listing). Conceptual comparison, not a current-build playthrough. Different focus from prior visual-combat comparison: accumulation of long-term progression layers.
+- Benefits (impact): (1) persistent goals can motivate returning after unattended progress (high); (2) visibly distinct temporary/permanent growth supports reset meaning (high); (3) unlock previews can turn waits into understandable objectives (medium).
+- Drawbacks (impact): (1) stacked currencies/systems create steep onboarding and balance costs (high); (2) dense upgrade panels conflict with narrow mobile battle hierarchy (high); (3) active clicking or rapid manual optimization conflicts with low-input requirement (critical).
+- Cost/expected effect: low for checking existing stage/skill/rebirth goal labels; medium for read-only next-unlock explanation in growth/stats; high for parallel new progression layers and migrations. Expected comprehension gain remains untested.
+- Decision: **defer new currencies/layers and active mechanics**. Prioritize actual production portrait evidence and 30-minute goal readability, retaining automatic combat and optional infrequent decisions. No borrowed art, formulas, or game changes.
+
+
+## 2026-11-15 00:54 KST — Realm Grinder: faction identity versus first-session overload
+- Reference: https://store.steampowered.com/app/610080/Realm_Grinder/ (store listing; conceptual comparison only, no hands-on current-version test). Different angle: specialization and long-run replay identity rather than portrait graphics.
+- Benefits (impact): (1) high: differentiated build paths make reset cycles feel distinct; (2) medium: persistent progression can shorten previously difficult segments; (3) medium: passive choice intervals fit low-input play.
+- Risks (impact): (1) high: new factions and currencies overwhelm a 30-minute first session; (2) high: cross-faction balancing and save migration create regression risk; (3) medium-high: nested menus obscure battle on mobile.
+- Cost/expected effect: low to compare current trait/skill choices, medium to improve existing unlock messaging, high to implement faction trees. No measured benefit yet.
+- Decision: **defer factions/currencies**. Preserve automatic combat and existing trait/skill specialization; first obtain production first-fold battle evidence and test low-frequency choice clarity. No mechanics or assets copied.
+
+
+## 2026-11-15 01:51 KST — Cookie Clicker: passive milestone anticipation, excluding active clicking
+- Reference: https://orteil.dashnet.org/cookieclicker/ (official game; conceptual mechanics comparison, not current-version hands-on test). New focus: communicating the next unlock during unattended resource accumulation.
+- Benefits/impact: (1) **high** visible upcoming unlocks can make a waiting interval purposeful; (2) **medium** discrete milestone rewards can distinguish 5/15/30-minute progression; (3) **medium** persistent progress after resets can make repeat runs shorter.
+- Risks/impact: (1) **critical** copying click-driven play or timed golden-cookie reactions violates the no-tap/low-frequency rule; (2) **high** more upgrade panels and currencies would crowd mobile combat; (3) **medium** chasing every minor unlock may weaken the larger 30-minute goal.
+- Cost/value: **low** to audit existing battle goal and stage 15/20 equipment/skill unlock text; **medium** to improve existing milestone feedback without extra controls; **high** for any new production layer. Benefit is a hypothesis pending player test.
+- Decision: **apply only passive goal clarity as an evaluation criterion**, no clicking, timers requiring reaction, new currencies or borrowed art. Current battle already has `#battleGoal` and growth shows stage 15/20 unlocks; verify actual readability before editing. No gameplay code changed.
+
+
+## 2026-11-15 02:51 KST — Melvor Idle: passive skill milestone visibility
+- Reference: https://melvoridle.com/ (official site; conceptual comparison, no current-build hands-on test). Distinct focus: making unattended progression meaningful through skill-level milestones rather than combat animation.
+- Benefits (impact): (1) **high** next unlock clarity gives a reason to return without frequent interaction; (2) **medium** persistent mastery can make later runs feel faster; (3) **medium** skill-specific progress offers varied long-term goals.
+- Risks (impact): (1) **high** copying many parallel skills adds complexity and balance cost; (2) **high** large skill grids crowd a portrait battle screen; (3) **medium** too many milestones distract from the first 30-minute goal.
+- Cost/value: low to audit existing skill unlock and goal labels, medium to polish existing milestone messaging, high to add multiple independent skill tracks. Expected effect unverified.
+- Decision: **retain passive milestone readability as a test criterion**, defer parallel skill systems and extra currencies. No manual tapping or fast reaction mechanics, no borrowed assets/formulas, no gameplay change.
+
+
+## 2026-11-15 03:56 KST — Cell to Singularity: thematic milestone visibility
+Reference: https://celltosingularity.com/ (official project site; design-level comparison, no hands-on test this run).
+
+**Transferable hypothesis:** milestone framing can make passive accumulation feel purposeful when the next unlock and its consequence are understandable. This is not evidence of any current Neon usability improvement.
+
+**Advantages (impact):** (1) next-goal visibility may make 30-minute waits meaningful (high); (2) milestones can reuse existing stage/skill thresholds (medium-high); (3) concise text in growth/details keeps automatic battle visually prominent (medium).
+**Risks (impact):** (1) broad thematic tech trees inflate scope and save migration burden (high); (2) extra currencies and unlock layers obscure the first-playable goal (high); (3) manual tapping or repeated collection would violate the fixed low-input rule (critical).
+**Cost / expectation:** low for a read-only next-unlock explanation using existing state; medium for new unlock behavior and balancing; potential value is unverified until browser/device 30-minute observation.
+**Decision:** **selectively consider** concise existing-milestone guidance after current portrait CI and screenshots are verified. **Defer** new currencies, branching trees, tap actions and other new mechanics. Next verification: measure whether a player can identify the next objective in the first 60 seconds without opening several panels.
+
+
+## 2026-11-15 04:57 KST — Kittens Game: visible long-term resource bottlenecks
+Source: https://kittensgame.com/web/ (primary game website; **not independently played in this run**). Design comparison is conceptual rather than a claim of observed mechanics in the current build.
+
+**Transferable principle:** the next meaningful bottleneck should be legible while automation runs, and resource accumulation should communicate *why* an unlock matters. For Neon, existing tier-first auto-buy may create periods where affordable low-tier upgrades are ignored; this is intentional priority but could be confusing without a clear next-tier objective.
+
+**Advantages:** (1) next-tier target explanation can make passive waiting purposeful (high); (2) explicit unlock gating can help understand auto-buy choices (high); (3) no extra combat input is needed (high).
+**Disadvantages:** (1) dense resource tables would clutter portrait combat (high); (2) excessive forward previews can spoil progression (medium); (3) dynamic affordability forecasts may be unstable with variable drops (medium).
+**Implementation cost:** low-medium for a read-only next-target explanation in Growth/Stats; high for new production chains. **Decision:** consider the explanation only after verifying the highest-tier auto-buy fixture and 30-minute economy; defer new resources and any click-driven production. No gameplay changes from this research.
+
+## 2026-11-15 05:55 KST — Exponential Idle: clear next-goal hierarchy, not formula copying
+Reference: https://exponentialidle.com/ (official project homepage; **not independently played or web-fetched in this run**, so these are conceptual design hypotheses).
+**Transferable idea:** a passive exponential progression game can orient the player through a small number of visible next goals while complex optimization remains optional. In Neon, the existing highest-unlocked-tier auto-buy preference makes the target tier more important to explain than a list of affordable purchases.
+**Advantages / impact:** (1) explicit next high-tier target could reduce perceived automation randomness (high); (2) a read-only target in Growth/Stats avoids cluttering automatic combat (high); (3) reuse of existing tier/cost state could avoid save migration (medium-high).
+**Disadvantages / impact:** (1) inaccurate ETA forecasts from variable rewards would mislead (high); (2) too much mathematical optimization information overwhelms early players (high); (3) copying a prestige equation or adding new meta-currency would increase balance scope (high).
+**Cost and expected value:** low for read-only current tier and next cost, medium for an accurate forecast or multi-system comparison; clarity benefit plausible but not player-validated.
+**Decision:** **defer implementation** until current portrait screenshots and 30-minute tier-first economic pacing are measured. If needed, apply only a compact target/cost explanation on the existing growth/details screen; never import repeated taps, mandatory reactions, formula copies or new currencies.
+
+
+## 2026-11-15 06:55 KST — Trimps: milestone gates versus single-stat optimization
+Reference: https://trimps.github.io/ (original browser game; **conceptual comparison, not independently played or fetched this run**).
+
+**Question prompted by Neon evidence:** a successful 47-case regression run yielded attack-only stage 46–48 at 30 minutes, versus attack+speed stage 43 and balanced ROI stage 41 in simplified 60-second purchase policies. Does the early game communicate why non-attack investments matter? These results are limited proxies and do not justify copying Trimps mechanics.
+
+**Potential strengths / impact:** (1) visible near-term zone/goal gates can orient passive play without extra taps (**high**); (2) different upgrade roles can become meaningful through clearly differentiated later bottlenecks (**high**); (3) progress after a reset can be expressed as earlier bottlenecks becoming easier (**medium-high**).
+**Risks / impact:** (1) introducing additional resource-production systems would inflate mobile UI and balancing complexity (**high**); (2) hard counters/gates can make the player feel forced into specific builds (**high**); (3) importing active management or rapid input conflicts with the fixed automatic-combat constraint (**critical**).
+**Cost / expected benefit:** low to annotate existing milestone/upgrade goals in Growth/Stats, medium to tune attack/speed/energy roles after integrated simulations, high for new economy layers. Benefit to Neon remains hypothetical until actual 30-minute session and full-feature fixtures.
+**Decision:** **defer new mechanics and rebalance**; first compare integrated highest-tier auto-buy, equipment, skill and trait effects at low input frequency. If attack dominates there too, consider a targeted existing-system adjustment with regression and save compatibility tests. Keep battle canvas prominent, no tapping, no copied formulas/art.
+
+
+## 2026-11-15 07:55 KST — Universal Paperclips: automatic choice legibility
+Reference: https://www.decisionproblem.com/paperclips/index2.html (original game site; **conceptual design comparison, not a current-build hands-on test**).
+
+**Question:** when an automated system chooses upgrades, does the interface explain the next actual target rather than a different cheapest item?
+
+**Benefits / impact:** (1) visible automation intent helps users trust unattended progress (**high**); (2) short read-only target text fits Growth/Stats without shrinking combat (**high**); (3) using existing costs and unlock levels avoids new currencies and save migration (**medium-high**).
+**Risks / impact:** (1) presenting an unaffordable top tier as the only possible purchase can misrepresent fallback purchasing (**high**); (2) too many economic forecasts distract from battle (**medium**); (3) rapidly changing target text could feel unstable (**medium**).
+**Cost / expected effect:** low for matching existing tier-first selection and explaining the active purchase mode; medium for testing affordability transitions across unlocks; high for introducing new automation planning mechanics. Benefit is plausible, not player-validated.
+**Decision:** apply only a small existing-state goal-description correction; do not copy game mechanics or add clicking, manual production chains, currencies or dense dashboards. Verify the current game's actual selection logic in CI/browser before claiming success.
+
+
+## 2026-11-15 09:00 KST — Idle Research: readable next-action vs auto-play recommendations
+Source: https://store.steampowered.com/app/2713180/Idle_Research/ (store-level design reference; no hands-on verification this run).
+
+**Comparison:** layered idle research/progression suggests that a player should distinguish an immediately actionable purchase from a longer-term milestone. Neon already has a stage milestone and an auto-buy target, but the latter changes meaning when a higher-tier item is unaffordable. Treat this as a clarity audit rather than permission to add another system.
+
+**Advantages (impact):** (1) separate immediate affordable purchase from long-term unlock reduces confusion (medium-high); (2) existing growth panel can convey both without new combat controls (medium); (3) helps explain auto-buy priorities without manual taps (medium).
+**Risks (impact):** (1) more status text crowds portrait UI (high); (2) promising a high-tier item while lower tiers are auto-purchased may mislead (medium-high); (3) copying research layers adds save and balance complexity (high).
+**Cost / value:** low for a concise wording correction plus goal-selection fixture, medium for live UI and localization review; high for new research layers. Potential clarity improvement, not yet measured.
+**Decision:** **defer feature expansion**; prioritize executable verification of current tier-first target and separate milestone wording. Reject active clicking or mandatory intervention. No borrowed assets, mechanics or new currency.
+
+
+## 2026-11-15 09:54 KST — Idle Champions: passive party progression as a comparison boundary
+Reference: https://idlechampions.com/ (official site; conceptual comparison only, no hands-on play or current web verification).
+
+**Transferable principle:** idle battle can remain visually meaningful while most optimization is periodic rather than reaction-based. Compare Neon’s auto-battle and occasional skill/equipment decisions with passive party progression, not with active tapping.
+**Advantages / impact:** (1) persistent battle presence during low-input sessions (high); (2) optional upgrade milestones could create distinct 5–10-minute choices (medium-high); (3) role differentiation might help non-attack stats feel meaningful (medium).
+**Risks / impact:** (1) copying a multi-character party would multiply art and balancing costs (high); (2) numerous upgrade panels crowd portrait layout (high); (3) mandatory timed skill activation would violate the low-input rule (critical).
+**Cost / expected value:** low to compare existing battle visibility and milestone cadence; medium to tune existing skill roles after integrated simulations; very high for party mechanics. No evidence yet of improved Neon enjoyment.
+**Decision:** **defer new mechanics**. Prioritize executable goal-text regression, portrait visual review and 30-minute full-system pacing; reject active-tap combat and unneeded party systems.
+
+
+## 2026-11-15 10:57 KST — A Dark Room: pacing of sparse discoveries (conceptual)
+Reference: https://adarkroom.doublespeakgames.com/ (original game site; not hands-on or fresh web-verified this run).
+
+**Question:** can an idle session retain interest through legible milestones and occasional discoveries without frequent required input?
+**Advantages / impact:** (1) infrequent, distinct discoveries can break monotony without taps (**high**); (2) a concise next-unlock line fits a portrait interface without obscuring battle (**medium-high**); (3) gradual exposure of existing systems avoids new currencies (**medium**).
+**Risks / impact:** (1) copying minimal presentation would erase Neon's intended visible auto-combat (**critical**); (2) withholding key information may make the economy opaque (**high**); (3) scripted surprises can become repetitive on rebirth (**medium**).
+**Cost / expected value:** low for auditing existing stage-15/25/45/55/65 milestone clarity, medium for existing-skill/gear discovery feedback and test coverage, high for a bespoke event narrative. Benefit hypothetical until 30-minute play assessment.
+**Decision:** compare milestone clarity in future full-feature scenario; **defer** narrative system or minimalist combat replacement. Keep combat prominent, automatic, and low-input; no copying mechanics or art.
+
+
+## 2026-11-15 11:59 KST — Realm Grinder: meaningful infrequent strategic specialization
+Reference: https://store.steampowered.com/app/610080/Realm_Grinder/ (Steam store; conceptual comparison, not hands-on testing this run).
+
+**Transferable question:** can a player make occasional impactful specialization decisions without needing repeated inputs? Realm Grinder's faction-oriented idle progression suggests contrasting build identities, but its large number of layered systems is a scope warning for a 30-minute mobile evaluation build.
+
+**Benefits (impact):** (1) a recognizable strategic identity can make a reset feel different (**high**); (2) distinct production-versus-combat priorities help choices feel consequential (**medium-high**); (3) a short next-choice explanation can fit a separate growth panel (**medium**).
+
+**Risks (impact):** (1) adding factions or multiple currencies greatly expands balance/save migration (**high**); (2) too many build options overwhelm portrait UI (**high**); (3) active-clicking incentives would violate the fixed low-input constraint (**critical**).
+
+**Cost / expected benefit:** low to analyze existing assault/supply/balanced allocation, skill loadouts and traits in seeded 30-minute tests; medium to adjust existing bonuses after proof; high to introduce faction mechanics. Expected benefit is unproven until integrated simulation and mobile player feedback.
+
+**Decision:** **apply only the evaluation principle**: test whether current existing allocation, skills and traits create at least two meaningfully different low-input paths. **Defer** new factions, currencies, prestige tiers and mandatory taps. Keep automatic combat visually prominent and avoid copying formulas or art.
+
+## 2026-11-15 12:54 KST — Loop Hero: automatic battle readability versus planning frequency
+Reference: https://store.steampowered.com/app/1282730/Loop_Hero/ (official store; design comparison only, not hands-on or fresh verified this run).
+
+**Transferable principle:** autonomous combat can remain visually engaging when enemy identity, damage feedback and progression consequences are legible; however, Loop Hero's frequent tile/equipment planning is not appropriate as mandatory interaction for Neon's low-input mobile play.
+
+**Benefits / impact:** (1) clearly distinguish ordinary enemies and bosses without tapping (**high**); (2) make equipment/skill effects visibly consequential in the battle canvas (**high**); (3) communicate milestones as a natural consequence of combat (**medium**).
+
+**Risks / impact:** (1) frequent tactical placements would violate the user-approved low-input cadence (**critical**); (2) replicating its map/loot loop is major scope and UI complexity (**high**); (3) extra particles and animations may harm phone FPS/battery (**high**).
+
+**Cost / expected benefit:** low for source/UI audit and targeted cue tests, medium for restrained existing battle effect changes plus reduced-motion tests, high for new map/placement systems. Visual benefit is hypothetical until screenshots, browser frame timing and player assessment.
+
+**Decision:** **selective inspiration only**: prioritize readable enemy/boss and skill impact using current combat architecture, with reduced-motion support; **defer** tile placement, new loot economy and mandatory frequent input. No production change justified by research alone.
