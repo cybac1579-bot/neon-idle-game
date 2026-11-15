@@ -707,3 +707,13 @@ Reference: https://store.steampowered.com/app/1353300/Idle_Slayer/ (Steam listin
 Reference: https://kittensgame.com/web/ (original game; conceptual comparison only, no live gameplay measurement). Kittens Game gradually unlocks production, research and reset-related goals. Transferable to Neon: show the *next consequential existing unlock* in the growth/details surface and compare how permanent gains compress previously slow stages, without inventing additional resources.
 
 **Benefits / impact:** (1) visible next unlock helps a 30-minute idle session feel directed (high); (2) long-term planning can work with sparse input (high); (3) existing milestone state could be reused without save schema changes (medium). **Costs / risks / impact:** (1) many parallel resources would overwhelm portrait UI (high); (2) micromanagement and frequent building purchases conflict with low-input play (high); (3) an extra prestige tree would complicate the already unverified ~60-minute target (high). **Implementation cost:** low for read-only existing milestone copy, medium for tests and mobile layout validation, high for imported production systems. **Decision:** research-only, consider milestone clarity audit after current branch integration; defer resource trees, click loops and new prestige layers. **Next evidence:** measure goal visibility and stage55–100 rewards in a 30–60s+ decision-cadence PR browser/simulation test.
+
+
+## 2026-11-16 06:58 KST — Idle Research: passive laboratory goals versus active micromanagement
+Source: https://store.steampowered.com/app/1482860/Idle_Research/ (store description; design comparison only, no hands-on test).
+
+**Transferable principle:** unlockable research targets and periodic meaningful milestones can structure idle progression without requiring high-frequency input. Evaluate the existing stage 20/55/60 and 65–100 goals before introducing a new laboratory system.
+
+**Benefits/impact:** (1) clear next unlock can reduce directionless waiting (high); (2) occasional choices create build identity while combat stays automatic (high); (3) a concise goal preview fits a separate growth/details surface (medium).
+**Costs/risks/impact:** (1) new research currencies and layered automation increase balance/save complexity (high); (2) additional menus crowd portrait UX (high); (3) active optimization loops can violate low-input play (critical).
+**Implementation cost:** low for an existing-state milestone summary; high for new research layers. **Decision:** selectively evaluate read-only stage/skill goal cues; defer new currencies, lab systems and any rapid-input incentive. **Evidence gap:** no current live mobile screenshot or player test; this is a hypothesis, not implemented improvement.
