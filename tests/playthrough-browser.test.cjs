@@ -195,10 +195,11 @@ const server=createServer((req,res)=>{
     summary.rebirth={reborn,rebornSaved};
     console.log('PASS TOUCH_REBIRTH '+JSON.stringify(summary.rebirth));
     await context.close();
+    summary.captureCount=summary.viewportResults.length*2+2; // six viewport shots plus chain and rebirth
     fs.writeFileSync(path.join(output,'playthrough-report.json'),JSON.stringify(summary,null,2));
     console.log('PASS MOBILE_TOUCH_PLAYTHROUGH '+JSON.stringify({
       widths:summary.viewportResults.map(x=>x.width),skillsChosen:true,questsClaimed:true,
-      saveReload:true,rebirth:true,screenshots:summary.viewportResults.length*2+1
+      saveReload:true,rebirth:true,screenshots:summary.captureCount
     }));
   }catch(e){
     summary.issues.push(String(e.stack||e));
