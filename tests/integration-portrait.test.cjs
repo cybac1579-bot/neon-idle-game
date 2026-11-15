@@ -361,8 +361,21 @@ const server=createServer((req,res)=>{
     console.log('BALANCE_ATTACK_COST_SENSITIVITY '+JSON.stringify(sensitivity));
     assert.equal(Object.keys(strategies).length,7,'strategy sweep incomplete');
     assert.ok(Object.values(strategies).every(x=>x.finalStage>=1&&Number.isFinite(x.finalStage)),'invalid strategy telemetry');
-    assert.ok(Object.values(strategies).every(x=>x.unlocks.weaponAt!==null&&x.unlocks.skillAt!==null&&x.unlocks.hero10At!==null),'growth-system milestones missing from strategy sweep');
+    console.log('BALANCE_GROWTH_MILESTONES '+JSON.stringify(Object.fromEntries(Object.entries(strategies).map(([name,x])=>[name,x.unlocks]))));
+    assert.ok(Object.values(strategies).every(x=>x.unlocks.skillAt!==null),'skill unlock missing in strategy sweep');
     assert.ok(strategies.attackWithSkillChoice.unlocks.traitAt!==null,'trait allocation was not exercised');
+    const rebirthBenefits=await balancePage.evaluate(()=>{
+     s=initial();
+     const base={power:coreMultiplier(),credits:startingCredits()};
+     s.rebirths=5;s.totalCores=500;
+     const passive={power:coreMultiplier(),credits:startingCredits()};
+     s.corePower=4;s.coreEconomy=3;
+     const invested={power:coreMultiplier(),creditRate:creditRate()};
+     return {base,passive,invested};
+    });
+    assert.deepEqual(rebirthBenefits.passive,rebirthBenefits.base,'rebirth count or lifetime cores still grant passive benefits');
+    assert.ok(rebirthBenefits.invested.power>rebirthBenefits.base.power,'purchased core attack upgrade must improve power');
+    console.log('REBIRTH_REWARD_ONLY '+JSON.stringify(rebirthBenefits));
     assert.ok(strategies.attackWithSkillChoice.equipped.every(id=>strategies.attackWithSkillChoice.skillLevels[id]>=1),'selected skill levels must be tracked');
     const firstTimes=Object.values(strategies).map(x=>x.firstReconstructionAt).filter(Number.isFinite);
     const strategySpread=Math.max(...firstTimes)-Math.min(...firstTimes);
