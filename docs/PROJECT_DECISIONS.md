@@ -43,3 +43,17 @@ When user revises a rule, update this file with date, exact new decision and sup
 - Efficient first reconstruction target remains ~60 minutes, calibrated with all growth sources, not merely HP/cost inflation.
 - Automatic purchasing prioritizes the HIGHEST UNLOCKED UPGRADE TIER (unlock-stage order), not the highest purchase price and not the cheapest purchase. Within the same tier preserve stable existing ordering; if a higher tier is unaffordable, fall back to the highest affordable tier. Implemented on integration branch at be86f7e177d0068a65be3de53ca34ac0a82776d9.
 - Do not request additional user settings before investigating and balancing; make evidence-based tuning decisions and report measured results separately from estimates.
+
+## Development priorities — 2026-11-15 (latest user decision)
+
+- User approved prioritizing gameplay development over new high-quality illustrations. This **supersedes the earlier equal-priority development schedule for graphics and systems**, not the long-term aspiration for quality character art. **Preserve current illustrated assets and art hooks**; use simple hit/skill/reward indicators. Do not commission/build new high-end cut-ins, sprite animations or environment variations while core gameplay remains unvalidated.
+- New execution order for the manual integration branch (each phase must pass relevant tests before next):
+  1. **P0 integrity:** fix outdated CI expectations while preserving current confirmed rules; restore useful tier-first auto-buy regression coverage; then prevent legacy quest balance loss and out-of-range skill-level restoration.
+  2. **P0/P1 automation gate:** ensure auto-rebirth policy/text is consistent and does not silently prevent STAGE180 phase objectives; validate long-run behavior.
+  3. **P1 gameplay:** meaningful skill differences, choice/drop/reward loop, and hero advancement availability; retain agreed skill slot milestones unless explicitly changed by the user.
+  4. **P1 pacing:** optimize first reconstruction toward ~60 min under efficient play **after skills/gear/traits are represented**, and improve STAGE55~65 wall with meaningful intermediate options.
+  5. **P1 interface/performance:** portrait combat focus, clear reward feedback, stats separation, avoid unnecessary per-frame DOM writes. Preserve current imagery, fix misleading boss HP art when convenient.
+  6. **P2 polish:** equipment depth, trait rounding/point sinks, credit claim automation and boss differentiation, based on playtest evidence.
+  7. **Deferred:** high-end new art/animation, multiple new character illustrations, new currencies, phase/deep progression expansion. Existing phase code/data must remain save-compatible and must not be deleted.
+- **Protected core gameplay:** automated stage combat (no tapping), credits/upgrades, weapon/skills, permanent hero level/traits, reconstruction/core investment (no free rebirth-count bonus), automation, save/load/offline. Three timed quests remain lightweight supplementary income, not a new independent progression layer.
+- Baseline: the existing 10-step audit in `docs/audit/2026-11-15-full-game-review-checklist.md` is complete. From now on, code/test fixes and audits are tracked separately. Production `main` is not overwritten; PR #2 remains draft until merged-code tests and real-device readiness are verified.
