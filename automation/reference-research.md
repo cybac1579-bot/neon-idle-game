@@ -586,3 +586,12 @@ Reference: https://celltosingularity.com/ (official game site; conceptual design
 **Implementation cost / expected effect:** low for auditing existing next-goal/rebirth preview text and checkpoint telemetry; medium for a restrained nonmodal unlock indicator using existing UI; high for new simulation layers or economies. Benefits are hypothetical until actual 30-minute play and narrow-viewport checks.
 
 **Decision:** apply only as a **validation criterion**: during fresh-save 30-minute low-input testing, check whether each major milestone is visible, meaningful and nonintrusive. Defer new layers, tapping and modal notifications; preserve auto-combat visual presence.
+
+
+## 2026-11-15 17:56 KST — Idle Dyson Swarm: automation value versus prestige complexity
+Sources: official Steam listing https://store.steampowered.com/app/4348570/Idle_Dyson_Swarm/ (three prestige layers, offline resources, auto-buy unlocks, branching skills); historical community criticism https://www.reddit.com/r/incremental_games/comments/1gbcrh3/ (older Nanite version; not proof of current release). Research only, not hands-on play.
+
+**Pros / impact:** (1) permanent automation can make each reset noticeably less repetitive (high); (2) differentiated specialization choices support low-input strategic play (medium-high); (3) explicit next automation unlock offers a concrete near-term goal (high).
+**Cons / impact:** (1) stacking three prestige systems and 100+ skills would swamp Neon portrait UI and balancing (high); (2) older community reports criticize auto-buy prioritization and prestige incentives, highlighting a risk rather than establishing a current bug (high); (3) active click optimization would violate Neon's no-repeated-tap constraint (critical).
+**Cost and value:** low to compare existing tier-first auto-buy goal with actual purchases and display retained rebirth benefits; medium to add compact nonmodal preview; very high for new prestige tiers, currencies and skill trees. Expected benefit is hypothetical until fresh-save 30-minute evidence.
+**Decision:** selective evaluation only; no new layers, click loops or combat buttons. Next: verify actual auto-buy purchasing sequence against goal text and assess whether first reset reduces repeated input in the 30-minute/60-minute scenarios.
