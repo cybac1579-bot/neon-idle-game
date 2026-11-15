@@ -436,20 +436,26 @@ test('stage 180 goal reports phase prerequisites rather than claiming a transiti
 });
 
 
-test('upgrade hint identifies cheapest available choice without claiming strategic optimality',()=>{
-  const b=boot(undefined);
-  const first=b.get('actionableGoal()');
-  assert.match(first,/현재 구매 가능한 최저가 강화/);
-  assert.match(first,/전투 엔진/);
-  assert.doesNotMatch(first,/추천|최적/);
+test('growth goal matches tier-first auto-buy and manual mode across affordability',()=>{
+  const b=boot({stage:65,best:65,credits:80000,autoLevel:1,autoBuy:true,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+  const automated=b.get('actionableGoal()');
+  assert.match(automated,/자동 구매 목표 \(해금 등급 우선\)/);
+  assert.match(automated,/전투 반응로/);
+  assert.match(automated,/구매 가능/);
+  b.get('s.credits=100');
+  const fallback=b.get('actionableGoal()');
+  assert.match(fallback,/자동 구매 목표/);
+  assert.match(fallback,/전투 엔진/,'unaffordable top tier must not hide affordable lower-tier fallback');
   b.get('s.credits=0');
   const waiting=b.get('actionableGoal()');
-  assert.match(waiting,/다음 최저가 강화/);
+  assert.match(waiting,/자동 구매 목표/);
+  assert.match(waiting,/기본 생산 기준/);
   assert.doesNotMatch(waiting,/구매 가능$/);
-  b.get('s.credits=10000;s.best=65');
-  const affordable=b.get('actionableGoal()');
-  assert.match(affordable,/현재 구매 가능한 최저가 강화/);
-  assert.doesNotMatch(affordable,/추천|최적/);
+  b.get('s.autoBuy=false;s.credits=80000');
+  const manual=b.get('actionableGoal()');
+  assert.match(manual,/수동 구매 참고 \(최저가\)/);
+  assert.match(manual,/전투 엔진/);
+  assert.doesNotMatch(manual,/자동 구매 목표/);
 });
 
 
