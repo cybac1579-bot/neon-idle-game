@@ -317,6 +317,18 @@ const server=createServer((req,res)=>{
     assert.equal(Object.keys(contributions).length,5,'system contribution comparison incomplete');
     assert.ok(Object.values(contributions).every(x=>x.samples.length===3),'multi-seed system contribution comparison incomplete');
     console.log('BALANCE_SYSTEM_CONTRIBUTIONS '+JSON.stringify(contributions));
+    // Diagnostic: the first-rebirth target is about 3600s for an efficient
+    // full-system policy. This is telemetry, not a pass/fail hard time gate.
+    const fullSamples=contributions.full.samples;
+    const fullTimes=fullSamples.map(x=>x.firstReconstructionAt);
+    console.log('BALANCE_FIRST_REBIRTH_TARGET '+JSON.stringify({
+     targetSeconds:3600,
+     observedSeconds:fullTimes,
+     meanSeconds:contributions.full.meanFirstRebirthSeconds,
+     gapToTargetSeconds:contributions.full.meanFirstRebirthSeconds===null?null:3600-contributions.full.meanFirstRebirthSeconds,
+     coverage:{gear:true,skills:true,traits:true,questClaim:true,heroLevels:true},
+     note:'Scripted attack-first policy, not proven global optimum'
+    }));
     // Experimental attack-cost sensitivity: restore the production formula after
     // each seeded run. Do not change live balance before measuring the tradeoff.
     const sensitivity=await balancePage.evaluate(()=>{
