@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - development/main-redesign-integration-20261114
+      - integration/reconcile-main-redesign-20261114
   workflow_dispatch:
 jobs:
   portrait:
