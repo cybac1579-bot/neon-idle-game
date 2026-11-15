@@ -648,3 +648,13 @@ Reference: original playable game https://www.decisionproblem.com/paperclips/ind
 **Costs and risks / impact:** (1) importing its rapid-click opening would violate Neon's strict low-input rule (critical); (2) its abstract production presentation would diminish the combat/art identity (high); (3) abrupt phase transitions and additional resource layers would complicate the 30-minute balance and save compatibility (high).
 **Implementation cost / expected value:** low to audit existing stage milestones, next-goal text and unlock messages; medium for a single nonmodal progress cue if live portrait evidence shows confusion; high for additional economies or phases. No improvement claim without fresh-save timing and mobile screenshots.
 **Decision:** research-only evaluation criterion. Keep automatic combat and existing progression systems; **do not** add repeated clicking or a new production tree. Next verify whether milestones at stages 10/15/25 are actually reached and understood during the first 30 minutes.
+
+
+## 2026-11-15 23:51 KST — Antimatter Dimensions: automation policy and prestige clarity (focused comparison)
+Reference: https://ivark.github.io/AntimatterDimensions/ (original playable game; design-level comparison, no fresh hands-on measurement).
+
+**Transferable principle:** automation should reduce repetitive actions after progression milestones while preserving a visible next objective and distinct reset payoff. The relevant Neon experiment is the manual PR #2's tier-first auto-buy, timed credit quests, stage-55/60 options, and first-rebirth pacing—not another automation currency.
+**Benefits/impact:** (1) persistent automation lowers repeated inputs after reconstruction (high); (2) goal visibility helps make passive waiting purposeful (high); (3) explicit upgrade priority makes player strategies comparable (medium-high).
+**Costs/risks/impact:** (1) multiple prestige layers and abstract number panels would obscure portrait combat (high); (2) powerful automation may make early rewards feel automatic and irrelevant (medium-high); (3) treating 10-second burst-purchase simulations as normal mobile play gives misleading timing (critical).
+**Cost/expected effect:** low to add low-input scenario evidence and compare existing UI/auto-buy; medium for restrained nonmodal goal hints; high for any new prestige layer. No claimed improvement without actual run and device validation.
+**Decision:** apply only to the verification rubric; defer additional prestige, dense menus and all tap incentives. Prioritize PR #2 integration and real low-input tests before main tuning.
