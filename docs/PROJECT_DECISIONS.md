@@ -66,3 +66,11 @@ When user revises a rule, update this file with date, exact new decision and sup
 - The existing auto-rebirth decision remains `gainCore() >= max(3,ceil(totalCores*0.15))`: **both** "at least 3 cores" and "15% of all cores ever gained in this phase" must hold, not OR. Fix UI wording and display the numeric threshold; do not silently make auto-rebirth much more aggressive by replacing AND with OR.
 - Limitation: phase focus may substantially lengthen a run (especially weak permanent combat investments); the player can uncheck it. Further UX/play balance validation should compare both settings over multiple rebirths; do not call it an unconditional performance buff.
 - Implementation commit `6d3d9e31`. PR CI storage regression `43706407957` **60/60 passed** including four new guard tests; Chromium portrait PR `43706407929` **passed**. Main/deployment and real Galaxy S25+ are untouched/unverified.
+
+
+## First skill-choice gameplay trial — 2026-11-15 (provisional implementation, not a user-locked rule)
+
+- The current **gameplay-first, graphics-light** manual branch offers **one optional first-skill selection per run at current STAGE 20**. Choice is nonblocking: combat and random drops continue if untouched. It resets on rebirth and phase. Old saves default the new flag to false.
+- Existing `overload`, `chain`, `bountySkill` remain. Experimental 4th `trainingSkill` / 전술 훈련 offers **12 seconds of ×2 hero XP at skill Lv1, every 14 seconds**, with standard skill-level scaling. No attack-speed buff or bonus rebirth-stage jump.
+- These new skill values and the optional choice are **playtest experiments**, not separately approved permanent user rules. Preserve the user-approved skill-slot levels (initial 1; LV10/25/40/60 increasing to 5), inheritance, and high-end-new-art deferral.
+- Implementation `065f4651`, test harness follow-up `7f2368a6`. Latest PR regression **64/64 PASS**, run `43707318776`, portrait Chromium **PASS**, run `43707318779`. Still no actual Galaxy S25+ gameplay or main deployment.

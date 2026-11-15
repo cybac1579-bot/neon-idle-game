@@ -31,3 +31,12 @@ Last verified: integration branch created from main dbfb7a759f2f4d4947db4fdb3fc1
 - Earlier P0 save preservation and skill cap fixes remain present (`3608411e`) and included in 60 tests. Safety branch `backup/neon-priority-baseline-20261115` preserved. Continue to check drift of main/automation records before new work.
 - **NEXT:** gameplay-focused P1 step — diversify and assess actual skill effects, XP/slot unlock pacing, early/midstage reward choices. Keep high-quality new illustration work deferred, reuse existing character/enemy assets and simple low-cost feedback. Verify with original-code simulations and CI. Afterwards first prestige ~60m and 55–65 wall.
 - User's explicitly confirmed high-level priorities are in `docs/PROJECT_DECISIONS.md`. The opt-in phaseFocus is an implementation decision subject to play feedback, not a new user-specified hard rule.
+
+
+## 2026-11-15 latest P1 handoff — first-skill choice verified
+
+- Current manual PR #2: STAGE20 optional first-skill selection per rebirth plus a 4th XP-focused `trainingSkill` (12s ×2 hero XP /14s cycle Lv1). Implementation `065f4651`, regression assertion correction `7f2368a6`. Keep 5-slot unlock levels and inheritance, RNG drops, existing saved heroes, and low-art-development priority. `main` and live Pages not deployed.
+- PR CI **64/64 save regression PASS** run `43707318776`, portrait Chromium **PASS** run `43707318779`. First implementation had 1 false failure from a fake-DOM assertion and was corrected; all 4 new tests now pass.
+- Actual original-JS .25s seeded simulation: 30min hero LV 8–9 with Training vs LV7 with Overload under three manually purchased runs; Training usually delays the first Stage100/rebirth relative to damage choice. Do not overclaim based on three seeds or equate simulation with real mobile.
+- **NEXT:** address differentiation of Overload versus Chain, improve early skill/reward feedback and timing of second skill slot without changing the confirmed LV10/25/40/60 thresholds; then run complete 60min optimal-ish economy/multi-strategy simulation and fix STAGE55–65 slowdown. Avoid expensive new artwork and new phase expansion. Check live `main` automation drift before writing/merging.
+- Canonical records: `docs/PROJECT_DECISIONS.md` (approved versus provisional), `docs/IMPLEMENTATION_STATUS.md` (implementation+evidence), `docs/audit/2026-11-15-full-game-review-checklist.md` (original 10-stage audit plus follow-ups). Draft PR stays unmerged pending actual Galaxy S25+ test and safe integration.
