@@ -205,7 +205,7 @@ const server=createServer((req,res)=>{
               textClipped:name.scrollWidth>name.clientWidth+1,cardClipped:card.scrollWidth>card.clientWidth+1};
           });
         });
-        assert.equal(layout.length,2,'two equipped/owned skill cards should render at width '+width);
+        assert.ok(layout.length>=2,'the two seeded skills plus any legitimate random drops must render at width '+width+': '+JSON.stringify(layout));
         assert.ok(layout.every(card=>!card.textOverButtons&&!card.buttonOverlap&&!card.nextCardOverlap&&!card.textClipped&&!card.cardClipped),
           'skill descriptions/actions must not overlap or clip at width '+width+': '+JSON.stringify(layout));
         layoutChecks.push({width,pass:true,cards:layout.length});
