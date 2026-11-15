@@ -167,13 +167,13 @@ test('sequential progression awards STAGE 10 milestone exactly once',()=>{
   const b=boot({stage:8,best:8,rebirths:3,credits:0,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   b.get('enemyHp=0;resolveEnemyDefeat()');
   assert.equal(b.get('s.stage'),9);
-  assert.equal(b.get('s.knownUnlocks.filter(k==="milestone-10").length'),0);
+  assert.equal(b.get('s.knownUnlocks.filter(k=>k==="milestone-10").length'),0);
   b.get('enemyHp=0;resolveEnemyDefeat()');
   assert.equal(b.get('s.stage'),10);
-  assert.equal(b.get('s.knownUnlocks.filter(k==="milestone-10").length'),1);
+  assert.equal(b.get('s.knownUnlocks.filter(k=>k==="milestone-10").length'),1);
   b.get('enemyHp=0;resolveEnemyDefeat()');
   assert.equal(b.get('s.stage'),11);
-  assert.equal(b.get('s.knownUnlocks.filter(k==="milestone-10").length'),1);
+  assert.equal(b.get('s.knownUnlocks.filter(k=>k==="milestone-10").length'),1);
 });
 test('auto-buy spends available credits only when enabled and unlocked',()=>{
   const stamp=Date.UTC(2026,10,12,0,0,0);
