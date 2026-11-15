@@ -157,7 +157,7 @@ test('STAGE 20 grants one optional skill choice and never stops idle combat',()=
  assert.equal(b.get('s.skillsEquipped.includes("trainingSkill")'),true);
  assert.equal(b.get('s.skillChoiceUsed'),true);
  assert.equal(b.get("chooseSkill('overload')"),false,'one selection per run');
- assert.equal(b.document.getElementById('skillChoice').children.length,0);
+ assert.match(b.document.getElementById('skillChoiceInfo').textContent,/선택 완료/,'choice confirmation is shown');
  const prior=b.get('s.kills');b.get('enemyHp=0;resolveEnemyDefeat()');
  assert.equal(b.get('s.kills'),prior+1,'automated combat continues after selection');
 });
