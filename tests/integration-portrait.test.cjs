@@ -237,9 +237,9 @@ const server=createServer((req,res)=>{
      };
      const output={};
      for(const [name,compare] of Object.entries(policies)){
-      s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
       let rng=20261114;
       Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
+      s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
       let first=null;
       const milestones={};
       const unlocks={weaponAt:null,skillAt:null,skillEquippedAt:null,hero10At:null,traitAt:null};
@@ -280,9 +280,9 @@ const server=createServer((req,res)=>{
      const results={};
      for(const growth of [1.31,1.35,1.37,1.39,1.41]){
       costs.atk[1]=growth;
-      s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
       let rng=20261114;
       Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
+      s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
       let first=null;
       for(let t=1;t<=3600;t++){
        step(1,false);
