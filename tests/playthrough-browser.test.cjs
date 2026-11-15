@@ -244,6 +244,25 @@ const server=createServer((req,res)=>{
       assert.equal(selected.forge,7,'touch grants two free existing production upgrades');
       assert.match(selected.goal,/지원 완료/);
       assert.equal(await mid.locator('#frontlineSupportChoices button:enabled').count(),0);
+      const chosen=mid.locator('#frontlineSupportChoices [data-frontline-support="industry"]');
+      assert.equal(await chosen.evaluate(el=>el.classList.contains('support-selected')),true,'the picked support must be clearly highlighted');
+      const layoutChecks=[];
+      for(const width of [360,390,412]){
+        await mid.setViewportSize({width,height:844});
+        const cards=await mid.locator('#frontlineSupportChoices button').evaluateAll(buttons=>buttons.map(button=>{
+          const r=button.getBoundingClientRect(),title=button.querySelector('strong')?.getBoundingClientRect(),
+            desc=button.querySelector('small')?.getBoundingClientRect();
+          const overlap=title&&desc?Math.min(title.right,desc.right)-Math.max(title.left,desc.left)>0.5&&
+            Math.min(title.bottom,desc.bottom)-Math.max(title.top,desc.top)>0.5:false;
+          return {type:button.dataset.frontlineSupport,clipped:button.scrollWidth>button.clientWidth+1,
+            overlap,visible:r.width>=100,selected:button.classList.contains('support-selected')};
+        }));
+        assert.equal(cards.length,3);
+        assert.ok(cards.every(x=>!x.clipped&&!x.overlap&&x.visible),'stage60 choices cannot clip/overlap: '+JSON.stringify({width,cards}));
+        assert.equal(cards.filter(x=>x.selected).length,1);
+        layoutChecks.push({width,cards:cards.length,pass:true});
+      }
+      await mid.setViewportSize({width:390,height:844});
       await mid.locator('#allocationPanel').screenshot({path:path.join(output,'stage60-support-390.png')});
       await mid.reload({waitUntil:'load'});
       const restored=await mid.evaluate(()=>({stage:s.stage,choice:s.frontlineSupport,forge:s.forge}));
@@ -252,7 +271,7 @@ const server=createServer((req,res)=>{
       const preKill=await mid.evaluate(()=>s.kills);
       await mid.evaluate(()=>{enemyHp=0;resolveEnemyDefeat();render();save()});
       assert.equal(await mid.evaluate(()=>s.kills),preKill+1,'combat continues after optional support selection');
-      summary.midgame={pre,selected,restored};
+      summary.midgame={pre,selected,restored,layoutChecks};
       console.log('PASS STAGE60_SUPPORT_UI '+JSON.stringify(summary.midgame));
       await ctx.close();
     }

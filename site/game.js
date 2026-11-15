@@ -96,7 +96,7 @@ function chooseFrontlineSupport(kind){if(s.stage<60||s.frontlineSupport||!FRONTL
 }
 function renderFrontlineSupport(){const ready=s.stage>=60,chosen=s.frontlineSupport; $('frontlineSupportPanel').classList.toggle('hide',!ready);
  $('frontlineSupportInfo').textContent=!ready?'STAGE 60 도달 후 선택 가능':chosen?'이번 회차 지원 완료 · '+FRONTLINE_SUPPORT[chosen][0]+' (재구성 후 다시 선택 가능)':'이번 회차 무료 지원 1회 · 세 가지 중 선택 (선택하지 않아도 자동 전투 계속)';
- for(const b of $('frontlineSupportChoices').querySelectorAll('[data-frontline-support]'))b.disabled=!!chosen;
+ for(const b of $('frontlineSupportChoices').querySelectorAll('[data-frontline-support]')){b.disabled=!!chosen;b.classList.toggle('support-selected',b.dataset.frontlineSupport===chosen);}
 }
 function allocationComparison(){
  const baseCredits=(.8+s.forge*3.5*Math.pow(1.23,s.forge))*(1+Math.min(2,s.gen*.08))*(1+s.coreEconomy*.6)*phaseMultiplier();

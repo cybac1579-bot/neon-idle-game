@@ -38,6 +38,13 @@ html{-webkit-text-size-adjust:100%;touch-action:manipulation}body{min-width:0}ma
 #skillList>[data-skill]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:11px;min-width:0;background:#141a31;border:1px solid #52678a;border-radius:11px}
 #skillList>[data-skill]>strong{grid-column:1/-1;display:block;min-width:0;overflow-wrap:anywhere;font-size:13px;line-height:1.5;color:#eef4ff}
 #skillList>[data-skill]>button{min-width:0;min-height:48px;padding:8px;text-align:center;overflow-wrap:anywhere}
+
+/* Stage-60 choice remains readable once claimed; mobile buttons have their own footprint. */
+#allocationPanel{scroll-margin-top:80px}
+#frontlineSupportChoices{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#frontlineSupportChoices button{min-width:0;min-height:68px;overflow-wrap:anywhere}
+#frontlineSupportChoices button:disabled{opacity:.64}
+#frontlineSupportChoices button.support-selected{opacity:1;background:#2c575d;border:2px solid #ffe17e}
 </style></head><body><main>
 <h1>✦ 네온 방치단</h1><p class="sub">자동 전투로 성장하고, 장비와 스킬을 조합해 다음 단계에 도전해.</p>
 <nav class="nav" aria-label="화면 이동"><button data-view="battle" class="active">전투</button><button data-view="growth">성장</button><button data-view="reset">재구성</button><button data-view="stats">통계</button></nav>
