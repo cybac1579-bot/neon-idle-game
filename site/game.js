@@ -84,7 +84,7 @@ const creditRate=()=> (.8+s.forge*3.5*Math.pow(1.23,s.forge))*(1+Math.min(2,s.ge
 // 9차: 전선 선택 전 효과를 수치로 비교한다. 실제 배율 공식과 동일한 계산을 사용한다.
 function allocationComparison(){
  const baseCredits=(.8+s.forge*3.5*Math.pow(1.23,s.forge))*(1+Math.min(2,s.gen*.08))*(1+s.coreEconomy*.6)*phaseMultiplier();
- const basePower=(5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(1+traitLevel('precision')*.04)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier();
+ const basePower=(5+s.atk*4)*Math.pow(1.10,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(1+traitLevel('precision')*.04)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier();
  return [
   ['균형',basePower,baseCredits],
   ['공격 집중',basePower*2.2,baseCredits],
@@ -92,7 +92,7 @@ function allocationComparison(){
  ];
 }
 const energyRate=()=> (1+s.gen*1.7)*Math.pow(1.16,s.gen)*(1+s.relay*.65)*(1+s.coreEconomy*.12)*phaseMultiplier()*(1+traitLevel('energy')*.04);
-const power=()=> Math.min(1e100,(5+s.atk*4)*Math.pow(1.115,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(s.stage>=55&&s.allocation==='assault'?2.2:1)*(1+traitLevel('precision')*.04)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier());
+const power=()=> Math.min(1e100,(5+s.atk*4)*Math.pow(1.10,s.atk)*(1+Math.log10(1+s.energy)*(.14+s.amp*.09))*(1+s.gen*.015)*Math.pow(1.8,s.reactor)*coreMultiplier()*phaseMultiplier()*(s.stage>=55&&s.allocation==='assault'?2.2:1)*(1+traitLevel('precision')*.04)*(s.stage%10===0?1+traitLevel('boss')*.08:1)*weaponMultiplier());
 const enemyHealth=stage=>Math.min(1e100,Math.round(48*Math.pow(1.26,stage-1)*Math.pow(1.30,Math.floor((stage-1)/20))*Math.pow(1.4,Math.max(0,stage-100))*Math.pow(1.045,Math.max(0,Math.min(stage,100)-70)))); // 첫 재구성 전 70~100단계 구간만 완만하게 강화
 const enemyReward=stage=>Math.min(1e100,Math.round(16*Math.pow(1.19,stage-1)));
 const unlockStage={atk:1,spd:1,gen:1,amp:15,relay:25,forge:45,reactor:65};
