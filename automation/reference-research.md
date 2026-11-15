@@ -717,3 +717,11 @@ Source: https://store.steampowered.com/app/1482860/Idle_Research/ (store descrip
 **Benefits/impact:** (1) clear next unlock can reduce directionless waiting (high); (2) occasional choices create build identity while combat stays automatic (high); (3) a concise goal preview fits a separate growth/details surface (medium).
 **Costs/risks/impact:** (1) new research currencies and layered automation increase balance/save complexity (high); (2) additional menus crowd portrait UX (high); (3) active optimization loops can violate low-input play (critical).
 **Implementation cost:** low for an existing-state milestone summary; high for new research layers. **Decision:** selectively evaluate read-only stage/skill goal cues; defer new currencies, lab systems and any rapid-input incentive. **Evidence gap:** no current live mobile screenshot or player test; this is a hypothesis, not implemented improvement.
+
+
+## 2026-11-16 07:58 KST — Legends of Idleon: offline return clarity vs multi-character overhead
+Reference: https://www.legendsofidleon.com/ (official site; conceptual design comparison, not hands-on measurement).
+**Transferable hypothesis:** visible offline rewards and a clear next objective can make low-input progression rewarding without constant interaction. Evaluate Neon's existing offline 2h cap, credit-claim visibility, boss gates and STAGE55/60 choices first.
+**Benefits / impact:** (1) explicit return earnings improve reward comprehension (high); (2) differentiated progression targets encourage long sessions (high); (3) occasional strategic allocation can preserve agency with sparse inputs (medium-high).
+**Risks / impact:** (1) multi-character management greatly increases complexity and manual chores (high); (2) additional resource loops compete with portrait combat space (high); (3) generous offline gains could bypass boss and ~60m rebirth pacing (high).
+**Implementation cost / expected value:** low to test existing offline credit accounting and read-only return cues; medium to add a compact return summary with lifecycle regression; very high for multi-character systems. **Decision:** adopt as a test criterion only; defer multi-character systems, new currencies, extra UI and all mandatory tapping. No gameplay change or verified engagement improvement this run.
