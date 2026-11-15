@@ -238,6 +238,7 @@ const server=createServer((req,res)=>{
       let rng=20261114;
       Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
       let first=null;
+      const milestones={};
       for(let t=1;t<=3600;t++){
        step(1,false);
        if(t%10===0){
@@ -248,9 +249,10 @@ const server=createServer((req,res)=>{
          purchase(available[0]);
         }
        }
+       for(const stage of [40,55,65,70,80,90,100])if(milestones[stage]===undefined&&s.stage>=stage)milestones[stage]=t;
        if(first===null&&gainCore()>0)first=t;
       }
-      output[name]={firstReconstructionAt:first,finalStage:s.stage,upgrades:{atk:s.atk,spd:s.spd,gen:s.gen,amp:s.amp,relay:s.relay,forge:s.forge,reactor:s.reactor},heroLevel:s.heroLevel,weapon:!!s.weapon,skills:s.skillsOwned.length};
+      output[name]={firstReconstructionAt:first,milestones,finalStage:s.stage,upgrades:{atk:s.atk,spd:s.spd,gen:s.gen,amp:s.amp,relay:s.relay,forge:s.forge,reactor:s.reactor},heroLevel:s.heroLevel,weapon:!!s.weapon,skills:s.skillsOwned.length};
      }
      return output;
     });
