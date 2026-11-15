@@ -273,6 +273,43 @@ const server=createServer((req,res)=>{
      }
      return output;
     });
+    // Counterfactual: quantify the contribution of gear, skills and traits
+    // under the same seeded strategy, without changing production balance.
+    const contributions=await balancePage.evaluate(()=>{
+     const modes=['full','noGear','noSkills','noTraits','noGearOrSkills'];
+     const results={};
+     for(const mode of modes){
+      let rng=20261114;
+      Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
+      s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
+      let first=null;
+      // Global const bindings cannot be reassigned; use state-level interventions.
+      for(let t=1;t<=3600;t++){
+       if(mode==='noGear'||mode==='noGearOrSkills')s.weapon=null;
+       if(mode==='noSkills'||mode==='noGearOrSkills')s.skillsEquipped=[];
+       if(mode==='noTraits'){s.traits={};s.traitPointsSpent=0;}
+       step(1,false);
+       if(t%10===0){
+        if(mode!=='noTraits'){
+         const priority=['precision','double','boss','haste','bounty','training','energy','loot'];
+         for(const id of priority){const cap=TRAITS.find(x=>x[0]===id)[2];while(availablePoints()>0&&traitLevel(id)<cap){s.traits[id]=traitLevel(id)+1;s.traitPointsSpent++;}}
+        }
+        if(mode!=='noSkills'&&mode!=='noGearOrSkills')s.skillsEquipped=['overload','chain','bountySkill'].filter(id=>s.skillsOwned.includes(id)).slice(0,skillSlotCount());
+        transferCacheCredits();
+        for(let n=0;n<30;n++){
+         const affordable=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>(a==='atk'?-1:b==='atk'?1:cost(a)-cost(b)));
+         if(!affordable.length)break;
+         purchase(affordable[0]);
+        }
+       }
+       if(first===null&&gainCore()>0)first=t;
+      }
+      results[mode]={firstReconstructionAt:first,finalStage:s.stage,weapon:!!s.weapon,skillsEquipped:s.skillsEquipped.length,traitsSpent:s.traitPointsSpent};
+     }
+     return results;
+    });
+    assert.equal(Object.keys(contributions).length,5,'system contribution comparison incomplete');
+    console.log('BALANCE_SYSTEM_CONTRIBUTIONS '+JSON.stringify(contributions));
     // Experimental attack-cost sensitivity: restore the production formula after
     // each seeded run. Do not change live balance before measuring the tradeoff.
     const sensitivity=await balancePage.evaluate(()=>{
