@@ -22,3 +22,12 @@ Last verified: integration branch created from main dbfb7a759f2f4d4947db4fdb3fc1
 - **Next step:** **P0/P1 auto-rebirth and phase objective compatibility**. Source issue is `gainCore()>=Math.max(3,Math.ceil(s.totalCores*.15))` vs UI describing `15% OR 3`. When enabled, auto-rebirth can reset from STAGE179 before phase STAGE180 is reached. Preserve user agency and avoid accidental automatic reset, test staged save conditions and multi-rebirth simulations. Then optimize skill variety/hero XP, ~60min first rebirth, mobile UI, simple feedback before high-end art.
 - **Documentation:** full 10-step audit and post-audit CI analysis in `docs/audit/2026-11-15-full-game-review-checklist.md`; actual verification evidence here and in GitHub Actions. Previous statement 'automation paused' was historical and must not be treated as current fact; check live automation.
 - **Reporting:** changes actually committed, CI pass/fail, unverified mobile, unchanged main status and provisional first-playable readiness 58%. Do not invent GitHub deployment or screenshot proof.
+
+
+## 2026-11-15 latest handoff after phase guard (supersedes earlier P0/P1 next step)
+
+- Manual PR #2 latest gameplay commit `6d3d9e31`: `phaseFocus` opt-in ON prevents automatic reconstruction from interrupting stage 180 objective after two prior reconstructions. OFF continues normal auto-rebirth; old saves default OFF. Core award threshold remains **AND**, display fixed. No auto-purchase/phase-button changes.
+- PR CI: saved-game regression `43706407957` **60/60 PASS** and portrait browser `43706407929` **PASS**. Four added tests. Main branch, Pages deployment and real Android **unchanged/unverified**.
+- Earlier P0 save preservation and skill cap fixes remain present (`3608411e`) and included in 60 tests. Safety branch `backup/neon-priority-baseline-20261115` preserved. Continue to check drift of main/automation records before new work.
+- **NEXT:** gameplay-focused P1 step — diversify and assess actual skill effects, XP/slot unlock pacing, early/midstage reward choices. Keep high-quality new illustration work deferred, reuse existing character/enemy assets and simple low-cost feedback. Verify with original-code simulations and CI. Afterwards first prestige ~60m and 55–65 wall.
+- User's explicitly confirmed high-level priorities are in `docs/PROJECT_DECISIONS.md`. The opt-in phaseFocus is an implementation decision subject to play feedback, not a new user-specified hard rule.

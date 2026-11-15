@@ -61,3 +61,13 @@ Previous ~67% is historical estimate only; no current evidence-based revised per
 - **New regression tests:** `automation/save-regression.test.cjs` `5e8ea185` adds 3 tests for high-stage legacy credit survival across tick/save/load/claim, already-migrated oversized quest balances, and loaded skill cap/alias normalization. PR save regression run `43705486087` **56/56 PASS**. PR portrait run `43705486090` and push run `43705481934` **PASS**. Actual Android device and Pages parity **NOT VERIFIED**.
 - **Readiness:** retain provisional **58%** until user has tested gameplay; risk-reduction work completed, not new fun/content. Whole audit already 10/10 and the post-audit development phase is now active.
 - **Next priority:** automatic-rebirth condition/label discrepancy (OR vs max/AND) and preventing automatic reconstruction from consuming the phase unlock at STAGE180. Test coherent policy before changing. After that: skill/gameplay reward choices, 60-minute calibration, portrait UI and basic effects; high-end new art deferred.
+
+
+## 2026-11-15 P0/P1 auto-rebirth and phase objective safeguard — verified code+CI
+
+- Code/UI/test commit: `6d3d9e31bba29f14f3bd7421aa0de682a10fc5ca` on manual `integration/reconcile-main-redesign-20261114`. Changed **only** `site/game.js`, `site/index.html`, `automation/save-regression.test.cjs` in that gameplay commit.
+- Added an explicit **phaseFocus** preference in the existing reconstruction automation panel. Default false for old saves, normalized to boolean on load, persisted by save. With preference ON and `rebirths>=2`, only foreground automatic reconstruction is suppressed; normal auto-purchase/skill/combat continue. A player can still reconstruct manually and execute phase manually on STAGE180.
+- Actual automatic core threshold `max(3,ceil(totalCores*.15))` unchanged, UI **OR** miswording replaced by correct **AND** requirement, showing current and required core award.
+- Four extra Node regression cases cover AND policy, STAGE179→180 under focus, old save/default OFF and manual override, second rebirth before pause/setting toggle. PR saved-game CI run `43706407957`: **60/60 PASS**; PR portrait Chromium run `43706407929`: **PASS**.
+- Confirmed **not tested**: actual Galaxy S25+ interaction and extended phase objective 180 growth pacing. Opt-in can create a prolonged run: the player may choose OFF at any time. No changed enemy health/costs/skills/art, no main merge or deployment.
+- **Next development priority:** meaningful skill decisions/hero progression + basic combat reward indicators using existing art; only after skill mechanics are stable, re-balance first prestige toward 60m with 55–65 bridge; new high-end illustration production deferred.
