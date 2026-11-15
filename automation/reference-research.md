@@ -648,3 +648,80 @@ Reference: original playable game https://www.decisionproblem.com/paperclips/ind
 **Costs and risks / impact:** (1) importing its rapid-click opening would violate Neon's strict low-input rule (critical); (2) its abstract production presentation would diminish the combat/art identity (high); (3) abrupt phase transitions and additional resource layers would complicate the 30-minute balance and save compatibility (high).
 **Implementation cost / expected value:** low to audit existing stage milestones, next-goal text and unlock messages; medium for a single nonmodal progress cue if live portrait evidence shows confusion; high for additional economies or phases. No improvement claim without fresh-save timing and mobile screenshots.
 **Decision:** research-only evaluation criterion. Keep automatic combat and existing progression systems; **do not** add repeated clicking or a new production tree. Next verify whether milestones at stages 10/15/25 are actually reached and understood during the first 30 minutes.
+
+
+## 2026-11-15 23:51 KST — Antimatter Dimensions: automation policy and prestige clarity (focused comparison)
+Reference: https://ivark.github.io/AntimatterDimensions/ (original playable game; design-level comparison, no fresh hands-on measurement).
+
+**Transferable principle:** automation should reduce repetitive actions after progression milestones while preserving a visible next objective and distinct reset payoff. The relevant Neon experiment is the manual PR #2's tier-first auto-buy, timed credit quests, stage-55/60 options, and first-rebirth pacing—not another automation currency.
+**Benefits/impact:** (1) persistent automation lowers repeated inputs after reconstruction (high); (2) goal visibility helps make passive waiting purposeful (high); (3) explicit upgrade priority makes player strategies comparable (medium-high).
+**Costs/risks/impact:** (1) multiple prestige layers and abstract number panels would obscure portrait combat (high); (2) powerful automation may make early rewards feel automatic and irrelevant (medium-high); (3) treating 10-second burst-purchase simulations as normal mobile play gives misleading timing (critical).
+**Cost/expected effect:** low to add low-input scenario evidence and compare existing UI/auto-buy; medium for restrained nonmodal goal hints; high for any new prestige layer. No claimed improvement without actual run and device validation.
+**Decision:** apply only to the verification rubric; defer additional prestige, dense menus and all tap incentives. Prioritize PR #2 integration and real low-input tests before main tuning.
+
+
+## 2026-11-16 00:53 KST — Idle Champions: background combat and event pacing (research hypothesis)
+Reference: https://www.idlechampions.com/ (official game homepage; conceptual comparison only, no hands-on or current-feature verification).
+
+**Potential advantages/impact:** (1) visually legible automated combat supports spectator engagement (high); (2) occasional meaningful formation/build decisions can create low-input agency (high); (3) limited-time goals illustrate pacing variety without continuous input (medium).
+**Risks/impact:** (1) multi-character roster/formation complexity would dilute Neon's single-hero combat identity (high); (2) frequent events and reward layers increase balance, save and UI burden (high); (3) click-to-accelerate mechanics are prohibited for Neon (critical).
+**Cost/expected effect:** low to inspect existing skill/boss cues and stage-55/60 decision cadence on the manual PR; medium to add a restrained combat-effect cue after real portrait screenshots; very high for roster/event systems. No expected benefit is proven without fresh-save browser/device play.
+**Decision:** use passive battle readability and infrequent choice cadence as assessment criteria only. Defer formations, events, currencies and all mandatory tapping. Prioritize main/PR divergence and runtime verification first.
+
+
+## 2026-11-16 01:57 KST — Cookie Clicker: passive production readability versus click-centric onboarding
+Reference: https://orteil.dashnet.org/cookieclicker/ (original playable game; design-level comparison only, no fresh hands-on benchmark).
+
+**Potential benefits / impact:** (1) clear production-per-second feedback makes passive accumulation understandable (high); (2) visibly distinct upgrade thresholds support medium-term goals (high); (3) optional achievements can mark progress without interrupting battle (medium).
+**Risks / impact:** (1) click-based opening and click multipliers directly violate Neon's no-mandatory-tapping rule (critical); (2) many simultaneous producer rows would shrink the portrait battle area (high); (3) extra multiplier layers complicate first-rebirth ~60m balancing and save compatibility (high).
+**Cost / expected value:** low to measure current credit income/next-affordable target and check existing battle visibility; medium for a compact read-only next milestone in the growth/stats view; high for new producer/achievement mechanics. Benefit remains unproven without fresh-save low-input and real portrait validation.
+**Decision:** assessment-only; no click mechanics, no new currencies, no production-system expansion. Prioritize testing whether current auto-buy and credits explain progress while keeping combat visually central.
+
+
+## 2026-11-16 02:54 KST — The Perfect Tower II: idle combat visibility and layered progression (design hypothesis)
+Reference: https://www.perfecttower2.com/ (official game website; no hands-on or current-feature verification in this run).
+**Potential advantages:** visible autonomous enemy waves and distinct upgrade milestones can make low-input combat watchable (high); a clear upcoming unlock gives waiting a purpose (high); optional tactical decisions can offer agency without tapping (medium-high).
+**Risks:** its many interlocking subsystems would overcomplicate Neon's first 30 minutes (high); automation that immediately resolves every choice can erase meaningful skill/build decisions (high); dense management screens compete with portrait combat space (high).
+**Implementation cost/expected value:** low to audit current stage/boss/skill cues and goal text on PR #2; medium for one compact milestone cue after actual portrait inspection; very high for additional buildings and layered currencies.
+**Decision:** assessment rubric only. Preserve automatic combat and existing art; defer added layers, manual attack clicks and interface expansion. No gameplay benefit demonstrated this run.
+
+
+## 2026-11-16 03:55 KST — Realm Grinder: meaningful long-term build identity without frequent input
+Reference: https://www.kongregate.com/games/DivineGames/realm-grinder (original game listing; design-level reference, no hands-on measurement or current-build audit).
+
+**Hypothesis:** faction/build identity and distinct upgrades can make a second run meaningfully different even when combat is autonomous. Neon should first evaluate existing four first-skill choices, STAGE55 Assault/Supply, STAGE60 support, trait and weapon combinations rather than import a faction system.
+**Advantages / impact:** (1) strategic build differentiation increases replay discovery (high); (2) persistent progression makes earlier barriers visibly shorter on rebirth (high); (3) an occasional irreversible run choice creates a goal during idle accumulation (medium-high).
+**Disadvantages / impact:** (1) numerous faction bonuses and hidden synergies create major balance and onboarding costs (high); (2) reset-to-reset optimization can invite frequent manual switching contrary to low-input play (high); (3) expanding choices before measuring the manual PR's 34m fastest versus ~60m goal risks masking rather than fixing pacing (high).
+**Implementation cost / expected effect:** low to classify the existing 80-case PR telemetry by first skill/policy and add 30–60s-or-longer capped-action experiments; medium to improve the existing choice preview in growth/stats after portrait inspection; very high for faction-like layers and save migration. No engagement improvement demonstrated.
+**Decision:** use **build diversity and rebirth compression** as test criteria only. Defer factions, extra currencies, tap/click mechanics and additional menus. The current PR trial is not deployed on main/Pages.
+
+
+## 2026-11-16 04:55 KST — Idle Slayer: passive combat reward cues versus active-input traps
+Reference: https://store.steampowered.com/app/1353300/Idle_Slayer/ (Steam listing; design comparison only, not hands-on or current-version measurement).
+**Useful patterns / impact:** visible enemy/reward feedback can make automated combat satisfying (high); milestone-driven unlocks offer intermediate targets (high); permanent reset rewards can communicate replay compression (high).
+**Costs and risks / impact:** active timing/jump mechanics are incompatible with Neon's no-tap constraint (critical); adding currencies/unlocks before measuring 30-minute pacing expands balancing burden (high); frequent reward popups can crowd the portrait battle (medium-high).
+**Cost/expected benefit:** low to audit existing boss/skill/reward visual cues and stage milestones; medium for an unobtrusive reward cue after real browser review; high for additional reset/reward systems with save migration. **Decision:** research only. Borrow passive feedback criteria, explicitly reject jump/tap/reaction mechanics, new currencies and mandatory interaction. Existing manual PR remains separate from deployed main.
+
+
+## 2026-11-16 05:56 KST — Kittens Game: long-horizon milestones without busywork
+Reference: https://kittensgame.com/web/ (original game; conceptual comparison only, no live gameplay measurement). Kittens Game gradually unlocks production, research and reset-related goals. Transferable to Neon: show the *next consequential existing unlock* in the growth/details surface and compare how permanent gains compress previously slow stages, without inventing additional resources.
+
+**Benefits / impact:** (1) visible next unlock helps a 30-minute idle session feel directed (high); (2) long-term planning can work with sparse input (high); (3) existing milestone state could be reused without save schema changes (medium). **Costs / risks / impact:** (1) many parallel resources would overwhelm portrait UI (high); (2) micromanagement and frequent building purchases conflict with low-input play (high); (3) an extra prestige tree would complicate the already unverified ~60-minute target (high). **Implementation cost:** low for read-only existing milestone copy, medium for tests and mobile layout validation, high for imported production systems. **Decision:** research-only, consider milestone clarity audit after current branch integration; defer resource trees, click loops and new prestige layers. **Next evidence:** measure goal visibility and stage55–100 rewards in a 30–60s+ decision-cadence PR browser/simulation test.
+
+
+## 2026-11-16 06:58 KST — Idle Research: passive laboratory goals versus active micromanagement
+Source: https://store.steampowered.com/app/1482860/Idle_Research/ (store description; design comparison only, no hands-on test).
+
+**Transferable principle:** unlockable research targets and periodic meaningful milestones can structure idle progression without requiring high-frequency input. Evaluate the existing stage 20/55/60 and 65–100 goals before introducing a new laboratory system.
+
+**Benefits/impact:** (1) clear next unlock can reduce directionless waiting (high); (2) occasional choices create build identity while combat stays automatic (high); (3) a concise goal preview fits a separate growth/details surface (medium).
+**Costs/risks/impact:** (1) new research currencies and layered automation increase balance/save complexity (high); (2) additional menus crowd portrait UX (high); (3) active optimization loops can violate low-input play (critical).
+**Implementation cost:** low for an existing-state milestone summary; high for new research layers. **Decision:** selectively evaluate read-only stage/skill goal cues; defer new currencies, lab systems and any rapid-input incentive. **Evidence gap:** no current live mobile screenshot or player test; this is a hypothesis, not implemented improvement.
+
+
+## 2026-11-16 07:58 KST — Legends of Idleon: offline return clarity vs multi-character overhead
+Reference: https://www.legendsofidleon.com/ (official site; conceptual design comparison, not hands-on measurement).
+**Transferable hypothesis:** visible offline rewards and a clear next objective can make low-input progression rewarding without constant interaction. Evaluate Neon's existing offline 2h cap, credit-claim visibility, boss gates and STAGE55/60 choices first.
+**Benefits / impact:** (1) explicit return earnings improve reward comprehension (high); (2) differentiated progression targets encourage long sessions (high); (3) occasional strategic allocation can preserve agency with sparse inputs (medium-high).
+**Risks / impact:** (1) multi-character management greatly increases complexity and manual chores (high); (2) additional resource loops compete with portrait combat space (high); (3) generous offline gains could bypass boss and ~60m rebirth pacing (high).
+**Implementation cost / expected value:** low to test existing offline credit accounting and read-only return cues; medium to add a compact return summary with lifecycle regression; very high for multi-character systems. **Decision:** adopt as a test criterion only; defer multi-character systems, new currencies, extra UI and all mandatory tapping. No gameplay change or verified engagement improvement this run.
