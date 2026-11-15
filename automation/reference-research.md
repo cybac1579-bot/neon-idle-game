@@ -595,3 +595,14 @@ Sources: official Steam listing https://store.steampowered.com/app/4348570/Idle_
 **Cons / impact:** (1) stacking three prestige systems and 100+ skills would swamp Neon portrait UI and balancing (high); (2) older community reports criticize auto-buy prioritization and prestige incentives, highlighting a risk rather than establishing a current bug (high); (3) active click optimization would violate Neon's no-repeated-tap constraint (critical).
 **Cost and value:** low to compare existing tier-first auto-buy goal with actual purchases and display retained rebirth benefits; medium to add compact nonmodal preview; very high for new prestige tiers, currencies and skill trees. Expected benefit is hypothetical until fresh-save 30-minute evidence.
 **Decision:** selective evaluation only; no new layers, click loops or combat buttons. Next: verify actual auto-buy purchasing sequence against goal text and assess whether first reset reduces repeated input in the 30-minute/60-minute scenarios.
+
+
+## 2026-11-15 18:57 KST — Kittens Game: passive resource bottlenecks and milestone readability
+Source: original playable game https://kittensgame.com/web/ (conceptual comparison; not hands-on benchmark).
+
+**Transferable question:** when resources accumulate slowly, can a visible next milestone make waiting purposeful without requiring frequent actions? Neon should distinguish intentional waiting from missing feedback; resource scarcity alone is not a defect.
+
+**Advantages / impact:** (1) clear future construction/unlock requirements make passive accumulation legible (high); (2) constrained choices can make an infrequent purchase consequential (medium-high); (3) optional detail surfaces can separate planning from the core visual experience (medium).
+**Disadvantages / impact:** (1) dense resource lists would crowd the portrait combat scene (high); (2) adding many production chains or currencies would dilute combat/skill identity (high); (3) manual micromanagement and frequent building purchases conflict with the low-input target (high).
+**Cost / expected effect:** low to audit existing next-purchase and next-unlock text against actual 30s/60s fresh-save checkpoints; medium for a compact read-only progress indicator in the growth/details panel; high for any resource-chain redesign. Benefit is unproven until browser/phone testing.
+**Decision:** use milestone clarity as a **test criterion**, not a new system. Defer resource chains, click incentives and additional battle buttons. Verify whether automatic combat remains visually central during resource accumulation; do not rebalance merely because a purchase gap exists.
