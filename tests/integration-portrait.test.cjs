@@ -307,6 +307,10 @@ const server=createServer((req,res)=>{
     assert.ok(Object.values(strategies).every(x=>x.finalStage>=1&&Number.isFinite(x.finalStage)),'invalid strategy telemetry');
     assert.ok(Object.values(strategies).every(x=>x.unlocks.weaponAt!==null&&x.unlocks.skillAt!==null&&x.unlocks.hero10At!==null),'growth-system milestones missing from strategy sweep');
     assert.ok(strategies.attackWithSkillChoice.unlocks.traitAt!==null,'trait allocation was not exercised');
+    assert.ok(strategies.attackWithSkillChoice.equipped.every(id=>strategies.attackWithSkillChoice.skillLevels[id]>=1),'selected skill levels must be tracked');
+    const firstTimes=Object.values(strategies).map(x=>x.firstReconstructionAt).filter(Number.isFinite);
+    const strategySpread=Math.max(...firstTimes)-Math.min(...firstTimes);
+    console.log('BALANCE_SYSTEM_COVERAGE '+JSON.stringify({strategyCount:Object.keys(strategies).length,fastestFirstRebirthSeconds:Math.min(...firstTimes),slowestFirstRebirthSeconds:Math.max(...firstTimes),strategySpreadSeconds:strategySpread,skillSelectionImpactSeconds:strategies.attackWithSkillChoice.firstReconstructionAt-strategies.attackWithTraits.firstReconstructionAt,weaponFirstDropSeconds:Object.fromEntries(Object.entries(strategies).map(([name,x])=>[name,x.unlocks.weaponAt]))}));
     console.log('BALANCE_STRATEGIES_60M '+JSON.stringify(strategies));
     assert.equal(balance.checkpoints.length,6,'balance checkpoints missing');
     assert.ok(balance.finalStage>=1&&Number.isFinite(balance.finalStage),'invalid simulated stage');
