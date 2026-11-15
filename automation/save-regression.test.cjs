@@ -696,3 +696,12 @@ test('30-minute integrated low-input auto-combat with gear, skills, traits and t
  assert.equal(b.get('s.rebirths'),0,'the scenario must not silently rebirth');
  console.log('30-minute integrated low-input scenario:',JSON.stringify({initial,checkpoints}));
 });
+
+test('saved mid-boss HP survives reload instead of resetting boss to full health',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:10,best:10,savedEnemyHp:1,savedAttackClock:0.4,lastSaved:now},now,13);
+ assert.ok(b.get('enemyMax')>1,'boss maximum HP must be initialized');
+ assert.equal(b.get('enemyHp'),1,'reloaded boss must retain its saved remaining HP');
+ assert.equal(b.get('attackClock'),0.4,'saved attack progress must remain intact');
+ assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
+});
