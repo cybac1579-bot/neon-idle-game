@@ -1,0 +1,42 @@
+name: First-rebirth balance telemetry
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'site/game.js'
+      - 'tests/balance-simulation.cjs'
+      - '.github/workflows/first-rebirth-balance.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'site/game.js'
+      - 'tests/balance-simulation.cjs'
+      - '.github/workflows/first-rebirth-balance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare full-game first-rebirth strategies, 5 fixed seeds
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 540s node tests/balance-simulation.cjs 2>&1 | tee balance-console.log
+      - name: Upload baseline metrics and scenario details
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: first-rebirth-balance
+          path: |
+            artifacts/balance/first-rebirth-baseline.json
+            balance-console.log
+          if-no-files-found: warn
+          retention-days: 14
