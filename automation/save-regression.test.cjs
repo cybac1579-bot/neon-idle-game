@@ -681,3 +681,28 @@ test('two-hour offline restore reports runtime and preserves settlement cap with
  assert.match(b.get('logText'),/방치 진행 7200초 반영/);
  console.log('two-hour offline restore benchmark:',JSON.stringify({elapsedMs:Math.round(elapsedMs),stage:state.stage,best:state.best,rebirths:state.rebirths}));
 });
+
+test('legacy automation levels above cap migrate to five without losing progression',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:72,best:90,credits:12345,cores:42,autoLevel:19,autoBuy:true,autoRebirth:true,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.autoLevel'),5);
+ assert.equal(b.get('s.stage'),72);
+ assert.equal(b.get('s.credits'),12345);
+ assert.equal(b.get('s.cores'),42);
+ assert.equal(b.get('s.autoBuy'),true);
+ assert.equal(b.get('s.autoRebirth'),true);
+ assert.equal(b.get('autoPurchaseInterval()'),3);
+ assert.equal(b.get('coreCost("autoLevel")'),Infinity);
+ const before=b.get('s.cores');
+ b.get('buyCore("autoLevel")');
+ assert.equal(b.get('s.cores'),before);
+ assert.equal(b.get('s.autoLevel'),5);
+ assert.match(b.document.getElementById('coreUpgrades').children.find(n=>n.dataset.core==='autoLevel').lastElementChild.textContent,/최대 레벨 달성/);
+});
+test('automation research level five refuses additional purchases',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({autoLevel:5,cores:1e6,lastSaved:stamp},stamp);
+ b.get('buyCore("autoLevel")');
+ assert.equal(b.get('s.autoLevel'),5);
+ assert.equal(b.get('s.cores'),1e6);
+});
