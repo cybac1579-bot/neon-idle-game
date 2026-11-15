@@ -534,3 +534,17 @@ Reference: https://store.steampowered.com/app/1282730/Loop_Hero/ (official store
 **Cost / expected benefit:** low for source/UI audit and targeted cue tests, medium for restrained existing battle effect changes plus reduced-motion tests, high for new map/placement systems. Visual benefit is hypothetical until screenshots, browser frame timing and player assessment.
 
 **Decision:** **selective inspiration only**: prioritize readable enemy/boss and skill impact using current combat architecture, with reduced-motion support; **defer** tile placement, new loot economy and mandatory frequent input. No production change justified by research alone.
+
+
+## 2026-11-15 13:59 KST — Idle Apocalypse: combat production dependencies versus mobile clarity
+Reference: https://www.grumpyrhinogames.com/idle-apocalypse/ (developer website; design comparison only, no hands-on test in this run).
+
+**Transferable question:** whether production upgrades visibly support battle milestones, and whether a reset feels like a meaningful new run without mandatory rapid input.
+
+**Advantages (impact):** (1) a clear relationship between resource production and combat makes passive growth legible (**high**); (2) different upgrade bottlenecks create low-frequency strategic choices (**medium-high**); (3) reset unlocks can make the previous barrier easier on later runs (**high**).
+
+**Risks (impact):** (1) layered production chains and many currencies can obscure the next objective on portrait screens (**high**); (2) frequent collection actions violate the desired low-input experience (**critical**); (3) adding another reset tier before balancing the first increases QA and save migration cost (**high**).
+
+**Cost / expected effect:** low for comparing Neon's existing generator/attack/skill upgrade checkpoint traces; medium for improving existing growth goal wording; high for a new production chain or currency. Expected benefit remains hypothetical without actual 30-minute play evidence.
+
+**Decision:** **evaluate only**, do not copy resources, art, progression numbers or tapping loops. Use the new integrated scenario to examine whether existing attack and production choices change stage progress; defer all new systems until CI and mobile evaluation.
