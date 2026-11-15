@@ -445,7 +445,7 @@ test('growth goal matches tier-first auto-buy and manual mode across affordabili
   b.get('s.credits=100');
   const fallback=b.get('actionableGoal()');
   assert.match(fallback,/자동 구매 목표/);
-  assert.match(fallback,/전투 엔진/,'unaffordable top tier must not hide affordable lower-tier fallback');
+  assert.match(fallback,/공격속도/,'unaffordable top tier must not hide affordable lower-tier fallback');
   b.get('s.credits=0');
   const waiting=b.get('actionableGoal()');
   assert.match(waiting,/자동 구매 목표/);
