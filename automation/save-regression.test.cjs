@@ -145,6 +145,70 @@ test('combat skill damages enemy and respects cooldown',()=>{
   b.get('skillTick(1)');
   assert.equal(b.get('enemyHp'),after,'skill must not fire again before cooldown');
 });
+test('STAGE 20 grants one optional skill choice and never stops idle combat',()=>{
+ const b=boot({stage:19,best:19,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ assert.equal(b.get("chooseSkill('trainingSkill')"),false,'choice locked before stage20');
+ assert.equal(b.get("s.skillsOwned.length"),0);
+ b.get('s.stage=20;spawn();render()');
+ assert.equal(b.get('Object.keys(SKILLS).length'),4);
+ assert.equal(b.document.getElementById('skillChoice').children.length,4);
+ assert.equal(b.get("chooseSkill('trainingSkill')"),true);
+ assert.equal(b.get('s.skillsOwned.includes("trainingSkill")'),true);
+ assert.equal(b.get('s.skillsEquipped.includes("trainingSkill")'),true);
+ assert.equal(b.get('s.skillChoiceUsed'),true);
+ assert.equal(b.get("chooseSkill('overload')"),false,'one selection per run');
+ assert.equal(b.document.getElementById('skillChoice').children.length,0);
+ const prior=b.get('s.kills');b.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(b.get('s.kills'),prior+1,'automated combat continues after selection');
+});
+test('skill-choice save, normal reset, inherited skill and legacy save remain compatible',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:100,best:100,skillsOwned:['trainingSkill'],skillsEquipped:['trainingSkill'],skillsInherited:['trainingSkill'],
+  skillLevels:{trainingSkill:12},skillBuffTraining:9,skillChoiceUsed:true,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.skillChoiceUsed'),true);
+ assert.equal(b.get('s.skillBuffTraining'),9);
+ b.get('save();load()');
+ assert.equal(b.get('s.skillChoiceUsed'),true);
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.skillChoiceUsed'),false,'a new run permits another starter choice');
+ assert.equal(b.get('s.skillsOwned.includes("trainingSkill")'),true,'inherited skill survives');
+ assert.equal(b.get('s.skillLevels.trainingSkill'),1,'inherited level resets to one');
+ assert.equal(b.get('s.skillBuffTraining'),0,'temporary buff does not carry across runs');
+ assert.equal(b.get("chooseSkill('overload')"),false,'must reach stage20 again');
+ b.get('s.stage=20;spawn();render()');
+ assert.equal(b.get("chooseSkill('overload')"),true);
+ const legacy=boot({stage:20,best:20,lastSaved:stamp},stamp);
+ assert.equal(legacy.get('s.skillChoiceUsed'),false,'existing saves without flag can opt in');
+});
+test('training skill gives hero XP without changing attack interval or credit income',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:35,best:35,skillsOwned:['trainingSkill'],skillsEquipped:['trainingSkill'],
+  skillLevels:{trainingSkill:1},lastSaved:stamp},stamp);
+ const beforeInterval=b.get('attackInterval()'),credits=b.get('creditRate()');
+ assert.equal(b.get('s.skillBuffTraining'),0);
+ b.get('skillTick(14)');
+ assert.equal(b.get('s.skillBuffTraining'),12);
+ assert.equal(b.get('attackInterval()'),beforeInterval);
+ assert.equal(b.get('creditRate()'),credits);
+ const base=b.get('Math.floor(2*Math.pow(1.035,Math.min(200,s.stage)-1)*(1+traitLevel("training")*.05))');
+ b.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.ok(b.get('s.heroXp')>=base*2 || b.get('s.heroLevel')>1,'active training must boost hero XP');
+ b.get('skillTick(1)');
+ assert.equal(b.get('s.skillBuffTraining'),11);
+});
+test('skill choice does not override full equip slots and remains optional when all known',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:25,best:25,skillsOwned:['overload'],skillsEquipped:['overload'],lastSaved:stamp},stamp);
+ assert.equal(b.get('skillSlotCount()'),1);
+ assert.equal(b.get("chooseSkill('trainingSkill')"),true);
+ assert.equal(b.get('s.skillsOwned.length'),2);
+ assert.equal(b.get('s.skillsEquipped.length'),1,'equipped slot limit is preserved');
+ assert.equal(b.get('s.skillsEquipped.includes("overload")'),true);
+ const all=boot({stage:25,best:25,skillsOwned:['overload','chain','bountySkill','trainingSkill'],lastSaved:stamp},stamp);
+ assert.equal(all.get('s.skillChoiceUsed'),false);
+ assert.equal(all.document.getElementById('skillChoice').children.length,0);
+});
+
 test('timed quests accumulate independently and claim exactly once',()=>{
   const b=boot({stage:1,best:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   b.get('step(360,false)');
