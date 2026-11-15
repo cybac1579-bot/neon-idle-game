@@ -277,9 +277,12 @@ const server=createServer((req,res)=>{
     // under the same seeded strategy, without changing production balance.
     const contributions=await balancePage.evaluate(()=>{
      const modes=['full','noGear','noSkills','noTraits','noGearOrSkills'];
+     const seeds=[20261114,20261115,20261116];
      const results={};
      for(const mode of modes){
-      let rng=20261114;
+      const samples=[];
+      for(const seed of seeds){
+      let rng=seed;
       Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
       s=initial();pendingOffline=0;enemyHp=enemyMax=0;attackClock=enemyClock=0;spawn();
       let first=null;
@@ -304,11 +307,15 @@ const server=createServer((req,res)=>{
        }
        if(first===null&&gainCore()>0)first=t;
       }
-      results[mode]={firstReconstructionAt:first,finalStage:s.stage,weapon:!!s.weapon,skillsEquipped:s.skillsEquipped.length,traitsSpent:s.traitPointsSpent};
+      samples.push({seed,firstReconstructionAt:first,finalStage:s.stage,weapon:!!s.weapon,skillsEquipped:s.skillsEquipped.length,traitsSpent:s.traitPointsSpent});
+      }
+      const times=samples.map(x=>x.firstReconstructionAt).filter(Number.isFinite);
+      results[mode]={samples,meanFirstRebirthSeconds:times.length===seeds.length?Math.round(times.reduce((a,b)=>a+b,0)/times.length):null};
      }
      return results;
     });
     assert.equal(Object.keys(contributions).length,5,'system contribution comparison incomplete');
+    assert.ok(Object.values(contributions).every(x=>x.samples.length===3),'multi-seed system contribution comparison incomplete');
     console.log('BALANCE_SYSTEM_CONTRIBUTIONS '+JSON.stringify(contributions));
     // Experimental attack-cost sensitivity: restore the production formula after
     // each seeded run. Do not change live balance before measuring the tradeoff.
