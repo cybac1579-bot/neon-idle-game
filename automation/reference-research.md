@@ -606,3 +606,13 @@ Source: original playable game https://kittensgame.com/web/ (conceptual comparis
 **Disadvantages / impact:** (1) dense resource lists would crowd the portrait combat scene (high); (2) adding many production chains or currencies would dilute combat/skill identity (high); (3) manual micromanagement and frequent building purchases conflict with the low-input target (high).
 **Cost / expected effect:** low to audit existing next-purchase and next-unlock text against actual 30s/60s fresh-save checkpoints; medium for a compact read-only progress indicator in the growth/details panel; high for any resource-chain redesign. Benefit is unproven until browser/phone testing.
 **Decision:** use milestone clarity as a **test criterion**, not a new system. Defer resource chains, click incentives and additional battle buttons. Verify whether automatic combat remains visually central during resource accumulation; do not rebalance merely because a purchase gap exists.
+
+
+## 2026-11-15 19:53 KST — NGU Idle: optional layered goals versus interface overload
+Reference: https://store.steampowered.com/app/1147690/NGU_IDLE/ (official Steam listing; conceptual comparison, **not** hands-on play or verified current-version feature audit).
+
+**Question:** can existing upgrade layers support medium-term goals without demanding rapid actions or obscuring auto-combat?
+**Advantages / impact:** (1) multiple distinct progression goals can make otherwise passive intervals purposeful (**high**); (2) permanent gains can make a later run visibly compress earlier barriers (**high**); (3) optional deeper details can be isolated from a clear main battle scene (**medium-high**).
+**Drawbacks / impact:** (1) too many simultaneous multipliers and menus create substantial onboarding and portrait-space costs (**high**); (2) extra reset layers multiply save migration and balancing risk (**high**); (3) frequent manual optimization would conflict with Neon's low-input constraint (**critical**).
+**Cost / expected effect:** low for measuring existing skill/trait/gear unlock cadence in fresh-save 30-minute fixtures; medium for one compact next-goal indicator in a separate growth panel if supported by evidence; high for additional upgrade layers. Benefit remains unproven without actual browser/phone play.
+**Decision:** **evaluation principle only**. Defer new layers, compulsory clicking and complex menus. Verify existing milestones, loadout impact and visible automatic battle before considering additions.
