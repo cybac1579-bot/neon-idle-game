@@ -241,14 +241,14 @@ const server=createServer((req,res)=>{
       await mid.locator('#frontlineSupportChoices [data-frontline-support="industry"]').tap();
       const selected=await mid.evaluate(()=>({choice:s.frontlineSupport,forge:s.forge,goal:frontlineSupportGoal()}));
       assert.equal(selected.choice,'industry');
-      assert.equal(selected.forge,6,'touch grants one free existing production upgrade');
+      assert.equal(selected.forge,7,'touch grants two free existing production upgrades');
       assert.match(selected.goal,/지원 완료/);
       assert.equal(await mid.locator('#frontlineSupportChoices button:enabled').count(),0);
       await mid.locator('#allocationPanel').screenshot({path:path.join(output,'stage60-support-390.png')});
       await mid.reload({waitUntil:'load'});
       const restored=await mid.evaluate(()=>({stage:s.stage,choice:s.frontlineSupport,forge:s.forge}));
       assert.equal(restored.choice,'industry');
-      assert.equal(restored.forge,6);
+      assert.equal(restored.forge,7);
       const preKill=await mid.evaluate(()=>s.kills);
       await mid.evaluate(()=>{enemyHp=0;resolveEnemyDefeat();render();save()});
       assert.equal(await mid.evaluate(()=>s.kills),preKill+1,'combat continues after optional support selection');

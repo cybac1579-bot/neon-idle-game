@@ -88,10 +88,10 @@ const startingCredits=()=> 30*(1+s.phaseEngine*2)*(1+traitLevel('restart')*.2);
 function buyPhaseEngine(){const c=phaseEngineCost();if(s.phaseFlux<c)return false;s.phaseFlux-=c;s.phaseEngine++;save();render();return true;}
 const creditRate=()=> (.8+s.forge*3.5*Math.pow(1.23,s.forge))*(1+Math.min(2,s.gen*.08))*(1+s.coreEconomy*.6)*phaseMultiplier()*(s.stage>=55&&s.allocation==='supply'?2.5:1);
 // 9차: 전선 선택 전 효과를 수치로 비교한다. 실제 배율 공식과 동일한 계산을 사용한다.
-const FRONTLINE_SUPPORT={firepower:['전투 지원','전투 엔진 +1단계'],industry:['보급 지원','크레딧 주조기 +1단계'],training:['훈련 지원','현재 주인공 다음 레벨 필요 XP의 50%']};
+const FRONTLINE_SUPPORT={firepower:['전투 지원','전투 엔진 +2단계'],industry:['보급 지원','크레딧 주조기 +2단계'],training:['훈련 지원','현재 주인공 다음 레벨 필요 XP의 100%']};
 function frontlineSupportGoal(){if(s.stage<55)return '';if(s.stage<60)return ' · STAGE 60 전선 지원까지 '+(60-s.stage)+'단계';if(!s.frontlineSupport)return ' · 전선 지원 1회 선택 가능 (성장 탭)';return s.stage<65?' · 지원 완료: '+FRONTLINE_SUPPORT[s.frontlineSupport][0]:'';}
 function chooseFrontlineSupport(kind){if(s.stage<60||s.frontlineSupport||!FRONTLINE_SUPPORT[kind])return false;
- s.frontlineSupport=kind;if(kind==='firepower')s.atk++;else if(kind==='industry')s.forge++;else gainHeroXp(Math.ceil(xpNeeded(s.heroLevel)*.5));
+ s.frontlineSupport=kind;if(kind==='firepower')s.atk+=2;else if(kind==='industry')s.forge+=2;else gainHeroXp(xpNeeded(s.heroLevel));
  const label=FRONTLINE_SUPPORT[kind][0];logText='STAGE 60 전선 지원 선택 · '+label;showRewardNotice(label+' · '+FRONTLINE_SUPPORT[kind][1]);save();render();return true;
 }
 function renderFrontlineSupport(){const ready=s.stage>=60,chosen=s.frontlineSupport; $('frontlineSupportPanel').classList.toggle('hide',!ready);

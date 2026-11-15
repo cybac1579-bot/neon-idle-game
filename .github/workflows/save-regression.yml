@@ -1,7 +1,7 @@
 name: Save regression checks
 on:
   push:
-    branches: [main]
+    branches: [main, integration/reconcile-main-redesign-20261114]
     paths:
       - 'site/game.js'
       - 'automation/*.test.cjs'
