@@ -573,3 +573,16 @@ Sources: official wiki https://idlewizard.wiki.gg/wiki/Main_Page ; Xbox store ht
 **Cons / impact:** (1) a large class/pet roster would overwhelm portrait UI (high); (2) more multipliers make 30-minute and 60-minute balancing harder (high); (3) active spell-casting incentives could violate the no-repeated-taps rule (critical).
 **Cost:** low-medium for read-only existing-loadout effect summaries or a focused visual cue; high for new class/pet mechanics, save migration and balance.
 **Decision:** apply the *comparison principle* to a measured audit of existing skills and weapon effect visibility; defer class/pet trees, additional currencies and any required manual casting. Next evidence: run fresh-save and pre-unlocked 30-minute fixtures with different existing skill loadouts, compare progress and battle cue visibility in real portrait browser.
+
+## 2026-11-15 16:57 KST — Cell to Singularity: milestones and reset visibility
+Reference: https://celltosingularity.com/ (official game site; conceptual design review only, no hands-on measurement).
+
+**Question:** can visible near-term unlocks and a reset preview make long passive intervals meaningful without increasing required input frequency?
+
+**Benefits / impact:** (1) recognizable milestone progression gives a passive session a direction (**high**); (2) visible next unlock/reward can distinguish meaningful waiting from unexplained stalling (**high**); (3) a clear reset benefit can communicate why the next run is faster (**medium-high**).
+
+**Drawbacks / impact:** (1) adding parallel simulation trees or currencies would dilute existing combat identity and burden portrait navigation (**high**); (2) rapid clicking/tapping incentives conflict with the hard low-input constraint (**critical**); (3) excessive milestone popups can obscure the combat screen (**high**).
+
+**Implementation cost / expected effect:** low for auditing existing next-goal/rebirth preview text and checkpoint telemetry; medium for a restrained nonmodal unlock indicator using existing UI; high for new simulation layers or economies. Benefits are hypothetical until actual 30-minute play and narrow-viewport checks.
+
+**Decision:** apply only as a **validation criterion**: during fresh-save 30-minute low-input testing, check whether each major milestone is visible, meaningful and nonintrusive. Defer new layers, tapping and modal notifications; preserve auto-combat visual presence.
