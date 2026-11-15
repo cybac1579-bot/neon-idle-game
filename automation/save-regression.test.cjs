@@ -206,6 +206,64 @@ test('combat reward and skill cue text is transient, but earned weapon and skill
  assert.equal(b.get('s.skillsOwned.includes("chain")'),true,'earned ownership must remain');
 });
 
+test('early hero XP requirement is discounted until level ten, but later thresholds remain unchanged',()=>{
+ const b=boot({stage:20,best:20,heroLevel:1,heroXp:0,lastSaved:Date.UTC(2026,10,12)});
+ assert.equal(b.get('xpNeeded(1)'),6);
+ assert.equal(b.get('xpNeeded(9)'),Math.ceil(10*Math.pow(9,1.45)*.6));
+ assert.equal(b.get('xpNeeded(10)'),Math.ceil(10*Math.pow(10,1.45)));
+ assert.equal(b.get('xpNeeded(25)'),Math.ceil(10*Math.pow(25,1.45)));
+ assert.equal(b.get('skillSlotCount()'),1);
+ assert.equal(b.get('nextSkillSlotLevel()'),10);
+ assert.ok(b.get('xpToNextSkillSlot()')<1017);
+});
+test('hero level ten automatically fills only newly opened slot with a pre-owned unequipped skill',()=>{
+ const stamp=Date.UTC(2026,10,12);
+ const b=boot({stage:25,best:25,heroLevel:9,heroXp:0,skillsOwned:['chain','overload'],skillsEquipped:['chain'],
+  skillLevels:{chain:2,overload:3},lastSaved:stamp},stamp);
+ assert.equal(b.get('skillSlotCount()'),1);
+ assert.deepEqual(Array.from(b.get('s.skillsEquipped')),['chain']);
+ const prior=b.get('s.traitPointsEarned');
+ b.get('gainHeroXp(xpNeeded(9));render()');
+ assert.equal(b.get('s.heroLevel'),10);
+ assert.equal(b.get('s.traitPointsEarned'),prior+1,'trait point gained normally');
+ assert.equal(b.get('skillSlotCount()'),2,'unchanged LV10 slot threshold');
+ assert.equal(b.get('s.skillsEquipped.length'),2);
+ assert.equal(b.get('s.skillsEquipped[1]'),'overload');
+ assert.match(b.document.getElementById('rewardCue').textContent,/자동 장착/);
+ b.get('save();load()');
+ assert.equal(b.get('s.skillsEquipped.length'),2);
+ assert.equal(b.get('s.skillLevels.overload'),3,'skill experience remains');
+});
+test('slot opening never invents skills, clears manual emptiness only on a new slot, or overfills',()=>{
+ const stamp=Date.UTC(2026,10,12);
+ const b=boot({stage:25,best:25,heroLevel:9,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ b.get('gainHeroXp(xpNeeded(9));render()');
+ assert.equal(b.get('s.heroLevel'),10);
+ assert.equal(b.get('s.skillsEquipped.length'),1);
+ assert.match(b.document.getElementById('rewardCue').textContent,/스킬 장착 가능/);
+ const another=boot({stage:25,best:25,heroLevel:9,skillsOwned:['chain','overload','bountySkill'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ another.get('gainHeroXp(xpNeeded(9))');
+ assert.equal(another.get('s.skillsEquipped.length'),2);
+ assert.equal(another.get('s.skillsEquipped[1]'),'overload');
+ assert.equal(another.get('s.skillsOwned.length'),3);
+ another.get('gainHeroXp(0)');
+ assert.equal(another.get('s.skillsEquipped.length'),2,'no further automatic equipping outside milestone');
+});
+test('old partial hero experience loads safely into new early curve and permanent progress survives rebirth',()=>{
+ const stamp=Date.UTC(2026,10,12);
+ const b=boot({stage:100,best:100,heroLevel:9,heroXp:200,traitPointsEarned:8,skillsOwned:['chain','overload'],
+  skillsEquipped:['chain'],skillsInherited:['chain'],lastSaved:stamp},stamp);
+ assert.equal(b.get('s.heroLevel'),9,'save load never downgrades a hero');
+ assert.equal(b.get('s.heroXp'),200,'old accumulated XP not silently lost');
+ b.get('gainHeroXp(0);render()');
+ assert.ok(b.get('s.heroLevel')>=10);
+ assert.equal(b.get('s.skillsEquipped.length'),2);
+ assert.equal(b.get('rebirth()'),true);
+ assert.ok(b.get('s.heroLevel')>=10,'permanent level retained');
+ assert.equal(b.get('skillSlotCount()'),2);
+ assert.equal(b.get('s.skillsEquipped.length'),1,'only inherited skills survive a rebirth, as before');
+});
+
 test('STAGE 20 grants one optional skill choice and never stops idle combat',()=>{
  const b=boot({stage:19,best:19,lastSaved:Date.UTC(2026,10,12,0,0,0)});
  assert.equal(b.get("chooseSkill('trainingSkill')"),false,'choice locked before stage20');

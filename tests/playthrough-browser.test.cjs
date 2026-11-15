@@ -162,6 +162,45 @@ const server=createServer((req,res)=>{
       await ctx.close();
     }
 
+    // Existing-save fixture: let an actual defeated enemy unlock LV10 and auto-equip only the new slot.
+    {
+      const ctx=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+      const slotPage=await ctx.newPage();
+      await slotPage.addInitScript(()=>{
+        if(localStorage.getItem('neon_rework_07'))return;
+        localStorage.setItem('neon_rework_07',JSON.stringify({stage:25,best:25,heroLevel:9,
+          heroXp:0,skillsOwned:['chain','overload'],skillsEquipped:['chain'],
+          skillLevels:{chain:1,overload:1},lastSaved:Date.now()}));
+      });
+      await slotPage.goto(url,{waitUntil:'load'});
+      await slotPage.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
+      await slotPage.locator('[data-view="growth"]').tap();
+      const initial=await slotPage.evaluate(()=>({level:s.heroLevel,slots:skillSlotCount(),equipped:s.skillsEquipped.slice(),
+        need:xpToNextSkillSlot(),text:document.getElementById('skillInfo').textContent}));
+      assert.equal(initial.level,9);
+      assert.equal(initial.slots,1);
+      assert.match(initial.text,/남은 경험치/);
+      const unlocked=await slotPage.evaluate(()=>{
+        s.heroXp=xpNeeded(9)-1;
+        enemyHp=0;resolveEnemyDefeat();render();save();
+        return {level:s.heroLevel,slots:skillSlotCount(),equipped:s.skillsEquipped.slice(),
+          reward:document.getElementById('rewardCue').textContent};
+      });
+      assert.equal(unlocked.level,10,'defeating an actual enemy must complete hero level 10');
+      assert.equal(unlocked.slots,2);
+      assert.deepEqual(unlocked.equipped,['chain','overload']);
+      assert.match(unlocked.reward,/자동 장착/);
+      await slotPage.locator('[data-screen="growth"]').first().screenshot({path:path.join(output,'slot-unlock-390.png')});
+      await slotPage.reload({waitUntil:'load'});
+      const restored=await slotPage.evaluate(()=>({level:s.heroLevel,slots:skillSlotCount(),equipped:s.skillsEquipped.slice()}));
+      assert.equal(restored.level,10);
+      assert.equal(restored.slots,2);
+      assert.deepEqual(restored.equipped,['chain','overload']);
+      summary.slotUnlock={initial,unlocked,restored};
+      console.log('PASS HERO_SLOT_UNLOCK '+JSON.stringify(summary.slotUnlock));
+      await ctx.close();
+    }
+
     // Separate save-state fixture: exercise actual reset UI and confirm persistence.
     const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
     const page=await context.newPage();
@@ -195,7 +234,7 @@ const server=createServer((req,res)=>{
     summary.rebirth={reborn,rebornSaved};
     console.log('PASS TOUCH_REBIRTH '+JSON.stringify(summary.rebirth));
     await context.close();
-    summary.captureCount=summary.viewportResults.length*2+2; // six viewport shots plus chain and rebirth
+    summary.captureCount=summary.viewportResults.length*2+3; // six viewport shots plus chain, slot and rebirth
     fs.writeFileSync(path.join(output,'playthrough-report.json'),JSON.stringify(summary,null,2));
     console.log('PASS MOBILE_TOUCH_PLAYTHROUGH '+JSON.stringify({
       widths:summary.viewportResults.map(x=>x.width),skillsChosen:true,questsClaimed:true,
