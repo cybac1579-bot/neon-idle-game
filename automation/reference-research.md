@@ -627,3 +627,15 @@ Reference: https://melvoridle.com/ (official game site; conceptual comparison on
 **Drawbacks / impact:** (1) many skill categories would overload Neon's 30-minute onboarding (**high**); (2) complex equipment/loadout menus raise save and balance regression cost (**high**); (3) dense numeric information risks shrinking the enemy artwork (**high**).
 **Cost / expected effect:** low for inspecting existing boss-art and skill-feedback code; medium for a restrained nonmodal skill cue after real portrait screenshot review; high for new skill trees or crafting economies. Expected engagement improvement **unproven**.
 **Decision:** evaluate existing boss and skill visual presence before implementation; defer added categories, crafting, and frequent manual commands. Keep combat automatic and screen uncluttered.
+
+
+## 2026-11-15 21:51 KST — Trimps: automatic combat and incremental unlock pacing
+
+Reference: original playable game https://trimps.github.io/ (design comparison only; not a fresh hands-on test).
+
+**Transferable idea:** let combat and resource production continue automatically while periodic unlocks, boss thresholds and a small number of deliberate upgrade decisions mark progress. For Neon, prioritize making the current boss fight and next milestone legible rather than adding new controls.
+
+**Pros / impact:** (1) passive battle with distinct gates creates a meaningful next objective (high); (2) persistent unlocks can shorten already-cleared segments after rebirth (high); (3) staged goals help players understand a long wait without repeated taps (medium).
+**Cons / impact:** (1) importing many production resources or jobs would overwhelm portrait UI (high); (2) excessive automation may hide why a run accelerated or stalled (medium-high); (3) new prestige layers could invalidate the planned 30–60 minute first-reset balance (high).
+**Implementation cost / expected effect:** low for reusing existing boss HP, stage milestone and retained-upgrade summaries; medium for differentiated boss cues and test coverage; high for extra resource chains, worker management and prestige tiers. Clarity benefit plausible, not device-validated.
+**Decision:** selectively reuse readable boss gates and low-frequency upgrade milestones; defer Trimps-style resource/job complexity. **No mandatory tapping.** Immediate production priority remains verified save/resume correctness and fresh-save pacing, not feature expansion.
