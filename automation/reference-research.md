@@ -487,3 +487,13 @@ Source: https://store.steampowered.com/app/2713180/Idle_Research/ (store-level d
 **Risks (impact):** (1) more status text crowds portrait UI (high); (2) promising a high-tier item while lower tiers are auto-purchased may mislead (medium-high); (3) copying research layers adds save and balance complexity (high).
 **Cost / value:** low for a concise wording correction plus goal-selection fixture, medium for live UI and localization review; high for new research layers. Potential clarity improvement, not yet measured.
 **Decision:** **defer feature expansion**; prioritize executable verification of current tier-first target and separate milestone wording. Reject active clicking or mandatory intervention. No borrowed assets, mechanics or new currency.
+
+
+## 2026-11-15 09:54 KST — Idle Champions: passive party progression as a comparison boundary
+Reference: https://idlechampions.com/ (official site; conceptual comparison only, no hands-on play or current web verification).
+
+**Transferable principle:** idle battle can remain visually meaningful while most optimization is periodic rather than reaction-based. Compare Neon’s auto-battle and occasional skill/equipment decisions with passive party progression, not with active tapping.
+**Advantages / impact:** (1) persistent battle presence during low-input sessions (high); (2) optional upgrade milestones could create distinct 5–10-minute choices (medium-high); (3) role differentiation might help non-attack stats feel meaningful (medium).
+**Risks / impact:** (1) copying a multi-character party would multiply art and balancing costs (high); (2) numerous upgrade panels crowd portrait layout (high); (3) mandatory timed skill activation would violate the low-input rule (critical).
+**Cost / expected value:** low to compare existing battle visibility and milestone cadence; medium to tune existing skill roles after integrated simulations; very high for party mechanics. No evidence yet of improved Neon enjoyment.
+**Decision:** **defer new mechanics**. Prioritize executable goal-text regression, portrait visual review and 30-minute full-system pacing; reject active-tap combat and unneeded party systems.
