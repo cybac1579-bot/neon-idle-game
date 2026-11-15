@@ -521,3 +521,16 @@ Reference: https://store.steampowered.com/app/610080/Realm_Grinder/ (Steam store
 **Cost / expected benefit:** low to analyze existing assault/supply/balanced allocation, skill loadouts and traits in seeded 30-minute tests; medium to adjust existing bonuses after proof; high to introduce faction mechanics. Expected benefit is unproven until integrated simulation and mobile player feedback.
 
 **Decision:** **apply only the evaluation principle**: test whether current existing allocation, skills and traits create at least two meaningfully different low-input paths. **Defer** new factions, currencies, prestige tiers and mandatory taps. Keep automatic combat visually prominent and avoid copying formulas or art.
+
+## 2026-11-15 12:54 KST — Loop Hero: automatic battle readability versus planning frequency
+Reference: https://store.steampowered.com/app/1282730/Loop_Hero/ (official store; design comparison only, not hands-on or fresh verified this run).
+
+**Transferable principle:** autonomous combat can remain visually engaging when enemy identity, damage feedback and progression consequences are legible; however, Loop Hero's frequent tile/equipment planning is not appropriate as mandatory interaction for Neon's low-input mobile play.
+
+**Benefits / impact:** (1) clearly distinguish ordinary enemies and bosses without tapping (**high**); (2) make equipment/skill effects visibly consequential in the battle canvas (**high**); (3) communicate milestones as a natural consequence of combat (**medium**).
+
+**Risks / impact:** (1) frequent tactical placements would violate the user-approved low-input cadence (**critical**); (2) replicating its map/loot loop is major scope and UI complexity (**high**); (3) extra particles and animations may harm phone FPS/battery (**high**).
+
+**Cost / expected benefit:** low for source/UI audit and targeted cue tests, medium for restrained existing battle effect changes plus reduced-motion tests, high for new map/placement systems. Visual benefit is hypothetical until screenshots, browser frame timing and player assessment.
+
+**Decision:** **selective inspiration only**: prioritize readable enemy/boss and skill impact using current combat architecture, with reduced-motion support; **defer** tile placement, new loot economy and mandatory frequent input. No production change justified by research alone.
