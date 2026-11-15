@@ -561,3 +561,15 @@ Reference: https://www.sodadungeon.com/ (developer site; conceptual comparison, 
 **Estimated cost / expected effect:** low to audit existing three-skill cue visibility and add browser screenshot assertions; medium for restrained differentiated effects with reduced-motion safeguards; high for party AI, scripting, or new equipment layers. Visual benefit remains unproven until screenshots and device assessment.
 
 **Decision:** **evaluate existing battle skill cues first; defer** party systems, scripting and mandatory tapping. No gameplay change justified solely by this comparison. Next: capture actual portrait battle at ordinary and boss encounters, verify reduced-motion and combat visibility, and correlate skill-equipped states with visible feedback.
+
+
+## 2026-11-15 15:55 KST — Idle Wizard: build diversity without mandatory interaction
+
+Sources: official wiki https://idlewizard.wiki.gg/wiki/Main_Page ; Xbox store https://www.xbox.com/en-gb/games/store/idle-wizard/9p0g32lcd7b9 (describes classes, pets, spells and equipment); developer discussion https://www.reddit.com/r/incremental_games/comments/1d0sj88/ . Research only, not hands-on gameplay.
+
+**Transferable insight:** multiple viable class/pet/spell/equipment combinations can produce different growth routes; the choice is most meaningful when players can tell what each loadout changes. Neon already has skills, equipment and traits; test their existing effects and on-screen feedback before adding new build systems.
+
+**Pros / impact:** (1) existing skill/equipment synergies can make automatic combat feel strategic (high); (2) visible build effects give the combat screen identity without tapping (high); (3) optional long-term experiments can sustain post-rebirth replay (medium).
+**Cons / impact:** (1) a large class/pet roster would overwhelm portrait UI (high); (2) more multipliers make 30-minute and 60-minute balancing harder (high); (3) active spell-casting incentives could violate the no-repeated-taps rule (critical).
+**Cost:** low-medium for read-only existing-loadout effect summaries or a focused visual cue; high for new class/pet mechanics, save migration and balance.
+**Decision:** apply the *comparison principle* to a measured audit of existing skills and weapon effect visibility; defer class/pet trees, additional currencies and any required manual casting. Next evidence: run fresh-save and pre-unlocked 30-minute fixtures with different existing skill loadouts, compare progress and battle cue visibility in real portrait browser.
