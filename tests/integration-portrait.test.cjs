@@ -242,6 +242,7 @@ const server=createServer((req,res)=>{
       Math.random=()=>{rng=(Math.imul(1664525,rng)+1013904223)>>>0;return rng/4294967296};
       let first=null;
       const milestones={};
+      const unlocks={weaponAt:null,skillAt:null,skillEquippedAt:null,hero10At:null,traitAt:null};
       for(let t=1;t<=3600;t++){
        step(1,false);
        if(t%10===0){
@@ -260,10 +261,15 @@ const server=createServer((req,res)=>{
          purchase(available[0]);
         }
        }
+       if(unlocks.weaponAt===null&&s.weapon)unlocks.weaponAt=t;
+       if(unlocks.skillAt===null&&s.skillsOwned.length)unlocks.skillAt=t;
+       if(unlocks.skillEquippedAt===null&&s.skillsEquipped.length)unlocks.skillEquippedAt=t;
+       if(unlocks.hero10At===null&&s.heroLevel>=10)unlocks.hero10At=t;
+       if(unlocks.traitAt===null&&s.traitPointsSpent>0)unlocks.traitAt=t;
        for(const stage of [40,55,65,70,80,90,100])if(milestones[stage]===undefined&&s.stage>=stage)milestones[stage]=t;
        if(first===null&&gainCore()>0)first=t;
       }
-      output[name]={firstReconstructionAt:first,milestones,finalStage:s.stage,upgrades:{atk:s.atk,spd:s.spd,gen:s.gen,amp:s.amp,relay:s.relay,forge:s.forge,reactor:s.reactor},heroLevel:s.heroLevel,weapon:!!s.weapon,skills:s.skillsOwned.length,equipped:[...s.skillsEquipped],skillLevels:{...s.skillLevels},traits:{...s.traits},traitPointsSpent:s.traitPointsSpent};
+      output[name]={firstReconstructionAt:first,milestones,unlocks,finalStage:s.stage,upgrades:{atk:s.atk,spd:s.spd,gen:s.gen,amp:s.amp,relay:s.relay,forge:s.forge,reactor:s.reactor},heroLevel:s.heroLevel,weapon:!!s.weapon,skills:s.skillsOwned.length,equipped:[...s.skillsEquipped],skillLevels:{...s.skillLevels},traits:{...s.traits},traitPointsSpent:s.traitPointsSpent};
      }
      return output;
     });
@@ -299,6 +305,8 @@ const server=createServer((req,res)=>{
     console.log('BALANCE_ATTACK_COST_SENSITIVITY '+JSON.stringify(sensitivity));
     assert.equal(Object.keys(strategies).length,7,'strategy sweep incomplete');
     assert.ok(Object.values(strategies).every(x=>x.finalStage>=1&&Number.isFinite(x.finalStage)),'invalid strategy telemetry');
+    assert.ok(Object.values(strategies).every(x=>x.unlocks.weaponAt!==null&&x.unlocks.skillAt!==null&&x.unlocks.hero10At!==null),'growth-system milestones missing from strategy sweep');
+    assert.ok(strategies.attackWithSkillChoice.unlocks.traitAt!==null,'trait allocation was not exercised');
     console.log('BALANCE_STRATEGIES_60M '+JSON.stringify(strategies));
     assert.equal(balance.checkpoints.length,6,'balance checkpoints missing');
     assert.ok(balance.finalStage>=1&&Number.isFinite(balance.finalStage),'invalid simulated stage');
