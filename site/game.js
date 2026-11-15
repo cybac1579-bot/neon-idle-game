@@ -103,8 +103,9 @@ s.lastSaved=hiddenAt===null?Date.now():hiddenAt;s.savedEnemyHp=enemyHp;s.savedAt
 function spawn(){enemyMax=Math.round(enemyHealth(s.stage));enemyHp=enemyMax;const img=$('enemyImage');img.src=s.stage%20===0?'boss_overheat.webp':s.stage%10===0?'boss_guardian.webp':s.stage%5===0?'enemy_armor.svg':s.stage%3===0?'enemy_agile.svg':'enemy_scout.svg';}
 function unlock(key,msg){if(!s.knownUnlocks.includes(key)){s.knownUnlocks.push(key);logText='✨ 최초 해금 · '+msg;}}
 function purchase(type){if(s.best<unlockStage[type])return false;if(type==='spd'&&s.spd>=50)return false;const c=cost(type);if(s.credits<c)return false;s.credits-=c;s[type]++;return true;}
-function coreCost(type){return Math.ceil((type==='corePower'?1:type==='coreEconomy'?2:3)*Math.pow(1.85,s[type]));}
-function buyCore(type){const c=coreCost(type);if(s.cores<c)return;s.cores-=c;s[type]++;if(type==='autoLevel')unlock('auto','자동 구매 해금');save();render();}
+const AUTO_LEVEL_CAP=5; // 구매 간격은 5레벨에서 3초에 도달하며 이후 추가 효과가 없음
+function coreCost(type){if(type==='autoLevel'&&s.autoLevel>=AUTO_LEVEL_CAP)return Infinity;return Math.ceil((type==='corePower'?1:type==='coreEconomy'?2:3)*Math.pow(1.85,s[type]));}
+function buyCore(type){const c=coreCost(type);if(!Number.isFinite(c)||s.cores<c)return;s.cores-=c;s[type]++;if(type==='autoLevel')unlock('auto','자동 구매 해금');save();render();}
 function gainCore(){return s.stage<100?0:Math.max(5,Math.floor(Math.pow((s.stage-95)/5,1.25)*(1+s.phaseEngine*.3)));}
 function gainPhase(){return s.stage>=180&&s.rebirths>=2?Math.max(1,Math.floor((s.stage-175)/5)):0;}
 function rebirth(automatic=false){const gain=gainCore();if(!gain)return false;s.cores+=gain;s.totalCores+=gain;s.rebirths++;resetGearSkills();s.stage=1;s.cacheCredits=0;s.cacheClock=0;s.questCredits=[0,0,0];s.questClocks=[0,0,0];s.credits=startingCredits();s.energy=0;s.allocation='balanced';s.atk=s.spd=s.gen=s.amp=s.relay=s.forge=s.reactor=0;attackClock=enemyClock=0;spawn();unlock('rebirth','재구성 완료');logText=(automatic?'자동 ':'')+'재구성! 영구 코어 +'+fmt(gain);save();return true;}
