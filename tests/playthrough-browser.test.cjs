@@ -222,6 +222,41 @@ const server=createServer((req,res)=>{
       await ctx.close();
     }
 
+    // Existing STAGE 60 fixture: actual touch support choice, non-blocking battle and save/reload.
+    {
+      const ctx=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+      const mid=await ctx.newPage();
+      await mid.addInitScript(()=>{
+        if(localStorage.getItem('neon_rework_07'))return;
+        localStorage.setItem('neon_rework_07',JSON.stringify({stage:60,best:60,heroLevel:8,forge:5,
+          atk:35,skillChoiceUsed:true,lastSaved:Date.now()}));
+      });
+      await mid.goto(url,{waitUntil:'load'});
+      await mid.waitForFunction(()=>document.querySelector('#stage')?.textContent?.trim().length>0);
+      const pre=await mid.evaluate(()=>({stage:s.stage,choice:s.frontlineSupport,forge:s.forge,goal:frontlineSupportGoal()}));
+      assert.equal(pre.stage,60);
+      assert.equal(pre.choice,null);
+      assert.match(pre.goal,/선택 가능/);
+      await mid.locator('[data-view="growth"]').tap();
+      await mid.locator('#frontlineSupportChoices [data-frontline-support="industry"]').tap();
+      const selected=await mid.evaluate(()=>({choice:s.frontlineSupport,forge:s.forge,goal:frontlineSupportGoal()}));
+      assert.equal(selected.choice,'industry');
+      assert.equal(selected.forge,6,'touch grants one free existing production upgrade');
+      assert.match(selected.goal,/지원 완료/);
+      assert.equal(await mid.locator('#frontlineSupportChoices button:enabled').count(),0);
+      await mid.locator('#allocationPanel').screenshot({path:path.join(output,'stage60-support-390.png')});
+      await mid.reload({waitUntil:'load'});
+      const restored=await mid.evaluate(()=>({stage:s.stage,choice:s.frontlineSupport,forge:s.forge}));
+      assert.equal(restored.choice,'industry');
+      assert.equal(restored.forge,6);
+      const preKill=await mid.evaluate(()=>s.kills);
+      await mid.evaluate(()=>{enemyHp=0;resolveEnemyDefeat();render();save()});
+      assert.equal(await mid.evaluate(()=>s.kills),preKill+1,'combat continues after optional support selection');
+      summary.midgame={pre,selected,restored};
+      console.log('PASS STAGE60_SUPPORT_UI '+JSON.stringify(summary.midgame));
+      await ctx.close();
+    }
+
     // Separate save-state fixture: exercise actual reset UI and confirm persistence.
     const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
     const page=await context.newPage();
@@ -255,7 +290,7 @@ const server=createServer((req,res)=>{
     summary.rebirth={reborn,rebornSaved};
     console.log('PASS TOUCH_REBIRTH '+JSON.stringify(summary.rebirth));
     await context.close();
-    summary.captureCount=summary.viewportResults.length*2+3; // six viewport shots plus chain, slot and rebirth
+    summary.captureCount=summary.viewportResults.length*2+4; // six viewport shots plus chain, slot, stage60 support and rebirth
     fs.writeFileSync(path.join(output,'playthrough-report.json'),JSON.stringify(summary,null,2));
     console.log('PASS MOBILE_TOUCH_PLAYTHROUGH '+JSON.stringify({
       widths:summary.viewportResults.map(x=>x.width),skillsChosen:true,questsClaimed:true,

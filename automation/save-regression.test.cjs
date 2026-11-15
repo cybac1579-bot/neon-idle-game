@@ -206,6 +206,70 @@ test('combat reward and skill cue text is transient, but earned weapon and skill
  assert.equal(b.get('s.skillsOwned.includes("chain")'),true,'earned ownership must remain');
 });
 
+test('STAGE 60 frontline support provides one nonblocking per-run choice and no new currency',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:59,best:59,atk:35,forge:4,lastSaved:stamp},stamp);
+ assert.equal(b.get("chooseFrontlineSupport('firepower')"),false,'cannot claim before STAGE60');
+ assert.equal(b.get('s.frontlineSupport'),null);
+ b.get('s.stage=60;spawn();render()');
+ const initial=b.get('s.atk');
+ assert.equal(b.get("chooseFrontlineSupport('firepower')"),true);
+ assert.equal(b.get('s.atk'),initial+1);
+ assert.equal(b.get('s.frontlineSupport'),'firepower');
+ assert.equal(b.get("chooseFrontlineSupport('industry')"),false,'one reward only');
+ assert.equal(b.get("chooseFrontlineSupport('training')"),false);
+ assert.ok(b.get('frontlineSupportGoal()').includes('지원 완료'));
+ b.get('save();load()');
+ assert.equal(b.get('s.frontlineSupport'),'firepower');
+ assert.equal(b.get('s.atk'),initial+1);
+});
+test('frontline support alternatives reward only the existing economy or permanent hero XP',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const econ=boot({stage:60,best:60,forge:7,credits:5000,lastSaved:stamp},stamp);
+ assert.equal(econ.get("chooseFrontlineSupport('industry')"),true);
+ assert.equal(econ.get('s.forge'),8);
+ assert.equal(econ.get('s.credits'),5000,'free upgrade spends no credits');
+ assert.equal(econ.get("chooseFrontlineSupport('industry')"),false);
+ const training=boot({stage:60,best:60,heroLevel:9,heroXp:0,lastSaved:stamp},stamp);
+ const xp=training.get('xpNeeded(s.heroLevel)');
+ assert.equal(training.get("chooseFrontlineSupport('training')"),true);
+ assert.ok(training.get('s.heroXp')>=xp*.5 || training.get('s.heroLevel')>=10);
+ assert.equal(training.get('s.frontlineSupport'),'training');
+ assert.equal(training.get('s.traitPointsEarned'),training.get('s.heroLevel')-1);
+});
+test('new choice remains optional for idle combat and resets on rebirth and phase without duplicate payouts',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:60,best:60,atk:30,lastSaved:stamp},stamp);
+ const oldStage=b.get('s.stage'),kills=b.get('s.kills');
+ b.get('enemyHp=0;step(.25,false)');
+ assert.equal(b.get('s.kills'),kills+1);
+ assert.equal(b.get('s.stage'),oldStage+1);
+ assert.equal(b.get('s.frontlineSupport'),null,'idle combat does not silently choose');
+ b.get("chooseFrontlineSupport('industry')");
+ b.get('s.stage=100;spawn()');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.frontlineSupport'),null,'next reconstruction gets a fresh choice');
+ assert.equal(b.get('s.forge'),0,'temporary upgrade cleared by rebirth');
+ b.get('s.stage=180;s.rebirths=2;spawn()');
+ b.get("chooseFrontlineSupport('firepower')");
+ assert.equal(b.get('s.frontlineSupport'),'firepower');
+ b.get('phase()');
+ assert.equal(b.get('s.frontlineSupport'),null,'phase transition cannot preserve transient free reward');
+});
+test('frontline support input is sanitized, keeps allocation independent and never adds a rebirth-count bonus',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:60,best:60,allocation:'assault',frontlineSupport:'invalid',rebirths:5,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.frontlineSupport'),null);
+ assert.equal(b.get('s.allocation'),'assault');
+ assert.ok(b.get('frontlineSupportGoal()').includes('선택 가능'));
+ assert.equal(b.get("chooseFrontlineSupport('invalid')"),false);
+ assert.equal(b.get("chooseFrontlineSupport('firepower')"),true);
+ assert.equal(b.get('s.allocation'),'assault','support must not force permanent allocation');
+ assert.equal(b.get('s.atk'),1,'free single upgrade rather than repeated rebirth-count scaling');
+ const old=boot({stage:60,best:60,lastSaved:stamp},stamp);
+ assert.equal(old.get('s.frontlineSupport'),null,'legacy saves get a fresh opt-in');
+});
+
 test('early hero XP requirement is discounted until level ten, but later thresholds remain unchanged',()=>{
  const b=boot({stage:20,best:20,heroLevel:1,heroXp:0,lastSaved:Date.UTC(2026,10,12)});
  assert.equal(b.get('xpNeeded(1)'),6);
