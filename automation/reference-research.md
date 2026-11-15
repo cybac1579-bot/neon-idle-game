@@ -684,3 +684,13 @@ Reference: https://www.perfecttower2.com/ (official game website; no hands-on or
 **Risks:** its many interlocking subsystems would overcomplicate Neon's first 30 minutes (high); automation that immediately resolves every choice can erase meaningful skill/build decisions (high); dense management screens compete with portrait combat space (high).
 **Implementation cost/expected value:** low to audit current stage/boss/skill cues and goal text on PR #2; medium for one compact milestone cue after actual portrait inspection; very high for additional buildings and layered currencies.
 **Decision:** assessment rubric only. Preserve automatic combat and existing art; defer added layers, manual attack clicks and interface expansion. No gameplay benefit demonstrated this run.
+
+
+## 2026-11-16 03:55 KST — Realm Grinder: meaningful long-term build identity without frequent input
+Reference: https://www.kongregate.com/games/DivineGames/realm-grinder (original game listing; design-level reference, no hands-on measurement or current-build audit).
+
+**Hypothesis:** faction/build identity and distinct upgrades can make a second run meaningfully different even when combat is autonomous. Neon should first evaluate existing four first-skill choices, STAGE55 Assault/Supply, STAGE60 support, trait and weapon combinations rather than import a faction system.
+**Advantages / impact:** (1) strategic build differentiation increases replay discovery (high); (2) persistent progression makes earlier barriers visibly shorter on rebirth (high); (3) an occasional irreversible run choice creates a goal during idle accumulation (medium-high).
+**Disadvantages / impact:** (1) numerous faction bonuses and hidden synergies create major balance and onboarding costs (high); (2) reset-to-reset optimization can invite frequent manual switching contrary to low-input play (high); (3) expanding choices before measuring the manual PR's 34m fastest versus ~60m goal risks masking rather than fixing pacing (high).
+**Implementation cost / expected effect:** low to classify the existing 80-case PR telemetry by first skill/policy and add 30–60s-or-longer capped-action experiments; medium to improve the existing choice preview in growth/stats after portrait inspection; very high for faction-like layers and save migration. No engagement improvement demonstrated.
+**Decision:** use **build diversity and rebirth compression** as test criteria only. Defer factions, extra currencies, tap/click mechanics and additional menus. The current PR trial is not deployed on main/Pages.
