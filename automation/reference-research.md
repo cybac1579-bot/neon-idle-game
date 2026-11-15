@@ -476,3 +476,14 @@ Reference: https://www.decisionproblem.com/paperclips/index2.html (original game
 **Risks / impact:** (1) presenting an unaffordable top tier as the only possible purchase can misrepresent fallback purchasing (**high**); (2) too many economic forecasts distract from battle (**medium**); (3) rapidly changing target text could feel unstable (**medium**).
 **Cost / expected effect:** low for matching existing tier-first selection and explaining the active purchase mode; medium for testing affordability transitions across unlocks; high for introducing new automation planning mechanics. Benefit is plausible, not player-validated.
 **Decision:** apply only a small existing-state goal-description correction; do not copy game mechanics or add clicking, manual production chains, currencies or dense dashboards. Verify the current game's actual selection logic in CI/browser before claiming success.
+
+
+## 2026-11-15 09:00 KST — Idle Research: readable next-action vs auto-play recommendations
+Source: https://store.steampowered.com/app/2713180/Idle_Research/ (store-level design reference; no hands-on verification this run).
+
+**Comparison:** layered idle research/progression suggests that a player should distinguish an immediately actionable purchase from a longer-term milestone. Neon already has a stage milestone and an auto-buy target, but the latter changes meaning when a higher-tier item is unaffordable. Treat this as a clarity audit rather than permission to add another system.
+
+**Advantages (impact):** (1) separate immediate affordable purchase from long-term unlock reduces confusion (medium-high); (2) existing growth panel can convey both without new combat controls (medium); (3) helps explain auto-buy priorities without manual taps (medium).
+**Risks (impact):** (1) more status text crowds portrait UI (high); (2) promising a high-tier item while lower tiers are auto-purchased may mislead (medium-high); (3) copying research layers adds save and balance complexity (high).
+**Cost / value:** low for a concise wording correction plus goal-selection fixture, medium for live UI and localization review; high for new research layers. Potential clarity improvement, not yet measured.
+**Decision:** **defer feature expansion**; prioritize executable verification of current tier-first target and separate milestone wording. Reject active clicking or mandatory intervention. No borrowed assets, mechanics or new currency.
