@@ -497,3 +497,13 @@ Reference: https://idlechampions.com/ (official site; conceptual comparison only
 **Risks / impact:** (1) copying a multi-character party would multiply art and balancing costs (high); (2) numerous upgrade panels crowd portrait layout (high); (3) mandatory timed skill activation would violate the low-input rule (critical).
 **Cost / expected value:** low to compare existing battle visibility and milestone cadence; medium to tune existing skill roles after integrated simulations; very high for party mechanics. No evidence yet of improved Neon enjoyment.
 **Decision:** **defer new mechanics**. Prioritize executable goal-text regression, portrait visual review and 30-minute full-system pacing; reject active-tap combat and unneeded party systems.
+
+
+## 2026-11-15 10:57 KST — A Dark Room: pacing of sparse discoveries (conceptual)
+Reference: https://adarkroom.doublespeakgames.com/ (original game site; not hands-on or fresh web-verified this run).
+
+**Question:** can an idle session retain interest through legible milestones and occasional discoveries without frequent required input?
+**Advantages / impact:** (1) infrequent, distinct discoveries can break monotony without taps (**high**); (2) a concise next-unlock line fits a portrait interface without obscuring battle (**medium-high**); (3) gradual exposure of existing systems avoids new currencies (**medium**).
+**Risks / impact:** (1) copying minimal presentation would erase Neon's intended visible auto-combat (**critical**); (2) withholding key information may make the economy opaque (**high**); (3) scripted surprises can become repetitive on rebirth (**medium**).
+**Cost / expected value:** low for auditing existing stage-15/25/45/55/65 milestone clarity, medium for existing-skill/gear discovery feedback and test coverage, high for a bespoke event narrative. Benefit hypothetical until 30-minute play assessment.
+**Decision:** compare milestone clarity in future full-feature scenario; **defer** narrative system or minimalist combat replacement. Keep combat prominent, automatic, and low-input; no copying mechanics or art.
