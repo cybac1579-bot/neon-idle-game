@@ -79,7 +79,7 @@ const tests=[
  ['STAGE65 grants fifth stored-energy skill with no new button or currency',()=>{
    assert.match(js,/capacitor:\['전력 순환'/);
    assert.match(js,/function grantStage65Skill\(\)/);
-   assert.match(js,/s\.best=Math\.max\(s\.best,s\.stage\);grantStage65Skill\(\)/);
+   assert.match(js,/if\(previousStage<35&&s\.stage>=35\)grantStage35Support\(\);grantStage65Skill\(\)/);
    assert.match(js,/id==='capacitor'&&s\.stage<65/);
    assert.match(js,/s\.skillBuffCapacitor=safeNumber\(s\.skillBuffCapacitor,0,10\)/);
    assert.match(js,/const capacitorPowerBonus=/);
@@ -87,6 +87,7 @@ const tests=[
    assert.match(js,/s\.skillBuffBounty=s\.skillBuffTraining=s\.skillBuffCapacitor=0/);
    assert.doesNotMatch(html,/data-view="capacitor"/,'reuses the existing growth screen');
  }],
+ ['STAGE35 skill catch-up and quick quest reserve improve first 30-minute pacing',()=>{assert.match(js,/function grantStage35Support\(\)/);assert.match(js,/STAGE35_EARLY_PARTNERS/);assert.match(js,/q\[4\]/);assert.match(js,/\['긴급 배송',6,1,3,10\]/);}],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
