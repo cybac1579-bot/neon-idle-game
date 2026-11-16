@@ -368,7 +368,8 @@ test('STAGE 20 grants one optional skill choice and never stops idle combat',()=
  assert.equal(b.get("chooseSkill('trainingSkill')"),false,'choice locked before stage20');
  assert.equal(b.get("s.skillsOwned.length"),0);
  b.get('s.stage=20;spawn();render()');
- assert.equal(b.get('Object.keys(SKILLS).length'),4);
+ assert.equal(b.get('Object.keys(SKILLS).length'),5,'STAGE65 fifth skill is defined');
+ assert.equal(b.get("chooseSkill('capacitor')"),false,'midgame reward cannot be chosen before stage65');
  assert.equal(b.document.getElementById('skillChoice').children.length,4);
  assert.equal(b.get("chooseSkill('trainingSkill')"),true);
  assert.equal(b.get('s.skillsOwned.includes("trainingSkill")'),true);
