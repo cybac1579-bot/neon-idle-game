@@ -1639,3 +1639,44 @@ test('energy-cycle buff cannot remain active when its skill is unequipped or exc
  assert.equal(forged.get('s.skillBuffCapacitor'),0,'un-equipped legacy skill must not keep the benefit');
  assert.equal(forged.get('capacitorPowerBonus()'),0);
 });
+
+
+test('charged Chain requires both equipped skills and an active Capacitor window',()=>{
+ const at=Date.UTC(2026,10,16,0,0,0);
+ const common={stage:70,best:70,heroLevel:20,traitPointsEarned:19,energy:1e7,atk:12,
+  skillsOwned:['chain','capacitor'],skillsEquipped:['chain','capacitor'],skillLevels:{chain:2,capacitor:2},
+  chainPulses:1,chainPulseClock:0,skillBuffCapacitor:8,lastSaved:at};
+ const b=boot(common,at);
+ assert.equal(b.get('chargedChainMultiplier()'),2,'dual loadout requires both skills');
+ const power=b.get('power()'),expected=power*.6*b.get("skillScale('chain')")*2;
+ b.get('enemyHp=1e12;skillTick(1)');
+ const dealt=1e12-b.get('enemyHp');
+ assert.ok(Math.abs(dealt-expected)<Math.max(1e-5,expected*1e-6),'charged pulse damage uses current power and doubles chain pulse');
+ assert.match(b.get('skillNotice'),/충전 연쇄/);
+ b.get('s.skillBuffCapacitor=0');
+ assert.equal(b.get('chargedChainMultiplier()'),1,'outside temporary window there is no charged hit');
+ b.get('s.skillBuffCapacitor=8;toggleEquipSkill("capacitor")');
+ assert.equal(b.get('chargedChainMultiplier()'),1,'unequip must cancel charged chain interaction');
+ assert.equal(b.get('s.skillBuffCapacitor'),0);
+ const solo=boot({...common,skillsEquipped:['chain']},at);
+ assert.equal(solo.get('s.skillBuffCapacitor'),0,'legacy unequipped buff must be normalized');
+ assert.equal(solo.get('chargedChainMultiplier()'),1);
+});
+
+test('charged Chain composes with STAGE85 weapon resonance without changing regular attack speed',()=>{
+ const at=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:85,best:85,heroLevel:20,traitPointsEarned:19,energy:1e7,atk:10,
+  weapon:{tier:2,stage:80},skillsOwned:['chain','capacitor'],
+  skillsEquipped:['chain','capacitor'],skillLevels:{chain:1,capacitor:1},
+  chainPulses:1,chainPulseClock:0,skillBuffCapacitor:8,lastSaved:at},at);
+ const interval=b.get('attackInterval()');
+ const expected=b.get("power()*.6*skillScale('chain')*(1+resonanceBonus('chain'))*chargedChainMultiplier()");
+ b.get('enemyHp=1e12;skillTick(1)');
+ const dealt=1e12-b.get('enemyHp');
+ assert.ok(Math.abs(dealt-expected)<Math.max(1e-5,expected*1e-6),'charge × weapon resonance must match exact chain pulse math');
+ assert.equal(b.get('attackInterval()'),interval,'skill combo must not bypass 0.1s attack speed cap');
+ b.get('save();load()');
+ assert.equal(b.get('chargedChainMultiplier()'),2,'both equipped skills and active charge survive valid save');
+ b.get('s.stage=100;spawn();rebirth()');
+ assert.equal(b.get('chargedChainMultiplier()'),1,'temporary combo is reset at rebirth');
+});
