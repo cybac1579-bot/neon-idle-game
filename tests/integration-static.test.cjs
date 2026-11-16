@@ -98,25 +98,26 @@ const tests=[
      assert.ok(end>start,'function boundary missing for '+name);
      return js.slice(start,end);
    };
-   for(const stage of [20,35,40]){
+   for(const stage of [20,35,40])for(const [first,partner] of Object.entries({chain:'bountySkill',overload:'trainingSkill',bountySkill:'chain',trainingSkill:'overload'})){
      const state={stage,skillsOwned:[],skillsEquipped:[],skillLevels:{},skillXp:{},skillChoiceUsed:false};
      const notices=[];
      const context=vm.createContext({
        s:state,SKILLS:{chain:['연쇄 방전'],bountySkill:['현상금 추적'],overload:['과부하 사격'],trainingSkill:['전술 훈련']},
        STAGE35_EARLY_PARTNERS:{chain:'bountySkill',overload:'trainingSkill',bountySkill:'chain',trainingSkill:'overload'},
-       skillSlotCount:()=>2,showRewardNotice:m=>notices.push(m),addSkillXp:(id,n)=>{state.skillXp[id]=(state.skillXp[id]||0)+n},
+       skillSlotCount:()=>stage===40?1:2,showRewardNotice:m=>notices.push(m),addSkillXp:(id,n)=>{state.skillXp[id]=(state.skillXp[id]||0)+n},
        save(){},render(){}
      });
      vm.runInContext(extract('grantStage35Support')+'\n'+extract('chooseSkill'),context);
-     assert.equal(vm.runInContext("chooseSkill('chain')",context),true);
-     assert.deepEqual([...state.skillsOwned],stage>=35?['chain','bountySkill']:['chain']);
-     assert.equal(vm.runInContext("chooseSkill('overload')",context),false,'second first-choice must be rejected');
+     assert.equal(vm.runInContext("chooseSkill(first)",context),true);
+     assert.deepEqual([...state.skillsOwned],stage>=35?[first,partner]:[first]);
+     assert.equal(vm.runInContext("chooseSkill(first)",context),false,'second first-choice must be rejected');
      assert.equal(state.skillsOwned.length,stage>=35?2:1);
      if(stage===20){
        assert.equal(vm.runInContext('grantStage35Support()',context),'skill');
-       assert.deepEqual([...state.skillsOwned],['chain','bountySkill']);
+       assert.deepEqual([...state.skillsOwned],[first,partner]);
      }
      assert.equal(notices.filter(m=>m.includes('STAGE 35 전술 보급')).length,1);
+     if(stage===40)assert.deepEqual([...state.skillsEquipped],[first],'full skill slots must preserve chosen equipment');
    }
  }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
