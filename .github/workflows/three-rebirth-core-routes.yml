@@ -1,0 +1,44 @@
+name: Three-rebirth core-route telemetry
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'site/game.js'
+      - 'tests/multi-rebirth-balance.cjs'
+      - '.github/workflows/three-rebirth-core-routes.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'site/game.js'
+      - 'tests/multi-rebirth-balance.cjs'
+      - '.github/workflows/three-rebirth-core-routes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax-check 3-rebirth simulator
+        run: node --check tests/multi-rebirth-balance.cjs
+      - name: Compare 3 first STAGE100 cycles across 4 core-spend routes and 2 seeded players
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 510s node tests/multi-rebirth-balance.cjs 2>&1 | tee three-rebirth-core-console.log
+      - name: Upload scenario evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: three-rebirth-core-route-evidence
+          path: |
+            artifacts/balance/three-rebirth-core-routes.json
+            three-rebirth-core-console.log
+          if-no-files-found: warn
+          retention-days: 14
