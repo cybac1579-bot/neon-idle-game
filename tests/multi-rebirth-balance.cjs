@@ -6,14 +6,15 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const assert=require('node:assert/strict');
-const BUY_VARIANT=process.env.CORE_BUY_VARIANT==='progressive'?'progressive':'live';
+const BUY_VARIANT=process.env.CORE_BUY_VARIANT==='legacy'?'legacy':'live';
 const productionSource=fs.readFileSync(path.resolve(__dirname,'../site/game.js'),'utf8');
-// One counterfactual source transformation for measurement only. NEVER changes site/game.js.
-const autoLoop='attempts++<Math.min(100,3+s.autoLevel*8)';
-const progressiveLoop='attempts++<[0,1,1,2,3,5][Math.min(5,Math.max(0,s.autoLevel))]';
-if(BUY_VARIANT==='progressive'&&!productionSource.includes(autoLoop))
- throw Error('Production auto-purchase budget changed; counterfactual must be reviewed');
-const source=BUY_VARIANT==='progressive'?productionSource.replace(autoLoop,progressiveLoop):productionSource;
+// Historical counterfactual for reproducible before/after comparison only.
+// Never edit real site/game.js with this test.
+const budgetNow='const autoPurchaseLimit=()=>[0,1,1,2,3,5][Math.min(5,Math.max(0,s.autoLevel))];';
+const budgetOld='const autoPurchaseLimit=()=>Math.min(100,3+s.autoLevel*8);';
+if(BUY_VARIANT==='legacy'&&!productionSource.includes(budgetNow))
+ throw Error('Production auto-purchase policy changed; legacy counterfactual needs review');
+const source=BUY_VARIANT==='legacy'?productionSource.replace(budgetNow,budgetOld):productionSource;
 const SEEDS=[20261114,20261116];
 const ROUTES=['combat','economy','automation','automation-lite'];
 const MAX_SECONDS=10800;
@@ -165,5 +166,5 @@ const output={experiment:'first three manual STAGE100 reconstructions with actua
  sourceCommit:process.env.GITHUB_SHA||null,seeds:SEEDS,routes:ROUTES,summary,scenarios:rows};
 const out=path.resolve(__dirname,'../artifacts/balance/three-rebirth-core-routes-'+BUY_VARIANT+'.json');
 fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(output,null,2)+'\n');
-for(const item of summary)console.log('CORE_ROUTE '+JSON.stringify(item));
+for(const item of summary)console.log('CORE_ROUTE '+JSON.stringify({...item,autoPurchaseVariant:BUY_VARIANT}));
 console.log('CORE_ROUTES_DONE variant='+BUY_VARIANT+' routes='+ROUTES.length+' seeds='+SEEDS.length+' campaigns='+rows.length);
