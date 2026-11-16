@@ -1242,3 +1242,73 @@ test('battle shows minimal hero HUD while details remain on growth and statistic
  }
  assert.equal(b.get('TRAITS.find(t=>t[0]==="inherit")[3]').includes('스킬 구현 전 효과 대기'),false,'obsolete tooltip must be removed');
 });
+
+
+test('timed quest auto-claim stays opt-in, requires research Lv2 and preserves legacy saves',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const old=boot({stage:3,best:3,autoLevel:2,lastSaved:now},now);
+ assert.equal(old.get('s.autoClaimQuests'),false,'legacy saves do not automatically gain new behavior');
+ assert.equal(old.document.getElementById('autoClaimQuests').checked,false);
+ assert.equal(old.document.getElementById('autoClaimQuests').disabled,false,'research level two unlocks opt-in');
+ old.get('s.questCredits=[7,15,21];s.autoClaimClock=29.75;step(.25,false)');
+ assert.equal(old.get('s.questCredits.reduce((a,b)=>a+b,0)'),43,'default-disabled setting retains manual reserves');
+ const locked=boot({stage:3,best:3,autoLevel:1,autoClaimQuests:true,autoClaimClock:29.75,lastSaved:now},now);
+ assert.equal(locked.document.getElementById('autoClaimQuests').disabled,true);
+ assert.equal(locked.get('autoQuestClaimTick(.25)'),0,'forged option without research must not claim');
+ assert.equal(locked.get('s.questCredits.reduce((a,b)=>a+b,0)'),0);
+});
+
+test('Lv2 auto-claim uses the exact manual transfer path without duplicate credit payout',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:3,best:3,credits:250,autoLevel:2,autoClaimQuests:true,autoClaimClock:29.75,
+  questCredits:[7,15,21],questClocks:[0,0,0],lastSaved:now},now);
+ const before=b.get('s.credits');
+ const passive=b.get('creditRate()')*.25;
+ b.get('step(.25,false)');
+ assert.ok(Math.abs(b.get('s.credits')-before-passive-43)<1e-6,'auto payout must equal exactly pending timed credits');
+ assert.equal(b.get('s.questCredits.reduce((a,b)=>a+b,0)'),0,'auto claim consumes all claimable reserves');
+ assert.equal(b.get('s.autoClaimClock'),0);
+ assert.equal(b.get('transferCacheCredits()'),0,'manual claim cannot duplicate previous auto claim');
+ b.get('save();load()');
+ assert.equal(b.get('s.autoClaimQuests'),true,'user preference survives save/load');
+ assert.equal(b.get('s.autoClaimClock'),0,'clock survives load');
+ b.get('s.questCredits=[3,4,5];s.autoClaimClock=10');
+ const oldBalance=b.get('s.credits');
+ assert.equal(b.get('claimCache()'),true,'manual claim must remain usable while auto mode is enabled');
+ assert.equal(b.get('s.credits'),oldBalance+12,'manual transfer is the same amount');
+ assert.equal(b.get('transferCacheCredits()'),0,'after manual claim there is nothing for auto mode to duplicate');
+});
+
+test('quest claim automation is distinct from autobuy and continues through offline settlement',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const seed={stage:3,best:3,credits:100,autoLevel:2,autoBuy:false,autoClaimQuests:true,
+   questCredits:[0,0,0],questClocks:[0,0,0],lastSaved:now};
+ const a=boot(seed,now,20261116);
+ const m=boot({...seed,autoClaimQuests:false},now,20261116);
+ const paid=a.get('settleElapsed(120)');
+ m.get('settleElapsed(120)');
+ assert.equal(paid,120);
+ assert.equal(a.get('s.autoBuy'),false,'autoclaim must not silently enable purchases');
+ assert.equal(a.get('s.atk+s.spd+s.gen'),0,'no auto purchase despite research level two');
+ assert.equal(a.get('s.stage'),m.get('s.stage'),'claiming alone must not affect combat progression');
+ assert.ok(a.get('s.credits')>m.get('s.credits'),'autoclaim makes already-produced quest rewards spendable during offline time');
+ assert.ok(a.get('s.questCredits.every((x,i)=>x<=questPayout(i)*5)'),'quest caps still constrain unclaimed reserves');
+ assert.ok(m.get('s.questCredits.some(x=>x>0)'),'without autoclaim, idle rewards remain manual');
+});
+
+test('quest claim automation survives rebirth but resets with phase research',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:100,best:100,rebirths:1,autoLevel:2,autoClaimQuests:true,
+  autoClaimClock:27,questCredits:[4,5,6],lastSaved:now},now);
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.autoLevel'),2,'research should survive normal rebirth');
+ assert.equal(b.get('s.autoClaimQuests'),true,'the saved setting should survive normal rebirth');
+ assert.equal(b.get('s.autoClaimClock'),0,'fresh run begins a fresh claim interval');
+ assert.equal(b.get('s.questCredits.reduce((a,b)=>a+b,0)'),0,'no credit queue carried across rebirth');
+ b.get('s.stage=180;s.rebirths=2;spawn()');
+ b.get('phase()');
+ assert.equal(b.get('s.autoLevel'),0,'phase resets core research as before');
+ assert.equal(b.get('s.autoClaimQuests'),false,'phase removes automation which is no longer unlocked');
+ assert.equal(b.get('s.autoClaimClock'),0);
+ assert.equal(b.document.getElementById('autoClaimQuests').disabled,true);
+});
