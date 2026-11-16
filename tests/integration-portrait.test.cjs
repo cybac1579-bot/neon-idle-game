@@ -60,12 +60,16 @@ const server=createServer((req,res)=>{
    await batchButton.click();
    assert.equal(await batchButton.getAttribute('aria-pressed'),'true','three-buy mode must announce selection at '+width);
    assert.match(await batchButton.textContent(),/최대 3회/,'batch label must say maximum at '+width);
+   // Freeze foreground simulation while measuring purchase cost; otherwise passive credits
+   // accrue between the browser click and read-back, making the accounting assertion flaky.
+   await page.evaluate(()=>Object.defineProperty(document,'hidden',{configurable:true,value:true}));
    const beforeBatch=await page.evaluate(()=>({atk:s.atk,credits:s.credits,
      expected:(()=>{let total=0;const oldAtk=s.atk;for(let i=0;i<3;i++){total+=cost('atk');s.atk++}s.atk=oldAtk;return total})()}));
    await page.locator('#upgrades [data-buy="atk"]').click();
    const afterBatch=await page.evaluate(()=>({atk:s.atk,credits:s.credits}));
    assert.equal(afterBatch.atk,beforeBatch.atk+3,'one actual button click must buy three levels at '+width);
    assert.equal(afterBatch.credits,beforeBatch.credits-beforeBatch.expected,'each rising price must be paid at '+width);
+   await page.evaluate(()=>{delete document.hidden});
    await batchButton.click();
    assert.equal(await batchButton.getAttribute('aria-pressed'),'false','single-buy mode must be restorable at '+width);
    await page.evaluate(previous=>{s.credits=previous.credits;s.atk=previous.atk;render();save()},batchSeed);
