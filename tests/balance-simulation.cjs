@@ -13,7 +13,7 @@ const LOW_INPUT=['low-input','one-buy','two-minute'].includes(process.env.BALANC
 const TWO_MINUTE=process.env.BALANCE_MODE==='two-minute';
 const ONE_BUY=process.env.BALANCE_MODE==='one-buy';
 const BALANCE_DIAGNOSTIC=process.env.BALANCE_DIAGNOSTIC==='1';
-const ALLOCATION_POLICY=['assault','balanced','supply','adaptive'].includes(process.env.BALANCE_ALLOCATION)?process.env.BALANCE_ALLOCATION:'assault';
+const ALLOCATION_POLICY=['assault','balanced','supply','supply-pivot'].includes(process.env.BALANCE_ALLOCATION)?process.env.BALANCE_ALLOCATION:'assault';
 const SEEDS=BALANCE_DIAGNOSTIC?[20261114,20261115,20261116]:[20261114,20261115,20261116,20261117,20261118];
 const POLICIES=BALANCE_DIAGNOSTIC?['value']:LOW_INPUT?['value','cheapest']:['value','cheapest','attack-first','tier-first'];
 const SKILL_IDS=BALANCE_DIAGNOSTIC?['chain','bountySkill']:LOW_INPUT?['chain','bountySkill']:['chain','overload','bountySkill','trainingSkill'];
@@ -100,8 +100,8 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy){
    visits++;
    if(s.stage>=20&&!s.skillChoiceUsed&&!s.skillsOwned.includes(skill))chooseSkill(skill);
    if(s.stage>=55){
-     const target=allocationPolicy!=='adaptive'?allocationPolicy:
-       (s.credits < Math.min(...Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)).map(k=>cost(k)))*2?'supply':'assault');
+     // A realistic two-decision experiment: finance reactor unlock (55-64), then push.
+     const target=allocationPolicy==='supply-pivot'?(s.stage<65?'supply':'assault'):allocationPolicy;
      if(s.allocation!==target){s.allocation=target;allocationActions++;}
     }
    if(s.stage>=60&&!s.frontlineSupport)chooseFrontlineSupport('firepower');
