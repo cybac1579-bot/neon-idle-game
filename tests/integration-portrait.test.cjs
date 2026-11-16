@@ -122,6 +122,30 @@ const server=createServer((req,res)=>{
    assert.equal(afterStage75.overflow,false,'STAGE75 growth overflow at '+width);
    await page.evaluate(prev=>{s=prev.state;spawn();enemyHp=prev.enemyHp;attackClock=prev.attackClock;render();save()},stage75Seed);
    assert.equal(await page.locator('#breakthroughPanel').isVisible(),false,'STAGE75 fixture contamination at '+width);
+   // Real touch opt-in: research Lv2 allows quest claiming without enabling auto-buy.
+   const claimModeSeed=await page.evaluate(()=>{
+    const prior=JSON.parse(JSON.stringify(s));
+    s.autoLevel=2;s.autoBuy=false;s.autoClaimQuests=false;s.autoClaimClock=0;
+    render();return prior;
+   });
+   await page.locator('[data-view="reset"]').first().click();
+   const claimToggle=page.locator('#autoClaimQuests');
+   assert.equal(await claimToggle.isDisabled(),false,'Lv2 quest claim must be unlocked at '+width);
+   assert.equal(await claimToggle.isChecked(),false,'old saves must default to opt-out at '+width);
+   await claimToggle.check();
+   assert.equal(await claimToggle.isChecked(),true,'touch should enable quest claim at '+width);
+   const claimResult=await page.evaluate(()=>{
+    s.autoClaimClock=29.75;s.questClocks=[0,0,0];s.questCredits=[3,7,11];
+    const previous=s.credits;step(.25,false);
+    return {earned:s.credits-previous,remaining:s.questCredits.reduce((a,b)=>a+b,0),
+      selected:s.autoClaimQuests,autoBuy:s.autoBuy,clock:s.autoClaimClock};
+   });
+   assert.equal(claimResult.selected,true);
+   assert.equal(claimResult.autoBuy,false,'claim preference must not activate buying at '+width);
+   assert.equal(claimResult.remaining,0,'auto claim must consume reserves at '+width);
+   assert.ok(claimResult.earned>=21,'timed quest transfer was not paid at '+width);
+   await page.evaluate(prior=>{s=prior;spawn();render();save()},claimModeSeed);
+   await page.locator('[data-view="growth"]').first().click();
    for(const view of ['growth','reset','stats','battle']){
     await page.locator('[data-view="'+view+'"]').first().click();
     assert.ok(await page.locator('[data-screen="'+view+'"]:not(.view-hidden)').count()>0,'navigation failed '+view);
