@@ -70,6 +70,12 @@ const tests=[
    assert.match(html,/data-allocation="supply"/);
    assert.doesNotMatch(html,/data-view="allocation"/);
  }],
+ ['research-level automatic purchases grow gradually rather than burst 11+ purchases at LV1',()=>{
+   assert.match(js,/const autoPurchaseLimit=\(\)=>\[0,1,1,2,3,5\]/);
+   assert.match(js,/while\(attempts\+\+<autoPurchaseLimit\(\)\)/);
+   assert.doesNotMatch(js,/3\+s\.autoLevel\*8/,'old 11+ per-tick buy budget must not reappear');
+   assert.match(js,/\[30,10,8,6,4,3\]/,'existing research-based purchase interval must be preserved');
+ }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
