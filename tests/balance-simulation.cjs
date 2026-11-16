@@ -2,7 +2,7 @@
 // Analysis only. Runs the exact current site/game.js; no production gameplay changes.
 // node tests/balance-simulation.cjs
 // Default: decisions every 10s. BALANCE_MODE=low-input: decisions every 60s,
-// one upgrade type per visit, up to 3 levels per click and 5 seeded scenarios.
+// one upgrade type per visit, up to 3 levels per click, optional STAGE75 reward and 5 seeded scenarios.
 // It is NOT a human playtest and does not establish a globally optimal strategy.
 const fs=require('node:fs');
 const vm=require('node:vm');
@@ -91,7 +91,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute){
    purchases[chosen]++;manualBuys++;manualPurchaseActions++;
   }
  }
- const actionCount=()=>manualPurchaseActions+manualClaims+manualTraitBuys+allocationActions+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null);
+ const actionCount=()=>manualPurchaseActions+manualClaims+manualTraitBuys+allocationActions+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null)+Number(s.breakthroughReward!==null);
  for(let tick=0;tick<=steps;tick++){
   const seconds=tick*.25;
   if(tick%(twoMinute?480:lowInput?240:40)===0){
@@ -99,6 +99,8 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute){
    if(s.stage>=20&&!s.skillChoiceUsed&&!s.skillsOwned.includes(skill))chooseSkill(skill);
    if(s.stage>=55&&s.allocation!=='assault'){s.allocation='assault';allocationActions++;}
    if(s.stage>=60&&!s.frontlineSupport)chooseFrontlineSupport('firepower');
+   // One optional STAGE75 choice at the next real visit, not a free background grant.
+   if(s.stage>=75&&!s.breakthroughReward)chooseBreakthroughReward(policy==='cheapest'?'credits':policy==='tier-first'?'skill':'weapon');
    const traitOrder=[['precision',5],['double',5],['boss',3],['haste',5],['training',5],['energy',5]];
    let traitBudget=lowInput?1:Infinity;
    for(const pair of traitOrder)while(traitBudget>0&&s.traitPointsEarned>s.traitPointsSpent&&(s.traits[pair[0]]||0)<pair[1]){
@@ -122,7 +124,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute){
   manualActions,purchaseCount:manualBuys,purchaseActions:manualPurchaseActions,visitCount:visits,
   purchaseActionsAt30,purchaseActionsAt60,purchaseCountAt30,purchaseCountAt60,claimCount:manualClaims,traitCount:manualTraitBuys,
   upgrades:purchases,weapon:s.weapon?{tier:s.weapon.tier,stage:s.weapon.stage}:null,
-  skillEquipped:s.skillsEquipped.slice(),skillOwned:s.skillsOwned.slice(),frontlineSupport:s.frontlineSupport,
+  skillEquipped:s.skillsEquipped.slice(),skillOwned:s.skillsOwned.slice(),frontlineSupport:s.frontlineSupport,breakthroughReward:s.breakthroughReward,
   balanceFlags:{creditRate:creditRate(),power:power(),speed:attackInterval(),cores:gainCore()}};
 }
 function median(a){const b=[...a].sort((x,y)=>x-y);return b[Math.floor(b.length/2)]}
