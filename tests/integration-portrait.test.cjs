@@ -48,6 +48,28 @@ const server=createServer((req,res)=>{
    assert.equal(questLayout.overflow,false,'growth view horizontal overflow at '+width);
    assert.equal(questLayout.rowOverflow,false,'quest row text overflow at '+width);
    assert.ok(questLayout.text.every(x=>x.length>0),'quest status missing at '+width);
+   // Exercise real portrait DOM clicks, not just purchaseBatch() in a VM fixture.
+   const batchSeed=await page.evaluate(()=>{
+    const previous={credits:s.credits,atk:s.atk};
+    s.credits=1000000;
+    render();
+    return previous;
+   });
+   const batchButton=page.locator('#batchPurchase');
+   assert.equal(await batchButton.getAttribute('aria-pressed'),'false','single-buy must be default at '+width);
+   await batchButton.click();
+   assert.equal(await batchButton.getAttribute('aria-pressed'),'true','three-buy mode must announce selection at '+width);
+   assert.match(await batchButton.textContent(),/최대 3회/,'batch label must say maximum at '+width);
+   const beforeBatch=await page.evaluate(()=>({atk:s.atk,credits:s.credits,
+     expected:(()=>{let total=0;const oldAtk=s.atk;for(let i=0;i<3;i++){total+=cost('atk');s.atk++}s.atk=oldAtk;return total})()}));
+   await page.locator('#upgrades [data-buy="atk"]').click();
+   const afterBatch=await page.evaluate(()=>({atk:s.atk,credits:s.credits}));
+   assert.equal(afterBatch.atk,beforeBatch.atk+3,'one actual button click must buy three levels at '+width);
+   assert.equal(afterBatch.credits,beforeBatch.credits-beforeBatch.expected,'each rising price must be paid at '+width);
+   await batchButton.click();
+   assert.equal(await batchButton.getAttribute('aria-pressed'),'false','single-buy mode must be restorable at '+width);
+   await page.evaluate(previous=>{s.credits=previous.credits;s.atk=previous.atk;render();save()},batchSeed);
+   assert.equal(await page.evaluate(()=>s.atk),batchSeed.atk,'batch smoke must not contaminate later checks at '+width);
    const questClaim=await page.evaluate(()=>{
     s.best=Math.max(s.best,3);
     s.questClocks=[0,0,0];
