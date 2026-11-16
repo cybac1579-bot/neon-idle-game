@@ -1409,3 +1409,68 @@ test('STAGE85 resonance survives save/load and reverts at rebirth without adding
  const legacy=boot({stage:85,best:85,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:at},at);
  assert.equal(legacy.get("resonanceBonus('chain')"),0,'old no-weapon saves remain safe');
 });
+
+
+test('STAGE55 allocation modes have real non-dominated attack / credit trade-offs',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:55,best:55,atk:25,gen:3,forge:5,energy:1000,allocation:'balanced',lastSaved:at},at);
+ const preview=b.get('allocationComparison()');
+ const actuals=[];
+ for(const mode of ['balanced','assault','supply']){
+  b.get("s.allocation='"+mode+"';render()");
+  const value=b.get('({power:power(),income:creditRate(),status:document.getElementById("allocationStatus").textContent})');
+  actuals.push(value);
+ }
+ for(let i=0;i<3;i++){
+  assert.ok(Math.abs(actuals[i].power/preview[i][1]-1)<1e-10,'preview combat must match '+preview[i][0]);
+  assert.ok(Math.abs(actuals[i].income/preview[i][2]-1)<1e-10,'preview production must match '+preview[i][0]);
+ }
+ assert.ok(actuals[1].power>actuals[0].power&&actuals[1].income<actuals[0].income,
+  'assault must not strictly dominate balanced');
+ assert.ok(actuals[2].power<actuals[0].power&&actuals[2].income>actuals[0].income,
+  'supply must not strictly dominate balanced');
+ assert.ok(actuals[1].power>actuals[2].power&&actuals[1].income<actuals[2].income,
+  'assault/supply need different opportunity costs');
+ assert.match(actuals[1].status,/×2\.2.*×0\.75/);
+ assert.match(actuals[2].status,/×0\.8.*×2\.5/);
+ assert.match(actuals[0].status,/손실 없는 안정형/);
+});
+
+test('STAGE55 allocation tradeoffs never leak before stage unlock or into enemy/quest rewards',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:54,best:54,atk:15,forge:4,energy:250,lastSaved:at},at);
+ const basic=b.get('({power:power(),income:creditRate(),quest:questPayout(0),kill:enemyReward(54)})');
+ for(const mode of ['balanced','assault','supply']){
+  b.get("s.allocation='"+mode+"'");
+  assert.equal(b.get('power()'),basic.power,'pre-55 power must be unchanged by choice');
+  assert.equal(b.get('creditRate()'),basic.income,'pre-55 credit production must not be affected');
+  assert.equal(b.get('questPayout(0)'),basic.quest,'quests are not multiplied by frontline mode');
+  assert.equal(b.get('enemyReward(54)'),basic.kill,'enemy reward base is not multiplied');
+ }
+ b.get('s.stage=55;spawn();s.allocation="assault";save();load();render()');
+ assert.equal(b.get('s.allocation'),'assault','choice survives same-run save');
+ assert.ok(b.get('creditRate()')<basic.income,'assault income penalty is retained after load');
+ b.get('s.stage=100;spawn()');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.allocation'),'balanced','rebirth resets tactical choice');
+ assert.equal(b.get('allocationEffects()[0]'),1,'rebirth below stage 55 disables combat effect');
+ assert.equal(b.get('allocationEffects()[1]'),1,'rebirth below stage 55 disables production effect');
+});
+
+test('frontline changes are immediate, reversible and do not create spending or extra UI actions',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:65,best:65,atk:18,forge:4,credits:12345,energy:1000,lastSaved:at},at);
+ const credits=b.get('s.credits');
+ const before=b.get('({power:power(),income:creditRate()})');
+ b.get('s.allocation="supply";render()');
+ const supply=b.get('({power:power(),income:creditRate()})');
+ assert.ok(supply.power<before.power&&supply.income>before.income);
+ b.get('s.allocation="assault";render()');
+ const assault=b.get('({power:power(),income:creditRate()})');
+ assert.ok(assault.power>before.power&&assault.income<before.income);
+ b.get('s.allocation="balanced";render()');
+ assert.equal(b.get('power()'),before.power);
+ assert.equal(b.get('creditRate()'),before.income);
+ assert.equal(b.get('s.credits'),credits,'switches cost no new resource');
+ assert.equal(b.get('s.autoLevel'),0,'tactical choice does not unlock automated purchasing');
+});
