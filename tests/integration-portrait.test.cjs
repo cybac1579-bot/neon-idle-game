@@ -122,6 +122,35 @@ const server=createServer((req,res)=>{
    assert.equal(afterStage75.overflow,false,'STAGE75 growth overflow at '+width);
    await page.evaluate(prev=>{s=prev.state;spawn();enemyHp=prev.enemyHp;attackClock=prev.attackClock;render();save()},stage75Seed);
    assert.equal(await page.locator('#breakthroughPanel').isVisible(),false,'STAGE75 fixture contamination at '+width);
+   // Real growth-tab interaction: the STAGE85 passive resonance reacts to loadout changes.
+   // Restore the entire scenario so previous-stage and persistence tests are isolated.
+   const resonanceSeed=await page.evaluate(()=>{
+    const previous={state:JSON.parse(JSON.stringify(s)),enemyHp,attackClock};
+    s.stage=85;s.best=Math.max(s.best,85);s.weapon={tier:1,stage:82};
+    s.heroLevel=10;s.traitPointsEarned=Math.max(s.traitPointsEarned,9);
+    s.skillsOwned=['overload','chain'];s.skillsEquipped=['overload'];s.skillsInherited=[];
+    s.skillLevels={overload:1,chain:1};s.skillXp={overload:0,chain:0};
+    spawn();render();return previous;
+   });
+   const resonancePanel=page.locator('#resonanceInfo');
+   assert.match(await resonancePanel.textContent(),/과부하 사격 피해 \+15%/,'uncommon weapon should boost equipped skill at '+width);
+   assert.equal(await page.evaluate(()=>resonanceBonus('chain')),0,'un-equipped chain must not receive resonance at '+width);
+   await page.locator('#skillList [data-equip="overload"]').click();
+   assert.match(await resonancePanel.textContent(),/스킬을 장착해/,'unequip should disable resonance at '+width);
+   await page.locator('#skillList [data-equip="chain"]').click();
+   assert.match(await resonancePanel.textContent(),/연쇄 방전 피해 \+15%/,'switching skill should change resonance at '+width);
+   const resonanceLayout=await page.evaluate(()=>({
+    overflow:document.documentElement.scrollWidth>innerWidth+1,
+    status:document.getElementById('resonanceInfo').textContent,
+    weapon:document.getElementById('weaponInfo').textContent
+   }));
+   assert.equal(resonanceLayout.overflow,false,'resonance growth overflow at '+width);
+   assert.match(resonanceLayout.weapon,/희귀/);
+   await page.evaluate(previous=>{
+    s=previous.state;spawn();enemyHp=previous.enemyHp;attackClock=previous.attackClock;
+    render();save();
+   },resonanceSeed);
+   assert.match(await resonancePanel.textContent(),/STAGE 85/,'STAGE85 smoke must restore earlier player's state at '+width);
    // Real touch opt-in: research Lv2 allows quest claiming without enabling auto-buy.
    const claimModeSeed=await page.evaluate(()=>{
     const prior=JSON.parse(JSON.stringify(s));
