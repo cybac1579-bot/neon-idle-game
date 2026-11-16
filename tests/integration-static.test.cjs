@@ -108,9 +108,9 @@ const tests=[
        save(){},render(){}
      });
      vm.runInContext(extract('grantStage35Support')+'\n'+extract('chooseSkill'),context);
-     assert.equal(vm.runInContext("chooseSkill(first)",context),true);
+     assert.equal(vm.runInContext("chooseSkill("+JSON.stringify(first)+")",context),true);
      assert.deepEqual([...state.skillsOwned],stage>=35?[first,partner]:[first]);
-     assert.equal(vm.runInContext("chooseSkill(first)",context),false,'second first-choice must be rejected');
+     assert.equal(vm.runInContext("chooseSkill("+JSON.stringify(first)+")",context),false,'second first-choice must be rejected');
      assert.equal(state.skillsOwned.length,stage>=35?2:1);
      if(stage===20){
        assert.equal(vm.runInContext('grantStage35Support()',context),'skill');
