@@ -30,6 +30,11 @@ jobs:
         run: |
           set -o pipefail
           timeout --signal=TERM --kill-after=10s 540s node tests/balance-simulation.cjs 2>&1 | tee balance-console.log
+      - name: Measure 60-second low-input decisions (8 seeded scenarios)
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 240s env BALANCE_MODE=low-input node tests/balance-simulation.cjs 2>&1 | tee low-input-console.log
       - name: Upload baseline metrics and scenario details
         if: always()
         uses: actions/upload-artifact@v4
@@ -38,5 +43,7 @@ jobs:
           path: |
             artifacts/balance/first-rebirth-baseline.json
             balance-console.log
+            low-input-console.log
+            artifacts/balance/first-rebirth-low-input.json
           if-no-files-found: warn
           retention-days: 14
