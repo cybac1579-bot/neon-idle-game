@@ -122,3 +122,15 @@ When user revises a rule, update this file with date, exact new decision and sup
 - **Concurrency:** always fetch current working HEAD and target blob SHA before changes. On concurrent updates, compare and reconcile without force push, stale code overwrite, or silent removal of user-locked rules.
 - All 27 latest main-only automation-documentation commits through `main@9918709e` were preserved as the second parent of shared-branch merge commit `54fafa62`. The manual gameplay tree was preserved, apart from exact updates to three automation Markdown files. Backup `backup/neon-before-shared-development-20261116` keeps the pre-sync manual head.
 - Scheduled job is enabled; its **next actual run must confirm** that a scheduled run now reads/writes the shared branch. This recorded configuration does not prove future execution.
+
+
+## Trial: automatic timed-quest reward claiming at automation research Lv2 — 2026-11-16
+
+**Status: provisional implementation choice; NOT a new user-locked rule.** The user's existing direction is automatic combat, fewer repetitive inputs after reincarnation, distinct combat/economy/automation core investment, and eventual automated periodic credit claiming. The **Lv2 unlock and 30-second claim frequency are test hypotheses**; evaluate before preserving permanently. First-rebirth economics and user-approved skill/trait/inheritance rules are not changed.
+
+- Independently opt in with a checkbox inside the existing reconstruction > automation panel. Requires `autoLevel >= 2` and does **not** require the separate automatic upgrade purchase toggle.
+- Claim once every 30 seconds in foreground/offline using **the same `transferCacheCredits()` as the existing manual collection button**. The quest durations/payout/5-cycle reserve caps remain unchanged. This converts already earned rewards to spendable credits, never mints a new reward source or a currency.
+- Defaults **OFF for old saves**; preserves chosen setting, research and claim clock through saves and normal reincarnations (clock resets to 0 when a new run starts). Core-research reset at the phase transition also resets this preference. No automatic reincarnation runs offline, as before.
+- **Benefits (impact):** greatly reduces post-rebirth frequent reward-claim actions (large), makes a noncombat core-investment path give noticeable convenience (large), reuses a tested payment function and save schema (medium).
+- **Drawbacks/risks (impact):** more post-rebirth credits may magnify investment imbalance (large; not yet 2+ rebirth simulated), a separate setting adds one control to the automation panel (small), Lv2 and 30s cadence may not be a natural unlock curve (medium; test-only).
+- Do not treat this as replacing the P1 priority: meaningful STAGE 55–100 rewards and realistic efficient ~60m first rebirth remain ahead of further P2 convenience expansions.
