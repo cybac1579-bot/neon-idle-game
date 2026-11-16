@@ -192,6 +192,9 @@ function questTick(dt){for(let i=0;i<QUESTS.length;i++){const q=QUESTS[i];if(s.b
 function transferCacheCredits(){const amount=s.questCredits.reduce((a,b)=>a+b,0);if(amount<1)return 0;s.credits=Math.min(1e100,s.credits+amount);s.questCredits=[0,0,0];return amount;}
 function claimCache(){const amount=transferCacheCredits();if(!amount)return false;logText='시간제 퀘스트 보상 +'+fmt(amount);save();render();return true;}
 const autoPurchaseInterval=()=>[30,10,8,6,4,3][Math.min(5,Math.max(0,s.autoLevel))];
+// Provisional stage-based automation: interval and batch size grow with core research,
+// rather than granting up to 11 purchases on the very first research level.
+const autoPurchaseLimit=()=>[0,1,1,2,3,5][Math.min(5,Math.max(0,s.autoLevel))];
 // Provisional research LV2 reward: reuse the manual claim transfer logic, every 30 seconds.
 // The three time-based quests and five-payout reserve caps remain unchanged.
 const autoQuestClaimInterval=30;
@@ -204,7 +207,7 @@ function autoQuestClaimTick(dt){if(!s.autoClaimQuests||s.autoLevel<2)return 0;
 const autoRebirthThreshold=()=>Math.max(3,Math.ceil(s.totalCores*.15));
 const phaseFocusHolding=()=>s.phaseFocus&&s.rebirths>=2;
 function step(dt,allowAutoRebirth=true){questTick(dt);s.energy=Math.min(1e100,s.energy+energyRate()*dt);s.phaseFlux=Math.min(1e100,s.phaseFlux+fluxRate()*dt);s.credits=Math.min(1e100,s.credits+creditRate()*dt);skillTick(dt);resolveEnemyDefeat();attackClock+=dt;enemyClock+=dt;let hits=0;while(attackClock>=attackInterval()&&hits++<30){attackClock-=attackInterval();enemyHp-=power()*(Math.random()<traitLevel('double')*.03?2:1);resolveEnemyDefeat();}
-autoQuestClaimTick(dt);if(s.autoBuy&&s.autoLevel>0){s.autoPurchaseClock=(s.autoPurchaseClock||0)+dt;if(s.autoPurchaseClock>=autoPurchaseInterval()){s.autoPurchaseClock%=autoPurchaseInterval();let attempts=0;while(attempts++<Math.min(100,3+s.autoLevel*8)){const choices=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>unlockStage[b]-unlockStage[a]);if(!choices.length)break;purchase(choices[0]);}}}
+autoQuestClaimTick(dt);if(s.autoBuy&&s.autoLevel>0){s.autoPurchaseClock=(s.autoPurchaseClock||0)+dt;if(s.autoPurchaseClock>=autoPurchaseInterval()){s.autoPurchaseClock%=autoPurchaseInterval();let attempts=0;while(attempts++<autoPurchaseLimit()){const choices=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)&&s.credits>=cost(k)).sort((a,b)=>unlockStage[b]-unlockStage[a]);if(!choices.length)break;purchase(choices[0]);}}}
 if(allowAutoRebirth&&s.autoRebirth&&s.autoLevel>=3&&!phaseFocusHolding()&&gainCore()>=autoRebirthThreshold())rebirth(true);
 }
 // 버튼 노드를 유지해 터치 시작과 클릭 사이에 DOM이 교체되지 않도록 한다.
