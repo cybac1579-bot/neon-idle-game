@@ -1157,3 +1157,24 @@ test('reactor keeps two dramatic early levels then applies a gentler late multip
  close(b.get('power()'),values[4]);
  assert.equal(b.get('s.reactor'),4,'saved upgrade level survives reload');
 });
+
+
+test('manual upgrade batching preserves rising costs, caps, and first-run auto-buy gate',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:1,best:1,credits:100000,autoLevel:0,autoBuy:false,lastSaved:stamp},stamp);
+ const initial=b.get('s.credits');
+ const expected=b.get('(()=>{let total=0;for(let i=0;i<3;i++){total+=cost("atk");purchase("atk")}return {total,atk:s.atk}})()');
+ b.get('s.atk=0;s.credits='+initial);
+ assert.equal(b.get('purchaseBatch("atk",3)'),3);
+ assert.equal(b.get('s.atk'),expected.atk);
+ assert.equal(b.get('s.credits'),initial-expected.total);
+ assert.equal(b.get('s.autoLevel'),0,'batching must not unlock permanent auto-buy');
+ assert.equal(b.get('s.autoBuy'),false);
+ b.get('s.credits=0');
+ assert.equal(b.get('purchaseBatch("atk",3)'),0,'cannot buy without credits');
+ b.get('s.spd=49;s.credits=1e12');
+ assert.equal(b.get('purchaseBatch("spd",3)'),1,'attack speed cap must hold');
+ assert.equal(b.get('s.spd'),50);
+ b.get('save();load()');
+ assert.equal(b.get('s.spd'),50,'batch purchases persist through save/load');
+});
