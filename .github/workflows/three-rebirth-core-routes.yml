@@ -32,11 +32,11 @@ jobs:
         run: |
           set -o pipefail
           timeout --signal=TERM --kill-after=10s 510s node tests/multi-rebirth-balance.cjs 2>&1 | tee three-rebirth-core-console.log
-      - name: Compare a progressive research-level auto-buy budget (counterfactual only)
+      - name: Compare legacy high-batch auto-buy budget (counterfactual only)
         shell: bash
         run: |
           set -o pipefail
-          timeout --signal=TERM --kill-after=10s 240s env CORE_BUY_VARIANT=progressive node tests/multi-rebirth-balance.cjs 2>&1 | tee three-rebirth-progressive-console.log
+          timeout --signal=TERM --kill-after=10s 240s env CORE_BUY_VARIANT=legacy node tests/multi-rebirth-balance.cjs 2>&1 | tee three-rebirth-legacy-console.log
       - name: Upload scenario evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -45,6 +45,6 @@ jobs:
           path: |
             artifacts/balance/three-rebirth-core-routes-*.json
             three-rebirth-core-console.log
-            three-rebirth-progressive-console.log
+            three-rebirth-legacy-console.log
           if-no-files-found: warn
           retention-days: 14
