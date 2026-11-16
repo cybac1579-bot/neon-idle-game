@@ -97,6 +97,35 @@ const server=createServer((req,res)=>{
    assert.equal(questClaim.after,questClaim.before+questClaim.pending,'quest credits must reach wallet at '+width);
    assert.equal(questClaim.disabledAfter,true,'claim button must disable after collection at '+width);
    assert.equal(questClaim.rows.length,3,'quest statuses must survive reward collection at '+width);
+   // Real stage55 strategic choices via actual portrait button taps; existing growth tab only.
+   const allocSeed=await page.evaluate(()=>{
+    const previous={state:JSON.parse(JSON.stringify(s)),enemyHp,attackClock};
+    s.stage=55;s.best=Math.max(s.best,55);s.allocation='balanced';s.atk=16;s.forge=5;s.energy=1000;
+    spawn();render();return previous;
+   });
+   assert.equal(await page.locator('#allocationPanel').isVisible(),true,'STAGE55 panel not visible at '+width);
+   const allocSamples=[];
+   for(const [mode,index] of [['assault',1],['supply',2],['balanced',0]]){
+    await page.locator('#allocationPanel [data-allocation="'+mode+'"]').click();
+    const actual=await page.evaluate(()=>({
+     mode:s.allocation,power:power(),income:creditRate(),preview:allocationComparison(),
+     status:document.getElementById('allocationStatus').textContent,
+     overflow:document.documentElement.scrollWidth>innerWidth+1
+    }));
+    assert.equal(actual.mode,mode,'allocation tap failed '+mode+' at '+width);
+    assert.equal(actual.overflow,false,'allocation horizontal overflow at '+width);
+    assert.ok(Math.abs(actual.power/actual.preview[index][1]-1)<1e-9,'combat preview mismatch '+mode+' at '+width);
+    assert.ok(Math.abs(actual.income/actual.preview[index][2]-1)<1e-9,'production preview mismatch '+mode+' at '+width);
+    allocSamples.push(actual);
+   }
+   assert.match(allocSamples[0].status,/×2\.2.*×0\.75/,'assault loss must be disclosed at '+width);
+   assert.match(allocSamples[1].status,/×0\.8.*×2\.5/,'supply loss must be disclosed at '+width);
+   assert.ok(allocSamples[0].power>allocSamples[2].power &&
+      allocSamples[0].income<allocSamples[2].income,'assault must trade credits for power at '+width);
+   assert.ok(allocSamples[1].power<allocSamples[2].power &&
+      allocSamples[1].income>allocSamples[2].income,'supply must trade power for credits at '+width);
+   await page.evaluate(prev=>{s=prev.state;spawn();enemyHp=prev.enemyHp;attackClock=prev.attackClock;render();save()},allocSeed);
+   assert.equal(await page.locator('#allocationPanel').isVisible(),false,'stage55 fixture not cleaned at '+width);
    // Real portrait touch check of optional stage-75 reward; restore current-run state afterwards.
    const stage75Seed=await page.evaluate(()=>{
     const prev={state:JSON.parse(JSON.stringify(s)),enemyHp,attackClock};
