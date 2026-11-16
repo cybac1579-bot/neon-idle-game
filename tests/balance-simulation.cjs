@@ -59,7 +59,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
  const attackOrder=['atk','spd','amp','reactor','gen','forge','relay'];
  const checkpoints={},milestones=[20,45,55,60,65,70,75,85,95,100];
  const purchases=Object.fromEntries(kinds.map(k=>[k,0]));
- let firstSlot=null,manualBuys=0,manualPurchaseActions=0,manualClaims=0,manualTraitBuys=0,allocationActions=0,loadoutActions=0,visits=0,stageAt30=null,stageAt60=null,actionsAt30=null,actionsAt60=null,purchaseActionsAt30=null,purchaseActionsAt60=null,purchaseCountAt30=null,purchaseCountAt60=null;
+ let firstSlot=null,manualBuys=0,manualPurchaseActions=0,manualClaims=0,manualTraitBuys=0,allocationActions=0,loadoutActions=0,visits=0,stageAt30=null,stageAt60=null,actionsAt30=null,actionsAt60=null,purchaseActionsAt30=null,purchaseActionsAt60=null,purchaseCountAt30=null,purchaseCountAt60=null,skillSnapshot30=null,skillSnapshot60=null;
  const tmax=5400, steps=Math.round(tmax/.25);
  function chooseUpgrade(choices){
   if(policy==='cheapest')return choices.sort((a,b)=>cost(a)-cost(b))[0];
@@ -135,8 +135,8 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
   }
   if(s.heroLevel>=10&&firstSlot===null)firstSlot=seconds;
   for(const n of milestones)if(s.stage>=n&&checkpoints[n]===undefined)checkpoints[n]=seconds;
-  if(seconds>=1800&&stageAt30===null){stageAt30=s.stage;actionsAt30=actionCount();purchaseActionsAt30=manualPurchaseActions;purchaseCountAt30=manualBuys}
-  if(seconds>=3600&&stageAt60===null){stageAt60=s.stage;actionsAt60=actionCount();purchaseActionsAt60=manualPurchaseActions;purchaseCountAt60=manualBuys}
+  if(seconds>=1800&&stageAt30===null){stageAt30=s.stage;actionsAt30=actionCount();purchaseActionsAt30=manualPurchaseActions;purchaseCountAt30=manualBuys;skillSnapshot30={owned:s.skillsOwned.slice(),equipped:s.skillsEquipped.slice(),levels:{...s.skillLevels}}}
+  if(seconds>=3600&&stageAt60===null){stageAt60=s.stage;actionsAt60=actionCount();purchaseActionsAt60=manualPurchaseActions;purchaseCountAt60=manualBuys;skillSnapshot60={owned:s.skillsOwned.slice(),equipped:s.skillsEquipped.slice(),levels:{...s.skillLevels}}}
   if(s.stage>=100)break;
   if(tick<steps)step(.25);
  }
@@ -146,7 +146,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
  return {readySec:checkpoints[100]??null,stageAt30,stageAt60,actionsAt30,actionsAt60,stageAt90:s.stage,
   heroLevel:s.heroLevel,heroLv10Sec:firstSlot,stageTimes:checkpoints,
   manualActions,purchaseCount:manualBuys,purchaseActions:manualPurchaseActions,visitCount:visits,loadoutActions,
-  purchaseActionsAt30,purchaseActionsAt60,purchaseCountAt30,purchaseCountAt60,claimCount:manualClaims,traitCount:manualTraitBuys,
+  purchaseActionsAt30,purchaseActionsAt60,purchaseCountAt30,purchaseCountAt60,skillSnapshot30,skillSnapshot60,claimCount:manualClaims,traitCount:manualTraitBuys,
   upgrades:purchases,weapon:s.weapon?{tier:s.weapon.tier,stage:s.weapon.stage}:null,
   skillEquipped:s.skillsEquipped.slice(),skillOwned:s.skillsOwned.slice(),frontlineSupport:s.frontlineSupport,breakthroughReward:s.breakthroughReward,
   balanceFlags:{creditRate:creditRate(),power:power(),speed:attackInterval(),cores:gainCore()}};
