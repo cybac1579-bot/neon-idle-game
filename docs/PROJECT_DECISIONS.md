@@ -134,3 +134,15 @@ When user revises a rule, update this file with date, exact new decision and sup
 - **Benefits (impact):** greatly reduces post-rebirth frequent reward-claim actions (large), makes a noncombat core-investment path give noticeable convenience (large), reuses a tested payment function and save schema (medium).
 - **Drawbacks/risks (impact):** more post-rebirth credits may magnify investment imbalance (large; not yet 2+ rebirth simulated), a separate setting adds one control to the automation panel (small), Lv2 and 30s cadence may not be a natural unlock curve (medium; test-only).
 - Do not treat this as replacing the P1 priority: meaningful STAGE 55–100 rewards and realistic efficient ~60m first rebirth remain ahead of further P2 convenience expansions.
+
+
+## Trial: passive STAGE85 weapon × equipped-skill resonance — 2026-11-16
+
+**Status: experimental implementation, not a permanently user-approved balance rule.** The original direction is meaningful skill/equipment choice, no compulsory active tapping, first rebirth near 60m for a high-efficiency player, and reduced repeat-time after further rebirths. Preserve the existing 4 skills and LV10/25/40/60 permanent slot thresholds; no new currency, button, or fifth skill was added.
+
+- At **STAGE85+**, existing weapon tiers grant extra effect to **currently equipped** skills: common +10%, rare +15%, heroic +20% (of each skill effect, **not** overall character DPS). The four supported effects are Overload instant burst, Chain individual pulse damage, Bounty credit-on-kill boost, and Training hero-XP boost. Without a weapon or equipped skill, none activates. It is shown in the existing Growth > Equipment/Skills panel; no extra button or navigation.
+- Stage 85 unlock is reflected in milestone text; optional stage 75 weapon reward still grants its per-run +20% weapon effect independently.
+- **Bug fix:** weapon drop comparisons now use base `weaponScore(candidate) > weaponScore(s.weapon)`, not a temporary +20% `weaponMultiplier()` from stage75 reward. This restores proper automatic equipment upgrades during a temporarily boosted run.
+- The resonance follows loaded weapon and equipped skills without any saved extra state. It deactivates automatically after normal rebirth/phase, when stage resets and the weapon is cleared; inherited skill/level/reset rules remain unchanged.
+- **Advantages:** makes weapon tier and skill loadout influence STAGE85+ outcomes (medium), preserves one-tap-free passive combat with no extra economy or UI controls (large), derives from equipped loadout and therefore needs no migration or new save key (medium).
+- **Risks/tradeoffs:** still only four distinct skills for five possible permanent slots (large unresolved content shortage), the small +10–20% skill-only gains may be too subtle to feel meaningful (medium), and existing fastest runs already reach stage100 too quickly relative to target, so even modest bonuses reduce their time further (medium). Future user playtest decides whether to retain/rebalance. No raw enemy HP/cost increase performed.
