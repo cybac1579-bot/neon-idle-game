@@ -9,7 +9,8 @@ const vm=require('node:vm');
 const path=require('node:path');
 const assert=require('node:assert/strict');
 const source=fs.readFileSync(path.resolve(__dirname,'../site/game.js'),'utf8');
-const LOW_INPUT=process.env.BALANCE_MODE==='low-input';
+const LOW_INPUT=['low-input','one-buy'].includes(process.env.BALANCE_MODE);
+const ONE_BUY=process.env.BALANCE_MODE==='one-buy';
 const SEEDS=LOW_INPUT?[20261114,20261116]:[20261114,20261115,20261116,20261117,20261118];
 const POLICIES=LOW_INPUT?['value','cheapest']:['value','cheapest','attack-first','tier-first'];
 const SKILL_IDS=LOW_INPUT?['chain','bountySkill']:['chain','overload','bountySkill','trainingSkill'];
@@ -43,7 +44,7 @@ function boot(seed){
 
 // Serializes this function into the same V8 context as game.js to avoid
 // 20,000 costly cross-context calls and preserve the game's own exact rules.
-function runPolicy(policy,skill,lowInput){
+function runPolicy(policy,skill,lowInput,oneBuy){
  const kinds=['atk','spd','gen','amp','relay','forge','reactor'];
  const unlock={atk:1,spd:1,gen:1,amp:15,relay:25,forge:45,reactor:65};
  const attackOrder=['atk','spd','amp','reactor','gen','forge','relay'];
@@ -53,7 +54,7 @@ function runPolicy(policy,skill,lowInput){
  const tmax=5400, steps=Math.round(tmax/.25);
  function shop(){
   let loops=0;
-  while(loops++<(lowInput?3:75)){
+  while(loops++<(lowInput?(oneBuy?1:3):75)){
    const choices=kinds.filter(k=>s.best>=unlock[k]&&!(k==='spd'&&s.spd>=50)&&s.credits>=cost(k));
    if(!choices.length)break;
    let chosen;
@@ -111,7 +112,7 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
  const runs=[];
  for(const seed of SEEDS){
   const context=boot(seed);
-  const result=vm.runInContext('('+runPolicy.toString()+')('+JSON.stringify(policy)+','+JSON.stringify(skill)+','+LOW_INPUT+')',context,{timeout:60000});
+  const result=vm.runInContext('('+runPolicy.toString()+')('+JSON.stringify(policy)+','+JSON.stringify(skill)+','+LOW_INPUT+','+ONE_BUY+')',context,{timeout:60000});
   assert.equal(result.stageAt90>=1&&result.stageAt90<=100,true);
   assert.equal(result.readySec===null||result.readySec>=0,true);
   runs.push({seed,...result});
@@ -130,8 +131,8 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
  summary.push(row);detailed.push({policy,skill,runs});
  console.log('SIM_POLICY '+JSON.stringify(row));
 }
-const payload={title:LOW_INPUT?'Constrained-input first reconstruction; decisions every 60s, at most 3 purchases and 1 trait per visit; not human play':'First reconstruction baseline; simulated 0.25s ticks, manual decisions every 10s, not human play',
+const payload={title:LOW_INPUT?'Constrained-input first reconstruction; decisions every 60s, at most '+(ONE_BUY?1:3)+' purchases and 1 trait per visit; not human play':'First reconstruction baseline; simulated 0.25s ticks, manual decisions every 10s, not human play',
  observedAtUtc:new Date().toISOString(),seeds:SEEDS,policies:POLICIES,skills:SKILL_IDS,summary,detailed};
 fs.mkdirSync(path.resolve(__dirname,'../artifacts/balance'),{recursive:true});
-fs.writeFileSync(path.resolve(__dirname,LOW_INPUT?'../artifacts/balance/first-rebirth-low-input.json':'../artifacts/balance/first-rebirth-baseline.json'),JSON.stringify(payload,null,2)+'\n');
+fs.writeFileSync(path.resolve(__dirname,LOW_INPUT?(ONE_BUY?'../artifacts/balance/first-rebirth-one-buy.json':'../artifacts/balance/first-rebirth-low-input.json'):'../artifacts/balance/first-rebirth-baseline.json'),JSON.stringify(payload,null,2)+'\n');
 console.log('SIM_DONE policies='+summary.length+' scenarios='+detailed.reduce((a,x)=>a+x.runs.length,0));
