@@ -34,6 +34,7 @@ function boot(seed){
 }
 // Stringified into the game's VM, so per-frame actions stay native/fast.
 function campaign(route){
+ const maxSeconds=10800;
  const upgrades=['atk','spd','gen','amp','relay','forge','reactor'];
  const finished=[];
  const routeCore=route==='combat'?'corePower':route==='economy'?'coreEconomy':'autoLevel';
@@ -80,14 +81,14 @@ function campaign(route){
    if(!s.autoClaimQuests&&s.questCredits.some(x=>x>=1)&&claimCache())claims++;
    shop();
   }
-  for(let tick=0;tick<=MAX_SECONDS*4;tick++){
+  for(let tick=0;tick<=maxSeconds*4;tick++){
    const seconds=tick*.25;
    if(tick%(manualCadence*4)===0)visit();
    if(seconds>=1800&&at30===null)at30=s.stage;
    if(seconds>=3600&&at60===null)at60=s.stage;
    if(seconds>=5400&&at90===null)at90=s.stage;
    if(s.stage>=100){ready=seconds;break;}
-   if(tick<MAX_SECONDS*4)step(.25,false);
+   if(tick<maxSeconds*4)step(.25,false);
   }
   const actionCount=claims+manualPurchases+traits+specials+allocationClicks;
   overallActions+=actionCount;
