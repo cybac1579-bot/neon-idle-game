@@ -47,6 +47,16 @@ const tests=[
    assert.match(js,/return transferCacheCredits\(\)/);
    assert.match(js,/\$\('autoClaimQuests'\)\.onchange=/);
  }],
+ ['STAGE85 resonance uses equipped skill + weapon tier without adding controls or save keys',()=>{
+   assert.match(html,/id="resonanceInfo" aria-live="off"/);
+   assert.match(js,/const RESONANCE_UNLOCK_STAGE=85/);
+   assert.match(js,/weaponScore\(candidate\)>weaponScore\(s\.weapon\)/);
+   assert.match(js,/function resonanceBonus\(id\)/);
+   assert.match(js,/function resonanceStatus\(\)/);
+   assert.match(js,/s\.skillsEquipped\.includes\(id\)/);
+   assert.match(js,/\$\('resonanceInfo'\)\.textContent=resonanceStatus\(\)/);
+   assert.doesNotMatch(html,/data-view="resonance"/,'must reuse existing growth tab');
+ }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
