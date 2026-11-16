@@ -6,7 +6,14 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const assert=require('node:assert/strict');
-const source=fs.readFileSync(path.resolve(__dirname,'../site/game.js'),'utf8');
+const BUY_VARIANT=process.env.CORE_BUY_VARIANT==='progressive'?'progressive':'live';
+const productionSource=fs.readFileSync(path.resolve(__dirname,'../site/game.js'),'utf8');
+// One counterfactual source transformation for measurement only. NEVER changes site/game.js.
+const autoLoop='attempts++<Math.min(100,3+s.autoLevel*8)';
+const progressiveLoop='attempts++<[0,1,1,2,3,5][Math.min(5,Math.max(0,s.autoLevel))]';
+if(BUY_VARIANT==='progressive'&&!productionSource.includes(autoLoop))
+ throw Error('Production auto-purchase budget changed; counterfactual must be reviewed');
+const source=BUY_VARIANT==='progressive'?productionSource.replace(autoLoop,progressiveLoop):productionSource;
 const SEEDS=[20261114,20261116];
 const ROUTES=['combat','economy','automation','automation-lite'];
 const MAX_SECONDS=10800;
@@ -154,8 +161,9 @@ const summary=ROUTES.map(route=>{
 });
 const output={experiment:'first three manual STAGE100 reconstructions with actual saved-in-run core purchases',
  note:'Scripted 60-second visit/click policy. Automation-lite visits every 180 seconds after first reset, while auto-buy continues. One visit buys 3 levels of ONE upgrade. Not human play or a globally optimal policy.',
+ autoPurchaseVariant:BUY_VARIANT,
  sourceCommit:process.env.GITHUB_SHA||null,seeds:SEEDS,routes:ROUTES,summary,scenarios:rows};
-const out=path.resolve(__dirname,'../artifacts/balance/three-rebirth-core-routes.json');
+const out=path.resolve(__dirname,'../artifacts/balance/three-rebirth-core-routes-'+BUY_VARIANT+'.json');
 fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(output,null,2)+'\n');
 for(const item of summary)console.log('CORE_ROUTE '+JSON.stringify(item));
-console.log('CORE_ROUTES_DONE routes='+ROUTES.length+' seeds='+SEEDS.length+' campaigns='+rows.length);
+console.log('CORE_ROUTES_DONE variant='+BUY_VARIANT+' routes='+ROUTES.length+' seeds='+SEEDS.length+' campaigns='+rows.length);
