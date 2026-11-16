@@ -729,3 +729,28 @@ Reference: https://www.legendsofidleon.com/ (official site; conceptual design co
 
 ## 2026-11-16 09:00 KST — incremental design comparison: idle input cadence as an evaluation dimension
 Prior references (Antimatter Dimensions, Idle Slayer, Rogue with the Dead and others) were reviewed for passive advancement and milestone clarity. Rather than another game-name-only entry, this run adds an **evidence criterion**: compare the same current game logic at 10s/75-purchase burst versus 60s/3-purchase sessions, recording 30m stage, first-rebirth time, purchase count and stage55–65 delay. Benefit: isolates input-demand bias (high); risk: still scripted, not a player or device (high); implementation cost: low, test-only. Decision: implement as CI telemetry, do not alter tap mechanics, currencies or production pacing before results.
+
+
+## 2026-11-16 20:10 KST — NGU Idle: equipment milestones versus active farming overhead
+
+Sources:
+- Official Steam listing: https://store.steampowered.com/app/1147690/NGU_IDLE/
+- Adventure progression guide: https://sayolove.github.io/ngu-guide/en/mechanics/adventure/
+- Inventory and equipment guide: https://sayolove.github.io/ngu-guide/en/mechanics/inventory/
+- Adventure Mode overview: https://ngu-idle.fandom.com/wiki/Adventure_Mode
+
+**Observed design pattern:** NGU Idle combines a large RPG inventory and many equipment drops with a long sequence of bosses and progressively unlocked adventure zones. Its guide describes equipment as a major progression driver: zone-specific sets, duplicate-item merging/levels and set-completion bonuses can create goals beyond simply defeating the next boss. The guide also notes that inventory equipment persists through rebirths, while ordinary item drops are online-only; the Steam listing explicitly positions the game as a mix of idle and active play.
+
+**Potential benefits for Neon (hypotheses, not measured in our build):**
+1. A visible gear upgrade can make an otherwise slow stage push feel rewarding even when the stage number barely moves (**high**).
+2. Persistent equipment or collection progress can make earlier barriers compress after reconstruction (**high**).
+3. Boss/zone-specific rewards can distinguish encounters and create a reason to inspect drops (**medium-high**).
+
+**Risks for Neon:**
+1. Hundreds of items, inventory management and set completion would add substantial onboarding/UI complexity to a portrait-first 30-minute evaluation (**high**).
+2. Farming drop rates or manual enemy selection can turn an idle loop into repetitive active work, directly conflicting with the no-tapping / low-input constraint (**critical**).
+3. Making ordinary drops online-only would weaken the value of idle/offline progression and punish players who leave the game closed (**high**).
+
+**Implementation cost / expected value:** low to improve the clarity and celebration of the existing weapon/skill drops; medium to add a compact, optional drop-history or set-progress view if the current content later justifies it; high to introduce a multi-slot inventory, duplicate merging, zone sets and persistent collection bonuses (new save compatibility and balance surface). No hands-on NGU Idle measurement was performed.
+
+**Decision:** borrow only the evaluation criteria—reward clarity, distinct boss drops and visible cross-run compression. **Defer** a large inventory, gear-set grind, online-only loot and any manual farming loop. Keep Neon’s existing weapon/skill/rebirth structure as the current scope; no gameplay or save-schema change from this research.
