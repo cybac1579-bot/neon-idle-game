@@ -1312,3 +1312,16 @@ test('quest claim automation survives rebirth but resets with phase research',()
  assert.equal(b.get('s.autoClaimClock'),0);
  assert.equal(b.document.getElementById('autoClaimQuests').disabled,true);
 });
+
+
+test('automatic quest rewards remain visible as a clear countdown without crowding battle HUD',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const enabled=boot({stage:3,best:3,autoLevel:2,autoClaimQuests:true,autoClaimClock:12,lastSaved:now},now);
+ assert.match(enabled.document.getElementById('cacheAutoStatus').textContent,/자동 수령 중/);
+ assert.match(enabled.document.getElementById('cacheAutoStatus').textContent,/18초/);
+ const disabled=boot({stage:3,best:3,autoLevel:2,autoClaimQuests:false,lastSaved:now},now);
+ assert.match(disabled.document.getElementById('cacheAutoStatus').textContent,/재구성 탭에서 켤 수 있어/);
+ const early=boot({stage:3,best:3,autoLevel:0,lastSaved:now},now);
+ assert.equal(early.document.getElementById('cacheAutoStatus').textContent,'','fresh players should not see locked automation warnings');
+ assert.doesNotMatch(enabled.document.getElementById('heroGrowth').textContent,/자동 수령/,'do not crowd battle hero status');
+});
