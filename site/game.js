@@ -79,6 +79,23 @@ const skillXpNeeded=level=>Math.ceil(8*Math.pow(level,1.25));
 function addSkillXp(id,amount){if(!s.skillsOwned.includes(id))return;let level=s.skillLevels[id]||1;if(level>=20)return;s.skillXp[id]=(s.skillXp[id]||0)+amount;while(level<20&&s.skillXp[id]>=skillXpNeeded(level)){s.skillXp[id]-=skillXpNeeded(level);level++;}s.skillLevels[id]=level;if(level>=20)s.skillXp[id]=0;}
 function grantSkillXp(){for(const id of s.skillsEquipped)addSkillXp(id,1);}
 // Guaranteed STAGE65 discovery. Old saves beyond 65 receive it on their next kill.
+// One-time STAGE35 catch-up: a second early skill when RNG was unkind;
+// otherwise a little XP for an already equipped skill. No new currency/buttons.
+const STAGE35_EARLY_PARTNERS={chain:'bountySkill',overload:'trainingSkill',bountySkill:'chain',trainingSkill:'overload'};
+function grantStage35Support(){
+ if(s.skillsOwned.length===1){
+  const first=s.skillsOwned[0],partner=STAGE35_EARLY_PARTNERS[first];
+  if(partner&&!s.skillsOwned.includes(partner)){
+   s.skillsOwned.push(partner);s.skillLevels[partner]=1;s.skillXp[partner]=0;
+   if(s.skillsEquipped.length<skillSlotCount())s.skillsEquipped.push(partner);
+   showRewardNotice('STAGE 35 전술 보급 · '+SKILLS[partner][0]+' 획득');
+   return 'skill';
+  }
+ }
+ const target=s.skillsEquipped.find(id=>(s.skillLevels[id]||1)<20);
+ if(target){addSkillXp(target,3);showRewardNotice('STAGE 35 전술 보급 · '+SKILLS[target][0]+' 경험치 +3');return 'xp';}
+ return null;
+}
 function grantStage65Skill(){
  if(s.stage<65||s.skillsOwned.includes('capacitor'))return false;
  s.skillsOwned.push('capacitor');s.skillLevels.capacitor=1;s.skillXp.capacitor=0;
@@ -183,7 +200,7 @@ function gainPhase(){return s.stage>=180&&s.rebirths>=2?Math.max(1,Math.floor((s
 function rebirth(automatic=false){const gain=gainCore();if(!gain)return false;s.cores+=gain;s.totalCores+=gain;s.rebirths++;resetGearSkills();s.stage=1;s.cacheCredits=0;s.cacheClock=0;s.questCredits=[0,0,0];s.questClocks=[0,0,0];s.autoClaimClock=0;s.credits=startingCredits();s.energy=0;s.allocation='balanced';s.frontlineSupport=null;s.breakthroughReward=null;s.atk=s.spd=s.gen=s.amp=s.relay=s.forge=s.reactor=0;attackClock=enemyClock=0;spawn();unlock('rebirth','재구성 완료');logText=(automatic?'자동 ':'')+'재구성! 영구 코어 +'+fmt(gain);save();return true;}
 function phase(){const gain=gainPhase();if(!gain)return;s.phaseTokens+=gain;s.phases++;resetGearSkills();s.stage=1;s.cacheCredits=0;s.cacheClock=0;s.questCredits=[0,0,0];s.questClocks=[0,0,0];s.autoClaimClock=0;s.credits=startingCredits();s.energy=0;s.allocation='balanced';s.frontlineSupport=null;s.breakthroughReward=null;s.atk=s.spd=s.gen=s.amp=s.relay=s.forge=s.reactor=0;s.cores=0;s.totalCores=0;s.corePower=s.coreEconomy=s.autoLevel=0;s.autoBuy=s.autoClaimQuests=s.autoRebirth=false;s.rebirths=0;spawn();unlock('phase','위상 전환 완료');logText='위상 전환! 영구 위상 토큰 +'+fmt(gain);save();render();}
 const milestoneTargets=[10,15,25,35,45,55,65,75,85,100,120,150,180];
-const milestoneLabels={10:'초기 전선 확보',15:'에너지 증폭 해금',25:'에너지 중계기 해금',35:'중계망 정비',45:'크레딧 주조기 해금',55:'전선 배분 해금',65:'전투 반응로·전력 순환 스킬 해금',75:'반응로 안정화',85:'전술 공명 가동',100:'재구성 해금',120:'재구성 보상 확대',150:'고밀도 전선',180:'위상 전환 조건'};
+const milestoneLabels={10:'초기 전선 확보',15:'에너지 증폭 해금',25:'에너지 중계기 해금',35:'전술 보급 · 추가 스킬 또는 스킬 경험치',45:'크레딧 주조기 해금',55:'전선 배분 해금',65:'전투 반응로·전력 순환 스킬 해금',75:'반응로 안정화',85:'전술 공명 가동',100:'재구성 해금',120:'재구성 보상 확대',150:'고밀도 전선',180:'위상 전환 조건'};
 function actionableGoal(){
  const options=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=='spd'||s.spd<50)).map(k=>({k,price:cost(k)}));
  if(!options.length)return '현재 구매 가능한 강화가 없어.';
@@ -196,12 +213,12 @@ function actionableGoal(){
  const label=automated?'자동 구매 목표 (해금 등급 우선)':deficit===0?'현재 구매 가능한 최저가 강화':'다음 최저가 강화';
  return `${label}: ${names[next.k]} · ${fmt(next.price)} 크레딧 / 보유 ${fmt(s.credits)} · ${deficit===0?'구매 가능':rate>0?`기본 생산 기준 약 ${estimate}초 (전투 보상으로 단축 가능)`:'크레딧 생산을 강화해'}`;
 }
-function milestoneGoal(){const next=milestoneTargets.find(n=>s.stage<n);if(!next)return s.phases>0?'위상 전환 달성 · 다음 성장 목표를 자유롭게 선택해':s.rebirths<2?'STAGE 180 달성 · 위상 전환에는 재구성 누적 2회가 필요해':'STAGE 180 달성 · 위상 전환 가능 (위상 전환 메뉴 확인)';const unlocks={15:'에너지 증폭기',25:'에너지 중계기',45:'크레딧 주조기',55:'전선 배분',65:'전투 반응로 + 전력 순환 스킬',85:'무기·스킬 공명',100:'재구성'};const reward=next===55?'전선 배분 선택 · 달성 보너스':next===75?'후반 보급 선택 · 달성 보너스':unlocks[next]?`새 기능: ${unlocks[next]} · 달성 보너스`:'달성 보너스 크레딧';return `다음 목표: STAGE ${next} · ${milestoneLabels[next]} (${s.stage}/${next}) · ${reward}`;}
-function resolveEnemyDefeat(){if(!Number.isFinite(enemyHp)||enemyHp>0)return false;s.kills++;grantDrop();grantSkillXp();gainHeroXp(Math.max(1,Math.floor(2*Math.pow(1.035,Math.min(200,s.stage)-1)*(1+traitLevel('training')*.05)*(s.skillBuffTraining>0?2*skillScale('trainingSkill')*(1+resonanceBonus('trainingSkill')):1))));s.credits=Math.min(1e100,s.credits+enemyReward(s.stage)*(1+s.coreEconomy*.6)*(1+traitLevel('bounty')*.05)*(s.skillBuffBounty>0?1+bountySkillBonus():1)*allocationEffects()[2]);const previousStage=s.stage;const jump=1;const nextBoss=Math.ceil((previousStage+1)/10)*10;s.stage=Math.min(previousStage+jump,nextBoss);s.best=Math.max(s.best,s.stage);grantStage65Skill();if(milestoneTargets.some(n=>n>previousStage&&n<=s.stage)){const crossed=milestoneTargets.filter(n=>n>previousStage&&n<=s.stage);for(const n of crossed){const bonus=Math.ceil(enemyReward(n)*2);s.credits=Math.min(1e100,s.credits+bonus);unlock('milestone-'+n,`STAGE ${n} 달성 · ${milestoneLabels[n]} · 보너스 ${fmt(bonus)} 크레딧`);}}if(previousStage<20&&s.stage>=20&&!s.skillChoiceUsed)showRewardNotice('STAGE 20 · 성장 탭에서 첫 스킬 선택 가능');if(previousStage<55&&s.stage>=55)showRewardNotice('전선 배분 해금 · 성장 탭에서 공격/보급 선택');if(previousStage<60&&s.stage>=60&&!s.frontlineSupport)showRewardNotice('STAGE 60 전선 지원 도착 · 성장 탭에서 무료 지원 선택');if(previousStage<75&&s.stage>=75&&!s.breakthroughReward)showRewardNotice('STAGE 75 · 성장 탭에서 후반 보급 선택 가능');if(s.stage>=100)unlock('core','재구성 가능');if(s.stage>=180)unlock('phase-access','위상 전환 조건 확인');spawn();return true;}
+function milestoneGoal(){const next=milestoneTargets.find(n=>s.stage<n);if(!next)return s.phases>0?'위상 전환 달성 · 다음 성장 목표를 자유롭게 선택해':s.rebirths<2?'STAGE 180 달성 · 위상 전환에는 재구성 누적 2회가 필요해':'STAGE 180 달성 · 위상 전환 가능 (위상 전환 메뉴 확인)';const unlocks={15:'에너지 증폭기',25:'에너지 중계기',45:'크레딧 주조기',55:'전선 배분',65:'전투 반응로 + 전력 순환 스킬',85:'무기·스킬 공명',100:'재구성'};const reward=next===35?'초반 스킬 전술 보급 · 달성 보너스':next===55?'전선 배분 선택 · 달성 보너스':next===75?'후반 보급 선택 · 달성 보너스':unlocks[next]?`새 기능: ${unlocks[next]} · 달성 보너스`:'달성 보너스 크레딧';return `다음 목표: STAGE ${next} · ${milestoneLabels[next]} (${s.stage}/${next}) · ${reward}`;}
+function resolveEnemyDefeat(){if(!Number.isFinite(enemyHp)||enemyHp>0)return false;s.kills++;grantDrop();grantSkillXp();gainHeroXp(Math.max(1,Math.floor(2*Math.pow(1.035,Math.min(200,s.stage)-1)*(1+traitLevel('training')*.05)*(s.skillBuffTraining>0?2*skillScale('trainingSkill')*(1+resonanceBonus('trainingSkill')):1))));s.credits=Math.min(1e100,s.credits+enemyReward(s.stage)*(1+s.coreEconomy*.6)*(1+traitLevel('bounty')*.05)*(s.skillBuffBounty>0?1+bountySkillBonus():1)*allocationEffects()[2]);const previousStage=s.stage;const jump=1;const nextBoss=Math.ceil((previousStage+1)/10)*10;s.stage=Math.min(previousStage+jump,nextBoss);s.best=Math.max(s.best,s.stage);if(previousStage<35&&s.stage>=35)grantStage35Support();grantStage65Skill();if(milestoneTargets.some(n=>n>previousStage&&n<=s.stage)){const crossed=milestoneTargets.filter(n=>n>previousStage&&n<=s.stage);for(const n of crossed){const bonus=Math.ceil(enemyReward(n)*2);s.credits=Math.min(1e100,s.credits+bonus);unlock('milestone-'+n,`STAGE ${n} 달성 · ${milestoneLabels[n]} · 보너스 ${fmt(bonus)} 크레딧`);}}if(previousStage<20&&s.stage>=20&&!s.skillChoiceUsed)showRewardNotice('STAGE 20 · 성장 탭에서 첫 스킬 선택 가능');if(previousStage<55&&s.stage>=55)showRewardNotice('전선 배분 해금 · 성장 탭에서 공격/보급 선택');if(previousStage<60&&s.stage>=60&&!s.frontlineSupport)showRewardNotice('STAGE 60 전선 지원 도착 · 성장 탭에서 무료 지원 선택');if(previousStage<75&&s.stage>=75&&!s.breakthroughReward)showRewardNotice('STAGE 75 · 성장 탭에서 후반 보급 선택 가능');if(s.stage>=100)unlock('core','재구성 가능');if(s.stage>=180)unlock('phase-access','위상 전환 조건 확인');spawn();return true;}
 // 전투/주조기와 독립적인 정기 회수 보상. 5회분까지만 축적한다.
-const QUESTS=[['긴급 배송',6,1,3],['부품 회수',30,12,1],['장거리 운송',120,40,1]];
+const QUESTS=[['긴급 배송',6,1,3,10],['부품 회수',30,12,1,5],['장거리 운송',120,40,1,5]];
 function questPayout(i){const q=QUESTS[i];return Math.max(1,Math.floor(q[2]*Math.pow(1.11,Math.min(60,s.best)-1)));}
-function questTick(dt){for(let i=0;i<QUESTS.length;i++){const q=QUESTS[i];if(s.best<q[3])continue;const total=s.questClocks[i]+dt;const cycles=Math.floor((total+1e-7)/q[1]);s.questClocks[i]=total-cycles*q[1];if(cycles>0){const cap=questPayout(i)*5;const previous=s.questCredits[i];s.questCredits[i]=Math.max(previous,Math.min(cap,previous+cycles*questPayout(i)));}}}
+function questTick(dt){for(let i=0;i<QUESTS.length;i++){const q=QUESTS[i];if(s.best<q[3])continue;const total=s.questClocks[i]+dt;const cycles=Math.floor((total+1e-7)/q[1]);s.questClocks[i]=total-cycles*q[1];if(cycles>0){const cap=questPayout(i)*q[4];const previous=s.questCredits[i];s.questCredits[i]=Math.max(previous,Math.min(cap,previous+cycles*questPayout(i)));}}}
 // UI와 무관한 공통 회수 처리: 향후 자동 회수도 이 함수를 호출한다.
 function transferCacheCredits(){const amount=s.questCredits.reduce((a,b)=>a+b,0);if(amount<1)return 0;s.credits=Math.min(1e100,s.credits+amount);s.questCredits=[0,0,0];return amount;}
 function claimCache(){const amount=transferCacheCredits();if(!amount)return false;logText='시간제 퀘스트 보상 +'+fmt(amount);save();render();return true;}
