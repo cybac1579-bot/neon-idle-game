@@ -126,6 +126,44 @@ const server=createServer((req,res)=>{
       allocSamples[1].income>allocSamples[2].income,'supply must trade power for credits at '+width);
    await page.evaluate(prev=>{s=prev.state;spawn();enemyHp=prev.enemyHp;attackClock=prev.attackClock;render();save()},allocSeed);
    assert.equal(await page.locator('#allocationPanel').isVisible(),false,'stage55 fixture not cleaned at '+width);
+   // Real STAGE65 fifth-skill reward and full five-card layout on portrait.
+   const stage65Seed=await page.evaluate(()=>{
+    const previous={state:JSON.parse(JSON.stringify(s)),enemyHp,attackClock};
+    s.stage=64;s.best=64;s.heroLevel=60;s.traitPointsEarned=Math.max(s.traitPointsEarned,59);
+    s.skillsOwned=['overload','chain','bountySkill','trainingSkill'];
+    s.skillsEquipped=s.skillsOwned.slice();s.skillsInherited=[];
+    s.skillLevels={overload:1,chain:1,bountySkill:1,trainingSkill:1};
+    s.skillXp={overload:0,chain:0,bountySkill:0,trainingSkill:0};
+    s.skillBuffCapacitor=0;spawn();enemyHp=0;resolveEnemyDefeat();render();return previous;
+   });
+   const gained=await page.evaluate(()=>({
+    stage:s.stage,owned:s.skillsOwned.slice(),equipped:s.skillsEquipped.slice(),
+    overflow:document.documentElement.scrollWidth>innerWidth+1,
+    cardCount:document.querySelectorAll('#skillList [data-skill]').length
+   }));
+   assert.equal(gained.stage,65,'milestone should unlock at stage65 '+width);
+   assert.equal(gained.owned.length,5,'STAGE65 must award the fifth skill at '+width);
+   assert.equal(gained.equipped.length,5,'new skill should use fifth unlocked slot at '+width);
+   assert.equal(gained.cardCount,5,'all five skill cards visible on mobile at '+width);
+   assert.equal(gained.overflow,false,'five skill cards must not overflow at '+width);
+   const capacitorButton=page.locator('#skillList [data-equip="capacitor"]');
+   await capacitorButton.click();
+   assert.equal(await page.evaluate(()=>s.skillsEquipped.includes('capacitor')),false,'unequip tap should work at '+width);
+   await capacitorButton.click();
+   assert.equal(await page.evaluate(()=>s.skillsEquipped.includes('capacitor')),true,'re-equip tap should work at '+width);
+   const capacitorActivation=await page.evaluate(()=>{
+    s.skillsEquipped=['capacitor'];s['cd_capacitor']=0;s.skillBuffCapacitor=0;
+    const initial=energyRate();skillTick(18);render();
+    return {active:s.skillBuffCapacitor,rateFactor:energyRate()/initial,
+      label:document.querySelector('#skillList [data-skill="capacitor"] strong').textContent};
+   });
+   assert.equal(capacitorActivation.active,10,'energy skill timer should start at '+width);
+   assert.equal(capacitorActivation.rateFactor,2,'new skill should double energy production at '+width);
+   assert.match(capacitorActivation.label,/전력 순환/);
+   await page.evaluate(previous=>{
+    s=previous.state;spawn();enemyHp=previous.enemyHp;attackClock=previous.attackClock;render();save();
+   },stage65Seed);
+   assert.equal(await page.evaluate(()=>s.skillsOwned.includes('capacitor')),false,'STAGE65 test fixture must be restored at '+width);
    // Real portrait touch check of optional stage-75 reward; restore current-run state afterwards.
    const stage75Seed=await page.evaluate(()=>{
     const prev={state:JSON.parse(JSON.stringify(s)),enemyHp,attackClock};
