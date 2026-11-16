@@ -50,7 +50,7 @@ function runPolicy(policy,skill,lowInput,oneBuy){
  const attackOrder=['atk','spd','amp','reactor','gen','forge','relay'];
  const checkpoints={},milestones=[20,45,55,60,65,70,75,85,95,100];
  const purchases=Object.fromEntries(kinds.map(k=>[k,0]));
- let firstSlot=null,manualBuys=0,manualClaims=0,manualTraitBuys=0,autoBuyTicks=0,stageAt30=null;
+ let firstSlot=null,manualBuys=0,manualClaims=0,manualTraitBuys=0,autoBuyTicks=0,stageAt30=null,stageAt60=null,actionsAt30=null,actionsAt60=null;
  const tmax=5400, steps=Math.round(tmax/.25);
  function shop(){
   let loops=0;
@@ -92,12 +92,13 @@ function runPolicy(policy,skill,lowInput,oneBuy){
   }
   if(s.heroLevel>=10&&firstSlot===null)firstSlot=seconds;
   for(const n of milestones)if(s.stage>=n&&checkpoints[n]===undefined)checkpoints[n]=seconds;
-  if(seconds>=1800&&stageAt30===null)stageAt30=s.stage;
+  if(seconds>=1800&&stageAt30===null){stageAt30=s.stage;actionsAt30=manualBuys+manualClaims+manualTraitBuys+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null)+Number(s.stage>=55)}
+  if(seconds>=3600&&stageAt60===null){stageAt60=s.stage;actionsAt60=manualBuys+manualClaims+manualTraitBuys+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null)+Number(s.stage>=55)}
   if(s.stage>=100)break;
   if(tick<steps)step(.25);
  }
  if(s.stage<1||s.rebirths!==0||s.cores!==0||!Number.isFinite(s.credits))throw Error('First-run invariant failed');
- return {readySec:checkpoints[100]??null,stageAt30,stageAt90:s.stage,
+ return {readySec:checkpoints[100]??null,stageAt30,stageAt60,actionsAt30,actionsAt60,stageAt90:s.stage,
   heroLevel:s.heroLevel,heroLv10Sec:firstSlot,stageTimes:checkpoints,
   manualActions:manualBuys+manualClaims+manualTraitBuys+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null)+Number(s.stage>=55),
   purchaseCount:manualBuys,claimCount:manualClaims,traitCount:manualTraitBuys,
@@ -126,7 +127,9 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
   minReadySec:finish.length?Math.min(...finish):null,
   maxReadySec:finish.length?Math.max(...finish):null,
   meanStage55to65Sec:walls.length?avg(walls):null,
-  meanStageAt30:avg(stages30),meanManualActions:avg(runs.map(r=>r.manualActions)),
+  meanStageAt30:avg(stages30),meanStageAt60:avg(runs.map(r=>r.stageAt60??100)),
+  meanActionsAt30:avg(runs.map(r=>r.actionsAt30??r.manualActions)),
+  meanActionsAt60:avg(runs.map(r=>r.actionsAt60??r.manualActions)),meanManualActions:avg(runs.map(r=>r.manualActions)),
   meanHeroLv10Sec: runs.every(r=>r.heroLv10Sec!==null)?avg(runs.map(r=>r.heroLv10Sec)):null};
  summary.push(row);detailed.push({policy,skill,runs});
  console.log('SIM_POLICY '+JSON.stringify(row));
