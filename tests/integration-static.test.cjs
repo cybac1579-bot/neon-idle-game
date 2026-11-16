@@ -24,6 +24,7 @@ const tests=[
    const stats=smoke.lastIndexOf(`await page.locator('[data-view="stats"]').first().click()`,save);
    assert.ok(save>=0&&stats>=0&&stats<save,'save click must follow stats navigation');
  }],
+ ['batch purchase mode is accessible without changing save schema',()=>{assert.match(html,/id="batchPurchase"[^>]*aria-pressed="false"/);assert.match(js,/button\.setAttribute\('aria-pressed',String\(batchPurchaseCount===3\)\)/);assert.match(js,/button\.setAttribute\('aria-label','강화 구매 '/);assert.match(js,/batchPurchaseCount=1/)}],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
