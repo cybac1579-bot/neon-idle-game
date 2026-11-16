@@ -61,6 +61,15 @@ const tests=[
    assert.doesNotMatch(html,/data-view="resonance"/,'must reuse existing growth tab');
  }],
  ['milestone goals accurately identify existing strategic choices',()=>{assert.match(js,/next===55\?'전선 배분 선택/);assert.match(js,/next===75\?'후반 보급 선택/);assert.match(js,/function chooseBreakthroughReward/);assert.match(js,/function renderFrontlineSupport/)}],
+ ['STAGE55 allocation controls have visible kill-income tradeoffs but no separate mechanics tab',()=>{
+   assert.match(js,/const ALLOCATION_MULTIPLIERS=\{balanced:\[1,1,1\],assault:\[2\.2,\.75,\.8\],supply:\[\.8,2\.5,1\.5\]\}/);
+   assert.match(js,/enemyReward\(s\.stage\)[^\n]*allocationEffects\(\)\[2\]/);
+   assert.match(js,/처치 크레딧 ×/);
+   assert.match(html,/data-allocation="balanced"/);
+   assert.match(html,/data-allocation="assault"/);
+   assert.match(html,/data-allocation="supply"/);
+   assert.doesNotMatch(html,/data-view="allocation"/);
+ }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
