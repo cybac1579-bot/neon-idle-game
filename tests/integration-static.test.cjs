@@ -38,6 +38,15 @@ const tests=[
    assert.match(js,/s\.breakthroughReward=null/);
    assert.doesNotMatch(js,/스킬 구현 전 효과 대기/);
  }],
+ ['optional Lv2 quest claim toggle retains manual quest rewards',()=>{
+   assert.match(html,/id="autoClaimQuests" disabled/);
+   assert.match(html,/연구 Lv\.2 해금 · 30초마다/);
+   assert.match(js,/autoClaimQuests:false,autoClaimClock:0/);
+   assert.match(js,/function autoQuestClaimTick\(dt\)/);
+   assert.match(js,/if\(!s\.autoClaimQuests\|\|s\.autoLevel<2\)return 0/);
+   assert.match(js,/return transferCacheCredits\(\)/);
+   assert.match(js,/\$\('autoClaimQuests'\)\.onchange=/);
+ }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
