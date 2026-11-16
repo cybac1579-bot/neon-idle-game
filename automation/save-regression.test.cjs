@@ -1178,3 +1178,67 @@ test('manual upgrade batching preserves rising costs, caps, and first-run auto-b
  b.get('save();load()');
  assert.equal(b.get('s.spd'),50,'batch purchases persist through save/load');
 });
+
+
+test('STAGE75 optional bridge rewards existing skills, once per run, while idle combat continues',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:74,best:74,heroLevel:12,skillsOwned:['chain','overload'],skillsEquipped:['chain','overload'],skillLevels:{chain:3,overload:2},lastSaved:now},now);
+ assert.equal(b.get("chooseBreakthroughReward('skill')"),false,'cannot collect before STAGE75');
+ b.get('s.stage=75;spawn();render()');
+ assert.match(b.document.getElementById('battleGoal').textContent,/후반 보급 선택/);
+ const pre=b.get('s.kills');
+ b.get('enemyHp=0;step(0,false)');
+ assert.equal(b.get('s.kills'),pre+1,'unclaimed choice must not block automatic combat');
+ assert.equal(b.get('s.breakthroughReward'),null,'choice may remain unclaimed');
+ assert.equal(b.get("chooseBreakthroughReward('skill')"),true);
+ assert.equal(b.get('s.skillLevels.chain'),4);
+ assert.equal(b.get('s.skillLevels.overload'),3);
+ assert.equal(b.get("chooseBreakthroughReward('credits')"),false,'cannot claim a second reward');
+ b.get('save();load()');
+ assert.equal(b.get('s.breakthroughReward'),'skill','chosen reward must survive save/load');
+ b.get('s.stage=100;spawn()');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.breakthroughReward'),null,'next run must offer a new choice');
+ assert.equal(b.get('s.skillLevels.chain'),undefined,'non-inherited skill is reset normally');
+});
+
+test('STAGE75 weapon and credit alternatives grant bounded existing-system rewards',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const w=boot({stage:75,best:75,weapon:{tier:1,stage:72},lastSaved:now},now);
+ const before=w.get('power()');
+ assert.equal(w.get("chooseBreakthroughReward('weapon')"),true);
+ assert.ok(w.get('power()')>before*1.19,'weapon choice applies a meaningful current-run combat multiplier');
+ assert.equal(w.get("chooseBreakthroughReward('weapon')"),false,'no duplicate weapon reward');
+ w.get('save();load()');
+ assert.equal(w.get('s.breakthroughReward'),'weapon','weapon choice persists');
+ assert.ok(w.get('power()')>before*1.19,'saved multiplier remains active');
+ w.get('s.stage=100;spawn();rebirth()');
+ assert.equal(w.get('s.breakthroughReward'),null);
+ assert.equal(w.get('s.weapon'),null,'weapon equipment resets on rebirth');
+ const noWeapon=boot({stage:75,best:75,lastSaved:now},now);
+ assert.equal(noWeapon.get("chooseBreakthroughReward('weapon')"),true);
+ assert.equal(noWeapon.get('s.weapon.tier'),0,'unlucky weapon drops do not make option empty');
+ const c=boot({stage:75,best:75,credits:100,lastSaved:now},now);
+ const reward=c.get('enemyReward(75)*4');
+ assert.equal(c.get("chooseBreakthroughReward('credits')"),true);
+ assert.equal(c.get('s.credits'),100+reward);
+ assert.equal(c.get("chooseBreakthroughReward('credits')"),false);
+ assert.equal(c.get('s.credits'),100+reward,'payout not duplicated');
+ const invalid=boot({stage:75,best:75,breakthroughReward:'invalid',lastSaved:now},now);
+ assert.equal(invalid.get('s.breakthroughReward'),null,'legacy/corrupt choice normalized');
+});
+
+test('battle shows minimal hero HUD while details remain on growth and statistics screens',()=>{
+ const b=boot({stage:75,best:75,heroLevel:11,heroXp:22,traitPointsEarned:10,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ const hud=b.document.getElementById('heroGrowth').textContent;
+ assert.match(hud,/주인공 LV\.11/);
+ assert.match(hud,/장착 스킬 1\/2/);
+ assert.doesNotMatch(hud,/특성|경험치|계승/,'battle must not repeat full statistics');
+ for(const id of ['heroDetails','heroStats']){
+  const detail=b.document.getElementById(id).textContent;
+  assert.match(detail,/경험치 22/);
+  assert.match(detail,/스킬 슬롯 2\/5/);
+  assert.match(detail,/계승 1\/2/);
+ }
+ assert.equal(b.get('TRAITS.find(t=>t[0]==="inherit")[3]').includes('스킬 구현 전 효과 대기'),false,'obsolete tooltip must be removed');
+});
