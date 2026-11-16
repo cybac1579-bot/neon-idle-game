@@ -2,7 +2,7 @@
 // Analysis only. Runs the exact current site/game.js; no production gameplay changes.
 // node tests/balance-simulation.cjs
 // Default: decisions every 10s. BALANCE_MODE=low-input: decisions every 60s,
-// at most 3 purchases and 1 trait per visit, 8 seeded scenarios.
+// one upgrade type per visit, up to 3 levels per click and 5 seeded scenarios.
 // It is NOT a human playtest and does not establish a globally optimal strategy.
 const fs=require('node:fs');
 const vm=require('node:vm');
@@ -12,7 +12,7 @@ const source=fs.readFileSync(path.resolve(__dirname,'../site/game.js'),'utf8');
 const LOW_INPUT=['low-input','one-buy','two-minute'].includes(process.env.BALANCE_MODE);
 const TWO_MINUTE=process.env.BALANCE_MODE==='two-minute';
 const ONE_BUY=process.env.BALANCE_MODE==='one-buy';
-const SEEDS=LOW_INPUT?[20261114,20261116]:[20261114,20261115,20261116,20261117,20261118];
+const SEEDS=[20261114,20261115,20261116,20261117,20261118];
 const POLICIES=LOW_INPUT?['value','cheapest']:['value','cheapest','attack-first','tier-first'];
 const SKILL_IDS=LOW_INPUT?['chain','bountySkill']:['chain','overload','bountySkill','trainingSkill'];
 
@@ -51,37 +51,53 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute){
  const attackOrder=['atk','spd','amp','reactor','gen','forge','relay'];
  const checkpoints={},milestones=[20,45,55,60,65,70,75,85,95,100];
  const purchases=Object.fromEntries(kinds.map(k=>[k,0]));
- let firstSlot=null,manualBuys=0,manualClaims=0,manualTraitBuys=0,autoBuyTicks=0,stageAt30=null,stageAt60=null,actionsAt30=null,actionsAt60=null;
+ let firstSlot=null,manualBuys=0,manualPurchaseActions=0,manualClaims=0,manualTraitBuys=0,allocationActions=0,visits=0,stageAt30=null,stageAt60=null,actionsAt30=null,actionsAt60=null,purchaseActionsAt30=null,purchaseActionsAt60=null,purchaseCountAt30=null,purchaseCountAt60=null;
  const tmax=5400, steps=Math.round(tmax/.25);
+ function chooseUpgrade(choices){
+  if(policy==='cheapest')return choices.sort((a,b)=>cost(a)-cost(b))[0];
+  if(policy==='attack-first')return choices.sort((a,b)=>attackOrder.indexOf(a)-attackOrder.indexOf(b))[0];
+  if(policy==='tier-first')return choices.sort((a,b)=>unlock[b]-unlock[a])[0];
+  if(policy==='value'){
+   const dps=power()/attackInterval(),income=creditRate();
+   let chosen=null,score=-Infinity;
+   for(const k of choices){
+    const price=cost(k);s[k]++;
+    const newDps=power()/attackInterval(),newIncome=creditRate();
+    s[k]--;
+    const result=(Math.max(0,Math.log(newDps/dps))+.25*Math.max(0,Math.log(newIncome/income)))/Math.sqrt(price);
+    if(result>score){score=result;chosen=k}
+   }
+   return chosen;
+  }
+  throw Error('Unknown policy '+policy);
+ }
  function shop(){
+  const limit=lowInput?(oneBuy?1:3):75;
+  if(lowInput){
+   // Match the real UI: one upgrade button per visit; a 3-buy click only raises that same upgrade.
+   const choices=kinds.filter(k=>s.best>=unlock[k]&&!(k==='spd'&&s.spd>=50)&&s.credits>=cost(k));
+   if(!choices.length)return;
+   const chosen=chooseUpgrade(choices),bought=purchaseBatch(chosen,limit);
+   if(bought<1)throw Error('Batch purchase rejected '+chosen);
+   purchases[chosen]+=bought;manualBuys+=bought;manualPurchaseActions++;
+   return;
+  }
   let loops=0;
-  while(loops++<(lowInput?(oneBuy?1:3):75)){
+  while(loops++<limit){
    const choices=kinds.filter(k=>s.best>=unlock[k]&&!(k==='spd'&&s.spd>=50)&&s.credits>=cost(k));
    if(!choices.length)break;
-   let chosen;
-   if(policy==='cheapest')chosen=choices.sort((a,b)=>cost(a)-cost(b))[0];
-   else if(policy==='attack-first')chosen=choices.sort((a,b)=>attackOrder.indexOf(a)-attackOrder.indexOf(b))[0];
-   else if(policy==='tier-first')chosen=choices.sort((a,b)=>unlock[b]-unlock[a])[0];
-   else if(policy==='value'){
-    const dps=power()/attackInterval(),income=creditRate();
-    let score=-Infinity;
-    for(const k of choices){
-     const price=cost(k);s[k]++;
-     const newDps=power()/attackInterval(),newIncome=creditRate();
-     s[k]--;
-     const result=(Math.max(0,Math.log(newDps/dps))+.25*Math.max(0,Math.log(newIncome/income)))/Math.sqrt(price);
-     if(result>score){score=result;chosen=k}
-    }
-   }else throw Error('Unknown policy '+policy);
+   const chosen=chooseUpgrade(choices);
    if(!purchase(chosen))throw Error('Purchase candidate rejected '+chosen);
-   purchases[chosen]++;manualBuys++;
+   purchases[chosen]++;manualBuys++;manualPurchaseActions++;
   }
  }
+ const actionCount=()=>manualPurchaseActions+manualClaims+manualTraitBuys+allocationActions+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null);
  for(let tick=0;tick<=steps;tick++){
   const seconds=tick*.25;
   if(tick%(twoMinute?480:lowInput?240:40)===0){
+   visits++;
    if(s.stage>=20&&!s.skillChoiceUsed&&!s.skillsOwned.includes(skill))chooseSkill(skill);
-   if(s.stage>=55)s.allocation='assault';
+   if(s.stage>=55&&s.allocation!=='assault'){s.allocation='assault';allocationActions++;}
    if(s.stage>=60&&!s.frontlineSupport)chooseFrontlineSupport('firepower');
    const traitOrder=[['precision',5],['double',5],['boss',3],['haste',5],['training',5],['energy',5]];
    let traitBudget=lowInput?1:Infinity;
@@ -93,16 +109,18 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute){
   }
   if(s.heroLevel>=10&&firstSlot===null)firstSlot=seconds;
   for(const n of milestones)if(s.stage>=n&&checkpoints[n]===undefined)checkpoints[n]=seconds;
-  if(seconds>=1800&&stageAt30===null){stageAt30=s.stage;actionsAt30=manualBuys+manualClaims+manualTraitBuys+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null)+Number(s.stage>=55)}
-  if(seconds>=3600&&stageAt60===null){stageAt60=s.stage;actionsAt60=manualBuys+manualClaims+manualTraitBuys+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null)+Number(s.stage>=55)}
+  if(seconds>=1800&&stageAt30===null){stageAt30=s.stage;actionsAt30=actionCount();purchaseActionsAt30=manualPurchaseActions;purchaseCountAt30=manualBuys}
+  if(seconds>=3600&&stageAt60===null){stageAt60=s.stage;actionsAt60=actionCount();purchaseActionsAt60=manualPurchaseActions;purchaseCountAt60=manualBuys}
   if(s.stage>=100)break;
   if(tick<steps)step(.25);
  }
  if(s.stage<1||s.rebirths!==0||s.cores!==0||!Number.isFinite(s.credits))throw Error('First-run invariant failed');
+ const manualActions=actionCount();
+ if(lowInput){const maxPerVisit=oneBuy?1:3;assert.ok(manualPurchaseActions<=visits,'purchase clicks exceeded low-input visits');assert.ok(manualBuys<=manualPurchaseActions*maxPerVisit,'one visit bought more levels than the actual selector permits');}
  return {readySec:checkpoints[100]??null,stageAt30,stageAt60,actionsAt30,actionsAt60,stageAt90:s.stage,
   heroLevel:s.heroLevel,heroLv10Sec:firstSlot,stageTimes:checkpoints,
-  manualActions:manualBuys+manualClaims+manualTraitBuys+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null)+Number(s.stage>=55),
-  purchaseCount:manualBuys,claimCount:manualClaims,traitCount:manualTraitBuys,
+  manualActions,purchaseCount:manualBuys,purchaseActions:manualPurchaseActions,visitCount:visits,
+  purchaseActionsAt30,purchaseActionsAt60,purchaseCountAt30,purchaseCountAt60,claimCount:manualClaims,traitCount:manualTraitBuys,
   upgrades:purchases,weapon:s.weapon?{tier:s.weapon.tier,stage:s.weapon.stage}:null,
   skillEquipped:s.skillsEquipped.slice(),skillOwned:s.skillsOwned.slice(),frontlineSupport:s.frontlineSupport,
   balanceFlags:{creditRate:creditRate(),power:power(),speed:attackInterval(),cores:gainCore()}};
@@ -130,7 +148,12 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
   meanStage55to65Sec:walls.length?avg(walls):null,
   meanStageAt30:avg(stages30),meanStageAt60:avg(runs.map(r=>r.stageAt60??100)),
   meanActionsAt30:avg(runs.map(r=>r.actionsAt30??r.manualActions)),
-  meanActionsAt60:avg(runs.map(r=>r.actionsAt60??r.manualActions)),meanManualActions:avg(runs.map(r=>r.manualActions)),
+  meanActionsAt60:avg(runs.map(r=>r.actionsAt60??r.manualActions)),
+  meanPurchaseActionsAt30:avg(runs.map(r=>r.purchaseActionsAt30??r.purchaseActions)),
+  meanPurchaseLevelsAt30:avg(runs.map(r=>r.purchaseCountAt30??r.purchaseCount)),
+  meanPurchaseActionsAt60:avg(runs.map(r=>r.purchaseActionsAt60??r.purchaseActions)),
+  meanPurchaseLevelsAt60:avg(runs.map(r=>r.purchaseCountAt60??r.purchaseCount)),
+  meanManualActions:avg(runs.map(r=>r.manualActions)),
   meanHeroLv10Sec: runs.every(r=>r.heroLv10Sec!==null)?avg(runs.map(r=>r.heroLv10Sec)):null};
  summary.push(row);detailed.push({policy,skill,runs});
  console.log('SIM_POLICY '+JSON.stringify(row));
