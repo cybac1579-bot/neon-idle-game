@@ -1551,7 +1551,7 @@ test('auto-buy obeys tier-first preference and does not purchase before the inte
 
 test('STAGE65 grants energy-cycle skill at the milestone without manual input or duplicate rewards',()=>{
  const stamp=Date.UTC(2026,10,16,0,0,0);
- const b=boot({stage:64,best:64,credits:100,skillsOwned:['chain'],skillsEquipped:['chain'],heroLevel:20,traitPointsEarned:19,lastSaved:stamp},stamp);
+ const b=boot({stage:64,best:64,credits:100,skillsOwned:['chain'],skillsEquipped:['chain'],heroLevel:20,traitPointsEarned:19,lastSaved:stamp},stamp,42); // deterministic: a random drop must not consume the spare slot
  assert.equal(b.get('SKILLS.capacitor[2]'),18);
  assert.equal(b.get("chooseSkill('capacitor')"),false,'must not claim exclusive stage65 discovery early');
  assert.equal(b.get("s.skillsOwned.includes('capacitor')"),false);
