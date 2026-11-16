@@ -1513,3 +1513,36 @@ test('STAGE55 kill credits stay neutral before unlock and revert at normal rebir
  assert.equal(b.get('s.allocation'),'balanced');
  assert.equal(b.get('s.stage'),1);
 });
+
+
+test('automation research gradually increases per-tick auto-purchase budget without bulk-Lv1 exploit',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ const tiers=[[1,30,1],[2,10,1],[3,8,2],[4,6,3],[5,3,5]];
+ for(const [level,interval,limit] of tiers){
+  const b=boot({stage:1,best:1,autoLevel:level,autoBuy:true,credits:1e12,lastSaved:now},now);
+  assert.equal(b.get('autoPurchaseInterval()'),interval,'automation level '+level+' interval');
+  assert.equal(b.get('autoPurchaseLimit()'),limit,'automation level '+level+' purchase count');
+  const before=b.get('s.atk+s.spd+s.gen');
+  b.get('step('+interval+',false)');
+  const after=b.get('s.atk+s.spd+s.gen');
+  assert.equal(after-before,limit,'one due timer purchases exactly its level-bound budget');
+  assert.equal(b.get('s.autoLevel'),level,'auto-buy must not spend core research levels');
+  b.get('save();load()');
+  assert.equal(b.get('autoPurchaseLimit()'),limit,'budget follows saved research level');
+ }
+});
+
+test('auto-buy obeys tier-first preference and does not purchase before the interval',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:65,best:65,credits:1e12,autoLevel:1,autoBuy:true,lastSaved:now},now);
+ b.get('step(29,false)');
+ assert.equal(b.get('s.reactor'),0,'research LV1 cannot purchase before its due time');
+ b.get('step(1,false)');
+ assert.equal(b.get('s.reactor'),1,'highest unlocked reactor remains first purchase');
+ assert.equal(b.get('s.atk+s.spd+s.gen+s.amp+s.relay+s.forge'),0,
+  'first automatic interval cannot silently buy ten additional upgrade levels');
+ const off=boot({stage:65,best:65,credits:1e12,autoLevel:5,autoBuy:false,lastSaved:now},now);
+ off.get('step(60,false)');
+ assert.equal(off.get('s.atk+s.spd+s.gen+s.amp+s.relay+s.forge+s.reactor'),0,
+  'autobuy still requires explicit opt-in');
+});
