@@ -97,6 +97,34 @@ const server=createServer((req,res)=>{
    assert.equal(questClaim.after,questClaim.before+questClaim.pending,'quest credits must reach wallet at '+width);
    assert.equal(questClaim.disabledAfter,true,'claim button must disable after collection at '+width);
    assert.equal(questClaim.rows.length,3,'quest statuses must survive reward collection at '+width);
+   // First-half STAGE35 new-skill safety net and visible quick-quest reserve.
+   const stage35Seed=await page.evaluate(()=>{
+    const previous={state:JSON.parse(JSON.stringify(s)),enemyHp,attackClock};
+    window.__earlyOriginalRandom=Math.random;Math.random=()=>1; // guaranteed no random extra drop
+    s.stage=34;s.best=34;s.heroLevel=10;s.traitPointsEarned=Math.max(s.traitPointsEarned,9);
+    s.skillsOwned=['chain'];s.skillsEquipped=['chain'];s.skillsInherited=[];
+    s.skillLevels={chain:1};s.skillXp={chain:0};s.skillChoiceUsed=true;
+    s.questCredits=[0,0,0];s.questClocks=[0,0,0];
+    spawn();render();return previous;
+   });
+   assert.match(await page.locator('#goal').textContent(),/STAGE 35.*초반 스킬 전술 보급/,'stage35 goal must name next reward at '+width);
+   const stage35Outcome=await page.evaluate(()=>{
+    enemyHp=0;resolveEnemyDefeat();questTick(60);render();
+    return {stage:s.stage,owned:s.skillsOwned.slice(),equipped:s.skillsEquipped.slice(),
+     reward:document.getElementById('rewardCue').textContent,
+     fastPending:s.questCredits[0],fastPayout:questPayout(0),
+     overflow:document.documentElement.scrollWidth>innerWidth+1};
+   });
+   assert.equal(stage35Outcome.stage,35,'stage35 milestone transition at '+width);
+   assert.ok(stage35Outcome.owned.includes('bountySkill'),'second skill must be guaranteed at '+width);
+   assert.ok(stage35Outcome.equipped.includes('bountySkill'),'LV10 second slot should equip skill at '+width);
+   assert.match(stage35Outcome.reward,/전술 보급/,'reward should be immediately visible at '+width);
+   assert.equal(stage35Outcome.fastPending,10*stage35Outcome.fastPayout,'10 quick quests must be collectable after 60s at '+width);
+   assert.equal(stage35Outcome.overflow,false,'new early reward must not overflow mobile at '+width);
+   await page.evaluate(previous=>{
+    Math.random=window.__earlyOriginalRandom;delete window.__earlyOriginalRandom;
+    s=previous.state;spawn();enemyHp=previous.enemyHp;attackClock=previous.attackClock;render();save();
+   },stage35Seed);
    // Real stage55 strategic choices via actual portrait button taps; existing growth tab only.
    const allocSeed=await page.evaluate(()=>{
     const previous={state:JSON.parse(JSON.stringify(s)),enemyHp,attackClock};
