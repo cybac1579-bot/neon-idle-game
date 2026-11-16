@@ -150,7 +150,7 @@ const server=createServer((req,res)=>{
     s=previous.state;spawn();enemyHp=previous.enemyHp;attackClock=previous.attackClock;
     render();save();
    },resonanceSeed);
-   assert.match(await resonancePanel.textContent(),/STAGE 85/,'STAGE85 smoke must restore earlier player's state at '+width);
+   assert.match(await resonancePanel.textContent(),/STAGE 85/,'STAGE85 smoke must restore earlier player state at '+width);
    // Real touch opt-in: research Lv2 allows quest claiming without enabling auto-buy.
    const claimModeSeed=await page.evaluate(()=>{
     const prior=JSON.parse(JSON.stringify(s));
