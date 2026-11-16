@@ -161,3 +161,25 @@ When user revises a rule, update this file with date, exact new decision and sup
 **Drawbacks:** (1) at current simulated STAGE100 objective Assault still completes faster than Balanced/Supply (**large unresolved depth risk**), (2) 60s/3-level value+Chain first Stage100 rose to ~83m18 while a 10s active same-build run is ~41m06, so optimized ~60m target remains unmet (**large**), (3) extra kill-reward multipliers interact with Bounty skill and future automation after rebirth, needing longer-run validation (**medium**).
 
 The adjustment is a provisional candidate, not a claim that the game has good final strategy balance. A staged human-like **Supply 55–64 → Assault from65** diagnostic is allowed (one extra mode choice) to check whether saving before Reactor unlock pays back. It is not an automated in-game feature. Do not add more modes or complexity before actual 30-minute mobile experience and multi-rebirth testing.
+
+
+## 2026-11-16 progressive auto-buy research trial, 3-rebirth validation
+
+**Status: provisional balance trial, not a new immutable user requirement.** The user's priority remains rewarding post-rebirth compression without tapping, differentiated long-term core investments, no free bonus tied only to rebirth count, and all paths eventually unlockable. Existing first-STAGE100 efficient play target near **60 minutes** is still not met (current 10-second high-interaction and 60-second low-input scenarios remain very far apart).
+
+**Finding from actual game code:** former automatic purchasing at research LV1 granted **up to 11 buys every 10 seconds**, and at LV2 **up to 19 buys every 8 seconds**. Earlier spoken statement that LV1 tick was 30 seconds and LV2 was 10 seconds was incorrect: the array `[30,10,8,6,4,3]` is indexed by research level, so LV0=30s (auto-buy locked), LV1=10s, LV2=8s, LV3=6s, LV4=4s, LV5=3s. This discrepancy has been corrected in tests and the record.
+
+**Live trial adjustment:** keep existing intervals and tier-first affordable purchase priority, but make purchases-per-tick advance with research level: LV0=0, LV1=1, LV2=1, LV3=2, LV4=3, LV5=5. This avoids 11 instant purchases on the first automation unlock while preserving faster purchasing at higher ranks. Core costs/maximum LV5, auto-buy opt-in, quest auto-claim at LV2, save schema, manual 1/3-level buttons, hero/skills/inheritance, enemy curve and art stay unchanged. The old high-batch algorithm remains available **only as an explicitly labeled counterfactual in test code**, not a user option.
+
+**Benefits (impact):** (1) lowers runaway strength of earliest automation investment (large), (2) retains idle/rebirth compression and more frequent purchases after additional core research (large), (3) keeps existing controls, rewards, core tier and storage keys (medium).
+**Costs/risks (impact):** (1) early automation is still faster than combat in the constrained-input model, so route superiority remains (large), (2) legacy save owners at LV1 will experience fewer automated purchases than previously and thus a changed economy (medium; provisional balancing), (3) a 3-rebirth scripted simulation with five fixed seeds does not verify actual user enjoyment or every future core combination (large unknown). Do not present the trial as a final balanced path design.
+
+**Five-seed actual production JS evidence, identical first run for each route:** STAGE100 first **4,998.40 seconds (83m18s)**. Second/third by persistent-core spending (seconds; manual visits every 60s except `automation-lite` every 180s after first reset):
+- Combat: **4461.40 / 4302.20**, ~493.6 manual actions total across 3 runs.
+- Economy: **4617.30 / 4505.20**, ~504.8 actions.
+- Automation (live progressive budget): **4041.95 / 3359.30**, ~326.2 actions.
+- Automation-lite (3-min visits): **3964.50 / 3905.50**, ~245.4 actions.
+- Legacy high-batch counterfactual: automation **3360.30 / 3353.10**, ~281.8 actions; auto-lite **3567.05 / 3420.30**, ~230.2 actions.
+All **5/5 seeds completed all 3 STAGE100 cycles** for each policy/variant, but this is not human play nor statistical proof of optimality. The scripted driver explicitly counts core purchases and switches enabling auto-buy and auto-claim as user actions. After first rebirth the standard 5 core payout permits LV1 auto research (cost 3); LV2 costs 6 and is reached after second rebirth in simulated path. Auto-claim therefore begins on the third run and remains an opt-in option.
+
+**Next direction:** avoid further arbitrary global enemy HP/cost inflation or endlessly changing research numbers. Prioritize the actual STAGE55–100 reward choice depth and compare mixed core investments, multi-rebirth sustainability, user control burden and mobile gameplay before locking balancing.
