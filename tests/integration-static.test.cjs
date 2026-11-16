@@ -25,7 +25,7 @@ const tests=[
    assert.ok(save>=0&&stats>=0&&stats<save,'save click must follow stats navigation');
  }],
  ['batch purchase mode is accessible without changing save schema',()=>{assert.match(html,/id="batchPurchase"[^>]*aria-pressed="false"/);assert.match(js,/button\.setAttribute\('aria-pressed',String\(batchPurchaseCount===3\)\)/);assert.match(js,/button\.setAttribute\('aria-label','강화 구매 '/);assert.match(js,/batchPurchaseCount=1/)}],
- ['batch purchase copy distinguishes maximum from guaranteed purchases',()=>{assert.match(js,/batchPurchaseCount===3\?'최대 3회':'1회'/);assert.match(html,/1회 \/ 최대 3회 선택/)}],
+ ['batch purchase copy distinguishes maximum from guaranteed purchases',()=>{assert.match(js,/batchPurchaseCount===3\?'최대 3회':'1회'/);assert.match(html,/1회 \/ 최대 3회 선택/);assert.match(html,/한 번 클릭하면 선택한 강화 1종만 최대 3단계까지 연속 구매해/)}],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
