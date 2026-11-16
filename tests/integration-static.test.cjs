@@ -89,6 +89,36 @@ const tests=[
  }],
  ['STAGE35 skill catch-up and quick quest reserve improve first 30-minute pacing',()=>{assert.match(js,/function grantStage35Support\(\)/);assert.match(js,/STAGE35_EARLY_PARTNERS/);assert.match(js,/q\[4\]/);assert.match(js,/\['긴급 배송',6,1,3,10\]/);}],
  ['late first-skill selection receives the missed STAGE35 support once',()=>{assert.match(js,/function chooseSkill\(id\)\{[^\n]*s\.skillChoiceUsed=true;if\(s\.stage>=35\)grantStage35Support\(\)/);assert.match(js,/if\(s\.skillsOwned\.length===1\)/);assert.match(js,/if\(previousStage<35&&s\.stage>=35\)grantStage35Support\(\)/);}],
+ ['STAGE35 delayed-choice runtime: one partner, no repeat, early path unchanged',()=>{
+   // Execute the production functions, not a reimplementation of their decisions.
+   const extract=(name)=>{
+     const start=js.indexOf('function '+name+'(');
+     assert.ok(start>=0,'missing '+name);
+     const end=js.indexOf('\nfunction ',start+1);
+     assert.ok(end>start,'function boundary missing for '+name);
+     return js.slice(start,end);
+   };
+   for(const stage of [20,35,40]){
+     const state={stage,skillsOwned:[],skillsEquipped:[],skillLevels:{},skillXp:{},skillChoiceUsed:false};
+     const notices=[];
+     const context=vm.createContext({
+       s:state,SKILLS:{chain:['연쇄 방전'],bountySkill:['현상금 추적'],overload:['과부하 사격'],trainingSkill:['전술 훈련']},
+       STAGE35_EARLY_PARTNERS:{chain:'bountySkill',overload:'trainingSkill',bountySkill:'chain',trainingSkill:'overload'},
+       skillSlotCount:()=>2,showRewardNotice:m=>notices.push(m),addSkillXp:(id,n)=>{state.skillXp[id]=(state.skillXp[id]||0)+n},
+       save(){},render(){}
+     });
+     vm.runInContext(extract('grantStage35Support')+'\n'+extract('chooseSkill'),context);
+     assert.equal(vm.runInContext("chooseSkill('chain')",context),true);
+     assert.deepEqual([...state.skillsOwned],stage>=35?['chain','bountySkill']:['chain']);
+     assert.equal(vm.runInContext("chooseSkill('overload')",context),false,'second first-choice must be rejected');
+     assert.equal(state.skillsOwned.length,stage>=35?2:1);
+     if(stage===20){
+       assert.equal(vm.runInContext('grantStage35Support()',context),'skill');
+       assert.deepEqual([...state.skillsOwned],['chain','bountySkill']);
+     }
+     assert.equal(notices.filter(m=>m.includes('STAGE 35 전술 보급')).length,1);
+   }
+ }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
