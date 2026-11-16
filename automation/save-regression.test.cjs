@@ -1325,3 +1325,87 @@ test('automatic quest rewards remain visible as a clear countdown without crowdi
  assert.equal(early.document.getElementById('cacheAutoStatus').textContent,'','fresh players should not see locked automation warnings');
  assert.doesNotMatch(enabled.document.getElementById('heroGrowth').textContent,/자동 수령/,'do not crowd battle hero status');
 });
+
+
+test('STAGE85 resonance needs both an equipped skill and a weapon, and scales by current weapon tier',()=>{
+ const at=Date.UTC(2026,10,12);
+ const base={stage:84,best:85,weapon:{tier:0,stage:74},skillsOwned:['overload','chain','bountySkill','trainingSkill'],
+  skillsEquipped:['chain'],skillLevels:{overload:1,chain:1,bountySkill:1,trainingSkill:1},heroLevel:10,traitPointsEarned:9,lastSaved:at};
+ const b=boot(base,at);
+ assert.equal(b.get("resonanceBonus('chain')"),0,'no early-stage skill power leak');
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/STAGE 85/);
+ b.get('s.stage=85;spawn();render()');
+ assert.ok(Math.abs(b.get("resonanceBonus('chain')")-.10)<1e-12,'common tier gives +10% skill effect');
+ assert.equal(b.get("resonanceBonus('overload')"),0,'un-equipped skills cannot receive resonance');
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/연쇄 방전 피해 \+10%/);
+ b.get('s.weapon={tier:1,stage:85};render()');
+ assert.ok(Math.abs(b.get("resonanceBonus('chain')")-.15)<1e-12);
+ b.get('s.weapon={tier:2,stage:85};render()');
+ assert.ok(Math.abs(b.get("resonanceBonus('chain')")-.20)<1e-12);
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/영웅 무기/);
+ b.get('s.weapon=null;render()');
+ assert.equal(b.get("resonanceBonus('chain')"),0,'no weapon means no free resonance');
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/무기를 얻으면/);
+ b.get('s.weapon={tier:2,stage:85};toggleEquipSkill("chain")');
+ assert.equal(b.get("resonanceBonus('chain')"),0,'unequip immediately removes resonance');
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/스킬을 장착해/);
+});
+
+test('STAGE85 weapon resonance only strengthens existing skill effects, not standard attack or raw credit production',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:85,best:85,weapon:{tier:1,stage:85},heroLevel:10,traitPointsEarned:9,
+   skillsOwned:['overload','chain','bountySkill','trainingSkill'],skillsEquipped:['overload','bountySkill'],
+   skillLevels:{overload:1,chain:1,bountySkill:1,trainingSkill:1},lastSaved:at},at);
+ const attack=b.get('power()'),income=b.get('creditRate()');
+ assert.ok(Math.abs(b.get("resonanceBonus('overload')")-.15)<1e-12);
+ const hp=b.get('enemyHp');
+ b.get('skillTick(9)');
+ assert.ok(Math.abs((hp-b.get('enemyHp'))-attack*3*1.15)<1e-5,'burst must gain exactly tier bonus');
+ assert.equal(b.get('power()'),attack,'resonance should not create unlisted auto-attack multiplier');
+ assert.equal(b.get('creditRate()'),income,'resonance should not inflate passive income');
+ const bounty=b.get('bountySkillBonus()');
+ assert.ok(Math.abs(bounty-.25*1.15)<1e-12,'bounty effect receives tier bonus');
+ b.get('toggleEquipSkill("bountySkill")');
+ assert.ok(Math.abs(b.get('bountySkillBonus()')-.25)<1e-12,'unequip removes bounty resonance');
+});
+
+test('STAGE85 chain and training resonance use existing pulse and XP channels',()=>{
+ const at=Date.UTC(2026,10,12);
+ const chain=boot({stage:85,best:85,heroLevel:10,traitPointsEarned:9,weapon:{tier:2,stage:80},
+   skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:at},at);
+ const initialHp=chain.get('enemyHp'),power=chain.get('power()');
+ chain.get('skillTick(6);skillTick(1)');
+ assert.ok(Math.abs((initialHp-chain.get('enemyHp'))-power*.6*1.20)<1e-5,'chain pulse must gain +20% at heroic tier');
+ const xp=boot({stage:85,best:85,weapon:{tier:2,stage:80},skillsOwned:['trainingSkill'],
+   skillsEquipped:['trainingSkill'],skillBuffTraining:12,heroLevel:20,traitPointsEarned:19,lastSaved:at},at);
+ const pre=xp.get('s.heroXp');
+ const expected=xp.get("Math.max(1,Math.floor(2*Math.pow(1.035,Math.min(200,s.stage)-1)*(1+traitLevel('training')*.05)*(2*skillScale('trainingSkill')*1.20)))");
+ xp.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(xp.get('s.heroXp')-pre,expected,'training resonance must use the same hero XP reward');
+});
+
+test('temporary STAGE75 weapon bonus never prevents a stronger replacement drop',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:85,best:85,breakthroughReward:'weapon',weapon:{tier:0,stage:75},lastSaved:at},at);
+ assert.ok(b.get('weaponMultiplier()')>b.get('weaponScore({tier:0,stage:85})'),'fixture reproduces old boosted-weapon comparison error');
+ b.get('Math.random=()=>0;grantDrop();render()');
+ assert.equal(b.get('s.weapon.stage'),85,'the truly better drop replaces earlier unboosted gear');
+ assert.equal(b.get('s.weapon.tier'),0);
+ assert.equal(b.get('s.breakthroughReward'),'weapon','stage75 run-wide choice remains active');
+});
+
+test('STAGE85 resonance survives save/load and reverts at rebirth without adding permanent upgrades',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:100,best:100,weapon:{tier:1,stage:90},heroLevel:25,traitPointsEarned:24,
+    skillsOwned:['chain'],skillsEquipped:['chain'],skillsInherited:['chain'],skillLevels:{chain:5},lastSaved:at},at);
+ assert.ok(b.get("resonanceBonus('chain')")>.14);
+ b.get('save();load();render()');
+ assert.ok(b.get("resonanceBonus('chain')")>.14,'resonance derives from restored loadout');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get("resonanceBonus('chain')"),0,'no permanent resonance after stage reset');
+ assert.equal(b.get('s.weapon'),null,'weapons still reset');
+ assert.equal(b.get('s.skillsOwned.includes("chain")'),true,'inherited skill remains');
+ assert.equal(b.get('s.skillLevels.chain'),1,'inherited level still resets');
+ const legacy=boot({stage:85,best:85,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:at},at);
+ assert.equal(legacy.get("resonanceBonus('chain')"),0,'old no-weapon saves remain safe');
+});
