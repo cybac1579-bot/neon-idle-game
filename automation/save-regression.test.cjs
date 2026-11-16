@@ -1648,6 +1648,7 @@ test('charged Chain requires both equipped skills and an active Capacitor window
   chainPulses:1,chainPulseClock:0,skillBuffCapacitor:8,lastSaved:at};
  const b=boot(common,at);
  assert.equal(b.get('chargedChainMultiplier()'),2,'dual loadout requires both skills');
+ assert.match(b.document.getElementById('skillInfo').textContent,/충전 연쇄 준비.*피해 ×2/,'growth view must expose combination before it activates');
  const power=b.get('power()'),expected=power*.6*b.get("skillScale('chain')")*2;
  b.get('enemyHp=1e12;skillTick(1)');
  const dealt=1e12-b.get('enemyHp');
@@ -1658,6 +1659,7 @@ test('charged Chain requires both equipped skills and an active Capacitor window
  b.get('s.skillBuffCapacitor=8;toggleEquipSkill("capacitor")');
  assert.equal(b.get('chargedChainMultiplier()'),1,'unequip must cancel charged chain interaction');
  assert.equal(b.get('s.skillBuffCapacitor'),0);
+ assert.match(b.document.getElementById('skillInfo').textContent,/조합 힌트.*충전 연쇄/,'guide player to re-equip combo');
  const solo=boot({...common,skillsEquipped:['chain']},at);
  assert.equal(solo.get('s.skillBuffCapacitor'),0,'legacy unequipped buff must be normalized');
  assert.equal(solo.get('chargedChainMultiplier()'),1);
