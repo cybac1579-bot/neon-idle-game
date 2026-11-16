@@ -15,7 +15,7 @@ const budgetOld='const autoPurchaseLimit=()=>Math.min(100,3+s.autoLevel*8);';
 if(BUY_VARIANT==='legacy'&&!productionSource.includes(budgetNow))
  throw Error('Production auto-purchase policy changed; legacy counterfactual needs review');
 const source=BUY_VARIANT==='legacy'?productionSource.replace(budgetNow,budgetOld):productionSource;
-const SEEDS=[20261114,20261116];
+const SEEDS=[20261114,20261115,20261116,20261117,20261118];
 const ROUTES=['combat','economy','automation','automation-lite'];
 const MAX_SECONDS=10800;
 function boot(seed){
@@ -119,9 +119,12 @@ function campaign(route){
    if(s[routeCore]!==original+1)throw Error('core purchase failed');
    coreClicks++;overallActions++;
   }
-  if(routeCore==='autoLevel'&&s.autoLevel>0)s.autoBuy=true;
-  if(routeCore==='autoLevel'&&s.autoLevel>=2)s.autoClaimQuests=true;
+  let optionClicks=0;
+  // Auto-buy and quest-claim stay opt-in; include each explicit toggle in input burden.
+  if(routeCore==='autoLevel'&&s.autoLevel>0&&!s.autoBuy){s.autoBuy=true;optionClicks++;overallActions++;}
+  if(routeCore==='autoLevel'&&s.autoLevel>=2&&!s.autoClaimQuests){s.autoClaimQuests=true;optionClicks++;overallActions++;}
   outcome.coreSpentActions=coreClicks;
+  outcome.automationOptionClicks=optionClicks;
   outcome.coreAfter={corePower:s.corePower,coreEconomy:s.coreEconomy,autoLevel:s.autoLevel,
    cores:s.cores,claim:s.autoClaimQuests};
   finished.push(outcome);
@@ -161,7 +164,7 @@ const summary=ROUTES.map(route=>{
    (scenarios.reduce((n,x)=>n+x.cumulative,0)/scenarios.length).toFixed(2):null};
 });
 const output={experiment:'first three manual STAGE100 reconstructions with actual saved-in-run core purchases',
- note:'Scripted 60-second visit/click policy. Automation-lite visits every 180 seconds after first reset, while auto-buy continues. One visit buys 3 levels of ONE upgrade. Not human play or a globally optimal policy.',
+ note:'Scripted 60-second visit/click policy. Automation-lite visits every 180 seconds after first reset, while auto-buy continues. One visit buys 3 levels of ONE upgrade. Core investment and opt-in toggles count as actions. Not human play or a globally optimal policy.',
  autoPurchaseVariant:BUY_VARIANT,
  sourceCommit:process.env.GITHUB_SHA||null,seeds:SEEDS,routes:ROUTES,summary,scenarios:rows};
 const out=path.resolve(__dirname,'../artifacts/balance/three-rebirth-core-routes-'+BUY_VARIANT+'.json');
