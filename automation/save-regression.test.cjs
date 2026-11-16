@@ -1474,3 +1474,42 @@ test('frontline changes are immediate, reversible and do not create spending or 
  assert.equal(b.get('s.credits'),credits,'switches cost no new resource');
  assert.equal(b.get('s.autoLevel'),0,'tactical choice does not unlock automated purchasing');
 });
+
+
+test('STAGE55 enemy-credit tradeoffs make supply meaningful without inventing any resource',()=>{
+ const at=Date.UTC(2026,10,12);
+ const expected={balanced:1,assault:.8,supply:1.5};
+ const observed={};
+ for(const [mode,mult] of Object.entries(expected)){
+  const b=boot({stage:66,best:66,allocation:mode,credits:100,atk:25,forge:5,lastSaved:at},at,42);
+  const reward=b.get('enemyReward(66)'),credits=b.get('s.credits');
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  observed[mode]=b.get('s.credits')-credits;
+  assert.ok(Math.abs(observed[mode]-reward*mult)<1e-6,
+    mode+' must change only earned enemy credits, never stage/purchase logic');
+  assert.equal(b.get('s.stage'),67);
+  assert.equal(b.get('s.rebirths'),0);
+  const preview=b.get('allocationComparison()');
+  assert.deepEqual(Array.from(preview.map(x=>x[3])),[1,.8,1.5],
+    'the growth screen must show each kill-reward multiplier');
+  assert.equal(b.get('questPayout(0)'),b.get('Math.max(1,Math.floor(1*Math.pow(1.11,Math.min(60,s.best)-1)))'),
+    'claimable timed quest rewards must not inherit combat allocation');
+ }
+ assert.ok(observed.supply>observed.balanced&&observed.balanced>observed.assault);
+});
+
+test('STAGE55 kill credits stay neutral before unlock and revert at normal rebirth',()=>{
+ const at=Date.UTC(2026,10,12);
+ for(const mode of ['balanced','assault','supply']){
+  const b=boot({stage:50,best:50,allocation:mode,credits:0,lastSaved:at},at,99);
+  const reward=b.get('enemyReward(50)');
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.credits'),reward,'pre-55 combat credit must not depend on allocation');
+ }
+ const b=boot({stage:100,best:100,rebirths:0,allocation:'supply',lastSaved:at},at);
+ assert.equal(b.get('allocationEffects()[2]'),1.5);
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('allocationEffects()[2]'),1);
+ assert.equal(b.get('s.allocation'),'balanced');
+ assert.equal(b.get('s.stage'),1);
+});
