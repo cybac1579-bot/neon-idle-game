@@ -116,7 +116,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute){
  }
  if(s.stage<1||s.rebirths!==0||s.cores!==0||!Number.isFinite(s.credits))throw Error('First-run invariant failed');
  const manualActions=actionCount();
- if(lowInput){const maxPerVisit=oneBuy?1:3;assert.ok(manualPurchaseActions<=visits,'purchase clicks exceeded low-input visits');assert.ok(manualBuys<=manualPurchaseActions*maxPerVisit,'one visit bought more levels than the actual selector permits');}
+ if(lowInput){const maxPerVisit=oneBuy?1:3;if(manualPurchaseActions>visits)throw Error('Purchase clicks exceeded low-input visits');if(manualBuys>manualPurchaseActions*maxPerVisit)throw Error('One visit bought more levels than the actual selector permits');}
  return {readySec:checkpoints[100]??null,stageAt30,stageAt60,actionsAt30,actionsAt60,stageAt90:s.stage,
   heroLevel:s.heroLevel,heroLv10Sec:firstSlot,stageTimes:checkpoints,
   manualActions,purchaseCount:manualBuys,purchaseActions:manualPurchaseActions,visitCount:visits,
