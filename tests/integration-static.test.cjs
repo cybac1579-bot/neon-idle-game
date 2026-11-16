@@ -8,6 +8,9 @@ const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 const refs=[...js.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]);
 const tests=[
  ['game JavaScript parses',()=>new vm.Script(js)],
+ ['portrait browser regression file parses before Chromium setup',()=>{
+   new vm.Script(fs.readFileSync('tests/integration-portrait.test.cjs','utf8'),{filename:'tests/integration-portrait.test.cjs'});
+ }],
  ['inline navigation parses',()=>{for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(m[1].trim())new vm.Script(m[1])}],
  ['unique DOM IDs',()=>assert.equal(new Set(ids).size,ids.length)],
  ['game DOM bindings exist',()=>assert.deepEqual([...new Set(refs)].filter(x=>!ids.includes(x)),[])],
