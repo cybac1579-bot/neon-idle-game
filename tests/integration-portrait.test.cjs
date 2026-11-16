@@ -60,6 +60,7 @@ const server=createServer((req,res)=>{
    await batchButton.click();
    assert.equal(await batchButton.getAttribute('aria-pressed'),'true','three-buy mode must announce selection at '+width);
    assert.match(await batchButton.textContent(),/최대 3회/,'batch label must say maximum at '+width);
+    assert.match(await batchButton.evaluate(el=>el.nextElementSibling.textContent),/선택한 강화 1종만 최대 3단계/,'copy must explain one upgrade type per click at '+width);
    // Freeze foreground simulation while measuring purchase cost; otherwise passive credits
    // accrue between the browser click and read-back, making the accounting assertion flaky.
    await page.evaluate(()=>Object.defineProperty(document,'hidden',{configurable:true,value:true}));
