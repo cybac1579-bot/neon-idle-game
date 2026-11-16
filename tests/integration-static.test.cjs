@@ -88,6 +88,7 @@ const tests=[
    assert.doesNotMatch(html,/data-view="capacitor"/,'reuses the existing growth screen');
  }],
  ['STAGE35 skill catch-up and quick quest reserve improve first 30-minute pacing',()=>{assert.match(js,/function grantStage35Support\(\)/);assert.match(js,/STAGE35_EARLY_PARTNERS/);assert.match(js,/q\[4\]/);assert.match(js,/\['긴급 배송',6,1,3,10\]/);}],
+ ['late first-skill selection receives the missed STAGE35 support once',()=>{assert.match(js,/function chooseSkill\(id\)\{[^\n]*s\.skillChoiceUsed=true;if\(s\.stage>=35\)grantStage35Support\(\)/);assert.match(js,/if\(s\.skillsOwned\.length===1\)/);assert.match(js,/if\(previousStage<35&&s\.stage>=35\)grantStage35Support\(\)/);}],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
