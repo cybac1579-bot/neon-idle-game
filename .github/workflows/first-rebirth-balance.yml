@@ -53,6 +53,13 @@ jobs:
             echo "ALLOCATION_MODE=${mode}"
             timeout --signal=TERM --kill-after=10s 120s env BALANCE_MODE=low-input BALANCE_DIAGNOSTIC=1 BALANCE_ALLOCATION="${mode}" node tests/balance-simulation.cjs 2>&1 | tee "allocation-${mode}-console.log"
           done
+      - name: Compare early versus delayed first-skill choice (three seeded low-input runs per skill)
+        shell: bash
+        run: |
+          set -eo pipefail
+          for stage in 20 35 40; do
+            timeout --signal=TERM --kill-after=10s 150s env BALANCE_MODE=low-input BALANCE_DIAGNOSTIC=1 BALANCE_SKILL_CHOICE_STAGE="${stage}" node tests/balance-simulation.cjs 2>&1 | tee "skill-choice-stage-${stage}-console.log"
+          done
       - name: Upload baseline metrics and scenario details
         if: always()
         uses: actions/upload-artifact@v4
@@ -69,5 +76,7 @@ jobs:
             artifacts/balance/first-rebirth-low-input.json
             artifacts/balance/allocation-*.json
             allocation-*-console.log
+            artifacts/balance/skill-choice-stage-*.json
+            skill-choice-stage-*-console.log
           if-no-files-found: warn
           retention-days: 14
