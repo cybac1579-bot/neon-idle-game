@@ -1594,10 +1594,13 @@ test('STAGE65 skill respects full slots, inherited reset, legacy load and STAGE8
  assert.equal(full.get('grantStage65Skill()'),true);
  assert.equal(full.get("s.skillsEquipped.includes('capacitor')"),false,'do not exceed one available slot');
  assert.equal(full.get('s.skillsOwned.length'),2);
+ full.get('render()');
+ assert.match(full.document.getElementById('skillInfo').textContent,/전력 순환 미장착/,'new reward remains discoverable even if slot is full');
  assert.equal(full.get('toggleEquipSkill("capacitor")'),false,'manual rearrange requires a free slot');
  assert.equal(full.get('toggleEquipSkill("chain")'),true);
  assert.equal(full.get('toggleEquipSkill("capacitor")'),true);
  assert.equal(full.get('s.skillsEquipped.length'),1);
+ assert.doesNotMatch(full.document.getElementById('skillInfo').textContent,/전력 순환 미장착/,'hint disappears when equipped');
  assert.equal(full.get('toggleInheritSkill("capacitor")'),true);
  full.get('s.stage=100;spawn()');
  assert.equal(full.get('rebirth()'),true);
