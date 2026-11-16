@@ -13,10 +13,13 @@ const LOW_INPUT=['low-input','one-buy','two-minute'].includes(process.env.BALANC
 const TWO_MINUTE=process.env.BALANCE_MODE==='two-minute';
 const ONE_BUY=process.env.BALANCE_MODE==='one-buy';
 const BALANCE_DIAGNOSTIC=process.env.BALANCE_DIAGNOSTIC==='1';
+const LOADOUT_DIAGNOSTIC=process.env.BALANCE_SKILL_LOADOUT!==undefined;
+const LOADOUT_POLICY=['natural','chain','capacitor','pair'].includes(process.env.BALANCE_SKILL_LOADOUT)
+  ?process.env.BALANCE_SKILL_LOADOUT:'natural';
 const ALLOCATION_POLICY=['assault','balanced','supply','supply-pivot'].includes(process.env.BALANCE_ALLOCATION)?process.env.BALANCE_ALLOCATION:'assault';
 const SEEDS=BALANCE_DIAGNOSTIC?[20261114,20261115,20261116]:[20261114,20261115,20261116,20261117,20261118];
 const POLICIES=BALANCE_DIAGNOSTIC?['value']:LOW_INPUT?['value','cheapest']:['value','cheapest','attack-first','tier-first'];
-const SKILL_IDS=BALANCE_DIAGNOSTIC?['chain','bountySkill']:LOW_INPUT?['chain','bountySkill']:['chain','overload','bountySkill','trainingSkill'];
+const SKILL_IDS=LOADOUT_DIAGNOSTIC?['chain']:BALANCE_DIAGNOSTIC?['chain','bountySkill']:LOW_INPUT?['chain','bountySkill']:['chain','overload','bountySkill','trainingSkill'];
 
 function boot(seed){
  const nodes=new Map();
@@ -47,13 +50,13 @@ function boot(seed){
 
 // Serializes this function into the same V8 context as game.js to avoid
 // 20,000 costly cross-context calls and preserve the game's own exact rules.
-function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy){
+function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loadoutPolicy){
  const kinds=['atk','spd','gen','amp','relay','forge','reactor'];
  const unlock={atk:1,spd:1,gen:1,amp:15,relay:25,forge:45,reactor:65};
  const attackOrder=['atk','spd','amp','reactor','gen','forge','relay'];
  const checkpoints={},milestones=[20,45,55,60,65,70,75,85,95,100];
  const purchases=Object.fromEntries(kinds.map(k=>[k,0]));
- let firstSlot=null,manualBuys=0,manualPurchaseActions=0,manualClaims=0,manualTraitBuys=0,allocationActions=0,visits=0,stageAt30=null,stageAt60=null,actionsAt30=null,actionsAt60=null,purchaseActionsAt30=null,purchaseActionsAt60=null,purchaseCountAt30=null,purchaseCountAt60=null;
+ let firstSlot=null,manualBuys=0,manualPurchaseActions=0,manualClaims=0,manualTraitBuys=0,allocationActions=0,loadoutActions=0,visits=0,stageAt30=null,stageAt60=null,actionsAt30=null,actionsAt60=null,purchaseActionsAt30=null,purchaseActionsAt60=null,purchaseCountAt30=null,purchaseCountAt60=null;
  const tmax=5400, steps=Math.round(tmax/.25);
  function chooseUpgrade(choices){
   if(policy==='cheapest')return choices.sort((a,b)=>cost(a)-cost(b))[0];
@@ -93,7 +96,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy){
    purchases[chosen]++;manualBuys++;manualPurchaseActions++;
   }
  }
- const actionCount=()=>manualPurchaseActions+manualClaims+manualTraitBuys+allocationActions+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null)+Number(s.breakthroughReward!==null);
+ const actionCount=()=>manualPurchaseActions+manualClaims+manualTraitBuys+allocationActions+loadoutActions+Number(s.skillChoiceUsed)+Number(s.frontlineSupport!==null)+Number(s.breakthroughReward!==null);
  for(let tick=0;tick<=steps;tick++){
   const seconds=tick*.25;
   if(tick%(twoMinute?480:lowInput?240:40)===0){
@@ -105,6 +108,18 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy){
      if(s.allocation!==target){s.allocation=target;allocationActions++;}
     }
    if(s.stage>=60&&!s.frontlineSupport)chooseFrontlineSupport('firepower');
+   // Deliberate loadouts for controlled late-stage comparison. Standard equip actions only.
+   if(loadoutPolicy!=='natural'&&s.stage>=65&&s.skillsOwned.includes('capacitor')){
+    const desired=loadoutPolicy==='chain'?['chain']:loadoutPolicy==='capacitor'?['capacitor']:['chain','capacitor'];
+    for(const id of s.skillsEquipped.slice())if(!desired.includes(id)){
+     if(!toggleEquipSkill(id))throw Error('Could not unequip '+id);
+     loadoutActions++;
+    }
+    for(const id of desired)if(s.skillsOwned.includes(id)&&!s.skillsEquipped.includes(id)&&s.skillsEquipped.length<skillSlotCount()){
+     if(!toggleEquipSkill(id))throw Error('Could not equip '+id);
+     loadoutActions++;
+    }
+   }
    // One optional STAGE75 choice at the next real visit, not a free background grant.
    if(s.stage>=75&&!s.breakthroughReward)chooseBreakthroughReward(policy==='cheapest'?'credits':policy==='tier-first'?'skill':'weapon');
    const traitOrder=[['precision',5],['double',5],['boss',3],['haste',5],['training',5],['energy',5]];
@@ -127,7 +142,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy){
  if(lowInput){const maxPerVisit=oneBuy?1:3;if(manualPurchaseActions>visits)throw Error('Purchase clicks exceeded low-input visits');if(manualBuys>manualPurchaseActions*maxPerVisit)throw Error('One visit bought more levels than the actual selector permits');}
  return {readySec:checkpoints[100]??null,stageAt30,stageAt60,actionsAt30,actionsAt60,stageAt90:s.stage,
   heroLevel:s.heroLevel,heroLv10Sec:firstSlot,stageTimes:checkpoints,
-  manualActions,purchaseCount:manualBuys,purchaseActions:manualPurchaseActions,visitCount:visits,
+  manualActions,purchaseCount:manualBuys,purchaseActions:manualPurchaseActions,visitCount:visits,loadoutActions,
   purchaseActionsAt30,purchaseActionsAt60,purchaseCountAt30,purchaseCountAt60,claimCount:manualClaims,traitCount:manualTraitBuys,
   upgrades:purchases,weapon:s.weapon?{tier:s.weapon.tier,stage:s.weapon.stage}:null,
   skillEquipped:s.skillsEquipped.slice(),skillOwned:s.skillsOwned.slice(),frontlineSupport:s.frontlineSupport,breakthroughReward:s.breakthroughReward,
@@ -140,7 +155,7 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
  const runs=[];
  for(const seed of SEEDS){
   const context=boot(seed);
-  const result=vm.runInContext('('+runPolicy.toString()+')('+JSON.stringify(policy)+','+JSON.stringify(skill)+','+LOW_INPUT+','+ONE_BUY+','+TWO_MINUTE+','+JSON.stringify(ALLOCATION_POLICY)+')',context,{timeout:60000});
+  const result=vm.runInContext('('+runPolicy.toString()+')('+JSON.stringify(policy)+','+JSON.stringify(skill)+','+LOW_INPUT+','+ONE_BUY+','+TWO_MINUTE+','+JSON.stringify(ALLOCATION_POLICY)+','+JSON.stringify(LOADOUT_POLICY)+')',context,{timeout:60000});
   assert.equal(result.stageAt90>=1&&result.stageAt90<=100,true);
   assert.equal(result.readySec===null||result.readySec>=0,true);
   runs.push({seed,...result});
@@ -149,7 +164,7 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
  const walls=runs.filter(r=>r.stageTimes[55]!==undefined&&r.stageTimes[65]!==undefined)
    .map(r=>r.stageTimes[65]-r.stageTimes[55]);
  const stages30=runs.map(r=>r.stageAt30??100);
- const row={policy,skill,successCount:finish.length,seedCount:SEEDS.length,
+ const row={policy,skill,loadoutPolicy:LOADOUT_POLICY,successCount:finish.length,seedCount:SEEDS.length,
   meanReadySec:finish.length===SEEDS.length?avg(finish):null,
   minReadySec:finish.length?Math.min(...finish):null,
   maxReadySec:finish.length?Math.max(...finish):null,
@@ -161,15 +176,15 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
   meanPurchaseLevelsAt30:avg(runs.map(r=>r.purchaseCountAt30??r.purchaseCount)),
   meanPurchaseActionsAt60:avg(runs.map(r=>r.purchaseActionsAt60??r.purchaseActions)),
   meanPurchaseLevelsAt60:avg(runs.map(r=>r.purchaseCountAt60??r.purchaseCount)),
-  meanManualActions:avg(runs.map(r=>r.manualActions)),
+  meanManualActions:avg(runs.map(r=>r.manualActions)),meanLoadoutActions:avg(runs.map(r=>r.loadoutActions)),
   meanHeroLv10Sec: runs.every(r=>r.heroLv10Sec!==null)?avg(runs.map(r=>r.heroLv10Sec)):null};
  summary.push(row);detailed.push({policy,skill,runs});
  console.log('SIM_POLICY '+JSON.stringify(row));
 }
 const payload={title:LOW_INPUT?'Constrained-input first reconstruction; decisions every '+(TWO_MINUTE?120:60)+'s, at most '+(ONE_BUY?1:3)+' purchases and 1 trait per visit; not human play':'First reconstruction baseline; simulated 0.25s ticks, manual decisions every 10s, not human play',
- observedAtUtc:new Date().toISOString(),seeds:SEEDS,allocationPolicy:ALLOCATION_POLICY,diagnostic:BALANCE_DIAGNOSTIC,policies:POLICIES,skills:SKILL_IDS,summary,detailed};
+ observedAtUtc:new Date().toISOString(),seeds:SEEDS,allocationPolicy:ALLOCATION_POLICY,loadoutPolicy:LOADOUT_POLICY,diagnostic:BALANCE_DIAGNOSTIC,policies:POLICIES,skills:SKILL_IDS,summary,detailed};
 fs.mkdirSync(path.resolve(__dirname,'../artifacts/balance'),{recursive:true});
-const allocationFile=BALANCE_DIAGNOSTIC?'../artifacts/balance/allocation-'+ALLOCATION_POLICY+'.json':
+const allocationFile=LOADOUT_DIAGNOSTIC?'../artifacts/balance/skill-loadout-'+LOADOUT_POLICY+'.json':BALANCE_DIAGNOSTIC?'../artifacts/balance/allocation-'+ALLOCATION_POLICY+'.json':
  LOW_INPUT?(ONE_BUY?'../artifacts/balance/first-rebirth-one-buy.json':TWO_MINUTE?'../artifacts/balance/first-rebirth-two-minute.json':'../artifacts/balance/first-rebirth-low-input.json'):'../artifacts/balance/first-rebirth-baseline.json';
 fs.writeFileSync(path.resolve(__dirname,allocationFile),JSON.stringify(payload,null,2)+'\n');
 console.log('SIM_DONE policies='+summary.length+' scenarios='+detailed.reduce((a,x)=>a+x.runs.length,0));
