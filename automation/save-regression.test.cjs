@@ -1619,3 +1619,23 @@ test('STAGE65 skill respects full slots, inherited reset, legacy load and STAGE8
  resonance.get('s.skillBuffCapacitor=999;save();load()');
  assert.equal(resonance.get('s.skillBuffCapacitor'),10,'corrupt legacy buff duration clipped');
 });
+
+
+test('energy-cycle buff cannot remain active when its skill is unequipped or excluded from a loaded save',()=>{
+ const at=Date.UTC(2026,10,16,0,0,0);
+ const saved={stage:75,best:75,heroLevel:10,traitPointsEarned:9,energy:1e8,
+  skillsOwned:['capacitor','chain'],skillsEquipped:['capacitor'],skillLevels:{capacitor:2,chain:1},
+  skillBuffCapacitor:9,lastSaved:at};
+ const b=boot(saved,at);
+ assert.ok(b.get('capacitorPowerBonus()')>0);
+ const before=b.get('energyRate()');
+ b.get('toggleEquipSkill("capacitor")');
+ assert.equal(b.get('s.skillBuffCapacitor'),0,'unequipping active sustained skill must immediately end its buff');
+ assert.equal(b.get('capacitorPowerBonus()'),0);
+ assert.equal(b.get('energyRate()'),before/2);
+ b.get('save();load()');
+ assert.equal(b.get('s.skillBuffCapacitor'),0,'old saved buff must not revive');
+ const forged=boot({...saved,skillsEquipped:['chain']},at);
+ assert.equal(forged.get('s.skillBuffCapacitor'),0,'un-equipped legacy skill must not keep the benefit');
+ assert.equal(forged.get('capacitorPowerBonus()'),0);
+});
