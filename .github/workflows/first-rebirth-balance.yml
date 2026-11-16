@@ -30,17 +30,17 @@ jobs:
         run: |
           set -o pipefail
           timeout --signal=TERM --kill-after=10s 540s node tests/balance-simulation.cjs 2>&1 | tee balance-console.log
-      - name: Measure 60-second low-input decisions (8 seeded scenarios)
+      - name: Measure 60-second low-input visits (20 seeded scenarios; one upgrade type, up to 3 levels per click)
         shell: bash
         run: |
           set -o pipefail
           timeout --signal=TERM --kill-after=10s 240s env BALANCE_MODE=low-input node tests/balance-simulation.cjs 2>&1 | tee low-input-console.log
-      - name: Measure one purchase per 60-second visit (8 seeded scenarios)
+      - name: Measure one-level purchase per 60-second visit (20 seeded scenarios)
         shell: bash
         run: |
           set -o pipefail
           timeout --signal=TERM --kill-after=10s 240s env BALANCE_MODE=one-buy node tests/balance-simulation.cjs 2>&1 | tee one-buy-console.log
-      - name: Measure 120-second visits with three purchases (8 seeded scenarios)
+      - name: Measure 120-second visits with up to three levels of one upgrade (20 seeded scenarios)
         shell: bash
         run: |
           set -o pipefail
