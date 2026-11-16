@@ -97,6 +97,31 @@ const server=createServer((req,res)=>{
    assert.equal(questClaim.after,questClaim.before+questClaim.pending,'quest credits must reach wallet at '+width);
    assert.equal(questClaim.disabledAfter,true,'claim button must disable after collection at '+width);
    assert.equal(questClaim.rows.length,3,'quest statuses must survive reward collection at '+width);
+   // Real portrait touch check of optional stage-75 reward; restore current-run state afterwards.
+   const stage75Seed=await page.evaluate(()=>{
+    const prev={state:JSON.parse(JSON.stringify(s)),enemyHp,attackClock};
+    s.stage=75;s.best=Math.max(s.best,75);s.breakthroughReward=null;s.weapon={tier:1,stage:70};
+    spawn();render();return prev;
+   });
+   const stage75Button=page.locator('#breakthroughChoices [data-breakthrough="weapon"]');
+   assert.equal(await page.locator('#breakthroughPanel').isVisible(),true,'STAGE75 choice hidden at '+width);
+   const beforeStage75=await page.evaluate(()=>power());
+   await stage75Button.click();
+   const afterStage75=await page.evaluate(()=>({
+    chosen:s.breakthroughReward,power:power(),status:document.getElementById('breakthroughInfo').textContent,
+    buttons:[...document.querySelectorAll('#breakthroughChoices button')].map(b=>({
+     disabled:b.disabled,scrollWidth:b.scrollWidth,clientWidth:b.clientWidth,
+     selected:b.classList.contains('support-selected')})),
+    overflow:document.documentElement.scrollWidth>innerWidth+1
+   }));
+   assert.equal(afterStage75.chosen,'weapon','real touch did not select reward at '+width);
+   assert.ok(afterStage75.power>beforeStage75*1.19,'STAGE75 weapon bonus missing at '+width);
+   assert.match(afterStage75.status,/보급 완료/);
+   assert.ok(afterStage75.buttons.every(b=>b.disabled&&b.scrollWidth<=b.clientWidth+1),'STAGE75 options overflow at '+width);
+   assert.equal(afterStage75.buttons[0].selected,true,'choice not highlighted at '+width);
+   assert.equal(afterStage75.overflow,false,'STAGE75 growth overflow at '+width);
+   await page.evaluate(prev=>{s=prev.state;spawn();enemyHp=prev.enemyHp;attackClock=prev.attackClock;render();save()},stage75Seed);
+   assert.equal(await page.locator('#breakthroughPanel').isVisible(),false,'STAGE75 fixture contamination at '+width);
    for(const view of ['growth','reset','stats','battle']){
     await page.locator('[data-view="'+view+'"]').first().click();
     assert.ok(await page.locator('[data-screen="'+view+'"]:not(.view-hidden)').count()>0,'navigation failed '+view);
