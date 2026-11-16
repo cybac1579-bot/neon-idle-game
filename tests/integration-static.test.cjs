@@ -76,6 +76,17 @@ const tests=[
    assert.doesNotMatch(js,/3\+s\.autoLevel\*8/,'old 11+ per-tick buy budget must not reappear');
    assert.match(js,/\[30,10,8,6,4,3\]/,'existing research-based purchase interval must be preserved');
  }],
+ ['STAGE65 grants fifth stored-energy skill with no new button or currency',()=>{
+   assert.match(js,/capacitor:\['전력 순환'/);
+   assert.match(js,/function grantStage65Skill\(\)/);
+   assert.match(js,/s\.best=Math\.max\(s\.best,s\.stage\);grantStage65Skill\(\)/);
+   assert.match(js,/id==='capacitor'&&s\.stage<65/);
+   assert.match(js,/s\.skillBuffCapacitor=safeNumber\(s\.skillBuffCapacitor,0,10\)/);
+   assert.match(js,/const capacitorPowerBonus=/);
+   assert.match(js,/s\.skillBuffCapacitor=10/);
+   assert.match(js,/s\.skillBuffBounty=s\.skillBuffTraining=s\.skillBuffCapacitor=0/);
+   assert.doesNotMatch(html,/data-view="capacitor"/,'reuses the existing growth screen');
+ }],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
