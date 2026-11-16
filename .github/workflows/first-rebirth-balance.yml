@@ -40,6 +40,11 @@ jobs:
         run: |
           set -o pipefail
           timeout --signal=TERM --kill-after=10s 240s env BALANCE_MODE=one-buy node tests/balance-simulation.cjs 2>&1 | tee one-buy-console.log
+      - name: Measure 120-second visits with three purchases (8 seeded scenarios)
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 240s env BALANCE_MODE=two-minute node tests/balance-simulation.cjs 2>&1 | tee two-minute-console.log
       - name: Upload baseline metrics and scenario details
         if: always()
         uses: actions/upload-artifact@v4
@@ -50,6 +55,8 @@ jobs:
             balance-console.log
             low-input-console.log
             one-buy-console.log
+            two-minute-console.log
+            artifacts/balance/first-rebirth-two-minute.json
             artifacts/balance/first-rebirth-one-buy.json
             artifacts/balance/first-rebirth-low-input.json
           if-no-files-found: warn
