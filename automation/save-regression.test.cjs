@@ -443,7 +443,7 @@ test('timed quests accumulate independently and claim exactly once',()=>{
 test('timed quest reserves cap across repeated ticks and claim without duplication',()=>{
  const b=boot({stage:3,best:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
  for(let n=0;n<30;n++)b.get('step(120,false)');
- assert.ok(b.get('s.questCredits.every((x,i)=>x<=questPayout(i)*5)'),'each quest must cap at five payouts');
+ assert.ok(b.get('s.questCredits.every((x,i)=>x<=questPayout(i)*QUESTS[i][4])'),'each quest must cap at five payouts');
  const reserved=b.get('s.questCredits.reduce((a,x)=>a+x,0)');
  const before=b.get('s.credits');
  assert.equal(b.get('transferCacheCredits()'),reserved);
@@ -718,7 +718,7 @@ test('offline settlement caps credited time at 7200 seconds and never auto-rebir
   assert.equal(credited,7200,'offline credited time must be capped at two hours');
   assert.equal(b.get('s.rebirths'),before,'offline settlement must not trigger automatic rebirth');
   assert.match(b.get('logText'),/방치 진행 7200초 반영/,'return log must report credited, not wall time');
-  assert.ok(b.get('s.questCredits.every((x,i)=>x<=questPayout(i)*5)'),'offline quest reserves must respect five-payout cap');
+  assert.ok(b.get('s.questCredits.every((x,i)=>x<=questPayout(i)*QUESTS[i][4])'),'offline quest reserves must respect five-payout cap');
 });
 
 
@@ -836,7 +836,7 @@ test('milestone goals distinguish credit-only checkpoints from actual unlocks',(
   b.get('s.stage=10');
   assert.match(b.get('milestoneGoal()'),/STAGE 15.*새 기능: 에너지 증폭기/);
   b.get('s.stage=25');
-  assert.match(b.get('milestoneGoal()'),/STAGE 35.*달성 보너스 크레딧/);
+  assert.match(b.get('milestoneGoal()'),/STAGE 35.*초반 스킬 전술 보급/);
   b.get('s.stage=35');
   assert.match(b.get('milestoneGoal()'),/STAGE 45.*새 기능: 크레딧 주조기/);
   b.get('s.stage=85');
@@ -1293,7 +1293,7 @@ test('quest claim automation is distinct from autobuy and continues through offl
  assert.equal(a.get('s.atk+s.spd+s.gen'),0,'no auto purchase despite research level two');
  assert.equal(a.get('s.stage'),m.get('s.stage'),'claiming alone must not affect combat progression');
  assert.ok(a.get('s.credits')>m.get('s.credits'),'autoclaim makes already-produced quest rewards spendable during offline time');
- assert.ok(a.get('s.questCredits.every((x,i)=>x<=questPayout(i)*5)'),'quest caps still constrain unclaimed reserves');
+ assert.ok(a.get('s.questCredits.every((x,i)=>x<=questPayout(i)*QUESTS[i][4])'),'quest caps still constrain unclaimed reserves');
  assert.ok(m.get('s.questCredits.some(x=>x>0)'),'without autoclaim, idle rewards remain manual');
 });
 
@@ -1681,4 +1681,74 @@ test('charged Chain composes with STAGE85 weapon resonance without changing regu
  assert.equal(b.get('chargedChainMultiplier()'),2,'both equipped skills and active charge survive valid save');
  b.get('s.stage=100;spawn();rebirth()');
  assert.equal(b.get('chargedChainMultiplier()'),1,'temporary combo is reset at rebirth');
+});
+
+
+test('STAGE35 tactical reinforcement guarantees a complementary second skill after poor RNG',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ for(const [first,expected] of Object.entries({chain:'bountySkill',overload:'trainingSkill',bountySkill:'chain',trainingSkill:'overload'})){
+  const b=boot({stage:34,best:34,heroLevel:10,traitPointsEarned:9,
+   skillsOwned:[first],skillsEquipped:[first],skillLevels:{[first]:1},skillXp:{[first]:0},lastSaved:now},now,42);
+  b.get('Math.random=()=>1;enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),35);
+  assert.equal(b.get('s.skillsOwned.length'),2,'a weak luck run should have exactly two owned skills');
+  assert.equal(b.get('s.skillsOwned.includes('+JSON.stringify(expected)+')'),true,'reward complements '+first);
+  assert.equal(b.get('s.skillsEquipped.length'),2,'the second LV10 slot should auto-equip reinforcement');
+  assert.equal(b.get('s.skillLevels['+JSON.stringify(expected)+']'),1);
+  assert.match(b.get('rewardNotice'),/전술 보급/);
+  b.get('save();load()');
+  assert.equal(b.get('s.skillsOwned.filter(x=>x==='+JSON.stringify(expected)+').length'),1,'reward persists without duplicate');
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.skillsOwned.length'),2,'stage36 must not repeat milestone grant');
+ }
+});
+
+test('STAGE35 spare-slot rules and existing two-skill experience reward do not force swaps',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ const full=boot({stage:34,best:34,heroLevel:1,traits:{},skillsOwned:['chain'],
+  skillsEquipped:['chain'],lastSaved:now},now,42);
+ full.get('Math.random=()=>1;enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(full.get('s.skillsOwned.includes("bountySkill")'),true,'own second skill even if no equip slot');
+ assert.equal(full.get('s.skillsEquipped.length'),1,'never silently remove equipped first skill');
+ assert.equal(full.get('s.skillsEquipped[0]'),'chain');
+ const ready=boot({stage:34,best:34,skillsOwned:['overload','chain'],skillsEquipped:['overload'],
+  skillLevels:{overload:1,chain:1},skillXp:{overload:0,chain:0},lastSaved:now},now,42);
+ ready.get('Math.random=()=>1;enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(ready.get('s.skillsOwned.length'),2,'two owned skills get training rather than a third free skill');
+ assert.equal(ready.get('s.skillXp.overload'),4,'kill XP +1 and STAGE35 bonus XP +3');
+ ready.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(ready.get('s.skillXp.overload'),5,'the +3 bonus does not repeat at STAGE36');
+ assert.equal(ready.get('s.skillsOwned.length'),2);
+});
+
+test('6-second quest safely reserves ten payouts for a 60-second visit while other queues keep five',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ const s={stage:3,best:3,lastSaved:now,credits:0,questCredits:[0,0,0],questClocks:[0,0,0]};
+ const b=boot(s,now);
+ assert.equal(b.get('QUESTS[0][4]'),10);
+ assert.equal(b.get('QUESTS[1][4]'),5);
+ assert.equal(b.get('QUESTS[2][4]'),5);
+ b.get('questTick(60)');
+ assert.equal(b.get('s.questCredits[0]'),10*b.get('questPayout(0)'),'60s should retain all ten fast deliveries');
+ assert.equal(b.get('s.questCredits[1]'),2*b.get('questPayout(1)'));
+ assert.equal(b.get('s.questCredits[2]'),0);
+ b.get('questTick(1200)');
+ for(let i=0;i<3;i++)assert.equal(b.get('s.questCredits['+i+']'),b.get('questPayout('+i+')*QUESTS['+i+'][4]'),'quest '+i+' obeys its own ceiling');
+ const before=b.get('s.credits'),pending=b.get('s.questCredits.reduce((a,b)=>a+b,0)');
+ assert.equal(b.get('transferCacheCredits()'),pending,'manual claim consumes exactly one reserve');
+ assert.equal(b.get('s.credits'),before+pending,'no newly minted credits from the higher cap');
+ assert.equal(b.get('transferCacheCredits()'),0,'cannot double-claim');
+ const offline=boot(s,now);
+ offline.get('settleElapsed(60)');
+ assert.equal(offline.get('s.questCredits[0]'),10*offline.get('questPayout(0)'),'hidden-time aggregation matches visible accrual');
+});
+
+test('STAGE35 does not force a skill or consume the STAGE20 choice for a player who has not chosen',()=>{
+ const at=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:34,best:34,skillsOwned:[],skillsEquipped:[],skillChoiceUsed:false,lastSaved:at},at,42);
+ b.get('Math.random=()=>1;enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(b.get('s.stage'),35);
+ assert.equal(b.get('s.skillsOwned.length'),0,'preserve first skill choice instead of auto-choosing');
+ assert.equal(b.get('s.skillChoiceUsed'),false);
+ assert.equal(b.get("chooseSkill('chain')"),true,'manual STAGE20 choice still accessible');
 });
