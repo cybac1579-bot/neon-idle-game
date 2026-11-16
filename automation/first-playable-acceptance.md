@@ -1,6 +1,6 @@
 # First playable: 30-minute evaluation acceptance criteria
 
-Status: **not accepted** as of 2026-11-13 22:55 KST. Provisional readiness: **58%**; this is an estimate, not a test coverage fraction.
+Status: **not accepted** as of 2026-11-16 20:58 KST. Provisional readiness: **60%**; this is an estimate, not a test coverage fraction.
 
 ## Evidence required before calling the first playable ready
 1. **CI integrity:** latest gameplay/test changes have successful push-triggered CI with links and captured failures resolved. A successful older workflow does not validate a newer fixture.
@@ -25,3 +25,11 @@ Stop speculative feature expansion and await player feedback; retain scheduled r
 - Latest confirmed CI remains [43496898561](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43496898561), 45/45 tests, predating the HTML edit. Mixed-investment 30m simulation: attack 46/46/48, attack+speed 43/43/43, attack+energy 42/44/44, ROI 41/41/42. This does not prove real-player fun or longer-run ROI.
 - **New explicit performance acceptance criterion:** measure worst-case 7200-second offline resume elapsed wall time on a throttled browser/mobile CPU, including render/save and storage-denied behavior. Current `.85s` step loop implies ~8,471 synchronous iterations; this is a risk hypothesis, not a confirmed stall. Capture actual timing and ensure no double-settlement on reload before optimizing the simulation algorithm.
 - No device/browser screenshots, performance measurement, or post-footer live parity evidence obtained in this run. **Readiness 58% (delta 0pp).**
+
+## 2026-11-16 20:58 KST evidence update
+
+- Latest shared candidate: `00f875a54f4169e01c4e6637da7c46ac31eb225d`. Save regression **80/80 PASS** ([43864207847](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43864207847)); portrait Chromium/touch **PASS** at 360/390/412 CSS px ([43864207840](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43864207840)); balance telemetry **PASS** ([43864207996](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43864207996)).
+- The constrained-input model now matches the actual control: one selected upgrade type per visit, with up to three levels per click. It uses five RNG seeds and reports click count separately from purchased levels.
+- Value+Chain, 60-second visits, up to three levels: mean STAGE 52.0 at 30m and 86.2 at 60m; first-rebirth-ready mean 81m01s; 31 purchase clicks / 91 purchased levels by 30m. One-level visits reach STAGE39/49 at 30/60m and do not rebirth by 90m. 120-second / up-to-three-level visits reach STAGE42.2/55.8 and also do not rebirth by 90m. These are scripted game-JS simulations, not a human or physical-device playtest.
+- Protected main remains `9918709e`; Pages workflow [43716044966](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/43716044966) succeeded for `eca24916`, whose game.js and index.html blobs match current main. Integration is not deployed; PR #2 remains draft/unmerged.
+- **Readiness: 60% (unchanged).** Remaining acceptance gates: real Galaxy S25+ portrait scroll/touch and sustained performance, live HTTP served-byte confirmation, and a human 30-minute play session with subjective feedback. The ~60-minute first-rebirth target is not met by the current best constrained policy; stage65–100 reward cadence remains the next development bottleneck.
