@@ -1546,3 +1546,72 @@ test('auto-buy obeys tier-first preference and does not purchase before the inte
  assert.equal(off.get('s.atk+s.spd+s.gen+s.amp+s.relay+s.forge+s.reactor'),0,
   'autobuy still requires explicit opt-in');
 });
+
+
+test('STAGE65 grants energy-cycle skill at the milestone without manual input or duplicate rewards',()=>{
+ const stamp=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:64,best:64,credits:100,skillsOwned:['chain'],skillsEquipped:['chain'],heroLevel:20,traitPointsEarned:19,lastSaved:stamp},stamp);
+ assert.equal(b.get('SKILLS.capacitor[2]'),18);
+ assert.equal(b.get("chooseSkill('capacitor')"),false,'must not claim exclusive stage65 discovery early');
+ assert.equal(b.get("s.skillsOwned.includes('capacitor')"),false);
+ b.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(b.get('s.stage'),65);
+ assert.equal(b.get("s.skillsOwned.filter(id=>id==='capacitor').length"),1);
+ assert.equal(b.get('s.skillLevels.capacitor'),1);
+ assert.equal(b.get("s.skillsEquipped.includes('capacitor')"),true,'use free slot where available');
+ assert.match(b.get('logText'),/전력 순환/);
+ b.get('save();load()');
+ assert.equal(b.get("s.skillsOwned.filter(id=>id==='capacitor').length"),1,'reward survives loading');
+ const before=b.get('s.skillXp.capacitor');
+ b.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(b.get("s.skillsOwned.filter(id=>id==='capacitor').length"),1,'no duplicate reward at stage66');
+ assert.ok(b.get('s.skillXp.capacitor')>=before,'equipped fifth skill earns ordinary XP');
+});
+
+test('energy-cycle skill is a timed energy-and-sustained-damage alternative to chain and overload',()=>{
+ const stamp=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:70,best:70,heroLevel:25,traitPointsEarned:24,gen:12,relay:4,
+  energy:1e7,weapon:{tier:1,stage:65},skillsOwned:['capacitor'],skillsEquipped:['capacitor'],
+  skillLevels:{capacitor:1},lastSaved:stamp},stamp);
+ const idleRate=b.get('energyRate()'),idlePower=b.get('power()');
+ assert.equal(b.get('capacitorPowerBonus()'),0,'must not grant free base attack before activation');
+ b.get('skillTick(18)');
+ assert.equal(b.get('s.skillBuffCapacitor'),10);
+ assert.equal(b.get('energyRate()'),idleRate*2);
+ assert.ok(b.get('power()')>idlePower*1.3,'stored-energy multiplier should be meaningful, not another damage pulse');
+ assert.equal(b.get('s.chainPulses'),0,'not a chain pulse skill');
+ b.get('skillTick(10)');
+ assert.equal(b.get('s.skillBuffCapacitor'),0,'timed buff must expire');
+ assert.equal(b.get('energyRate()'),idleRate,'energy rate returns to original');
+ assert.equal(b.get('power()'),idlePower,'attack value returns to original');
+});
+
+test('STAGE65 skill respects full slots, inherited reset, legacy load and STAGE85 resonance',()=>{
+ const stamp=Date.UTC(2026,10,16,0,0,0);
+ const full=boot({stage:65,best:65,heroLevel:1,traitPointsEarned:0,
+  skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ assert.equal(full.get('grantStage65Skill()'),true);
+ assert.equal(full.get("s.skillsEquipped.includes('capacitor')"),false,'do not exceed one available slot');
+ assert.equal(full.get('s.skillsOwned.length'),2);
+ assert.equal(full.get('toggleEquipSkill("capacitor")'),false,'manual rearrange requires a free slot');
+ assert.equal(full.get('toggleEquipSkill("chain")'),true);
+ assert.equal(full.get('toggleEquipSkill("capacitor")'),true);
+ assert.equal(full.get('s.skillsEquipped.length'),1);
+ assert.equal(full.get('toggleInheritSkill("capacitor")'),true);
+ full.get('s.stage=100;spawn()');
+ assert.equal(full.get('rebirth()'),true);
+ assert.equal(full.get("s.skillsOwned.includes('capacitor')"),true,'selected skill inherited');
+ assert.equal(full.get('s.skillLevels.capacitor'),1);
+ assert.equal(full.get('s.skillBuffCapacitor'),0,'no temporary buff persists through rebirth');
+ assert.equal(full.get('s.weapon'),null);
+ const old=boot({stage:80,best:80,heroLevel:20,traitPointsEarned:19,lastSaved:stamp},stamp);
+ assert.equal(old.get('s.skillBuffCapacitor'),0);
+ old.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(old.get("s.skillsOwned.includes('capacitor')"),true,'old save stage65+ gets skill on next kill');
+ const resonance=boot({stage:85,best:85,weapon:{tier:2,stage:85},energy:1e7,
+  skillsOwned:['capacitor'],skillsEquipped:['capacitor'],skillBuffCapacitor:8,lastSaved:stamp},stamp);
+ assert.ok(Math.abs(resonance.get("resonanceBonus('capacitor')")-.20)<1e-12);
+ assert.ok(resonance.get('capacitorPowerBonus()')>0.45,'heroic equipment boosts the charged energy effect');
+ resonance.get('s.skillBuffCapacitor=999;save();load()');
+ assert.equal(resonance.get('s.skillBuffCapacitor'),10,'corrupt legacy buff duration clipped');
+});
