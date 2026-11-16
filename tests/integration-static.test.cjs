@@ -60,6 +60,7 @@ const tests=[
    assert.match(js,/\$\('resonanceInfo'\)\.textContent=resonanceStatus\(\)/);
    assert.doesNotMatch(html,/data-view="resonance"/,'must reuse existing growth tab');
  }],
+ ['milestone goals accurately identify existing strategic choices',()=>{assert.match(js,/next===55\?'전선 배분 선택/);assert.match(js,/next===75\?'후반 보급 선택/);assert.match(js,/function chooseBreakthroughReward/);assert.match(js,/function renderFrontlineSupport/)}],
  ['original save key',()=>assert.match(js,/const KEY='neon_rework_07'/)],
  ['save and load storage',()=>{assert.match(js,/localStorage\.getItem\(KEY\)/);assert.match(js,/localStorage\.setItem\(KEY/)}],
  ['offline simulation excludes automatic rebirth',()=>assert.match(js,/step\(dt,false\)/)],
