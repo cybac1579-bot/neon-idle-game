@@ -45,6 +45,14 @@ jobs:
         run: |
           set -o pipefail
           timeout --signal=TERM --kill-after=10s 240s env BALANCE_MODE=two-minute node tests/balance-simulation.cjs 2>&1 | tee two-minute-console.log
+      - name: Compare four STAGE55 allocation choices with three seeded low-input runs each
+        shell: bash
+        run: |
+          set -eo pipefail
+          for mode in assault balanced supply adaptive; do
+            echo "ALLOCATION_MODE=${mode}"
+            timeout --signal=TERM --kill-after=10s 120s env BALANCE_MODE=low-input BALANCE_DIAGNOSTIC=1 BALANCE_ALLOCATION="${mode}" node tests/balance-simulation.cjs 2>&1 | tee "allocation-${mode}-console.log"
+          done
       - name: Upload baseline metrics and scenario details
         if: always()
         uses: actions/upload-artifact@v4
@@ -59,5 +67,7 @@ jobs:
             artifacts/balance/first-rebirth-two-minute.json
             artifacts/balance/first-rebirth-one-buy.json
             artifacts/balance/first-rebirth-low-input.json
+            artifacts/balance/allocation-*.json
+            allocation-*-console.log
           if-no-files-found: warn
           retention-days: 14
