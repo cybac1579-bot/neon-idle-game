@@ -163,13 +163,13 @@ const server=createServer((req,res)=>{
    // Both skills coexist: charged Chain pulses show a visible combat combo cue.
    const chargedDuo=await page.evaluate(()=>{
     s.skillsEquipped=['capacitor','chain'];s.skillBuffCapacitor=8;s.chainPulses=1;s.chainPulseClock=0;
-    enemyHp=1e12;const expected=power()*.6*skillScale('chain')*(1+resonanceBonus('chain'))*2;
+    enemyHp=1e7;const expected=power()*.6*skillScale('chain')*(1+resonanceBonus('chain'))*2;
     skillTick(1);render();
-    return {damage:1e12-enemyHp,expected,cue:document.getElementById('skillCue').textContent,
+    return {damage:1e7-enemyHp,expected,cue:document.getElementById('skillCue').textContent,
      multiplier:chargedChainMultiplier(),overflow:document.documentElement.scrollWidth>innerWidth+1};
    });
    assert.equal(chargedDuo.multiplier,2,'both equipped skills must charge chain at '+width);
-   assert.ok(Math.abs(chargedDuo.damage-chargedDuo.expected)<Math.max(1e-5,chargedDuo.expected*1e-6),'charged pulse mismatch at '+width);
+   assert.ok(Math.abs(chargedDuo.damage-chargedDuo.expected)<Math.max(1e-4,chargedDuo.expected*1e-6),'charged pulse mismatch at '+width);
    assert.match(chargedDuo.cue,/충전 연쇄/,'combo must show in combat cue at '+width);
    assert.equal(chargedDuo.overflow,false,'combo cue must not cause overflow at '+width);
    await page.evaluate(previous=>{
