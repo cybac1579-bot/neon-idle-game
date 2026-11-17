@@ -4,6 +4,8 @@
 'use strict';
 const VERSION=1;
 const MAX_ACTORS=120; // protect save size and two-hour offline ticks
+const AUTO_BUY_INTERVAL=4; // seconds between optional single-step purchases
+const AUTO_MODES=['balanced','train','recruit','supply'];
 const SAVE_KEY='neon_expedition_prototype_v1';
 const UNITS=[
  {id:'guard',name:'방벽병',symbol:'🛡',dps:1.65,hp:48,heal:0,unlock:1},
@@ -33,6 +35,7 @@ const num=(n,min=0,max=1e14)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):m
 const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
 const total=s=>UNITS.reduce((n,u)=>n+s.units[u.id],0);
 const emptyContribution=()=>({damage:{guard:0,ranger:0,medic:0},healing:{guard:0,ranger:0,medic:0},taken:{guard:0,ranger:0,medic:0},falls:{guard:0,ranger:0,medic:0},attacks:{guard:0,ranger:0,medic:0}});
+const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purchases:0,spent:0});
 
 const isBoss=stage=>stage%10===0;
 const isElite=stage=>stage%5===0;
@@ -44,7 +47,7 @@ const newState=(now=Date.now())=>({
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,contribution:emptyContribution(),events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -62,6 +65,17 @@ function normalize(raw,now=Date.now()){
  for(const id of ['command','supply'])s.traits[id]=integer(raw.traits?.[id],0,10);
  RELICS.forEach(r=>s.relics[r.id]=integer(raw.relics?.[r.id],0,r.cap));
  for(const id of ['valor','trade'])s.coreUpgrades[id]=integer(raw.coreUpgrades?.[id],0,30);
+ // Control preferences are part of the prototype save, but missing legacy preferences
+ // are always OFF rather than silently activating automation.
+ s.autoBuy=initialAutoBuy();
+ if(raw.autoBuy&&typeof raw.autoBuy==='object'){
+  s.autoBuy.enabled=raw.autoBuy.enabled===true;
+  s.autoBuy.mode=AUTO_MODES.includes(raw.autoBuy.mode)?raw.autoBuy.mode:'balanced';
+  s.autoBuy.elapsed=num(raw.autoBuy.elapsed,0,AUTO_BUY_INTERVAL);
+  s.autoBuy.cursor=integer(raw.autoBuy.cursor,0,2);
+  s.autoBuy.purchases=integer(raw.autoBuy.purchases,0,1e9);
+  s.autoBuy.spent=num(raw.autoBuy.spent,0,1e14);
+ }
  s.contribution=emptyContribution();
  for(const kind of ['damage','healing','taken','falls','attacks'])for(const u of UNITS)
   s.contribution[kind][u.id]=kind==='falls'||kind==='attacks'?integer(raw.contribution?.[kind]?.[u.id],0,1e9):num(raw.contribution?.[kind]?.[u.id],0,1e14);
@@ -196,6 +210,13 @@ function tick(s,seconds){
   const dt=Math.min(1,remaining);remaining-=dt;s.clock+=dt;
   for(const q of QUESTS){if(s.stage<q.unlock)continue;s.questClocks[q.id]+=dt;const cycles=Math.floor((s.questClocks[q.id]+1e-9)/q.interval);if(cycles){s.questClocks[q.id]-=cycles*q.interval;s.credits=Math.min(1e14,s.credits+cycles*questIncome(s,q));}}
   fight(s,dt);
+  if(s.autoBuy.enabled){
+   s.autoBuy.elapsed+=dt;
+   if(s.autoBuy.elapsed>=AUTO_BUY_INTERVAL-1e-8){
+    s.autoBuy.elapsed=Math.max(0,s.autoBuy.elapsed-AUTO_BUY_INTERVAL);
+    autoPurchaseOnce(s);
+   }
+  }
  }
  return s;
 }
@@ -228,6 +249,49 @@ function purchase(s,kind,amount=1,id=null){
  if(count>1)note(s,(kind==='recruit'?'용병 소집':kind==='train'?'부대 훈련':'보급 의뢰')+' '+count+'회 연속 구매');
  return {count,spent};
 }
+// Explicit player-selected automation: only existing run-credit purchases.
+// Never opens collectible chests, spends permanent cores, invests traits, or rebirths.
+// In balanced mode, one successful transaction moves to the next category.
+// An unaffordable chosen upgrade is saved for, not bypassed by cheaper purchases.
+function autoTarget(s){
+ const mode=s.autoBuy.mode;
+ const order=mode==='balanced'?['train','recruit','supply']: [mode];
+ const start=mode==='balanced'?s.autoBuy.cursor:0;
+ for(let i=0;i<order.length;i++){
+  const kind=order[(start+i)%order.length];
+  if(kind==='recruit'){
+   if(total(s)<MAX_ACTORS)return {kind,cost:hireCost(s),id:null};
+  }else if(kind==='train'){
+   const cost=trainCost(s);
+   if(Number.isFinite(cost)&&cost<=1e14)return {kind,cost,id:null};
+  }else if(kind==='supply'){
+   // Higher-unlock contracts are higher grade, even if cheaper contracts
+   // are affordable. Preserve savings for the selected grade.
+   const q=QUESTS.slice().reverse().find(x=>s.stage>=x.unlock&&s.questLevels[x.id]<100&&Number.isFinite(questCost(s,x))&&questCost(s,x)<=1e14);
+   if(q)return {kind,id:q.id,cost:questCost(s,q)};
+  }
+ }
+ return null;
+}
+function setAutoBuy(s,mode,enabled){
+ if(!AUTO_MODES.includes(mode)||typeof enabled!=='boolean')return false;
+ s.autoBuy.mode=mode;s.autoBuy.enabled=enabled;s.autoBuy.elapsed=0;
+ s.autoBuy.cursor=0;
+ note(s,'성장 자동 구매 '+(enabled?'작동':'중단')+' · '+mode);
+ return true;
+}
+function autoPurchaseOnce(s){
+ if(!s.autoBuy.enabled)return null;
+ const target=autoTarget(s);
+ if(!target||s.credits<target.cost)return null;
+ const before=s.credits;
+ const result=target.kind==='train'?train(s):target.kind==='recruit'?recruit(s):upgradeQuest(s,target.id);
+ if(!result)return null;
+ s.autoBuy.purchases++;
+ s.autoBuy.spent+=Math.max(0,before-s.credits);
+ if(s.autoBuy.mode==='balanced')s.autoBuy.cursor=(s.autoBuy.cursor+1)%3;
+ return {kind:target.kind,id:target.id,spent:before-s.credits};
+}
 function permanentBonuses(s){
  const noPermanent={...s,relics:{},traits:{command:0,supply:0},coreUpgrades:{valor:0,trade:0}};
  const q=QUESTS[0];
@@ -256,7 +320,7 @@ function buyCore(s,id){if(!['valor','trade'].includes(id)||s.cores<coreCost(s,id
 function rebirthGain(s){return s.runBest<10?0:Math.max(1,Math.floor(Math.sqrt((s.runBest-5)/5)));}
 function rebirth(s){
  const gain=rebirthGain(s);if(!gain)return false;
- const keep={seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills};
+ const keep={seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
  Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  note(s,'탐사 귀환 · 코어 '+gain+'개 획득. 영구 유물/레벨 유지');
@@ -267,5 +331,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1)tick(s,Math.floor(elapsed));
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,MAX_ACTORS,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,permanentBonuses,openChest,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,MAX_ACTORS,AUTO_BUY_INTERVAL,AUTO_MODES,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
