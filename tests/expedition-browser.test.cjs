@@ -4,7 +4,7 @@ const {chromium}=require('playwright');
 const site=path.resolve(__dirname,'../site');
 const server=http.createServer((req,res)=>{
  const filename=decodeURIComponent((req.url||'/').split('?')[0].replace(/^\/+/,''));
- if(!['expedition.html','expedition-engine.js','expedition-app.js'].includes(filename)){res.writeHead(404);res.end();return;}
+ if(!['expedition.html','expedition-engine.js','expedition-app.js','expedition-field.js'].includes(filename)){res.writeHead(404);res.end();return;}
  const name=path.join(site,filename);
  res.writeHead(200,{'Content-Type':filename.endsWith('.html')?'text/html; charset=utf-8':'text/javascript; charset=utf-8'});
  fs.createReadStream(name).pipe(res);
@@ -21,7 +21,12 @@ async function main(){
    await page.goto(url,{waitUntil:'networkidle'});
    assert.match(await page.title(),/용병단 탐사 원형/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
-   assert.ok(await page.locator('#squad .unit').count()>=1);
+   assert.ok(await page.locator('#squad .fighter').count()>=2);
+   const firstActor=await page.locator('#squad .fighter').first().getAttribute('style');
+   await page.waitForTimeout(500);
+   const movedActor=await page.locator('#squad .fighter').first().getAttribute('style');
+   assert.notEqual(firstActor,movedActor,'fighter must advance visibly with engine state');
+   assert.ok(await page.locator('#squad .fighter-health').count()>=2);
    await page.locator('[data-tab="squad"]').click();
    assert.equal(await page.locator('#squadScreen').isVisible(),true);
    await page.locator('#hire').click();
