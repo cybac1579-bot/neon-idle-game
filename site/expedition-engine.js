@@ -142,6 +142,7 @@ function fight(s,dt){
  const living=s.actors.filter(a=>a.revive===0&&a.hp>0);
  if(!living.length){updateSquadHealth(s);return;}
  const boss=isBoss(s.stage);
+ const cueBeforeAttacks=s.battleCueSeq;
  let damage=0;
  for(const a of living){
   a.cooldown-=dt;
@@ -161,7 +162,7 @@ function fight(s,dt){
    .sort((a,b)=>a.hp/actorMaxHp(s,a.id)-b.hp/actorMaxHp(s,b.id))[0];
   if(patient){
    const amount=Math.min(actorMaxHp(s,patient.id)-patient.hp,2.7*(1+.18*relic(s,'medkit'))*(1+.08*s.training)*dt);
-   if(amount>0){patient.hp+=amount;battleCue(s,'heal',patient.id,amount);}
+   if(amount>0){patient.hp+=amount;if(s.battleCueSeq===cueBeforeAttacks)battleCue(s,'heal',patient.id,amount);}
   }
  }
  const enemyDps=.4*Math.pow(1.17,Math.min(s.stage-1,100))*(boss?2.2:isElite(s.stage)?1.4:1);
