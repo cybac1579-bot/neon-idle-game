@@ -140,14 +140,15 @@ function renderArchive(){
  const nextDeep=[15,25,30].find(distance=>distance>=s.stage);
  $('rebirthSummary').innerHTML=row('이번 탐사 최고 거리',fmt(s.runBest))+
   row('다음 새 유물 등급',nextDeep?nextDeep+'거리 목표 격파 시 상자':'현재 공개된 모든 깊이 개방')+
-  row('기본 귀환 코어',fmt(rewards.base)+'개')+
+  row('격파 성과로 적립한 코어',fmt(rewards.base)+'개')+
+  row('다음 코어 적립 진행',Math.min(99.9,Math.max(0,rewards.fraction*100)).toFixed(1)+'% · 다음 탐사로 이월')+
   row('이번 첫 기록 보너스',fmt(rewards.recordBonus)+'개')+
   row('귀환 시 총 코어',fmt(gain)+'개')+
   row('다음 최초 돌파 보너스',nextRecord?nextRecord.stage+'거리 보스 격파 · +'+nextRecord.cores+'코어':'공개된 돌파 보너스 모두 획득')+
   row('누적 귀환 횟수',fmt(s.rebirths)+'회')+
   row('보유 영구 코어',fmt(s.cores)+'개');
  $('rebirth').disabled=gain<1;
- $('rebirth').textContent=gain?'귀환하고 코어 '+fmt(gain)+'개 받기':'10거리 보스를 격파하면 귀환 가능';
+ $('rebirth').textContent=gain?'귀환하고 코어 '+fmt(gain)+'개 받기':s.runBest<=10?'10거리 보스를 격파해야 귀환 가능':'코어 적립 중 · 더 깊이 탐사해 줘';
  $('coreSummary').innerHTML=row('전선 코어 · 전투 강화','LV.'+fmt(s.coreUpgrades.valor))+
   row('보급 코어 · 경제 강화','LV.'+fmt(s.coreUpgrades.trade));
  const b=E.permanentBonuses(s);
@@ -234,7 +235,8 @@ function exportPlaytest(){
    manualGrowthSpent:s.runMetrics.manualSpent,
    automaticPurchases:s.autoBuy.purchases,
    automaticSpent:s.autoBuy.spent,chestsOpened:s.runMetrics.chestsOpened,
-   autoMode:s.autoBuy.enabled?s.autoBuy.mode:'off'
+   autoMode:s.autoBuy.enabled?s.autoBuy.mode:'off',
+   pendingReturnProgress:s.coreProgress,carryReturnFraction:s.coreReserve
   },
   lifetime:{
    bestDistance:s.best,commanderLevel:s.heroLevel,
