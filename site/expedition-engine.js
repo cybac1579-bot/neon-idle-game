@@ -85,7 +85,7 @@ const collectionBoost=s=>relic(s,'chronicle')?
 const newState=(now=Date.now())=>({
  version:VERSION,lastSaved:now,seed:123456789,clock:0,credits:65,stage:1,best:1,runBest:1,
  units:{guard:2,ranger:0,medic:0},training:0,questLevels:{dispatch:0,salvage:0,contract:0},
- questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,squadHp:96,respawn:0,
+ questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,bossHpBalanceVersion:2,squadHp:96,respawn:0,
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestDepths:[],chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
@@ -201,6 +201,15 @@ function normalize(raw,now=Date.now()){
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
+ // Legacy saves may be in the middle of a 50+ boss fight. Preserve the
+ // fraction of boss health left after the HP reduction, once only. Earlier
+ // stages and already-migrated saves retain their exact saved HP.
+ if(raw.bossHpBalanceVersion!==2&&isBoss(s.stage)&&s.stage>=50&&s.enemyHp>0){
+  const early=Math.min(s.stage-1,39),late=Math.max(0,Math.min(s.stage-40,60));
+  const oldBossMax=Math.min(1e13,Math.round(3.8*13*Math.pow(1.235,early)*Math.pow(1.18,late)));
+  const newBossMax=enemyMax(s.stage);
+  s.enemyHp=Math.max(1,Math.min(newBossMax,Math.round(s.enemyHp/oldBossMax*newBossMax)));
+ }
  s.enemyHp=s.enemyHp||enemyMax(s.stage);
  return s;
 }
