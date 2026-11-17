@@ -105,3 +105,19 @@ test('rebirth count itself neither raises payout nor attack and saved progress r
  const clean=E.normalize(bad,2000);
  assert.equal(clean.coreProgress,0);assert.equal(clean.coreReserve,0);
 });
+
+test('actual enemy clear earns fractional core progress that survives reload before return',()=>{
+ const s=state(11);
+ s.claimedBreakthroughDistance=10;
+ s.enemyHp=1;
+ s.actors.forEach(a=>{a.progress=1;a.cooldown=0;});
+ E.tick(s,1,'foreground');
+ assert.equal(s.stage,12);
+ assert.ok(s.coreProgress>0,'enemy defeat, not return clicks, generates progress');
+ const earned=s.coreProgress;
+ const loaded=E.normalize(JSON.parse(JSON.stringify(s)),2000);
+ assert.ok(Math.abs(loaded.coreProgress-earned)<1e-9,'save/load must not erase earned fraction');
+ assert.equal(E.rebirthGain(loaded),0,'fractional progress alone cannot trigger an empty return');
+ assert.equal(E.rebirth(loaded),false);
+ assert.ok(Math.abs(loaded.coreProgress-earned)<1e-9,'failed return must not consume progress');
+});
