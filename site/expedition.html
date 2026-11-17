@@ -151,10 +151,11 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 
  <div class="panel" id="autoPurchasePanel">
   <h2>성장 자동 구매 <span class="sub">(선택 기능)</span></h2>
-  <p class="sub">저축형 균형은 훈련·소집·보급을 순환하며 현재 항목의 비용을 모아. 유동형 균형은 해당 항목이 비싸면 구매 가능한 다른 종류를 먼저 강화해. 보급 안에서는 항상 해금된 최고 등급 의뢰를 선택해. 4초마다 판단하고 유물 상자·환생·코어는 자동 처리하지 않아.</p>
+  <p class="sub">균형은 약 4분 내 모을 수 있는 강화 비용은 저축하고, 그보다 비싼 목표가 성장을 막으면 작은 대체 강화를 먼저 구매해. 장기 저축은 종전 방식처럼 목표 비용이 모일 때까지 기다려. 유동형은 즉시 구매 가능한 강화를 우선해. 보급 의뢰는 모든 방식에서 해금된 최고 등급만 선택해. 4초마다 판단하며 유물 상자·환생·코어는 자동 처리하지 않아.</p>
   <label for="autoMode" class="auto-label">구매 우선 방향</label>
   <select id="autoMode" class="auto-select">
-   <option value="balanced">저축형 균형 · 정해진 순서에 따라 비용 저축</option>
+   <option value="balanced">균형 · 장시간 성장 정체 자동 방지</option>
+   <option value="reserve">장기 저축 · 기존 엄격한 저축 정책</option>
    <option value="adaptive">유동형 균형 · 구매 가능한 종류 먼저 강화</option>
    <option value="train">전투 · 훈련만 구매</option>
    <option value="recruit">편성 · 용병만 소집</option>
