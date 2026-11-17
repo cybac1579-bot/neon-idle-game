@@ -128,6 +128,9 @@
   if(ok){count('manualQuestClaims');count('manualQuestCredits',before);
    record('manual_quest_claim',{credits:before});}return ok;
  };
+ // The game registered onclick=claimCache before this script loaded.
+ // Rebind it to the recorder wrapper or manual button taps would be invisible.
+ $('claimCache').onclick=claimCache;
  const baseAutoClaim=autoQuestClaimTick;
  autoQuestClaimTick=function(dt){
   const earned=baseAutoClaim(dt);
@@ -135,6 +138,25 @@
    if(log.counters.autoQuestClaims%10===0)record('automatic_quest_checkpoint',{claims:log.counters.autoQuestClaims});}
   return earned;
  };
+ // Decisions handled by existing DOM handlers (not by a named game function).
+ $('allocationPanel').addEventListener('click',e=>{
+  const button=e.target.closest('[data-allocation]');
+  if(button&&s.stage>=55&&s.allocation===button.dataset.allocation){
+   count('allocationChanges');record('allocation',{choice:s.allocation});
+  }
+ });
+ for(const id of ['autoBuy','autoClaimQuests','autoRebirth','phaseFocus'])
+  $(id).addEventListener('change',()=>record('automation_setting',{setting:id,enabled:!!s[id]}));
+ const baseTraitReset=resetTraits;
+ resetTraits=function(){const before=s.traitPointsSpent;const result=baseTraitReset();
+  if(before>0)record('trait_reset',{points:before});return result;
+ };
+ const basePhaseEngine=buyPhaseEngine;
+ buyPhaseEngine=function(){const before=s.phaseEngine,spent=s.phaseFlux;const out=basePhaseEngine();
+  if(s.phaseEngine>before)record('phase_engine',{level:s.phaseEngine,cost:safeNumber(spent-s.phaseFlux)});
+  return out;
+ };
+ $('phaseEngine').onclick=buyPhaseEngine;
  const baseRebirth=rebirth;
  rebirth=function(automatic=false){
   const gained=gainCore(),before=s.rebirths,stage=s.stage;
