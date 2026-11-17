@@ -27,6 +27,8 @@ jobs:
         run: node tests/expedition-two-run.cjs
       - name: Probe selected auto-buy low-touch 30-minute modes
         run: node tests/expedition-autobuy-pacing.cjs
+      - name: Audit three consecutive expedition returns across strategies
+        run: node tests/expedition-route-audit.cjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.56.1
