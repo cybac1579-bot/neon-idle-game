@@ -37,7 +37,7 @@ const relic=(s,id)=>integer(s.relics[id],0,RELICS.find(x=>x.id===id)?.cap||0);
 const newState=(now=Date.now())=>({
  version:VERSION,lastSaved:now,seed:123456789,clock:0,credits:65,stage:1,best:1,runBest:1,
  units:{guard:2,ranger:0,medic:0},training:0,questLevels:{dispatch:0,salvage:0,contract:0},
- questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:0,squadHp:96,respawn:0,
+ questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,squadHp:96,respawn:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
  rebirths:0,events:['첫 번째 탐사를 시작했어.']
@@ -117,7 +117,7 @@ function recruit(s){
  note(s,chosen.name+' 소집');return chosen.id;
 }
 function train(s){const cost=trainCost(s);if(s.credits<cost)return false;s.credits-=cost;s.training++;s.squadHp=Math.min(maxHp(s),s.squadHp+18);return true;}
-function upgradeQuest(s,id){const q=QUESTS.find(x=>x.id===id);if(!q||s.best<q.unlock||s.credits<questCost(s,q))return false;s.credits-=questCost(s,q);s.questLevels[id]++;return true;}
+function upgradeQuest(s,id){const q=QUESTS.find(x=>x.id===id);if(!q||s.stage<q.unlock||s.credits<questCost(s,q))return false;s.credits-=questCost(s,q);s.questLevels[id]++;return true;}
 function openChest(s){
  if(s.chests<1)return null;s.chests--;s.chestsOpened++;
  const eligible=RELICS.filter(r=>relic(s,r.id)<r.cap);
