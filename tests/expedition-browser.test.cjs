@@ -60,7 +60,7 @@ async function main(){
    await page.addInitScript(()=>{
     const key='neon_expedition_prototype_v1',s=JSON.parse(localStorage.getItem(key));
     if(s){
-     s.stage=10;s.best=10;s.runBest=10;s.enemyHp=1e9;s.chests=4;s.credits=5000;s.lastSaved=Date.now();
+     s.stage=11;s.best=11;s.runBest=11;s.enemyHp=1e9;s.chests=4;s.credits=5000;s.lastSaved=Date.now();
      s.playtest={offlineSeconds:90,snapshots:[{
       run:1,sec:60,stage:7,credits:750,training:1,heroLevel:2,
       recruits:3,chests:1,relicKinds:0,relicTotal:0,
