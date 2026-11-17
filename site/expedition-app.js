@@ -193,11 +193,18 @@ function renderArchive(){
  const milestoneTime=seconds=>seconds===undefined?'미격파':
   Math.floor(seconds/60)+'분 '+(seconds%60).toFixed(1)+'초';
  const former=s.runHistory.at(-1)?.milestones||{};
- $('milestoneSummary').innerHTML='<p class="sub">해당 거리의 적을 격파한 시각 · 직전 탐사와 비교</p>'+
-  [5,10,15,25,35,40,45].map(stage=>row(
+ const relativeClear=(current,previous)=>{
+  if(!Number.isFinite(current)||!Number.isFinite(previous)||previous<=0||current<=0)return '';
+  const change=(previous-current)/previous*100;
+  if(Math.abs(change)<.05)return ' · 이전과 같은 속도';
+  return ' · 직전 대비 '+Math.abs(change).toFixed(1)+'% '+(change>0?'단축':'증가');
+ };
+ $('milestoneSummary').innerHTML='<p class="sub">해당 거리 적 격파 시각 · 직전 탐사와 비교 (미격파 시 비교 없음)</p>'+
+  [5,10,15,25,35,40,45,50].map(stage=>row(
    stage+'거리 '+(stage%10===0?'보스':'정예'),
    '이번 '+milestoneTime(s.runMilestones[stage])+
-   (former[stage]!==undefined?' · 직전 '+milestoneTime(former[stage]):'')
+   (former[stage]!==undefined?' · 직전 '+milestoneTime(former[stage]):'')+
+   relativeClear(s.runMilestones[stage],former[stage])
   )).join('');
  $('history').innerHTML='<div class="sub" style="margin:4px 0 10px">이번 탐사: '+safe(duration(s.clock))+
   ' · 수동 구매 '+fmt(s.runMetrics.manualPurchases)+'회 · 자동 구매 '+fmt(s.autoBuy.purchases)+'회 · 상자 개봉 '+fmt(s.runMetrics.chestsOpened)+'개</div>'+
