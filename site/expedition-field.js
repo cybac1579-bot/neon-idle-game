@@ -34,7 +34,7 @@ function sync(s){
  shown.forEach(({a,index},i)=>{
   const el=field.querySelector('[data-actor-index="'+index+'"]');if(!el)return;
   const lane=a.id==='guard'?i%3:a.id==='ranger'?(i%3):i%2;
-  const x=a.id==='guard'?7+safe(a.progress)*.58:a.id==='ranger'?3+safe(a.progress)*.35:2+safe(a.progress)*.25;
+  const x=a.id==='guard'?7+safe(a.progress)*58:a.id==='ranger'?3+safe(a.progress)*35:2+safe(a.progress)*25;
   el.style.left=x+'%';
   el.style.bottom=(a.id==='guard'?8+lane*8:a.id==='ranger'?38+lane*7:68+lane*7)+'%';
   const down=a.revive>0||a.hp<=0;
