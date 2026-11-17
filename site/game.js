@@ -152,13 +152,13 @@ function renderFrontlineSupport(){const ready=s.stage>=60,chosen=s.frontlineSupp
  for(const b of $('frontlineSupportChoices').querySelectorAll('[data-frontline-support]')){b.disabled=!!chosen;b.classList.toggle('support-selected',b.dataset.frontlineSupport===chosen);}
 }
 // Optional STAGE75 bridge: one existing-system reward, no new currency or forced click.
-const BREAKTHROUGH_REWARDS={weapon:['무기 보급','무기가 없으면 지급 · 이번 회차 무기 전투력 +20%'],skill:['스킬 집중','장착 스킬마다 다음 레벨 경험치 지급'],credits:['회수 작전','STAGE 75 적 처치 크레딧 4회분 즉시 지급']};
+const BREAKTHROUGH_REWARDS={weapon:['무기 보급','무기가 없으면 지급 · 이번 회차 무기 전투력 +20%'],skill:['스킬 집중','장착 스킬마다 다음 레벨 경험치 지급'],credits:['회수 작전','적 처치 크레딧 4회분 또는 주조기 30초 생산량 중 큰 금액 지급']};
 function breakthroughGoal(){if(s.stage<75)return '';if(!s.breakthroughReward)return ' · STAGE 75 후반 보급 선택 가능 (성장 탭)';return '';}
 function chooseBreakthroughReward(kind){if(s.stage<75||s.breakthroughReward||!BREAKTHROUGH_REWARDS[kind])return false;
  if(kind==='skill'&&!s.skillsEquipped.some(id=>(s.skillLevels[id]||1)<20))return false;
  if(kind==='weapon'&&!s.weapon)s.weapon={tier:0,stage:s.stage};
  if(kind==='skill'){for(const id of s.skillsEquipped)if((s.skillLevels[id]||1)<20)addSkillXp(id,skillXpNeeded(s.skillLevels[id]||1));}
- if(kind==='credits')s.credits=Math.min(1e100,s.credits+enemyReward(75)*4);
+ if(kind==='credits')s.credits=Math.min(1e100,s.credits+Math.max(enemyReward(75)*4,creditRate()*30));
  s.breakthroughReward=kind;logText='STAGE 75 후반 보급 · '+BREAKTHROUGH_REWARDS[kind][0];showRewardNotice('후반 보급 · '+BREAKTHROUGH_REWARDS[kind][0]);save();render();return true;
 }
 function renderBreakthroughReward(){const ready=s.stage>=75,chosen=s.breakthroughReward;$('breakthroughPanel').classList.toggle('hide',!ready);
