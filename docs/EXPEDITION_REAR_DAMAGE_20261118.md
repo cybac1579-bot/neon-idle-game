@@ -31,3 +31,10 @@
 - `site/expedition-app.js`: 병종 역할 설명과 통계 라벨.
 - `tests/expedition.test.cjs`: 우선순위/피격/후열 안전성 회귀.
 - 공개 `main`, `site/index.html`, `site/game.js`, 구 게임 저장 `neon_rework_07`은 미수정.
+
+
+## 검증 완료 및 사용자 배포용 파일 (2026-11-18)
+- **기능 검증 기준 코드:** `2c9168ea175fc3a23a289eea4a3abaf63d91c91d`. [GitHub Actions Push 44201954720](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44201954720): **SUCCESS**, 엔진 **111/111 PASS**, 기존 모바일/신형 원형 360·390·412px 브라우저 검사 및 네트워크 차단 단일 HTML 파일의 로컬 저장 백업·복원·재로드 PASS.
+- 공개 테스트 파일: GitHub Actions의 [neon-expedition-offline-playable artifact](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44201954720) 안 `neon-expedition-offline.html` 및 `README-KO.txt`. 실제 파일 meta `neon-expedition-build=2c9168ea175f` 확인, JS 인라인 후열 피해 수정과 용병 역할 안내 포함.
+- 중요: 기존에 사용자가 내려받아 플레이 중인 단일 HTML 파일은 **자동 패치되지 않음**. 데이터를 잃지 않으려면 구파일 **도감 → 전체 저장 백업** JSON 다운로드, 신파일로 교체해 연 후 **도감 → 저장 파일 복원**. 로컬 `file://` 환경이 이전 경로와 자동 저장을 공유한다고 전제 금지.
+- CI의 단계 45~50 장기 탐사 검증도 성공했으나 실제 Galaxy S25+ 플레이 20~30분의 후열 피격/전투 재미는 아직 사용자 실측이 필요함. 공개 main/Pages 및 레거시 저장은 수정하지 않았음.
