@@ -113,6 +113,28 @@ function renderSupply(){
  $('incomeSummary').innerHTML=row('자동 수익 / 분',fmt(E.QUESTS.filter(q=>s.stage>=q.unlock).reduce((n,q)=>n+60*E.questIncome(s,q)/q.interval,0)))+
   row('전투 격파',fmt(s.runKills)+'회')+row('정예 상자 보유',fmt(s.chests)+'개');
 }
+function returnReportHtml(r){
+ if(!r)return '';
+ const precise=n=>Number(n)<100?Number(n).toFixed(2):fmt(n);
+ let comparison='';
+ if(r.before&&r.after){
+  const compare=(label,oldValue,newValue)=>{
+   const percent=((newValue/Math.max(.00001,oldValue)-1)*100);
+   const sign=percent>=0?'+':'';
+   return row(label,precise(oldValue)+' → '+precise(newValue)+' ('+sign+percent.toFixed(1)+'%)');
+  };
+  comparison='<div class="return-comparison"><h3>지난 탐사 출발 ↔ 이번 탐사 출발</h3>'+
+   compare('기본 부대 화력/초',r.before.attack,r.after.attack)+
+   compare('기본 체력',r.before.hp,r.after.hp)+
+   compare('기본 보급/회',r.before.income,r.after.income)+'</div>';
+ }else{
+  comparison='<div class="sub" style="margin:11px 0">이전 탐사 출발 수치는 과거 저장에 없어서 비교하지 않았어. 다음 귀환부터 실제 출발 전투력을 비교할 수 있어.</div>';
+ }
+ return row('완료한 탐사',fmt(r.number)+'회차 · '+fmt(r.cleared)+'거리까지 격파')+
+  row('이번 귀환 코어',fmt(r.cores)+'개 (격파 적립 '+fmt(r.earned)+' · 첫 기록 '+fmt(r.firstClear)+')')+
+  row('영구 유물 수집',fmt(r.relicKinds)+'종 · 총 '+fmt(r.relicCopies)+'개')+
+  comparison;
+}
 function renderArchive(){
  let found=0,copies=0;E.RELICS.forEach(r=>{if(E.relic(s,r.id))found++;copies+=E.relic(s,r.id);});
  $('relicSummary').textContent=found+'/'+E.RELICS.length+' 발견 · '+copies+'개 수집';
@@ -135,6 +157,9 @@ function renderArchive(){
   return '<div class="collection-log"><span>'+safe(label)+'</span><strong>'+
    safe(r.id?'×'+r.stack:'+'+fmt(r.credits)+' 크레딧')+'</strong></div>';
  }).join(''):'아직 발견한 유물이 없어.';
+ const last=s.latestReturn;
+ $('returnReportPanel').hidden=!last;
+ if(last)$('returnReportContent').innerHTML=returnReportHtml(last);
  const rewards=E.rebirthRewards(s),gain=rewards.total;
  const nextRecord=E.BREAKTHROUGHS.find(b=>b.stage>Math.max(s.claimedBreakthroughDistance,s.runBest-1));
  const nextDeep=[15,25,30].find(distance=>distance>=s.stage);
@@ -291,11 +316,32 @@ $('openArchiveChest').addEventListener('click',e=>openChestWithCount(1,e.current
 $('openArchiveBatch').addEventListener('click',e=>openChestWithCount(20,e.currentTarget));
 $('popupClose').addEventListener('click',closeRelicPopup);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('relicPopup').hidden)closeRelicPopup();});
+function showReturnPopup(){
+ if(!s.latestReturn)return;
+ $('returnPopupSummary').innerHTML=returnReportHtml(s.latestReturn);
+ $('returnPopup').hidden=false;
+ $('returnPopupClose').focus();
+}
+function closeReturnPopup(destination){
+ $('returnPopup').hidden=true;
+ if(destination==='archive'){
+  screen('archive');
+  $('returnReportPanel').focus();
+ }else{
+  document.querySelector('[data-tab="battle"]').focus();
+ }
+}
+$('returnPopupClose').addEventListener('click',()=>closeReturnPopup('battle'));
+$('returnPopupArchive').addEventListener('click',()=>closeReturnPopup('archive'));
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!$('returnPopup').hidden)closeReturnPopup('battle');
+});
 $('rebirth').addEventListener('click',()=>{
  const gain=E.rebirthGain(s);
  if(!gain)return;
  if(!confirm('이번 탐사 병력·훈련·의뢰 레벨이 초기화돼. 유물과 지휘관 레벨은 남아. 기본 '+E.rebirthRewards(s).base+'코어 + 최초 기록 '+E.rebirthRewards(s).recordBonus+'코어 = 총 '+gain+'코어를 얻고 귀환할까?'))return;
- act(()=>E.rebirth(s));screen('battle');
+ const returned=act(()=>E.rebirth(s));if(!returned)return;
+ screen('battle');showReturnPopup();
 });
 $('saveNow').addEventListener('click',()=>{if(save())notify('탐사 기록 저장 완료');render();});
 $('exportPlaytest').addEventListener('click',exportPlaytest);
