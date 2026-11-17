@@ -283,7 +283,7 @@ test('bulk calls cannot bypass locked quests, actor cap, or unknown purchases',(
  assert.equal(E.purchase(s,'quest',10,'contract').count,0);
  assert.equal(E.purchase(s,'invalid',10).count,0);
  assert.equal(s.credits,originalCredits);
- s.credits=1e12;s.best=10;
+ s.credits=1e14;s.best=10;
  for(let n=0;n<15;n++)E.purchase(s,'recruit',10);
  assert.equal(s.actors.length,E.MAX_ACTORS);
  assert.equal(E.purchase(s,'recruit',10).count,0);
