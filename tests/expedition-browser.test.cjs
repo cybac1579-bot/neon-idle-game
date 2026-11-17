@@ -15,7 +15,7 @@ async function main(){
  const browser=await chromium.launch({headless:true});
  try{
   for(const width of [360,390,412]){
-   const context=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
+   const context=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1,acceptDownloads:true});
    const page=await context.newPage(),errors=[];
    page.on('pageerror',e=>errors.push(String(e)));
    await page.goto(url,{waitUntil:'networkidle'});
@@ -61,6 +61,11 @@ async function main(){
     const key='neon_expedition_prototype_v1',s=JSON.parse(localStorage.getItem(key));
     if(s){
      s.stage=10;s.best=10;s.runBest=10;s.enemyHp=1e9;s.chests=4;s.credits=5000;s.lastSaved=Date.now();
+     s.playtest={offlineSeconds:90,snapshots:[{
+      run:1,sec:60,stage:7,credits:750,training:1,heroLevel:2,
+      recruits:3,chests:1,relicKinds:0,relicTotal:0,
+      manualBuys:1,autoBuys:0,source:'foreground'
+     }]};
      s.units={guard:5,ranger:4,medic:3};
      s.actors=['guard','ranger','guard','medic','ranger','guard','medic','guard','ranger','medic','guard','ranger']
       .map(id=>({id,hp:id==='guard'?48:id==='ranger'?17:25,revive:0,progress:.5,cooldown:1}));
@@ -105,10 +110,29 @@ async function main(){
    assert.equal(Object.values(savedAfter.relics).reduce((a,b)=>a+b,0),4);
    assert.deepEqual(savedAfter.relicHistory,savedBefore.relicHistory,'journal must persist through rebirth');
    assert.equal(savedAfter.runMetrics.chestsOpened,0);
+   assert.equal(savedAfter.playtest.snapshots.length,1);
    assert.equal(savedAfter.autoBuy.mode,'recruit');
    assert.equal(savedAfter.autoBuy.enabled,false);
    assert.equal(savedAfter.autoBuy.purchases,0);
    assert.equal(await page.evaluate(()=>localStorage.getItem('neon_rework_07')),null);
+   await page.locator('[data-tab="archive"]').click();
+   assert.match(await page.locator('#playtestSummary').textContent(),/기록한 1분 단위 상태/);
+   const [download]=await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#exportPlaytest').click()
+   ]);
+   assert.match(download.suggestedFilename(),/^neon-expedition-playtest-\d{4}-\d{2}-\d{2}\.json$/);
+   const payload=JSON.parse(fs.readFileSync(await download.path(),'utf8'));
+   assert.equal(payload.schema,'neon-expedition-playtest-v1');
+   assert.equal(payload.origin,'local-user-export');
+   assert.equal(payload.currentRun.number,2);
+   assert.equal(payload.minuteSnapshots.length,1);
+   assert.equal(payload.minuteSnapshots[0].stage,7);
+   assert.equal(payload.offlineSettledSeconds,90);
+   assert.equal(payload.recentReturns.length,1);
+   assert.equal(payload.lifetime.relics[Object.keys(savedBefore.relics).find(id=>savedBefore.relics[id]>0)],savedBefore.relics[Object.keys(savedBefore.relics).find(id=>savedBefore.relics[id]>0)]);
+   assert.equal(Object.hasOwn(payload,'deviceId'),false);
+   assert.equal(Object.hasOwn(payload,'account'),false);
    const bounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(bounds.scroll<=bounds.width+1,'mobile horizontal overflow: '+JSON.stringify(bounds));
    assert.deepEqual(errors,[],'browser runtime errors '+width);
