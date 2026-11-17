@@ -1,7 +1,8 @@
 'use strict';
 /* Independent scripted efficiency probe; not an assertion of player behavior.
  * A rebirth decision is always manual, as is chest opening. Automatic upgrades
- * are opt-in. We compare early and deeper return targets over the same clock. */
+ * are opt-in. Targets are CLEARED stages, not the current enemy stage.
+ * We compare early and deeper return targets over the same clock. */
 const assert=require('node:assert/strict');
 const E=require('../site/expedition-engine.js');
 const TARGETS=[10,15,20,25,30,35],SEEDS=[123456789,987654321,20261118];
@@ -13,8 +14,9 @@ function simulate(seed,target){
   newRelicKinds:0,secondRunStarts:0,completedRuns:[],lastDistance:1};
  for(let t=4;t<=TOTAL_SECONDS;t+=4){
   E.tick(s,4);summary.elapsed=t;
-  if(s.stage<target)continue;
-  const actual=s.stage,elapsedRun=Math.floor(s.clock),reward=E.rebirthGain(s);
+  // A stage is cleared only when the state advances to the next enemy.
+  if(s.stage<=target)continue;
+  const actual=s.stage-1,elapsedRun=Math.floor(s.clock),reward=E.rebirthGain(s);
   assert.ok(reward>0,'benchmark target must allow return');
   const count=s.chests;
   for(let i=0;i<count;i+=20){
