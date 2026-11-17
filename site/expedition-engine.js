@@ -324,13 +324,14 @@ function fight(s,dt){
   if(actor.hp<=0){s.contribution.falls[actor.id]++;actor.revive=6;actor.progress=0;actor.cooldown=.5;
    battleCue(s,'fallen',actor.id);note(s,(UNITS.find(u=>u.id===actor.id)||UNITS[0]).name+' 후퇴 · 재합류 대기');}
  }
- hit(frontline,enemyDps*dt*(1-pierce));
- if(pierce){
-  // Rotate pressure among living rear actors instead of always striking
-  // the first ranger. This is deterministic and consumes no combat RNG.
-  const target=rear[Math.floor(s.clock/3)%rear.length];
-  hit(target,enemyDps*dt*pierce);
- }
+ // The rear can be clipped, but must not be shredded by the exponential
+ // enemy damage curve past stage 40. Cap rear pressure per fighter HP per
+ // second and give the unused attack strength back to the guarded front.
+ const target=pierce?rear[Math.floor(s.clock/3)%rear.length]:null;
+ const rearShot=target?Math.min(enemyDps*dt*pierce,
+  actorMaxHp(s,target.id)*(boss?.08:isElite(s.stage)?.06:.04)*dt):0;
+ hit(frontline,enemyDps*dt-rearShot);
+ if(target)hit(target,rearShot);
  updateSquadHealth(s);
  if(s.squadHp<=0){s.enemyHp=enemyMax(s.stage);battleCue(s,'rally','guard');note(s,'부대 전원 후퇴 · 적 전선 재정비');}
 }
