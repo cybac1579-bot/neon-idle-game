@@ -131,7 +131,7 @@ function renderArchive(){
  $('openArchiveBatch').textContent='상자 '+fmt(Math.min(20,s.chests))+'개 함께 열기'+(s.chests>20?' (나머지 보관)':'');
  $('relicRecent').innerHTML=s.relicHistory.length?s.relicHistory.slice(-8).reverse().map(r=>{
   const data=E.RELICS.find(x=>x.id===r.id);
-  const label=(data?(r.duplicate?'중복 · ':'첫 발견 · ')+data.name:'수집 완료 · 크레딧 보상')+(r.depth?' · '+r.depth+'거리 상자':'');
+  const label=(data?(r.duplicate?'중복 · ':'첫 발견 · ')+data.name:'해당 상자 등급 수집 완료 · 크레딧 보상')+(r.depth?' · '+r.depth+'거리 상자':'');
   return '<div class="collection-log"><span>'+safe(label)+'</span><strong>'+
    safe(r.id?'×'+r.stack:'+'+fmt(r.credits)+' 크레딧')+'</strong></div>';
  }).join(''):'아직 발견한 유물이 없어.';
@@ -184,7 +184,7 @@ function openChestWithCount(count,source){
  save();render();
  const n=opened.results.length;
  $('popupTitle').textContent=n===1?
-   (opened.first?'새 유물 발견!':opened.exchanges?'도감 수집 완료':'유물 강화 획득!'):
+   (opened.first?'새 유물 발견!':opened.exchanges?'상자 보상 교환':'유물 강화 획득!'):
    n+'개 상자 개봉 · 새 유물 '+opened.first+'종';
  $('popupDesc').textContent=n===1?
    '상자에서 나온 보상은 환생 후에도 남아.':
@@ -193,7 +193,7 @@ function openChestWithCount(count,source){
   const data=E.RELICS.find(x=>x.id===r.id);
   const isNew=data&&!r.duplicate;
   const title=data?data.name:'수집 완료 보상';
-  const detail=data?data.desc:'모든 유물의 보유 상한에 도달해서 크레딧으로 교환했어.';
+  const detail=data?data.desc:'이 상자의 발견 가능 유물이 모두 상한에 도달해서 크레딧으로 교환했어.';
   const countLabel=data?' · '+r.stack+'/'+data.cap+'개 보유':'';
   const depthLabel=r.depth?' · 획득 '+r.depth+'거리 상자':' · 기존 저장 상자';
   const tag=isNew?'첫 발견':data?'중복 강화':'크레딧 교환';
