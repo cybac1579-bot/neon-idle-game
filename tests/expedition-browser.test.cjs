@@ -163,8 +163,29 @@ async function main(){
    assert.ok(bounds.scroll<=bounds.width+1,'mobile horizontal overflow: '+JSON.stringify(bounds));
    assert.deepEqual(errors,[],'browser runtime errors '+width);
    if(width===390){fs.mkdirSync('artifacts/expedition',{recursive:true});await page.screenshot({path:'artifacts/expedition/expedition-390.png',fullPage:true});}
+   // Archive must show honest same-distance improvement and slowdown, including
+   // the stage-50 boss, without requiring invented milestones on older saves.
+   await page.addInitScript(()=>{
+    const key='neon_expedition_prototype_v1',state=JSON.parse(localStorage.getItem(key));
+    if(state&&state.rebirths===1&&state.runHistory?.length){
+     state.runHistory[state.runHistory.length-1].milestones={40:3600,45:4000,50:6000};
+     state.runMilestones={40:1800,45:6000,50:4500};
+     state.lastSaved=Date.now();
+     localStorage.setItem(key,JSON.stringify(state));
+    }
+   });
+   await page.reload({waitUntil:'networkidle'});
+   await page.locator('[data-tab="archive"]').click();
+   const milestones=await page.locator('#milestoneSummary').textContent();
+   assert.match(milestones,/40거리 보스/);
+   assert.match(milestones,/50거리 보스/);
+   assert.match(milestones,/직전 대비 50\.0% 단축/);
+   assert.match(milestones,/직전 대비 50\.0% 증가/);
+   const comparisonBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
+   assert.ok(comparisonBounds.scroll<=comparisonBounds.width+1,
+    'archive comparison horizontal overflow: '+JSON.stringify(comparisonBounds));
    await context.close();
-   console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow');
+   console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison');
   }
  }finally{await browser.close();await new Promise(r=>server.close(r));}
 }
