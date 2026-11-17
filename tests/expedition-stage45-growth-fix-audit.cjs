@@ -8,9 +8,10 @@ const E=require('../site/expedition-engine.js');
 const SEEDS=[123456789,987654321,20261118],MODES=['balanced','reserve','adaptive'];
 function cycle(state,mode,target,limit){
  assert.equal(E.setAutoBuy(state,mode,true),true);
- let first45=null,lastAuto=state.autoBuy.purchases,after45Buys=[],at50=null;
+ let first45=null,lastAuto=state.autoBuy.purchases,after45Buys=[],at50=null,bossStart=null;
  for(let elapsed=1;elapsed<=limit;elapsed++){
   E.tick(state,1);
+  if(bossStart===null&&state.stage===50)bossStart=elapsed;
   if(elapsed%300===0)while(state.chests>0)assert.ok(E.openChest(state));
   if(state.runMilestones[45]!==undefined&&first45===null)first45=state.runMilestones[45];
   if(state.autoBuy.purchases!==lastAuto){
@@ -22,7 +23,7 @@ function cycle(state,mode,target,limit){
    at50=state.runMilestones[50]??null;
    const end=at50??elapsed,events=after45Buys.filter(t=>t<=end);
    const marks=[first45??elapsed,...events,end];
-   return {seconds:elapsed,first45,last50:at50,growthBuysAfter45:events.length,
+   return {seconds:elapsed,first45,last50:at50,boss50Seconds:bossStart===null?null:elapsed-bossStart,growthBuysAfter45:events.length,
     maxNoGrowthSeconds:Math.max(...marks.slice(1).map((x,i)=>x-marks[i])),
     training:state.training,roster:state.actors.length,contract:state.questLevels.contract};
   }
@@ -43,12 +44,16 @@ function compare(mode,seed){
  assert.ok(s.relics.chronicle===1,'the stage50 treasure must remain collectable');
  assert.equal(s.rebirths,1,'never auto-rebirth');
  return {mode,seed,first45Seconds:first.seconds,second45Seconds:second.first45,
-  second50Seconds:second.last50,after45GrowthBuys:second.growthBuysAfter45,
+  second50Seconds:second.last50,boss50Seconds:second.boss50Seconds,after45GrowthBuys:second.growthBuysAfter45,
   longestNoGrowthSeconds:second.maxNoGrowthSeconds,
   training:second.training,roster:second.roster,contract:second.contract,
   firstReturnCores:paid,valorLevels:investments};
 }
 const results=MODES.flatMap(mode=>SEEDS.map(seed=>compare(mode,seed)));
+for(const r of results.filter(x=>x.mode==='balanced'||x.mode==='adaptive')){
+ assert.ok(r.boss50Seconds>0&&r.boss50Seconds<=720,
+  'stage50 boss combat regressed into a 12+ minute HP wall '+JSON.stringify(r));
+}
 for(const r of results.filter(x=>x.mode==='balanced')){
  assert.ok(r.longestNoGrowthSeconds<=1200,'balanced late growth unexpectedly stalled >20m '+JSON.stringify(r));
  assert.ok(r.after45GrowthBuys>=5,'balanced must still improve army between distance45 and 50');
