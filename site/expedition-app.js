@@ -135,14 +135,19 @@ function renderArchive(){
   return '<div class="collection-log"><span>'+safe(label)+'</span><strong>'+
    safe(r.id?'×'+r.stack:'+'+fmt(r.credits)+' 크레딧')+'</strong></div>';
  }).join(''):'아직 발견한 유물이 없어.';
- const gain=E.rebirthGain(s);
+ const rewards=E.rebirthRewards(s),gain=rewards.total;
+ const nextRecord=E.BREAKTHROUGHS.find(b=>b.stage>Math.max(s.claimedBreakthroughDistance,s.runBest-1));
  const nextDeep=[15,25,30].find(distance=>distance>=s.stage);
  $('rebirthSummary').innerHTML=row('이번 탐사 최고 거리',fmt(s.runBest))+
   row('다음 새 유물 등급',nextDeep?nextDeep+'거리 목표 격파 시 상자':'현재 공개된 모든 깊이 개방')+
-  row('귀환 시 코어 획득',fmt(gain)+'개')+row('누적 귀환 횟수',fmt(s.rebirths)+'회')+
+  row('기본 귀환 코어',fmt(rewards.base)+'개')+
+  row('이번 첫 기록 보너스',fmt(rewards.recordBonus)+'개')+
+  row('귀환 시 총 코어',fmt(gain)+'개')+
+  row('다음 최초 돌파 보너스',nextRecord?nextRecord.stage+'거리 보스 격파 · +'+nextRecord.cores+'코어':'공개된 돌파 보너스 모두 획득')+
+  row('누적 귀환 횟수',fmt(s.rebirths)+'회')+
   row('보유 영구 코어',fmt(s.cores)+'개');
  $('rebirth').disabled=gain<1;
- $('rebirth').textContent=gain?'귀환하고 코어 '+fmt(gain)+'개 받기':'10거리 이상 도달하면 귀환 가능';
+ $('rebirth').textContent=gain?'귀환하고 코어 '+fmt(gain)+'개 받기':'10거리 보스를 격파하면 귀환 가능';
  $('coreSummary').innerHTML=row('전선 코어 · 전투 강화','LV.'+fmt(s.coreUpgrades.valor))+
   row('보급 코어 · 경제 강화','LV.'+fmt(s.coreUpgrades.trade));
  const b=E.permanentBonuses(s);
@@ -287,7 +292,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('relicPopup').hi
 $('rebirth').addEventListener('click',()=>{
  const gain=E.rebirthGain(s);
  if(!gain)return;
- if(!confirm('이번 탐사 병력·훈련·의뢰 레벨이 초기화돼. 유물과 지휘관 레벨은 남아. '+gain+'코어를 얻고 귀환할까?'))return;
+ if(!confirm('이번 탐사 병력·훈련·의뢰 레벨이 초기화돼. 유물과 지휘관 레벨은 남아. 기본 '+E.rebirthRewards(s).base+'코어 + 최초 기록 '+E.rebirthRewards(s).recordBonus+'코어 = 총 '+gain+'코어를 얻고 귀환할까?'))return;
  act(()=>E.rebirth(s));screen('battle');
 });
 $('saveNow').addEventListener('click',()=>{if(save())notify('탐사 기록 저장 완료');render();});
