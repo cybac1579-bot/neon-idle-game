@@ -91,7 +91,13 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 @keyframes combat-flash{0%{transform:translateY(16px) scale(.85);opacity:0}20%{opacity:1}100%{transform:translateY(-16px) scale(1);opacity:0}}
 @keyframes enemy-damaged{0%,100%{filter:brightness(1)}50%{filter:brightness(2)}}
 @media(prefers-reduced-motion:reduce){.fighter,.fighter-health div{transition:none}.fighter.advance .fighter-symbol,.arena.combat-impact .foe .silhouette,.combat-cue{animation:none}}
-.batch-control{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0 12px}.batch-control button{padding:8px 14px;min-height:37px;font-size:12px}.permanent-summary{margin-top:12px;padding-top:10px;border-top:1px solid #43586b}.permanent-summary h3{font-size:12px;margin:0 0 5px;color:#bad7e2}</style></head>
+.batch-control{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0 12px}.batch-control button{padding:8px 14px;min-height:37px;font-size:12px}.permanent-summary{margin-top:12px;padding-top:10px;border-top:1px solid #43586b}.permanent-summary h3{font-size:12px;margin:0 0 5px;color:#bad7e2}.auto-label{display:block;font-size:12px;color:#bbd2df;margin:8px 0 6px}
+.auto-select{width:100%;min-height:44px;padding:9px 11px;background:#14253a;border:1px solid #63849b;color:#edf5ff;border-radius:9px;font:inherit;font-size:13px}
+.auto-select:focus-visible{outline:3px solid #ffe59a;outline-offset:2px}
+.auto-control{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:11px 0}
+.auto-control button{font-size:12px;padding:10px 13px;min-width:125px}
+#autoDetails{line-height:1.5;border-top:1px solid #344c63;padding-top:9px}
+</style></head>
 <body><main>
 <header><div><h1>네온 방치단 <span class="sub">/ 탐사 원형</span></h1><p class="sub">용병은 싸우고, 지휘관은 다음 원정을 준비해.</p></div><a class="sub" href="./index.html">기존판</a></header>
 <div class="top-info" aria-live="off"><div class="metric"><span>탐사 거리</span><strong id="stage">1</strong></div><div class="metric"><span>크레딧</span><strong id="credits">65</strong></div><div class="metric"><span>최고 기록</span><strong id="best">1</strong></div></div>
@@ -108,6 +114,23 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 <section id="squadScreen" class="screen" hidden>
  <div class="panel"><h2>용병단 편성</h2><p class="sub">소집하면 해금된 병종 중 한 명이 합류해. 같은 병종도 여러 명 모집할 수 있어.</p><div class="batch-control"><span class="sub">반복 구매를 한 번에</span><button id="buyCountSquad" type="button" class="soft" aria-label="한 번에 구매할 횟수 변경">최대 5회</button></div><div id="unitList" class="stack"></div>
  <button id="hire" class="primary" style="width:100%;margin-top:12px">용병 소집</button></div>
+
+ <div class="panel" id="autoPurchasePanel">
+  <h2>성장 자동 구매 <span class="sub">(선택 기능)</span></h2>
+  <p class="sub">원하는 방향을 선택하면 4초마다 구매 가능한 강화 한 번을 실행해. 크레딧이 부족하면 모았다가 구매하고, 유물 상자·환생·코어는 자동으로 처리하지 않아.</p>
+  <label for="autoMode" class="auto-label">구매 우선 방향</label>
+  <select id="autoMode" class="auto-select">
+   <option value="balanced">균형 · 훈련 → 소집 → 보급 반복</option>
+   <option value="train">전투 · 부대 훈련 우선</option>
+   <option value="recruit">편성 · 용병 소집 우선</option>
+   <option value="supply">경제 · 높은 등급 보급 우선</option>
+  </select>
+  <div class="auto-control">
+   <div id="autoStatus" role="status" aria-live="polite" class="sub">자동 구매 꺼짐</div>
+   <button type="button" id="autoToggle" class="soft" aria-pressed="false">자동 구매 켜기</button>
+  </div>
+  <div id="autoDetails" class="sub">기존 저장 데이터에서는 자동 구매가 꺼진 상태로 시작해.</div>
+ </div>
  <div class="panel"><h2>부대 공통 훈련</h2><div id="trainingSummary" class="statline"></div><button id="train" class="soft" style="width:100%;margin-top:12px">부대 훈련</button></div>
  <div class="panel"><h2>지휘관 성장 <span class="sub">(영구 유지)</span></h2><div id="heroSummary"></div><div class="two" style="margin-top:10px"><button id="traitCommand">전술 통솔 강화</button><button id="traitSupply">보급 지휘 강화</button></div></div>
  <div class="panel"><h2>병종별 전투 기여</h2><p class="sub">이번 탐사에서 실제로 가한 피해·회복·받은 피해를 기록해. 초과 피해는 제외해.</p><div id="roleContribution"></div></div>
