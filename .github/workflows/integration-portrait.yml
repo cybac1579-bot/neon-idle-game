@@ -29,6 +29,8 @@ jobs:
         run: node tests/expedition-autobuy-pacing.cjs
       - name: Audit three consecutive expedition returns across strategies
         run: node tests/expedition-route-audit.cjs
+      - name: Probe early versus deep return core farming economics
+        run: node tests/expedition-return-efficiency.cjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.56.1
