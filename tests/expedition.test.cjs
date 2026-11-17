@@ -709,3 +709,25 @@ test('malformed return reports and opening values are sanitized on load',()=>{
 
 // Exact early clear timestamps are tracked independently of 60-second snapshots.
 require('./expedition-milestones.test.cjs');
+
+test('adaptive mode skips unaffordable high-grade supply without changing fixed balanced policy',()=>{
+ const fixed=E.newState(1000),adaptive=E.newState(1000);
+ for(const s of [fixed,adaptive]){s.stage=s.best=s.runBest=12;s.credits=100;}
+ assert.equal(E.setAutoBuy(fixed,'balanced',true),true);
+ assert.equal(E.setAutoBuy(adaptive,'adaptive',true),true);
+ fixed.autoBuy.cursor=adaptive.autoBuy.cursor=2;
+ assert.equal(E.autoTarget(fixed).id,'contract','fixed mode saves for highest-grade supply');
+ assert.equal(E.autoTarget(adaptive).kind,'train','adaptive mode can use affordable growth');
+ E.tick(fixed,4);E.tick(adaptive,4);
+ assert.equal(fixed.autoBuy.purchases,0);
+ assert.equal(adaptive.autoBuy.purchases,1);
+ assert.equal(adaptive.training,1);
+ assert.equal(adaptive.autoBuy.cursor,1);
+ const loaded=E.normalize(JSON.parse(JSON.stringify(adaptive)),2000);
+ assert.equal(loaded.autoBuy.mode,'adaptive');
+ assert.equal(loaded.autoBuy.enabled,true);
+ assert.equal(loaded.autoBuy.purchases,1);
+ assert.equal(loaded.autoBuy.cursor,1);
+ assert.equal(loaded.coreSpent,0);
+ assert.equal(loaded.chestsOpened,0);
+});
