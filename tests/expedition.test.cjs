@@ -337,3 +337,152 @@ test('old prototype saves without contribution telemetry migrate to zeros',()=>{
  assert.equal(s.contribution.healing.medic,0);
  assert.equal(s.contribution.falls.guard,0);
 });
+
+
+test('auto buying is opt-in and legacy saves never silently activate it',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ assert.equal(s.autoBuy.enabled,false);
+ E.tick(s,180);
+ assert.equal(s.training,0);
+ assert.equal(s.units.guard,2);
+ assert.equal(s.autoBuy.purchases,0);
+ const old=E.newState(1000);delete old.autoBuy;
+ const loaded=E.normalize(JSON.parse(JSON.stringify(old)),2000);
+ assert.equal(loaded.autoBuy.enabled,false);
+ assert.equal(loaded.autoBuy.mode,'balanced');
+});
+
+test('explicit training mode saves credits and buys only once each four seconds',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ assert.equal(E.setAutoBuy(s,'train',true),true);
+ E.tick(s,3.9);
+ assert.equal(s.training,0);
+ E.tick(s,.1);
+ assert.equal(s.training,1);
+ assert.equal(s.units.guard,2);
+ assert.equal(s.autoBuy.purchases,1);
+ assert.equal(s.autoBuy.spent,E.trainCost(E.newState()));
+ // One expensive training step is not affordable yet, so lower-cost recruit is NOT a fallback.
+ s.credits=E.trainCost(s)-1;
+ const units=s.units.guard;
+ E.tick(s,4);
+ assert.equal(s.training,1);
+ assert.equal(s.units.guard,units);
+ assert.equal(s.autoBuy.purchases,1);
+});
+
+test('auto recruitment consumes the same RNG and prices as one manual recruit',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ const manual=E.normalize(E.newState(1000),1000);
+ s.credits=manual.credits=10000;s.best=manual.best=12;
+ assert.ok(E.setAutoBuy(s,'recruit',true));
+ const picked=E.recruit(manual);
+ E.tick(s,4);
+ assert.ok(picked);
+ assert.deepEqual(s.units,manual.units);
+ assert.equal(s.seed,manual.seed);
+ assert.equal(s.autoBuy.purchases,1);
+ assert.equal(s.autoBuy.spent,25);
+ assert.equal(s.autoBuy.mode,'recruit');
+});
+
+test('auto supply always targets highest unlocked contract grade, not cheap lower grade',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ s.stage=s.best=12;s.enemyHp=E.enemyMax(s.stage);s.credits=20000;
+ assert.ok(E.setAutoBuy(s,'supply',true));
+ assert.equal(E.autoTarget(s).id,'contract');
+ E.tick(s,4);
+ assert.equal(s.questLevels.contract,1);
+ assert.equal(s.questLevels.salvage,0);
+ assert.equal(s.questLevels.dispatch,0);
+ assert.equal(s.autoBuy.purchases,1);
+ s.credits=E.questCost(s,E.QUESTS[2])-1000;
+ E.tick(s,4);
+ assert.equal(s.questLevels.contract,1);
+ assert.equal(s.questLevels.dispatch,0);
+});
+
+test('balanced mode runs training, recruitment, highest grade quest in turn',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ s.stage=s.best=12;s.enemyHp=E.enemyMax(12);s.credits=100000;
+ assert.ok(E.setAutoBuy(s,'balanced',true));
+ assert.equal(E.autoTarget(s).kind,'train');
+ const before=s.units.guard+s.units.ranger+s.units.medic;
+ E.tick(s,4);assert.equal(s.training,1);
+ assert.equal(E.autoTarget(s).kind,'recruit');
+ E.tick(s,4);
+ assert.equal(s.units.guard+s.units.ranger+s.units.medic,before+1);
+ assert.equal(E.autoTarget(s).id,'contract');
+ E.tick(s,4);
+ assert.equal(s.questLevels.contract,1);
+ assert.equal(s.autoBuy.cursor,0);
+ assert.equal(s.autoBuy.purchases,3);
+});
+
+test('automated buying never opens chests, spends cores or performs rebirth',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ s.credits=10000;s.cores=10;s.chests=3;s.best=15;s.runBest=15;
+ assert.ok(E.setAutoBuy(s,'train',true));
+ E.tick(s,32);
+ assert.ok(s.autoBuy.purchases>0);
+ assert.equal(s.chests,3);
+ assert.equal(s.cores,10);
+ assert.equal(s.rebirths,0);
+ assert.equal(s.coreUpgrades.valor,0);
+ assert.equal(s.coreUpgrades.trade,0);
+});
+
+test('automation preference persists across save and rebirth but purchase counters reset',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ s.credits=10000;
+ assert.ok(E.setAutoBuy(s,'recruit',true));
+ E.tick(s,8);
+ assert.ok(s.autoBuy.purchases>=2);
+ const reloaded=E.normalize(JSON.parse(JSON.stringify(s)),10000);
+ assert.equal(reloaded.autoBuy.enabled,true);
+ assert.equal(reloaded.autoBuy.mode,'recruit');
+ assert.equal(reloaded.autoBuy.purchases,s.autoBuy.purchases);
+ reloaded.runBest=15;reloaded.best=15;reloaded.stage=15;
+ const gained=E.rebirth(reloaded);
+ assert.ok(gained>0);
+ assert.equal(reloaded.autoBuy.enabled,true);
+ assert.equal(reloaded.autoBuy.mode,'recruit');
+ assert.equal(reloaded.autoBuy.elapsed,0);
+ assert.equal(reloaded.autoBuy.purchases,0);
+ assert.equal(reloaded.autoBuy.spent,0);
+ E.tick(reloaded,4);
+ assert.equal(reloaded.autoBuy.purchases,1);
+});
+
+test('malformed automation config and calls cannot activate unsafe behavior',()=>{
+ const raw=E.newState(1000);
+ raw.autoBuy={enabled:'yes',mode:'hack',elapsed:999,cursor:999,purchases:-1,spent:Infinity};
+ const s=E.normalize(raw,1000);
+ assert.equal(s.autoBuy.enabled,false);
+ assert.equal(s.autoBuy.mode,'balanced');
+ assert.equal(s.autoBuy.elapsed,E.AUTO_BUY_INTERVAL);
+ assert.equal(s.autoBuy.cursor,2);
+ assert.equal(s.autoBuy.purchases,0);
+ assert.equal(s.autoBuy.spent,0);
+ assert.equal(E.setAutoBuy(s,'hacked',true),false);
+ assert.equal(E.setAutoBuy(s,'train','true'),false);
+ assert.equal(s.autoBuy.enabled,false);
+ assert.equal(E.autoPurchaseOnce(s),null);
+});
+
+test('offline catchup follows active selection without extra purchases or unlimited time',()=>{
+ const initial=1000000;
+ const s=E.normalize(E.newState(initial),initial);
+ const direct=E.normalize(E.newState(initial),initial);
+ s.credits=direct.credits=10000;
+ E.setAutoBuy(s,'train',true);E.setAutoBuy(direct,'train',true);
+ s.lastSaved=initial;
+ const elapsed=E.offline(s,initial+60*1000);
+ E.tick(direct,60);
+ assert.equal(elapsed,60);
+ assert.equal(s.training,direct.training);
+ assert.equal(s.autoBuy.purchases,direct.autoBuy.purchases);
+ assert.equal(s.autoBuy.spent,direct.autoBuy.spent);
+ assert.equal(s.stage,direct.stage);
+ assert.equal(s.credits,direct.credits);
+});
