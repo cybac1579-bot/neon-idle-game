@@ -6,7 +6,7 @@ const E=require('../site/expedition-engine.js');
 test('original game has an isolated save key and exactly three prototype roles',()=>{
  assert.notEqual(E.SAVE_KEY,'neon_rework_07');
  assert.equal(E.UNITS.length,3);
- assert.equal(E.RELICS.length,14);
+ assert.equal(E.RELICS.length,15);
  assert.equal(E.QUESTS.length,3);
 });
 
