@@ -364,3 +364,8 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 ### 2026-11-18 01:51 KST — new expedition return progress integrity
 - **Targeted test added** `780919b4`: real enemy clear → fractional core accumulation → JSON reload → blocked early return without consuming fraction. Source reviewed, commit verified; **new test CI not yet verified**. Previous `81792df8` four workflow runs succeeded, but cannot substitute for this commit.
 - **Next P0:** inspect new test/portrait CI for `780919b4` and fix failures before declaring success. **P1:** 30-minute low-input expedition route, return economics at 25/35, Android lifecycle and UI. Legacy 60% estimate unchanged but not transferable to new prototype. Main/Pages protected; Preview currently stale due quota.
+
+
+### 2026-11-18 02:59 KST — adaptive auto-buy selection / save safety
+- New test `daf7f991` added to `tests/expedition.test.cjs`: fixed balanced keeps highest-grade supply reservation, adaptive skips unaffordable supply for affordable training, advances cursor, survives JSON normalization and never spends cores/opens chests. GitHub write confirmed; **test CI still pending**.
+- **P0:** verify latest HEAD CI after manual concurrent changes, fix failed engine/browser checks. **P1:** expose and verify adaptive option at 360/390/412px and compare 30m no-tap economy/first-run milestones; real Android lifecycle unverified. Legacy 60% is not a proven expedition readiness score. Main protected; PR #2 draft.
