@@ -97,6 +97,26 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 .auto-control{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:11px 0}
 .auto-control button{font-size:12px;padding:10px 13px;min-width:125px}
 #autoDetails{line-height:1.5;border-top:1px solid #344c63;padding-top:9px}
+
+.relic-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 12px}
+.relic-actions button{font-size:12px;min-width:0;padding:10px 7px}
+.relic-actions button[hidden]{display:none}
+.relic-actions:has(>button[hidden]){grid-template-columns:1fr}
+#relicCollectionProgress{font-size:12px;line-height:1.5;border-bottom:1px solid #445970;padding-bottom:8px}
+.collection-journal{margin-top:14px;border-top:1px solid #445970;padding-top:12px}
+.collection-journal h3{margin:0 0 8px;font-size:13px;color:#d8e8de}
+.collection-log{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#b9cee1;padding:5px 0;border-bottom:1px solid #32465c}
+.collection-log strong{color:#edd29d;font-weight:700}
+#relicPopup>div{max-width:420px;max-height:min(86dvh,700px);overflow:auto;text-align:left}
+#relicPopup h2{margin:7px 0}
+.reward-results{display:grid;gap:7px;max-height:47dvh;overflow:auto;overscroll-behavior:contain;padding:3px 2px}
+.reward-item{display:grid;grid-template-columns:27px minmax(0,1fr);gap:10px;background:#14243a;border:1px solid #405976;border-radius:11px;padding:9px}
+.reward-item.first{border-color:#ebc97e;background:#2c3042}
+.reward-item .reward-glyph{color:#ffe1a4;font-size:24px;align-self:start}
+.reward-item strong{font-size:13px;display:block;color:#ffe9c6}
+.reward-item small{display:block;font-size:11px;line-height:1.45;margin-top:4px;color:#c3d2dc}
+.reward-impact{font-size:12px;line-height:1.6;color:#d8e8e0;margin:9px 0 3px}
+@media(max-width:380px){#relicPopup{padding:12px}#relicPopup>div{padding:14px}}
 </style></head>
 <body><main>
 <header><div><h1>네온 방치단 <span class="sub">/ 탐사 원형</span></h1><p class="sub">용병은 싸우고, 지휘관은 다음 원정을 준비해.</p></div><a class="sub" href="./index.html">기존판</a></header>
@@ -141,7 +161,13 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 </section>
 <section id="archiveScreen" class="screen" hidden>
  <div class="panel"><h2>유물 도감 <span class="sub" id="relicSummary"></span></h2><p class="sub">정예 전선(5거리)과 지휘급 목표(10거리)마다 상자를 얻어. 유물은 환생 후에도 남고, 중복 수집으로 효과가 커져.</p>
- <button id="openArchiveChest" class="primary" style="width:100%;margin-bottom:12px" hidden>보급 상자 열기</button><div id="relicList" class="relics"></div></div>
+ <div id="relicCollectionProgress" class="sub">유물 수집 진행도</div>
+ <div class="relic-actions">
+  <button id="openArchiveChest" class="primary" hidden>상자 1개 열기</button>
+  <button id="openArchiveBatch" class="soft" hidden>모은 상자 한번에 열기</button>
+ </div>
+ <div id="relicList" class="relics"></div>
+ <div class="collection-journal"><h3>최근 발견 기록</h3><div id="relicRecent" class="sub">아직 발견한 유물이 없어.</div></div></div>
  <div class="panel"><h2>귀환과 영구 강화</h2><p class="sub">10거리 이상 도달하면 언제든 귀환할 수 있어. 유물·플레이어 레벨·코어 연구는 남고, 용병·훈련·의뢰 강화는 다음 탐사에서 새로 시작해.</p>
  <div id="rebirthSummary"></div><button id="rebirth" class="primary" style="width:100%;margin:11px 0">귀환하여 다시 탐사</button>
  <div id="coreSummary"></div><div id="permanentBonusSummary" class="permanent-summary"></div><div class="two" style="margin-top:10px"><button id="coreValor">전선 코어</button><button id="coreTrade">보급 코어</button></div></div>
@@ -150,6 +176,13 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 <footer>비공개 개발용 독립 원형 · 기존 게임과 저장/배포 분리 · 최종 그래픽 아님</footer>
 </main>
 <nav class="tabs" aria-label="게임 화면"><button data-tab="battle" class="active">⚔ 전선</button><button data-tab="squad">♟ 용병</button><button data-tab="supply">◇ 보급</button><button data-tab="archive">✦ 도감</button></nav>
-<div id="relicPopup" hidden role="dialog" aria-modal="true" aria-labelledby="popupTitle"><div><p class="sub">유물 발견</p><div style="font-size:46px" aria-hidden="true">✦</div><h2 id="popupTitle"></h2><p id="popupDesc"></p><button id="popupClose" class="primary">탐사로 돌아가기</button></div></div>
+<div id="relicPopup" hidden role="dialog" aria-modal="true" aria-labelledby="popupTitle"><div>
+ <p class="sub">탐사 보상 · 영구 수집</p>
+ <h2 id="popupTitle"></h2>
+ <p id="popupDesc" class="sub"></p>
+ <div id="popupResults" class="reward-results"></div>
+ <div id="popupImpact" class="reward-impact"></div>
+ <button id="popupClose" class="primary">탐사로 돌아가기</button>
+ </div></div>
 <script src="./expedition-engine.js"></script><script src="./expedition-field.js"></script><script src="./expedition-app.js"></script>
 </body></html>
