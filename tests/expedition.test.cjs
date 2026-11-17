@@ -73,6 +73,8 @@ test('elite and boss victories award chests and advance progression',()=>{
  const s=E.normalize(E.newState(),Date.now());
  for(const stage of [5,10]){
   s.stage=stage;s.runBest=stage;s.best=stage;s.enemyHp=1;s.squadHp=E.maxHp(s);
+  // New formation combat first moves units into attack range.
+  s.actors.forEach(a=>{a.progress=1;a.cooldown=0;});
   const before=s.chests;E.tick(s,1);
   assert.equal(s.stage,stage+1);
   assert.equal(s.chests,before+1);
@@ -170,4 +172,65 @@ test('save/load restores permanent rewards, enemy progress and bounded event log
  assert.equal(loaded.best,19);
  assert.equal(loaded.relics.ember,1);
  assert.equal(loaded.events.length,8);
+});
+
+
+test('each role has an individual living fighter and a persisted march position',()=>{
+ const s=E.normalize(E.newState(100000),100000);
+ assert.equal(s.actors.length,2);
+ E.tick(s,.5);
+ assert.ok(s.actors[0].progress>0);
+ const restored=E.normalize(JSON.parse(JSON.stringify(s)),100500);
+ assert.equal(restored.actors.length,2);
+ assert.equal(restored.actors[0].progress,s.actors[0].progress);
+ assert.equal(restored.squadHp,s.squadHp);
+});
+
+test('ranger attacks from behind the guard, and receives no free tank priority',()=>{
+ const s=E.normalize(E.newState(),Date.now());
+ s.credits=100000;s.best=s.stage=6;
+ for(let n=0;n<20 && s.units.ranger===0;n++)E.recruit(s);
+ assert.ok(s.units.ranger>0,'recruitment pool must contain rangers');
+ s.actors.forEach(a=>{a.progress=a.id==='ranger'?.5:0;a.cooldown=0;});
+ s.enemyHp=1e8;
+ const before=s.enemyHp;E.tick(s,.5);
+ assert.ok(s.enemyHp<before,'ranged attacks should fire at half-way range');
+});
+
+test('guard is targeted before rear units and fallen fighters recover independently',()=>{
+ const s=E.normalize(E.newState(),Date.now());
+ s.stage=s.best=60;s.enemyHp=E.enemyMax(60);
+ s.actors.forEach(a=>{a.progress=1;a.cooldown=3;});
+ s.actors[0].hp=.0001;
+ E.tick(s,1);
+ assert.ok(s.actors[0].revive>0,'a damaged front-line guard should fall');
+ assert.equal(s.actors[1].revive,0,'other guards continue standing');
+ const firstFall=s.actors[0].revive;
+ E.tick(s,Math.min(firstFall+.1,7));
+ assert.equal(s.actors[0].revive,0);
+ assert.ok(s.actors[0].hp>0);
+});
+
+test('medics heal living wounded fighters and do not magically revive fallen ones',()=>{
+ const s=E.normalize(E.newState(),Date.now());
+ s.credits=1e9;s.stage=s.best=6;
+ for(let n=0;n<30&&s.units.medic===0;n++)E.recruit(s);
+ assert.ok(s.units.medic>0);
+ s.actors.forEach(a=>{a.progress=1;a.cooldown=10;});
+ s.actors[0].hp=5;
+ const prior=s.actors[0].hp;
+ E.tick(s,.5);
+ assert.ok(s.actors[0].hp>prior,'medic heals front line');
+});
+
+test('interleaved recruit order survives save/load without resetting HP or progress',()=>{
+ const s=E.normalize(E.newState(),Date.now());
+ s.credits=1e9;s.best=10;
+ for(let i=0;i<20;i++)E.recruit(s);
+ s.actors[3].hp=3.5;s.actors[3].progress=.71;
+ const ids=s.actors.map(a=>a.id);
+ const restored=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.deepEqual(restored.actors.map(a=>a.id),ids);
+ assert.equal(restored.actors[3].hp,3.5);
+ assert.equal(restored.actors[3].progress,.71);
 });
