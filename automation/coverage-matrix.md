@@ -353,3 +353,9 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 - **Source:** `site/expedition-engine.js` commit `28ca3b9b` prevents medic heal cue from hiding a same-tick hit; actual heal/damage remain unchanged. `tests/expedition.test.cjs` commit `355e9442` adds mixed-role cue regression. Evidence: code inspection + GitHub accepted both writes; **new test-commit CI unverified**.
 - **Prior baseline:** `d0bb1801` all four shared CI checks passed. Current modified-HEAD CI must be rechecked. Main protected, PR #2 draft, no Pages deployment.
 - **Next high priority:** verify new CI, then prototype actor rendering/cue at 360/390/412px and save migration; synthetic 30m multi-run pacing and real phone play remain separate unverified gates. Legacy readiness 60% held, not transferred as a validated new-prototype percentage.
+
+
+### 2026-11-18 00:57 KST — expedition latest shared-head coverage
+- HEAD `4dbd248a`, +70 commits since previous automated `b5558e9f`: depth-restricted relic drops, batch opening, auto-purchase, first-clear core milestones, run analytics and first-boss return are present in manual code/tests. Prior automated cue regression is superseded by latest shared source; do not overwrite it.
+- CI at HEAD: save 44120016622 PASS; first-rebirth 44120016798 PASS; three-rebirth 44120016976 PASS; portrait 44120016634 RUNNING (not PASS). No Android/30-minute human validation.
+- **P0:** verify portrait completion and mobile expedition behavior at 360/390/412px. **P1:** first-boss return + permanent core economy across two runs, chest provenance and older prototype save migration. **P1:** 30m six-check-in auto-purchase simulation versus real phone interaction. Release remains blocked; main read-only, no Pages deploy. Legacy readiness 60% cannot substantiate new prototype readiness.
