@@ -21,6 +21,8 @@ jobs:
         run: node tests/integration-static.test.cjs
       - name: Run standalone expedition engine regression
         run: node --test tests/expedition.test.cjs
+      - name: Probe 30-minute expedition pacing
+        run: node tests/expedition-pacing.cjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.56.1
