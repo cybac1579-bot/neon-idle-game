@@ -35,7 +35,7 @@ test('opening a chest counts once even when no other chest remains',()=>{
 test('rebirth preserves five histories and resets run-specific counters',()=>{
  const s=E.newState(1000);s.runBest=20;s.best=20;
  for(let i=0;i<6;i++){
-  s.clock=100+i;s.runBest=20;s.best=20;
+  s.clock=100+i;s.runBest=20;s.best=20;s.coreProgress=1.25;
   E.purchase(s,'train',1);
   const expected=s.runMetrics.manualPurchases;
   const gain=E.rebirth(s);
