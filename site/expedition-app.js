@@ -181,6 +181,7 @@ function renderArchive(){
  const pct=n=>'+'+Math.max(0,(n-1)*100).toFixed(1)+'%';
  $('permanentBonusSummary').innerHTML='<h3>현재 편성 기준 영구 성장 효과</h3>'+
   row('전체 전투 화력',pct(b.attack))+row('부대 최대 체력',pct(b.hp))+
+  (E.relic(s,'chronicle')?row('원정 연대기 수집 효과',found+'종 발견 · 피해량 +'+Math.min(30,found*2)+'%'):'')+
   row('자동 보급 수익',pct(b.income))+
   row('용병 소집 비용 절약',Math.max(0,(1-b.hireCost)*100).toFixed(1)+'%')+
   row('부대 훈련 비용 절약',Math.max(0,(1-b.trainCost)*100).toFixed(1)+'%');
