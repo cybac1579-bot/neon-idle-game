@@ -61,7 +61,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
  const attackOrder=['atk','spd','amp','reactor','gen','forge','relay'];
  const checkpoints={},milestones=[20,45,55,60,65,70,75,85,95,100];
  const purchases=Object.fromEntries(kinds.map(k=>[k,0]));
- let firstSkillDecision=null,firstSkillAlreadyOwnedAtDecision=false;
+ let firstSkillDecision=null,firstSkillAlreadyOwnedAtDecision=false,firstSkillPreownedAtSec=null,firstSkillPreownedAtStage=null;
  let firstSlot=null,manualBuys=0,manualPurchaseActions=0,manualClaims=0,manualTraitBuys=0,allocationActions=0,loadoutActions=0,visits=0,stageAt30=null,stageAt60=null,actionsAt30=null,actionsAt60=null,purchaseActionsAt30=null,purchaseActionsAt60=null,purchaseCountAt30=null,purchaseCountAt60=null,skillSnapshot30=null,skillSnapshot60=null;
  const tmax=5400, steps=Math.round(tmax/.25);
  function chooseUpgrade(choices){
@@ -108,7 +108,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
   if(tick%(twoMinute?480:lowInput?240:40)===0){
    visits++;
    if(s.stage>=skillChoiceStage&&!s.skillChoiceUsed){
-    if(s.skillsOwned.includes(skill))firstSkillAlreadyOwnedAtDecision=true;
+    if(s.skillsOwned.includes(skill)){firstSkillAlreadyOwnedAtDecision=true;if(firstSkillPreownedAtSec===null){firstSkillPreownedAtSec=seconds;firstSkillPreownedAtStage=s.stage;}}
     else if(chooseSkill(skill))firstSkillDecision={seconds,stage:s.stage,skill};
    }
    if(s.stage>=55){
@@ -149,7 +149,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
  if(s.stage<1||s.rebirths!==0||s.cores!==0||!Number.isFinite(s.credits))throw Error('First-run invariant failed');
  const manualActions=actionCount();
  if(lowInput){const maxPerVisit=oneBuy?1:3;if(manualPurchaseActions>visits)throw Error('Purchase clicks exceeded low-input visits');if(manualBuys>manualPurchaseActions*maxPerVisit)throw Error('One visit bought more levels than the actual selector permits');}
- return {firstSkillDecision,firstSkillAlreadyOwnedAtDecision,readySec:checkpoints[100]??null,stageAt30,stageAt60,actionsAt30,actionsAt60,stageAt90:s.stage,
+ return {firstSkillDecision,firstSkillAlreadyOwnedAtDecision,firstSkillPreownedAtSec,firstSkillPreownedAtStage,readySec:checkpoints[100]??null,stageAt30,stageAt60,actionsAt30,actionsAt60,stageAt90:s.stage,
   heroLevel:s.heroLevel,heroLv10Sec:firstSlot,stageTimes:checkpoints,
   manualActions,purchaseCount:manualBuys,purchaseActions:manualPurchaseActions,visitCount:visits,loadoutActions,
   purchaseActionsAt30,purchaseActionsAt60,purchaseCountAt30,purchaseCountAt60,skillSnapshot30,skillSnapshot60,claimCount:manualClaims,traitCount:manualTraitBuys,
@@ -173,7 +173,8 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
  const walls=runs.filter(r=>r.stageTimes[55]!==undefined&&r.stageTimes[65]!==undefined)
    .map(r=>r.stageTimes[65]-r.stageTimes[55]);
  const stages30=runs.map(r=>r.stageAt30??100);
- const row={policy,skill,loadoutPolicy:LOADOUT_POLICY,skillChoiceStage:SKILL_CHOICE_STAGE,successCount:finish.length,seedCount:SEEDS.length,
+ const row={policy,skill,loadoutPolicy:LOADOUT_POLICY,skillChoiceStage:SKILL_CHOICE_STAGE,successCount:finish.length,seedCount:SEEDS.length, 
+  scriptedChoiceCount:runs.filter(r=>r.firstSkillDecision!==null).length,preownedChoiceCount:runs.filter(r=>r.firstSkillAlreadyOwnedAtDecision).length,\n  noChoiceCount:runs.filter(r=>r.firstSkillDecision===null&&!r.firstSkillAlreadyOwnedAtDecision).length,
   meanReadySec:finish.length===SEEDS.length?avg(finish):null,
   minReadySec:finish.length?Math.min(...finish):null,
   maxReadySec:finish.length?Math.max(...finish):null,
