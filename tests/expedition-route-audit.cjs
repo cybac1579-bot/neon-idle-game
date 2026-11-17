@@ -23,10 +23,11 @@ function runScenario(config,seed){
  assert.equal(E.setAutoBuy(s,config.mode,config.manualInterval===0),true);
  const runs=[];
  for(let number=1;number<=3;number++){
-  let seconds=0,manualClicks=0,chestClicks=0;
+  let seconds=0,manualClicks=0,chestClicks=0,rebirthUnlockedAt=null;
   while(seconds<MAX_SECONDS&&s.stage<TARGET_DISTANCE){
    E.tick(s,4);
    seconds+=4;
+   if(rebirthUnlockedAt===null&&E.rebirthGain(s)>0)rebirthUnlockedAt=seconds;
    if(seconds%CHEST_CHECK===0){
     while(s.chests>0){assert.ok(E.openChest(s));chestClicks++;}
    }
@@ -43,7 +44,7 @@ function runScenario(config,seed){
    }
   }
   const completed=s.stage>=TARGET_DISTANCE;
-  const row={run:number,seconds,completed,finalDistance:s.stage,
+  const row={run:number,seconds,completed,finalDistance:s.stage,rebirthUnlockedAt,
    manualGrowthClicks:manualClicks,manualPurchases:s.runMetrics.manualPurchases,
    autoPurchases:s.autoBuy.purchases,chestClicks,
    collectedRelics:Object.values(s.relics).reduce((sum,n)=>sum+n,0),
@@ -73,6 +74,7 @@ const results=CASES.map(config=>{
  const firstSamples=samples.filter(x=>x.runs[0].completed).map(x=>x.runs[0].seconds);
  return {...config,firstGoalReached:firstSamples.length,
   firstGoalSeconds:firstSamples,
+  firstRebirthUnlockSeconds:samples.map(x=>x.runs[0].rebirthUnlockedAt),
   allThreeReached:finished.length,
   threeRunSeconds:finished.map(x=>x.runs.reduce((sum,y)=>sum+y.seconds,0)),
   manualGrowthClicks:samples.map(x=>x.runs.reduce((sum,y)=>sum+y.manualGrowthClicks,0)),
