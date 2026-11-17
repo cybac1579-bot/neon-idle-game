@@ -60,7 +60,7 @@ async function main(){
    await page.addInitScript(()=>{
     const key='neon_expedition_prototype_v1',s=JSON.parse(localStorage.getItem(key));
     if(s){
-     s.stage=10;s.best=10;s.runBest=10;s.enemyHp=100;s.chests=1;s.credits=5000;s.lastSaved=Date.now();
+     s.stage=10;s.best=10;s.runBest=10;s.enemyHp=100;s.chests=4;s.credits=5000;s.lastSaved=Date.now();
      s.units={guard:5,ranger:4,medic:3};
      s.actors=['guard','ranger','guard','medic','ranger','guard','medic','guard','ranger','medic','guard','ranger']
       .map(id=>({id,hp:id==='guard'?48:id==='ranger'?17:25,revive:0,progress:.5,cooldown:1}));
@@ -73,19 +73,38 @@ async function main(){
    assert.equal(await page.locator('.roster-note').isVisible(),true,'hidden reserve members must be signaled');
    await page.locator('[data-tab="archive"]').click();
    assert.equal(await page.locator('#openArchiveChest').isVisible(),true);
+   assert.equal(await page.locator('#openArchiveBatch').isVisible(),true);
+   assert.match(await page.locator('#relicCollectionProgress').textContent(),/미개봉 4상자/);
+   const awaiting=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')));
+   assert.equal(awaiting.chests,4,'chests remain unopened until explicitly clicked');
    await page.locator('#openArchiveChest').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),true);
+   assert.equal(await page.locator('#popupResults .reward-item').count(),1);
    await page.locator('#popupClose').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),false);
+   assert.match(await page.locator('#openArchiveBatch').textContent(),/3개 함께 열기/);
+   await page.locator('#openArchiveBatch').click();
+   assert.equal(await page.locator('#relicPopup').isVisible(),true);
+   assert.equal(await page.locator('#popupResults .reward-item').count(),3);
+   assert.match(await page.locator('#popupTitle').textContent(),/3개 상자 개봉/);
+   assert.match(await page.locator('#popupImpact').textContent(),/영구 효과 변화/);
+   await page.locator('#popupClose').click();
+   assert.equal(await page.locator('#relicPopup').isVisible(),false);
+   assert.equal(await page.locator('#relicRecent .collection-log').count(),4);
+   assert.equal(await page.locator('#openArchiveBatch').isVisible(),false);
    assert.match(await page.locator('#permanentBonusSummary').textContent(),/영구 성장 효과/);
    const savedBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')));
-   assert.equal(Object.values(savedBefore.relics).reduce((a,b)=>a+b,0),1);
+   assert.equal(Object.values(savedBefore.relics).reduce((a,b)=>a+b,0),4);
+   assert.equal(savedBefore.relicHistory.length,4);
+   assert.equal(savedBefore.runMetrics.chestsOpened,4);
    page.on('dialog',d=>d.accept());
    await page.locator('#rebirth').click();
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
    const savedAfter=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')));
    assert.equal(savedAfter.stage,1);
-   assert.equal(Object.values(savedAfter.relics).reduce((a,b)=>a+b,0),1);
+   assert.equal(Object.values(savedAfter.relics).reduce((a,b)=>a+b,0),4);
+   assert.deepEqual(savedAfter.relicHistory,savedBefore.relicHistory,'journal must persist through rebirth');
+   assert.equal(savedAfter.runMetrics.chestsOpened,0);
    assert.equal(savedAfter.autoBuy.mode,'recruit');
    assert.equal(savedAfter.autoBuy.enabled,false);
    assert.equal(savedAfter.autoBuy.purchases,0);
