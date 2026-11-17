@@ -60,6 +60,14 @@ jobs:
           for stage in 20 35 40; do
             timeout --signal=TERM --kill-after=10s 150s env BALANCE_MODE=low-input BALANCE_DIAGNOSTIC=1 BALANCE_SKILL_CHOICE_STAGE="${stage}" node tests/balance-simulation.cjs 2>&1 | tee "skill-choice-stage-${stage}-console.log"
           done
+      - name: Compare STAGE75 weapon, skill, credits and no-reward choices under identical low-input seeds
+        shell: bash
+        run: |
+          set -eo pipefail
+          for reward in weapon skill credits none; do
+            echo "STAGE75_REWARD=${reward}"
+            timeout --signal=TERM --kill-after=10s 120s env BALANCE_MODE=low-input BALANCE_DIAGNOSTIC=1 BALANCE_STAGE75_REWARD="${reward}" node tests/balance-simulation.cjs 2>&1 | tee "stage75-reward-${reward}-console.log"
+          done
       - name: Upload baseline metrics and scenario details
         if: always()
         uses: actions/upload-artifact@v4
@@ -78,5 +86,7 @@ jobs:
             allocation-*-console.log
             artifacts/balance/skill-choice-stage-*.json
             skill-choice-stage-*-console.log
+            artifacts/balance/stage75-reward-*.json
+            stage75-reward-*-console.log
           if-no-files-found: warn
           retention-days: 14
