@@ -702,6 +702,62 @@ const server=createServer((req,res)=>{
    // Permanent hero level determines equipped skill slots (1, 10, 25, 40, 60).
    // The level-60 inheritance trait expands the inherited-skill limit to two.
    if(width===390){
+    // Standalone real-browser playtest recording: interactions, export, reload and separate reset.
+    const metricsPage=await browser.newPage({viewport:{width,height:844},acceptDownloads:true});
+    const metricsErrors=[];
+    metricsPage.on('pageerror',e=>metricsErrors.push(e.message));
+    await metricsPage.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
+    const hasTelemetry=await metricsPage.evaluate(()=>typeof window.playtestTelemetry?.exportData==='function');
+    assert.equal(hasTelemetry,true,'local playtest telemetry must bootstrap');
+    await metricsPage.evaluate(()=>{
+     s.credits=1e7;s.stage=34;s.best=34;chooseSkill('chain');
+     s.questCredits=[9,0,0];spawn();save();render();
+    });
+    await metricsPage.locator('[data-view="growth"]').first().click();
+    await metricsPage.locator('#upgrades [data-buy="atk"]').click();
+    await metricsPage.locator('#claimCache').click();
+    await metricsPage.evaluate(()=>{enemyHp=0;resolveEnemyDefeat();render()});
+    await metricsPage.locator('[data-view="stats"]').first().click();
+    assert.equal(await metricsPage.locator('#playtestExport').isVisible(),true,'JSON export accessible in stats screen');
+    const [jsonDownload]=await Promise.all([
+     metricsPage.waitForEvent('download'),metricsPage.locator('#playtestExport').click()
+    ]);
+    assert.match(jsonDownload.suggestedFilename(),/^neon-playtest-\d{4}-\d{2}-\d{2}\.json$/);
+    const payload=JSON.parse(fs.readFileSync(await jsonDownload.path(),'utf8'));
+    assert.equal(payload.schema,'neon-playtest-v1');
+    assert.ok(payload.counters.manualUpgradeClicks>=1,'manual purchase must appear in recording');
+    assert.ok(payload.counters.manualQuestClaims>=1,'manual claim must appear in recording');
+    assert.ok(payload.counters.firstSkillChoices>=1,'first skill choice must be recorded');
+    assert.ok(payload.counters.stageAdvances>=1,'stage advancement must be recorded');
+    assert.ok(payload.events.some(e=>e.type==='manual_upgrade'),'purchase detail event absent');
+    assert.ok(payload.events.some(e=>e.type==='manual_quest_claim'),'manual quest detail event absent');
+    assert.ok(payload.events.some(e=>e.type==='stage'&&e.to>=35),'stage timestamp event absent');
+    assert.equal(payload.snapshot.stage>=35,true,'export should include latest real stage');
+    assert.equal(Object.prototype.hasOwnProperty.call(payload,'accountId'),false);
+    assert.equal(Object.prototype.hasOwnProperty.call(payload,'userAgent'),false);
+    assert.doesNotMatch(JSON.stringify(payload),/neon_rework_07/,'do not include raw game save');
+    const priorEventCount=payload.events.length;
+    await metricsPage.reload({waitUntil:'load'});
+    const restored=await metricsPage.evaluate(()=>window.playtestTelemetry.exportData());
+    assert.ok(restored.sessionLoads>=2,'recording must survive reload');
+    assert.ok(restored.events.length>=priorEventCount,'recording history must survive reload');
+    assert.ok(restored.counters.manualUpgradeClicks>=1,'purchase count must survive reload');
+    await metricsPage.locator('[data-view="stats"]').first().click();
+    const gameBefore=await metricsPage.evaluate(()=>({
+     stage:s.stage,stored:localStorage.getItem('neon_rework_07')
+    }));
+    metricsPage.once('dialog',d=>d.accept());
+    await metricsPage.locator('#playtestClear').click();
+    const cleared=await metricsPage.evaluate(()=>({
+     data:window.playtestTelemetry.exportData(),
+     stage:s.stage,stored:localStorage.getItem('neon_rework_07')
+    }));
+    assert.equal(cleared.data.counters.manualUpgradeClicks,0,'clear should only clear telemetry');
+    assert.equal(cleared.data.counters.manualQuestClaims,0,'clear should clear recorded claims');
+    assert.equal(cleared.stage,gameBefore.stage,'game stage must survive metrics reset');
+    assert.equal(cleared.stored,gameBefore.stored,'game save remains untouched by metrics reset');
+    assert.deepEqual(metricsErrors,[],'playtest browser errors');
+    await metricsPage.close();
     for(const [level,expectedSlots,expectedInheritance] of [[1,1,1],[9,1,1],[10,2,1],[24,2,1],[25,3,1],[39,3,1],[40,4,1],[59,4,1],[60,5,2]]){
      const slotPage=await browser.newPage({viewport:{width,height:844}});
      const slotErrors=[];
