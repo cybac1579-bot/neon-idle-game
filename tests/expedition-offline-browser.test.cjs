@@ -14,7 +14,7 @@ async function main(){
  // Artifact provenance: the packaged executable must embed the current checkout's
  // exact scripts, not just scripts with the expected filenames.
  for(const name of ['expedition-engine.js','expedition-field.js','expedition-app.js']){
-  const source=fs.readFileSync(path.resolve(__dirname,'../site',name),'utf8').replace(/<\\/script/gi,'<\\\\/script');
+  const source=fs.readFileSync(path.resolve(__dirname,'../site',name),'utf8').replace(/<\/script/gi,'<\\/script');
   assert.ok(file.includes('<script data-inline-source="'+name+'">\\n'+source+'\\n</script>'),
    'standalone package must embed current source: '+name);
  }
