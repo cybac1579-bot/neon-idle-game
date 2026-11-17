@@ -60,6 +60,36 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 #relicPopup button{width:100%;margin-top:12px}
 @media(prefers-reduced-motion:no-preference){.unit .silhouette{animation:unit-idle 2s ease-in-out infinite}.foe .silhouette{animation:foe-idle 1.7s ease-in-out infinite}@keyframes unit-idle{50%{transform:translateY(-4px)}}@keyframes foe-idle{50%{transform:translateY(-7px)}}}
 @media(max-width:365px){main{padding-left:8px;padding-right:8px}.panel{padding:10px}.action{gap:6px;padding:9px}.action button{min-width:92px}.unit .silhouette{font-size:24px}.foe .silhouette{font-size:48px}}
+
+/* Expedition field v2: actor positions are driven by real engine progress, not a cosmetic loop. */
+.field{position:absolute;inset:15% 5px 10%;height:auto;display:block}
+.squad{position:absolute;inset:0;display:block;min-width:0;width:100%;pointer-events:none;z-index:2}
+.foe{position:absolute;right:1%;bottom:0;z-index:1;width:31%;display:flex;justify-content:flex-end;align-items:center}
+.foe .silhouette{width:clamp(69px,24vw,114px);height:clamp(92px,30vw,145px);font-size:clamp(44px,13vw,62px)}
+.foe small{background:#08142299;border-radius:5px;padding:2px 5px}
+.fighter{position:absolute;z-index:3;display:flex;flex-direction:column;align-items:center;gap:2px;width:clamp(37px,11vw,53px);max-width:53px;
+ left:2%;bottom:8%;transition:left .32s linear,bottom .32s ease,opacity .2s}
+.fighter-symbol{width:100%;height:clamp(48px,15vw,68px);border-radius:48% 47% 12px 12px;
+ border:2px solid #7b9ebc;background:linear-gradient(155deg,#44617c,#152b49);display:grid;place-items:center;
+ font-size:clamp(22px,7vw,33px);box-shadow:0 5px 0 #071626,0 2px 10px #0008}
+.fighter.ranger .fighter-symbol{border-color:#89bfa7;background:linear-gradient(155deg,#385c5b,#163a49)}
+.fighter.medic .fighter-symbol{border-color:#baa5df;background:linear-gradient(155deg,#655d7c,#35354e)}
+.fighter-name{font-size:9px;font-weight:700;color:#ebf4ef;text-align:center;white-space:nowrap;text-shadow:0 2px 4px #000}
+.fighter-health{width:90%;height:4px;background:#3a2535;border:1px solid #19293c;border-radius:9px;overflow:hidden}
+.fighter-health div{height:100%;width:100%;background:#71d4b7;transition:width .2s}
+.fighter.down{opacity:.3;filter:grayscale(1);transform:translateY(13px)}
+.fighter.advance .fighter-symbol{animation:expedition-march .45s ease-in-out infinite alternate}
+#battleFx{pointer-events:none;position:absolute;inset:0;z-index:4;display:grid;place-items:center}
+.combat-cue{font-size:clamp(14px,4vw,21px);font-weight:900;letter-spacing:-.04em;color:#f6e0a7;
+ text-shadow:0 2px 5px #07101c,0 0 9px #000;animation:combat-flash .8s ease-out both}
+.combat-cue.heal,.combat-cue.returned{color:#9cf1c7}.combat-cue.fallen,.combat-cue.rally{color:#ffd0b5}
+.combat-cue.clear{font-size:25px;color:#ffe49c}
+.arena.combat-impact .foe .silhouette{animation:enemy-damaged .25s ease-out}
+.arena.arena-boss{border-color:#cf9a66;box-shadow:inset 0 0 26px #ae6d5340}
+@keyframes expedition-march{to{transform:translateY(-3px)}}
+@keyframes combat-flash{0%{transform:translateY(16px) scale(.85);opacity:0}20%{opacity:1}100%{transform:translateY(-16px) scale(1);opacity:0}}
+@keyframes enemy-damaged{0%,100%{filter:brightness(1)}50%{filter:brightness(2)}}
+@media(prefers-reduced-motion:reduce){.fighter,.fighter-health div{transition:none}.fighter.advance .fighter-symbol,.arena.combat-impact .foe .silhouette,.combat-cue{animation:none}}
 </style></head>
 <body><main>
 <header><div><h1>네온 방치단 <span class="sub">/ 탐사 원형</span></h1><p class="sub">용병은 싸우고, 지휘관은 다음 원정을 준비해.</p></div><a class="sub" href="./index.html">기존판</a></header>
@@ -96,5 +126,5 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 </main>
 <nav class="tabs" aria-label="게임 화면"><button data-tab="battle" class="active">⚔ 전선</button><button data-tab="squad">♟ 용병</button><button data-tab="supply">◇ 보급</button><button data-tab="archive">✦ 도감</button></nav>
 <div id="relicPopup" hidden role="dialog" aria-modal="true" aria-labelledby="popupTitle"><div><p class="sub">유물 발견</p><div style="font-size:46px" aria-hidden="true">✦</div><h2 id="popupTitle"></h2><p id="popupDesc"></p><button id="popupClose" class="primary">탐사로 돌아가기</button></div></div>
-<script src="./expedition-engine.js"></script><script src="./expedition-app.js"></script>
+<script src="./expedition-engine.js"></script><script src="./expedition-field.js"></script><script src="./expedition-app.js"></script>
 </body></html>
