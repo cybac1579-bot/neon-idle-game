@@ -117,6 +117,17 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 .reward-item small{display:block;font-size:11px;line-height:1.45;margin-top:4px;color:#c3d2dc}
 .reward-impact{font-size:12px;line-height:1.6;color:#d8e8e0;margin:9px 0 3px}
 @media(max-width:380px){#relicPopup{padding:12px}#relicPopup>div{padding:14px}}
+/* A compact, non-intrusive post-return result: no extra HUD stats. */
+#returnPopup[hidden],#returnReportPanel[hidden]{display:none}
+#returnPopup{position:fixed;z-index:35;inset:0;background:#040a15e5;display:grid;place-items:center;padding:16px}
+#returnPopup>div{width:100%;max-width:410px;max-height:88dvh;overflow:auto;background:#20334e;border:1px solid #e6c889;border-radius:17px;padding:20px;box-shadow:0 0 72px #000b}
+#returnPopup h2{font-size:21px;color:#ffe1a4;margin:7px 0 13px}
+#returnPopup button{font-size:12px;min-width:0;padding:11px 6px}
+#returnPopupSummary .statline{font-size:12px}
+.return-comparison{padding:9px 10px;margin:12px 0;background:#15283a;border:1px solid #49617b;border-radius:10px}
+.return-comparison h3{color:#d6f4ed;font-size:12px;margin:0 0 7px}
+.return-comparison .statline b{font-size:11px}
+@media(max-width:365px){#returnPopup>div{padding:13px}#returnPopup{padding:10px}}
 </style></head>
 <body><main>
 <header><div><h1>네온 방치단 <span class="sub">/ 탐사 원형</span></h1><p class="sub">용병은 싸우고, 지휘관은 다음 원정을 준비해.</p></div><a class="sub" href="./index.html">기존판</a></header>
@@ -171,6 +182,7 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
  <div class="panel"><h2>귀환과 영구 강화</h2><p class="sub">10거리 보스를 격파하면 환생이 해금돼. 적 처치 거리마다 환생 성과를 조금씩 쌓고, 1개 미만은 다음 탐사로 이월돼. 처음 돌파한 거리의 보너스 코어는 한 번만 얻어. 코어가 1개 이상 모였을 때 귀환할 수 있고, 유물·지휘관 레벨·코어 연구는 남아. 용병·훈련·의뢰 강화는 초기화돼.</p>
  <div id="rebirthSummary"></div><button id="rebirth" class="primary" style="width:100%;margin:11px 0">귀환하여 다시 탐사</button>
  <div id="coreSummary"></div><div id="permanentBonusSummary" class="permanent-summary"></div><div class="two" style="margin-top:10px"><button id="coreValor">전선 코어</button><button id="coreTrade">보급 코어</button></div></div>
+ <div id="returnReportPanel" class="panel" hidden tabindex="-1"><h2>최근 귀환 결과</h2><div id="returnReportContent"></div><p class="sub">전투력 비교는 각각 훈련·소집 전의 기본 2인 편성이야. 코어를 추가 투자하면 현재 출발 전투력은 더 높아질 수 있어.</p></div>
  <div class="panel"><h2>탐사 기록</h2><div id="history" class="stack"></div><p class="sub">2시간까지 오프라인 시간을 정산해. 이전 게임과 다른 저장 공간을 사용해.</p><button id="saveNow" class="soft">지금 저장</button></div>
  <div class="panel"><h2>플레이 검증 기록</h2><p class="sub">60초마다 탐사 거리·용병 수·유물·강화 흐름을 이 기기에만 기록해. 접속 중과 오프라인 정산을 구분해. 자동 전송은 하지 않아.</p><div id="playtestSummary" class="sub"></div><button id="exportPlaytest" class="soft" style="width:100%;margin-top:12px">내 플레이 기록 JSON 내보내기</button><p class="sub">직접 파일을 공유하면 2~3회차 성장 정체 구간을 함께 분석할 수 있어. 파일에는 플레이 기록과 수집 현황이 담겨 있어.</p></div>
 </section>
@@ -185,5 +197,13 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
  <div id="popupImpact" class="reward-impact"></div>
  <button id="popupClose" class="primary">탐사로 돌아가기</button>
  </div></div>
+<div id="returnPopup" hidden role="dialog" aria-modal="true" aria-labelledby="returnPopupTitle"><div>
+ <p class="sub">환생 결과 · 다음 탐사</p><h2 id="returnPopupTitle">용병단 귀환 완료</h2>
+ <div id="returnPopupSummary"></div>
+ <div class="two" style="margin-top:13px">
+  <button id="returnPopupClose" class="soft">전선에서 이어가기</button>
+  <button id="returnPopupArchive" class="primary">영구 강화 확인</button>
+ </div>
+</div></div>
 <script src="./expedition-engine.js"></script><script src="./expedition-field.js"></script><script src="./expedition-app.js"></script>
 </body></html>
