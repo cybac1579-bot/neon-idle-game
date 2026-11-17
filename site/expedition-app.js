@@ -78,7 +78,7 @@ function renderSquad(){
  renderAutoBuy();
  $('unitList').innerHTML=E.UNITS.map(u=>{
   const locked=s.best<u.unlock;
-  return '<div class="action"><div><strong>'+safe(u.symbol)+' '+safe(u.name)+(locked?' · 미해금':' ×'+fmt(s.units[u.id]))+'</strong><p>'+safe(locked?u.unlock+'거리 도달 시 모집 가능':u.id==='guard'?'전열 유지 · 높은 내구력':u.id==='ranger'?'강력한 단일 화력':'부대 체력 회복')+'</p></div><span class="sub">'+safe(locked?'잠김':'소집 풀')+'</span></div>';
+  return '<div class="action"><div><strong>'+safe(u.symbol)+' '+safe(u.name)+(locked?' · 미해금':' ×'+fmt(s.units[u.id]))+'</strong><p>'+safe(locked?u.unlock+'거리 도달 시 모집 가능':u.id==='guard'?'전열 방어 · 대부분의 피해 흡수':u.id==='ranger'?'후열 화력 · 측면 피격 가능':'후열 회복 · 측면 피격 가능')+'</p></div><span class="sub">'+safe(locked?'잠김':'소집 풀')+'</span></div>';
  }).join('');
  const recruitCost=E.hireCost(s);
  $('hire').textContent='용병 소집 · 다음 1명 '+fmt(recruitCost)+' 크레딧';
@@ -98,7 +98,7 @@ function renderSquad(){
  $('roleContribution').innerHTML=E.UNITS.map(u=>{
   const id=u.id;
   return '<div class="statline"><span>'+safe(u.name)+'</span><b>피해 '+fmt(c.damage[id])+
-   ' · 회복 '+fmt(c.healing[id])+' · 방어 '+fmt(c.taken[id])+
+   ' · 회복 '+fmt(c.healing[id])+' · 피격 '+fmt(c.taken[id])+
    (c.falls[id]?' · 후퇴 '+fmt(c.falls[id]):'')+'</b></div>';
  }).join('');
 }
