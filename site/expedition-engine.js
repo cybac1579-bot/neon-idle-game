@@ -487,7 +487,7 @@ function rebirth(s){
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  s.runOpening=runOpeningSnapshot(s);
  s.latestReturn={...previous,after:{...s.runOpening}};
- note(s,'탐사 귀환 · 코어 +gain+'개 획득'+(reward.recordBonus?' (최초 기록 +'+reward.recordBonus+')':'')+'. 영구 유물/레벨 유지');
+ note(s,'탐사 귀환 · 코어 '+gain+'개 획득'+(reward.recordBonus?' (최초 기록 +'+reward.recordBonus+')':'')+'. 영구 유물/레벨 유지');
  return gain;
 }
 function offline(s,now=Date.now()){
