@@ -731,3 +731,6 @@ test('adaptive mode skips unaffordable high-grade supply without changing fixed 
  assert.equal(loaded.coreSpent,0);
  assert.equal(loaded.chestsOpened,0);
 });
+
+// Optional adaptive strategy must preserve legacy purchase constraints.
+require('./expedition-adaptive-buy.test.cjs');
