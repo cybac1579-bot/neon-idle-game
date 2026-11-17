@@ -22,6 +22,8 @@ const DELAYED_SKILL_DIAGNOSTIC=process.env.BALANCE_SKILL_CHOICE_STAGE!==undefine
 const LOADOUT_POLICY=['natural','chain','capacitor','pair'].includes(process.env.BALANCE_SKILL_LOADOUT)
   ?process.env.BALANCE_SKILL_LOADOUT:'natural';
 const ALLOCATION_POLICY=['assault','balanced','supply','supply-pivot'].includes(process.env.BALANCE_ALLOCATION)?process.env.BALANCE_ALLOCATION:'assault';
+// Controlled STAGE75 reward comparison: same purchase strategy, skill and RNG seed.
+const REWARD_POLICY=['weapon','skill','credits','none'].includes(process.env.BALANCE_STAGE75_REWARD)?process.env.BALANCE_STAGE75_REWARD:null;
 const SEEDS=BALANCE_DIAGNOSTIC?[20261114,20261115,20261116]:[20261114,20261115,20261116,20261117,20261118];
 const POLICIES=BALANCE_DIAGNOSTIC?['value']:LOW_INPUT?['value','cheapest']:['value','cheapest','attack-first','tier-first'];
 const SKILL_IDS=LOADOUT_DIAGNOSTIC?['chain']:BALANCE_DIAGNOSTIC?['chain','bountySkill']:LOW_INPUT?['chain','bountySkill']:['chain','overload','bountySkill','trainingSkill'];
@@ -55,7 +57,7 @@ function boot(seed){
 
 // Serializes this function into the same V8 context as game.js to avoid
 // 20,000 costly cross-context calls and preserve the game's own exact rules.
-function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loadoutPolicy,skillChoiceStage){
+function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loadoutPolicy,skillChoiceStage,rewardPolicy){
  const kinds=['atk','spd','gen','amp','relay','forge','reactor'];
  const unlock={atk:1,spd:1,gen:1,amp:15,relay:25,forge:45,reactor:65};
  const attackOrder=['atk','spd','amp','reactor','gen','forge','relay'];
@@ -130,7 +132,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
     }
    }
    // One optional STAGE75 choice at the next real visit, not a free background grant.
-   if(s.stage>=75&&!s.breakthroughReward)chooseBreakthroughReward(policy==='cheapest'?'credits':policy==='tier-first'?'skill':'weapon');
+   if(s.stage>=75&&!s.breakthroughReward&&rewardPolicy!=='none')chooseBreakthroughReward(rewardPolicy|| (policy==='cheapest'?'credits':policy==='tier-first'?'skill':'weapon'));
    const traitOrder=[['precision',5],['double',5],['boss',3],['haste',5],['training',5],['energy',5]];
    let traitBudget=lowInput?1:Infinity;
    for(const pair of traitOrder)while(traitBudget>0&&s.traitPointsEarned>s.traitPointsSpent&&(s.traits[pair[0]]||0)<pair[1]){
@@ -164,7 +166,7 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
  const runs=[];
  for(const seed of SEEDS){
   const context=boot(seed);
-  const result=vm.runInContext('('+runPolicy.toString()+')('+JSON.stringify(policy)+','+JSON.stringify(skill)+','+LOW_INPUT+','+ONE_BUY+','+TWO_MINUTE+','+JSON.stringify(ALLOCATION_POLICY)+','+JSON.stringify(LOADOUT_POLICY)+','+SKILL_CHOICE_STAGE+')',context,{timeout:60000});
+  const result=vm.runInContext('('+runPolicy.toString()+')('+JSON.stringify(policy)+','+JSON.stringify(skill)+','+LOW_INPUT+','+ONE_BUY+','+TWO_MINUTE+','+JSON.stringify(ALLOCATION_POLICY)+','+JSON.stringify(LOADOUT_POLICY)+','+SKILL_CHOICE_STAGE+','+JSON.stringify(REWARD_POLICY)+')',context,{timeout:60000});
   assert.equal(result.stageAt90>=1&&result.stageAt90<=100,true);
   assert.equal(result.readySec===null||result.readySec>=0,true);
   runs.push({seed,...result});
@@ -173,7 +175,7 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
  const walls=runs.filter(r=>r.stageTimes[55]!==undefined&&r.stageTimes[65]!==undefined)
    .map(r=>r.stageTimes[65]-r.stageTimes[55]);
  const stages30=runs.map(r=>r.stageAt30??100);
- const row={policy,skill,loadoutPolicy:LOADOUT_POLICY,skillChoiceStage:SKILL_CHOICE_STAGE,successCount:finish.length,seedCount:SEEDS.length, 
+ const row={policy,skill,loadoutPolicy:LOADOUT_POLICY,skillChoiceStage:SKILL_CHOICE_STAGE,rewardPolicy:REWARD_POLICY||'default',successCount:finish.length,seedCount:SEEDS.length, 
   scriptedChoiceCount:runs.filter(r=>r.firstSkillDecision!==null).length,preownedChoiceCount:runs.filter(r=>r.firstSkillAlreadyOwnedAtDecision).length,
   noChoiceCount:runs.filter(r=>r.firstSkillDecision===null&&!r.firstSkillAlreadyOwnedAtDecision).length,
   meanReadySec:finish.length===SEEDS.length?avg(finish):null,
@@ -193,9 +195,9 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
  console.log('SIM_POLICY '+JSON.stringify(row));
 }
 const payload={title:LOW_INPUT?'Constrained-input first reconstruction; decisions every '+(TWO_MINUTE?120:60)+'s, at most '+(ONE_BUY?1:3)+' purchases and 1 trait per visit; not human play':'First reconstruction baseline; simulated 0.25s ticks, manual decisions every 10s, not human play',
- observedAtUtc:new Date().toISOString(),gameSourceSha256,simulatorMode:{lowInput:LOW_INPUT,oneBuy:ONE_BUY,twoMinute:TWO_MINUTE,decisionIntervalSec:TWO_MINUTE?120:LOW_INPUT?60:10},seeds:SEEDS,allocationPolicy:ALLOCATION_POLICY,loadoutPolicy:LOADOUT_POLICY,diagnostic:BALANCE_DIAGNOSTIC,skillChoiceStage:SKILL_CHOICE_STAGE,policies:POLICIES,skills:SKILL_IDS,summary,detailed};
+ observedAtUtc:new Date().toISOString(),gameSourceSha256,simulatorMode:{lowInput:LOW_INPUT,oneBuy:ONE_BUY,twoMinute:TWO_MINUTE,decisionIntervalSec:TWO_MINUTE?120:LOW_INPUT?60:10},seeds:SEEDS,allocationPolicy:ALLOCATION_POLICY,loadoutPolicy:LOADOUT_POLICY,rewardPolicy:REWARD_POLICY||'default',diagnostic:BALANCE_DIAGNOSTIC,skillChoiceStage:SKILL_CHOICE_STAGE,policies:POLICIES,skills:SKILL_IDS,summary,detailed};
 fs.mkdirSync(path.resolve(__dirname,'../artifacts/balance'),{recursive:true});
-const allocationFile=DELAYED_SKILL_DIAGNOSTIC?'../artifacts/balance/skill-choice-stage-'+SKILL_CHOICE_STAGE+'.json':LOADOUT_DIAGNOSTIC?'../artifacts/balance/skill-loadout-'+LOADOUT_POLICY+'.json':BALANCE_DIAGNOSTIC?'../artifacts/balance/allocation-'+ALLOCATION_POLICY+'.json':
+const allocationFile=REWARD_POLICY?'../artifacts/balance/stage75-reward-'+REWARD_POLICY+'.json':DELAYED_SKILL_DIAGNOSTIC?'../artifacts/balance/skill-choice-stage-'+SKILL_CHOICE_STAGE+'.json':LOADOUT_DIAGNOSTIC?'../artifacts/balance/skill-loadout-'+LOADOUT_POLICY+'.json':BALANCE_DIAGNOSTIC?'../artifacts/balance/allocation-'+ALLOCATION_POLICY+'.json':
  LOW_INPUT?(ONE_BUY?'../artifacts/balance/first-rebirth-one-buy.json':TWO_MINUTE?'../artifacts/balance/first-rebirth-two-minute.json':'../artifacts/balance/first-rebirth-low-input.json'):'../artifacts/balance/first-rebirth-baseline.json';
 fs.writeFileSync(path.resolve(__dirname,allocationFile),JSON.stringify(payload,null,2)+'\n');
 console.log('SIM_DONE policies='+summary.length+' scenarios='+detailed.reduce((a,x)=>a+x.runs.length,0));
