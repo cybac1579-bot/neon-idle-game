@@ -374,3 +374,8 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 ### 2026-11-18 04:00 KST — offline standalone and release isolation
 - Shared `6d573067`: portrait/save/first-rebirth/three-rebirth Actions 44144162707/44144162700/44144162772/44144162383 all SUCCESS. Source includes standalone offline HTML builder and 360/390/412px Chromium file:// test; earlier artifact run 44143464585 succeeded with 86/86 engine tests, but artifact SHA `43a0803e` differs from current HEAD. Android file launch, localStorage persistence and 20–30m fun remain **unverified**.
 - **P0:** obtain/check artifact generated from current HEAD and validate physical Galaxy S25+ launch + backup/restore. **P1:** compare adaptive auto-buy 30m growth and second-run permanent gains using actual play records. No main/Pages changes, no authorized production deployment; legacy 60% historical only.
+
+
+### 2026-11-18 05:00 KST — offline package provenance
+- **Source**: `94f2e729` extends `tests/expedition-offline-browser.test.cjs` to verify exact embedded engine/field/app sources, HTML build commit metadata and README commit metadata. Prior artifact `43a0803e` is not current HEAD.
+- **Evidence**: conditional GitHub write accepted; **new CI and rebuilt artifact pending/unverified**. P0: confirm CI runs and exact-SHA artifact; if assertion fails, fix test/build and rerun. P0 physical Android file:// storage and 20–30m human session still unverified. main/Pages protected.
