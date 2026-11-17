@@ -93,3 +93,5 @@ console.log(JSON.stringify({experiment:'expedition-3-run-auto-versus-manual',
  investment:'all affordable earned cores to valor',
  notes:'Same seeded engine, scheduled chest collection and priority policy. RNG may diverge when purchase timing changes. Single-category modes never buy other categories; timeouts are censored results, not claims of permanent impossibility.',
  results:results.map(({samples,...summary})=>summary)}));
+// Compare first-clear core boosts with long-route artifact discoveries.
+require('./expedition-breakthrough-economy.cjs');
