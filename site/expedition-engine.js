@@ -35,7 +35,10 @@ const RELICS=[
  {id:'archer',name:'초점 조준기',desc:'척후사수의 피해량이 수집 수마다 15% 증가',cap:4,unlockStage:15},
  {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치가 수집 수마다 15% 증가',cap:4,unlockStage:25},
  {id:'fortune',name:'중복 해체권',desc:'중복 유물 발견 시 수집 수마다 추가 크레딧 획득',cap:3,unlockStage:30},
- {id:'relay',name:'작전 통신기',desc:'전체 병종의 피해량이 수집 수마다 5% 증가',cap:5,unlockStage:30}
+ {id:'relay',name:'작전 통신기',desc:'전체 병종의 피해량이 수집 수마다 5% 증가',cap:5,unlockStage:30},
+ // Only deep-earned chests can reveal these permanent run-economy options.
+ {id:'enlist',name:'선발권 묶음',desc:'용병 소집 비용이 수집 수마다 6% 감소',cap:3,unlockStage:40},
+ {id:'drill',name:'훈련 규정집',desc:'부대 훈련 비용이 수집 수마다 6% 감소',cap:3,unlockStage:45}
 ];
 const num=(n,min=0,max=1e14)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):min;
 const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
@@ -212,8 +215,8 @@ function battleCue(s,type,id,value=0){s.battleCueSeq++;s.battleEvent={seq:s.batt
 function partyDps(s){return UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.dps*(u.id==='ranger'?1+.15*relic(s,'archer'):1),0)*(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*(1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor);}
 function healDps(s){return s.units.medic*2.7*(1+.18*relic(s,'medkit'))*(1+.08*s.training);}
 function questIncome(s,q){return q.income*(1+1.1*s.questLevels[q.id])*(1+.12*relic(s,'income'))*(1+.08*s.traits.supply)*(1+.09*s.coreUpgrades.trade);}
-function hireCost(s){return Math.round(25*Math.pow(1.22,Math.max(0,total(s)-2)));}
-function trainCost(s){return Math.round(46*Math.pow(1.51,s.training));}
+function hireCost(s){return Math.max(1,Math.round(25*Math.pow(1.22,Math.max(0,total(s)-2))*(1-.06*relic(s,'enlist'))));}
+function trainCost(s){return Math.max(1,Math.round(46*Math.pow(1.51,s.training)*(1-.06*relic(s,'drill'))));}
 function questCost(s,q){return Math.round(q.upgradeCost*Math.pow(1.63,s.questLevels[q.id]));}
 // Cubic cumulative investment costs temper acceleration from later returns.
 function coreCost(s,id){
@@ -423,7 +426,9 @@ function permanentBonuses(s){
  return {
   attack:partyDps(s)/Math.max(.00001,partyDps(noPermanent)),
   hp:maxHp(s)/Math.max(.00001,maxHp(noPermanent)),
-  income:questIncome(s,q)/Math.max(.00001,questIncome(noPermanent,q))
+  income:questIncome(s,q)/Math.max(.00001,questIncome(noPermanent,q)),
+  hireCost:hireCost(s)/Math.max(1,hireCost(noPermanent)),
+  trainCost:trainCost(s)/Math.max(1,trainCost(noPermanent))
  };
 }
 function rememberRelic(s,result){
@@ -446,7 +451,7 @@ function openChest(s){
  const missing=eligible.filter(r=>relic(s,r.id)===0);
  // First chest at a new depth guarantees a first discovery in that newly
  // reached tier, if there are still undiscovered relics from the milestone.
- const milestoneMissing=[15,25,30].includes(depth)?
+ const milestoneMissing=[15,25,30,40,45].includes(depth)?
   missing.filter(r=>r.unlockStage===depth):[];
  const pool=milestoneMissing.length?milestoneMissing:
   missing.length&&rand(s)<.7?missing:eligible;
