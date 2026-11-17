@@ -102,3 +102,6 @@ require('./expedition-first-run-milestone-audit.cjs');
 require('./expedition-stage30-growth-audit.cjs');
 // Two-hour first-run discovery proof for separate stage40/45 permanent relic tiers.
 require('./expedition-deep-run-relic-audit.cjs');
+
+// Check repeat-expedition payoff after a deep return: stage45 versus stage50.
+require('./expedition-deep-second-run-audit.cjs');
