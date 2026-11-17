@@ -740,3 +740,6 @@ require('./expedition-deep-relic-economy.test.cjs');
 
 // First stage-50 chest is a capped collection-synergy reward, never a free return bonus.
 require('./expedition-stage50-chronicle.test.cjs');
+
+// No post-50 core explosion; no automatic rebirth-count benefits.
+require('./expedition-post50-core-guard.test.cjs');
