@@ -256,6 +256,46 @@ function openChestWithCount(count,source){
  $('relicPopup').hidden=false;
  $('popupClose').focus();
 }
+function downloadJson(name,data){
+ const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}));
+ const a=document.createElement('a');a.href=url;a.download=name;
+ document.body.appendChild(a);a.click();a.remove();
+ // Android browsers can defer download start.
+ setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+function exportFullSave(){
+ // This is deliberately a human-requested backup, never an auto-upload.
+ save();
+ downloadJson('neon-expedition-full-save-'+new Date().toISOString().slice(0,10)+'.json',{
+  schema:'neon-expedition-full-save-v1',saveKey:E.SAVE_KEY,
+  exportedAt:new Date().toISOString(),state:JSON.parse(JSON.stringify(s))
+ });
+ notify('용병단 저장 백업 파일을 만들었어. 다운로드 폴더에서 확인해 줘.');
+ render();
+}
+async function importFullSave(file){
+ if(!file)return;
+ if(file.size>4*1024*1024){notify('저장 파일이 4MB를 초과해서 가져올 수 없어.');render();return;}
+ let decoded;
+ try{
+  const input=JSON.parse(await file.text());
+  if(input?.schema!=='neon-expedition-full-save-v1'||
+     input.saveKey!==E.SAVE_KEY||input.state?.version!==E.VERSION)throw Error('unsupported-backup');
+  decoded=E.normalize(input.state,Date.now());
+ }catch(err){
+  notify('올바른 용병단 전체 저장 백업 JSON 파일이 아니야.');
+  render();return;
+ }
+ const relicKinds=E.RELICS.filter(r=>E.relic(decoded,r.id)>0).length;
+ if(!confirm('가져올 저장: 최고 '+fmt(decoded.best)+'거리 · 유물 '+relicKinds+'종 · 환생 '+fmt(decoded.rebirths)+'회. 현재 용병단 저장을 덮어쓸까?'))return;
+ // Import is a new session event, not an offline catch-up from the old file's
+ // export time. Prevent credit/reward duplication on stale backups.
+ Object.assign(s,decoded);s.lastSaved=Date.now();
+ const persistent=save();
+ screen('battle');
+ notify(persistent?'백업을 복원했어.':'임시 복원했어. 이 브라우저는 자동 저장이 불가능하므로 전체 저장 백업을 다시 내려받아 줘.');
+ render();
+}
 function exportPlaytest(){
  // User-initiated local download. No analytics endpoint, device ID or credentials.
  save();
@@ -361,6 +401,12 @@ $('rebirth').addEventListener('click',()=>{
 });
 $('saveNow').addEventListener('click',()=>{if(save())notify('탐사 기록 저장 완료');render();});
 $('exportPlaytest').addEventListener('click',exportPlaytest);
+$('exportSave').addEventListener('click',exportFullSave);
+$('importSave').addEventListener('click',()=>$('importSaveFile').click());
+$('importSaveFile').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];e.target.value='';
+ await importFullSave(file);
+});
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden){save();}
  else{const elapsed=E.offline(s,Date.now());if(elapsed>1)notify('복귀 정산: '+fmt(elapsed)+'초 탐사');lastFrame=performance.now();save();render();}
