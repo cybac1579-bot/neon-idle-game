@@ -734,3 +734,6 @@ test('adaptive mode skips unaffordable high-grade supply without changing fixed 
 
 // Optional adaptive strategy must preserve legacy purchase constraints.
 require('./expedition-adaptive-buy.test.cjs');
+
+// Late-expedition relic rewards and pre-upgrade save compatibility.
+require('./expedition-deep-relic-economy.test.cjs');
