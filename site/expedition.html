@@ -137,13 +137,13 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 
  <div class="panel" id="autoPurchasePanel">
   <h2>성장 자동 구매 <span class="sub">(선택 기능)</span></h2>
-  <p class="sub">원하는 방향을 선택하면 4초마다 구매 가능한 강화 한 번을 실행해. 크레딧이 부족하면 모았다가 구매하고, 유물 상자·환생·코어는 자동으로 처리하지 않아.</p>
+  <p class="sub">균형 모드는 훈련·소집·보급을 순환하고, 나머지는 선택한 종류만 구매해. 4초마다 구매를 판단하며 부족한 크레딧은 모아. 유물 상자·환생·코어는 자동 처리하지 않아.</p>
   <label for="autoMode" class="auto-label">구매 우선 방향</label>
   <select id="autoMode" class="auto-select">
    <option value="balanced">균형 · 훈련 → 소집 → 보급 반복</option>
-   <option value="train">전투 · 부대 훈련 우선</option>
-   <option value="recruit">편성 · 용병 소집 우선</option>
-   <option value="supply">경제 · 높은 등급 보급 우선</option>
+   <option value="train">전투 · 훈련만 구매</option>
+   <option value="recruit">편성 · 용병만 소집</option>
+   <option value="supply">경제 · 최상위 보급만 강화</option>
   </select>
   <div class="auto-control">
    <div id="autoStatus" role="status" aria-live="polite" class="sub">자동 구매 꺼짐</div>
