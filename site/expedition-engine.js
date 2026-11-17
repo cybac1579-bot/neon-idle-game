@@ -9,7 +9,7 @@ const AUTO_BUY_INTERVAL=4; // seconds between optional single-step purchases
 // the return button. This is NOT spendable currency until a return.
 const CORE_PROGRESS_PER_CLEAR=0.025;
 const CORE_PROGRESS_GROWTH=1.18;
-const AUTO_MODES=['balanced','train','recruit','supply'];
+const AUTO_MODES=['balanced','adaptive','train','recruit','supply'];
 // One-time first-clear exploration cores. Repeat rebirths have no inherent multiplier.
 const BREAKTHROUGHS=[{stage:10,cores:1},{stage:15,cores:1},{stage:25,cores:2},{stage:35,cores:3},{stage:50,cores:5},{stage:75,cores:8},{stage:100,cores:13}];
 const SAVE_KEY='neon_expedition_prototype_v1';
@@ -369,24 +369,32 @@ function purchase(s,kind,amount=1,id=null){
 // In balanced mode, one successful transaction moves to the next category.
 // An unaffordable chosen upgrade is saved for, not bypassed by cheaper purchases.
 function autoTarget(s){
- const mode=s.autoBuy.mode;
- const order=mode==='balanced'?['train','recruit','supply']: [mode];
- const start=mode==='balanced'?s.autoBuy.cursor:0;
+ const mode=s.autoBuy.mode,flexible=mode==='adaptive';
+ const order=mode==='balanced'||flexible?['train','recruit','supply']:[mode];
+ const start=mode==='balanced'||flexible?s.autoBuy.cursor:0;
+ let preferred=null;
  for(let i=0;i<order.length;i++){
   const kind=order[(start+i)%order.length];
+  let candidate=null;
   if(kind==='recruit'){
-   if(total(s)<MAX_ACTORS)return {kind,cost:hireCost(s),id:null};
+   if(total(s)<MAX_ACTORS)candidate={kind,cost:hireCost(s),id:null};
   }else if(kind==='train'){
    const cost=trainCost(s);
-   if(Number.isFinite(cost)&&cost<=1e14)return {kind,cost,id:null};
+   if(Number.isFinite(cost)&&cost<=1e14)candidate={kind,cost,id:null};
   }else if(kind==='supply'){
-   // Higher-unlock contracts are higher grade, even if cheaper contracts
-   // are affordable. Preserve savings for the selected grade.
+   // The selected supply target remains the highest unlocked grade, even
+   // when unaffordable. Adaptive mode changes category, not quest grade.
    const q=QUESTS.slice().reverse().find(x=>s.stage>=x.unlock&&s.questLevels[x.id]<100&&Number.isFinite(questCost(s,x))&&questCost(s,x)<=1e14);
-   if(q)return {kind,id:q.id,cost:questCost(s,q)};
+   if(q)candidate={kind,id:q.id,cost:questCost(s,q)};
   }
+  if(!candidate)continue;
+  // Fixed balanced and exclusive modes still save for their preferred item.
+  if(!flexible)return candidate;
+  if(!preferred)preferred=candidate;
+  if(s.credits>=candidate.cost)return candidate;
  }
- return null;
+ // If nothing is affordable, save towards the original category.
+ return preferred;
 }
 function setAutoBuy(s,mode,enabled){
  if(!AUTO_MODES.includes(mode)||typeof enabled!=='boolean')return false;
@@ -404,7 +412,9 @@ function autoPurchaseOnce(s){
  if(!result)return null;
  s.autoBuy.purchases++;
  s.autoBuy.spent+=Math.max(0,before-s.credits);
- if(s.autoBuy.mode==='balanced')s.autoBuy.cursor=(s.autoBuy.cursor+1)%3;
+ if(s.autoBuy.mode==='adaptive'){
+  s.autoBuy.cursor=(['train','recruit','supply'].indexOf(target.kind)+1)%3;
+ }else if(s.autoBuy.mode==='balanced')s.autoBuy.cursor=(s.autoBuy.cursor+1)%3;
  return {kind:target.kind,id:target.id,spent:before-s.credits};
 }
 function permanentBonuses(s){
