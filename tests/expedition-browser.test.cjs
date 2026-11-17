@@ -59,7 +59,7 @@ async function main(){
    // saves the old game state; modifying storage immediately before reload loses the fixture.
    await page.addInitScript(()=>{
     const key='neon_expedition_prototype_v1',s=JSON.parse(localStorage.getItem(key));
-    if(s){
+    if(s&&s.rebirths===0){
      s.stage=11;s.best=11;s.runBest=11;s.enemyHp=1e9;s.chests=4;s.credits=5000;s.lastSaved=Date.now();
      s.playtest={offlineSeconds:90,snapshots:[{
       run:1,sec:60,stage:7,credits:750,training:1,heroLevel:2,
@@ -128,7 +128,12 @@ async function main(){
    assert.equal(savedAfter.autoBuy.enabled,false);
    assert.equal(savedAfter.autoBuy.purchases,0);
    assert.equal(await page.evaluate(()=>localStorage.getItem('neon_rework_07')),null);
+   await page.reload({waitUntil:'networkidle'});
    await page.locator('[data-tab="archive"]').click();
+   assert.equal(await page.locator('#returnReportPanel').isVisible(),true,'return report survives an actual browser reload');
+   const restoredReport=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')).latestReturn);
+   assert.deepEqual(restoredReport,savedAfter.latestReturn,'saved results must stay unchanged after reload');
+   assert.match(await page.locator('#returnReportContent').textContent(),/기본 부대 화력/);
    assert.match(await page.locator('#playtestSummary').textContent(),/기록한 1분 단위 상태/);
    const [download]=await Promise.all([
     page.waitForEvent('download'),
@@ -144,6 +149,8 @@ async function main(){
    assert.equal(payload.minuteSnapshots[0].stage,7);
    assert.equal(payload.offlineSettledSeconds,90);
    assert.equal(payload.recentReturns.length,1);
+   assert.deepEqual(payload.latestReturnComparison,savedAfter.latestReturn);
+   assert.deepEqual(payload.currentRunOpening,savedAfter.runOpening);
    assert.equal(payload.lifetime.relics[Object.keys(savedBefore.relics).find(id=>savedBefore.relics[id]>0)],savedBefore.relics[Object.keys(savedBefore.relics).find(id=>savedBefore.relics[id]>0)]);
    assert.equal(Object.hasOwn(payload,'deviceId'),false);
    assert.equal(Object.hasOwn(payload,'account'),false);
