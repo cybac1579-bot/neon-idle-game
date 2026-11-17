@@ -313,3 +313,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | 2026-11-17 13:53 KST · STAGE75 reward choice visibility | `site/game.js` `f4ced98a`: growth panel now displays current projected economic payout via existing formatter and exact award formula; no battle HUD clutter or balance change. Prior shared HEAD `321d9f64` four CI SUCCESS; new CI pending. | **P0:** confirm new CI/portrait, compare economic reward impact vs weapon/skill in seeded low-input play, verify Galaxy S25+ 30min manually. Readiness 60% unchanged. |
+
+| 2026-11-17 14:57 KST · STAGE75 economy payout feedback | `site/game.js` `a0504494`: temporary reward notice and log now report actual granted credits (not merely pre-choice projection); portrait regression `9eb00d58` checks formatted notice and once-only claim at 360/390/412px. Previous base `e74b2102` CI 4/4 success; **new CI unverified at write**. | **P0:** verify fresh portrait/save/first-rebirth/three-rebirth CI and fix failures. **P1:** seeded low-input comparison of STAGE75 credits vs weapon/skill and real Galaxy S25+ 30m; 60% provisional, main/Pages protected. |
