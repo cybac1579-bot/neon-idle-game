@@ -1,5 +1,8 @@
 # 네온 방치단 — 독립 용병단 원형 모바일 시범 플레이 (2026-11-18)
 
+> **버전 주의 (최신 2026-11-18):** 아래 테스트 URL은 유물 일괄 개봉까지 구현된 **이전 고정 버전(c8bd6bc2)**이야. 엔진 CI 55/55 및 신형 JSON 플레이 기록 내보내기 기능은 **91629827**에 구현·검증됐지만, Vercel 무료 일일 API 배포 한도(402) 때문에 이 URL에 아직 배포되지 않았어. 상세 증거와 환생 파밍 위험은 [2026-11-18 환생 효율 검증](EXPEDITION_REBIRTH_AUDIT_20261118.md) 참고.
+
+
 ## 테스트 링크 / 독립성
 - **테스트 전용 배포 (기존 공개 main 아님):** https://neon-idle-game-playtest-c1njedh34-cybac1579-9456.vercel.app/expedition.html
 - Vercel 프로젝트: neon-idle-game-playtest (preview, target null), 배포 ID `dpl_62bh5YJjSZD9jySGo5ajBiqQy9mP`, 상태 READY 확인.
