@@ -100,3 +100,5 @@ require('./expedition-first-run-milestone-audit.cjs');
 
 // Compare stage30-35 growth-purchase gaps without imposing artificial pacing targets.
 require('./expedition-stage30-growth-audit.cjs');
+// Two-hour first-run discovery proof for separate stage40/45 permanent relic tiers.
+require('./expedition-deep-run-relic-audit.cjs');
