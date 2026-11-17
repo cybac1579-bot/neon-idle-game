@@ -36,6 +36,7 @@ const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
 const total=s=>UNITS.reduce((n,u)=>n+s.units[u.id],0);
 const emptyContribution=()=>({damage:{guard:0,ranger:0,medic:0},healing:{guard:0,ranger:0,medic:0},taken:{guard:0,ranger:0,medic:0},falls:{guard:0,ranger:0,medic:0},attacks:{guard:0,ranger:0,medic:0}});
 const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purchases:0,spent:0});
+const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 
 const isBoss=stage=>stage%10===0;
 const isElite=stage=>stage%5===0;
@@ -47,7 +48,7 @@ const newState=(now=Date.now())=>({
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -76,6 +77,16 @@ function normalize(raw,now=Date.now()){
   s.autoBuy.purchases=integer(raw.autoBuy.purchases,0,1e9);
   s.autoBuy.spent=num(raw.autoBuy.spent,0,1e14);
  }
+ s.runMetrics=initialRunMetrics();
+ for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
+ s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
+ s.runHistory=Array.isArray(raw.runHistory)?raw.runHistory.slice(-5).filter(x=>x&&typeof x==='object').map(x=>({
+  duration:integer(x.duration,0,1e9),best:integer(x.best,1,100000),
+  kills:integer(x.kills,0,1e9),cores:integer(x.cores,0,1e9),
+  manualPurchases:integer(x.manualPurchases,0,1e9),
+  autoPurchases:integer(x.autoPurchases,0,1e9),
+  chestsOpened:integer(x.chestsOpened,0,1e9)
+ })):[];
  s.contribution=emptyContribution();
  for(const kind of ['damage','healing','taken','falls','attacks'])for(const u of UNITS)
   s.contribution[kind][u.id]=kind==='falls'||kind==='attacks'?integer(raw.contribution?.[kind]?.[u.id],0,1e9):num(raw.contribution?.[kind]?.[u.id],0,1e14);
@@ -246,6 +257,7 @@ function purchase(s,kind,amount=1,id=null){
   if(!result)break;
   count++;spent+=Math.max(0,before-s.credits);
  }
+ s.runMetrics.manualPurchases+=count;s.runMetrics.manualSpent+=spent;
  if(count>1)note(s,(kind==='recruit'?'용병 소집':kind==='train'?'부대 훈련':'보급 의뢰')+' '+count+'회 연속 구매');
  return {count,spent};
 }
@@ -302,7 +314,7 @@ function permanentBonuses(s){
  };
 }
 function openChest(s){
- if(s.chests<1)return null;s.chests--;s.chestsOpened++;
+ if(s.chests<1)return null;s.chests--;s.chestsOpened++;s.runMetrics.chestsOpened++;
  const eligible=RELICS.filter(r=>relic(s,r.id)<r.cap);
  if(!eligible.length){const credits=300+50*s.best;s.credits+=credits;note(s,'유물 수집 상한 · '+credits+' 크레딧으로 교환');return {id:null,duplicate:true,credits};}
  const missing=eligible.filter(r=>relic(s,r.id)===0);
@@ -320,7 +332,11 @@ function buyCore(s,id){if(!['valor','trade'].includes(id)||s.cores<coreCost(s,id
 function rebirthGain(s){return s.runBest<10?0:Math.max(1,Math.floor(Math.sqrt((s.runBest-5)/5)));}
 function rebirth(s){
  const gain=rebirthGain(s);if(!gain)return false;
- const keep={seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
+ const summary={duration:Math.floor(s.clock),best:s.runBest,kills:s.runKills,cores:gain,
+  manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
+  chestsOpened:s.runMetrics.chestsOpened};
+ const history=[...(s.runHistory||[]),summary].slice(-5);
+ const keep={runHistory:history,seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
  Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  note(s,'탐사 귀환 · 코어 '+gain+'개 획득. 영구 유물/레벨 유지');
