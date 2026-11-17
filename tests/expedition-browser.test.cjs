@@ -29,10 +29,11 @@ async function main(){
    await page.locator('[data-tab="supply"]').click();
    assert.equal(await page.locator('#supplyScreen').isVisible(),true);
    await page.locator('[data-tab="archive"]').click();
-   await page.evaluate(()=>{
+   // Inject on the next document before expedition-app.js loads. Ordinary pagehide
+   // saves the old game state; modifying storage immediately before reload loses the fixture.
+   await page.addInitScript(()=>{
     const key='neon_expedition_prototype_v1',s=JSON.parse(localStorage.getItem(key));
-    s.stage=10;s.best=10;s.runBest=10;s.enemyHp=100;s.chests=1;s.credits=5000;s.lastSaved=Date.now();
-    localStorage.setItem(key,JSON.stringify(s));
+    if(s){s.stage=10;s.best=10;s.runBest=10;s.enemyHp=100;s.chests=1;s.credits=5000;s.lastSaved=Date.now();localStorage.setItem(key,JSON.stringify(s));}
    });
    await page.reload({waitUntil:'networkidle'});
    await page.locator('[data-tab="archive"]').click();
