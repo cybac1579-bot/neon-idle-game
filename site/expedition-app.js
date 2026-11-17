@@ -60,8 +60,21 @@ function doPurchase(kind,id=null){
  }
  render();
 }
+function renderAutoBuy(){
+ const a=s.autoBuy,target=E.autoTarget(s);
+ $('autoMode').value=a.mode;
+ $('autoToggle').textContent=a.enabled?'자동 구매 끄기':'자동 구매 켜기';
+ $('autoToggle').classList.toggle('active',a.enabled);
+ $('autoToggle').setAttribute('aria-pressed',a.enabled?'true':'false');
+ const label=target?(target.kind==='train'?'부대 훈련':target.kind==='recruit'?'용병 소집':
+    (E.QUESTS.find(q=>q.id===target.id)?.name||'보급 의뢰')):'구매 가능한 종류 없음';
+ $('autoStatus').textContent=a.enabled?'작동 중 · '+E.AUTO_BUY_INTERVAL+'초마다 구매 판단':'자동 구매 꺼짐';
+ $('autoDetails').textContent='다음 대상: '+label+(target?' · '+fmt(target.cost)+' 크레딧':'')+
+   ' / 이번 탐사 자동 구매 '+fmt(a.purchases)+'회 · '+fmt(a.spent)+' 크레딧 사용';
+}
 function renderSquad(){
  updateBuyCount();
+ renderAutoBuy();
  $('unitList').innerHTML=E.UNITS.map(u=>{
   const locked=s.best<u.unlock;
   return '<div class="action"><div><strong>'+safe(u.symbol)+' '+safe(u.name)+(locked?' · 미해금':' ×'+fmt(s.units[u.id]))+'</strong><p>'+safe(locked?u.unlock+'거리 도달 시 모집 가능':u.id==='guard'?'전열 유지 · 높은 내구력':u.id==='ranger'?'강력한 단일 화력':'부대 체력 회복')+'</p></div><span class="sub">'+safe(locked?'잠김':'소집 풀')+'</span></div>';
@@ -149,6 +162,13 @@ function openChest(){
 }
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>screen(b.dataset.tab)));
 function cyclePurchaseCount(){buyCount=buyCount===1?5:buyCount===5?10:1;updateBuyCount();render();}
+$('autoMode').addEventListener('change',e=>{
+ if(E.setAutoBuy(s,e.target.value,s.autoBuy.enabled)){save();render();}
+});
+$('autoToggle').addEventListener('click',()=>{
+ E.setAutoBuy(s,s.autoBuy.mode,!s.autoBuy.enabled);
+ save();render();
+});
 $('buyCountSquad').addEventListener('click',cyclePurchaseCount);
 $('buyCountSupply').addEventListener('click',cyclePurchaseCount);
 $('hire').addEventListener('click',()=>doPurchase('recruit'));
