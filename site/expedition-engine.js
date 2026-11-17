@@ -38,7 +38,9 @@ const RELICS=[
  {id:'relay',name:'작전 통신기',desc:'전체 병종의 피해량이 수집 수마다 5% 증가',cap:5,unlockStage:30},
  // Only deep-earned chests can reveal these permanent run-economy options.
  {id:'enlist',name:'선발권 묶음',desc:'용병 소집 비용이 수집 수마다 6% 감소',cap:3,unlockStage:40},
- {id:'drill',name:'훈련 규정집',desc:'부대 훈련 비용이 수집 수마다 6% 감소',cap:3,unlockStage:45}
+ {id:'drill',name:'훈련 규정집',desc:'부대 훈련 비용이 수집 수마다 6% 감소',cap:3,unlockStage:45},
+ // A unique depth-50 collection reward, not a hidden bonus per rebirth.
+ {id:'chronicle',name:'원정 연대기',desc:'서로 다른 유물 1종마다 용병단 피해량 2% 증가 (최대 30%)',cap:1,unlockStage:50}
 ];
 const num=(n,min=0,max=1e14)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):min;
 const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
@@ -73,6 +75,11 @@ const validOpening=x=>x&&typeof x==='object'&&
 const isBoss=stage=>stage%10===0;
 const isElite=stage=>stage%5===0;
 const relic=(s,id)=>integer(s.relics[id],0,RELICS.find(x=>x.id===id)?.cap||0);
+// Owning the single stage-50 chronicle makes collecting *different* relics
+// valuable. A hard 15-kind ceiling prevents later catalog expansion from
+// silently scaling combat forever. Copies of existing relics do not count.
+const collectionBoost=s=>relic(s,'chronicle')?
+ 1+.02*Math.min(15,RELICS.filter(r=>relic(s,r.id)>0).length):1;
 const newState=(now=Date.now())=>({
  version:VERSION,lastSaved:now,seed:123456789,clock:0,credits:65,stage:1,best:1,runBest:1,
  units:{guard:2,ranger:0,medic:0},training:0,questLevels:{dispatch:0,salvage:0,contract:0},
@@ -212,7 +219,7 @@ function updateSquadHealth(s){
  s.respawn=s.squadHp<=0&&waits.length?Math.min(...waits):0;
 }
 function battleCue(s,type,id,value=0){s.battleCueSeq++;s.battleEvent={seq:s.battleCueSeq,type,id,value:Math.max(0,value)};}
-function partyDps(s){return UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.dps*(u.id==='ranger'?1+.15*relic(s,'archer'):1),0)*(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*(1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor);}
+function partyDps(s){return UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.dps*(u.id==='ranger'?1+.15*relic(s,'archer'):1),0)*(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*(1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*collectionBoost(s);}
 function healDps(s){return s.units.medic*2.7*(1+.18*relic(s,'medkit'))*(1+.08*s.training);}
 function questIncome(s,q){return q.income*(1+1.1*s.questLevels[q.id])*(1+.12*relic(s,'income'))*(1+.08*s.traits.supply)*(1+.09*s.coreUpgrades.trade);}
 function hireCost(s){return Math.max(1,Math.round(25*Math.pow(1.22,Math.max(0,total(s)-2))*(1-.06*relic(s,'enlist'))));}
@@ -263,7 +270,7 @@ function fight(s,dt){
  if(returned)note(s,'후퇴한 용병이 전선에 재합류했어.');
  const living=s.actors.filter(a=>a.revive===0&&a.hp>0);
  if(!living.length){updateSquadHealth(s);return;}
- const boss=isBoss(s.stage);
+ const boss=isBoss(s.stage),collection=collectionBoost(s);
  const cueBeforeAttacks=s.battleCueSeq;
  let damage=0;
  for(const a of living){
@@ -272,7 +279,7 @@ function fight(s,dt){
   const u=UNITS.find(u=>u.id===a.id);
   const multiplier=(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
    (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*
-   (a.id==='ranger'?1+.15*relic(s,'archer'):1)*(boss?1+.14*relic(s,'boss'):1);
+   (a.id==='ranger'?1+.15*relic(s,'archer'):1)*(boss?1+.14*relic(s,'boss'):1)*collection;
   const amount=u.dps*attackInterval(a.id)*multiplier;
   // Exclude overkill from useful damage statistics; retain original combat damage.
   const dealt=Math.min(Math.max(0,s.enemyHp-damage),amount);
@@ -454,7 +461,7 @@ function openChest(s){
  const missing=eligible.filter(r=>relic(s,r.id)===0);
  // First chest at a new depth guarantees a first discovery in that newly
  // reached tier, if there are still undiscovered relics from the milestone.
- const milestoneMissing=[15,25,30,40,45].includes(depth)?
+ const milestoneMissing=[15,25,30,40,45,50].includes(depth)?
   missing.filter(r=>r.unlockStage===depth):[];
  const pool=milestoneMissing.length?milestoneMissing:
   missing.length&&rand(s)<.7?missing:eligible;
