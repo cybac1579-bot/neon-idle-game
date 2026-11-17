@@ -5,9 +5,13 @@
 const VERSION=1;
 const MAX_ACTORS=120; // protect save size and two-hour offline ticks
 const AUTO_BUY_INTERVAL=4; // seconds between optional single-step purchases
+// Earn fractional return progress by defeating enemies, not by pushing
+// the return button. This is NOT spendable currency until a return.
+const CORE_PROGRESS_PER_CLEAR=0.025;
+const CORE_PROGRESS_GROWTH=1.18;
 const AUTO_MODES=['balanced','train','recruit','supply'];
 // One-time first-clear exploration cores. Repeat rebirths have no inherent multiplier.
-const BREAKTHROUGHS=[{stage:15,cores:1},{stage:25,cores:2},{stage:35,cores:3},{stage:50,cores:5},{stage:75,cores:8},{stage:100,cores:13}];
+const BREAKTHROUGHS=[{stage:10,cores:1},{stage:15,cores:1},{stage:25,cores:2},{stage:35,cores:3},{stage:50,cores:5},{stage:75,cores:8},{stage:100,cores:13}];
 const SAVE_KEY='neon_expedition_prototype_v1';
 const UNITS=[
  {id:'guard',name:'방벽병',symbol:'🛡',dps:1.65,hp:48,heal:0,unlock:1},
@@ -52,7 +56,7 @@ const newState=(now=Date.now())=>({
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestDepths:[],chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,claimedBreakthroughDistance:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],relicHistory:[],playtest:initialPlaytest(),events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],relicHistory:[],playtest:initialPlaytest(),events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -107,6 +111,8 @@ function normalize(raw,now=Date.now()){
  })):[];
  // Local-only playtest time series, never sent anywhere by the engine.
  // Validate old or malformed saved snapshots and impose a fixed size ceiling.
+ s.coreProgress=num(raw.coreProgress,0,1e9);
+ s.coreReserve=num(raw.coreReserve,0,1);
  s.playtest=initialPlaytest();
  s.playtest.offlineSeconds=num(raw.playtest?.offlineSeconds,0,1e9);
  if(Array.isArray(raw.playtest?.snapshots)){
@@ -176,7 +182,17 @@ function questIncome(s,q){return q.income*(1+1.1*s.questLevels[q.id])*(1+.12*rel
 function hireCost(s){return Math.round(25*Math.pow(1.22,Math.max(0,total(s)-2)));}
 function trainCost(s){return Math.round(46*Math.pow(1.51,s.training));}
 function questCost(s,q){return Math.round(q.upgradeCost*Math.pow(1.63,s.questLevels[q.id]));}
-function coreCost(s,id){return 1+Math.floor(s.coreUpgrades[id]/2);}
+// Cubic cumulative investment costs temper acceleration from later returns.
+function coreCost(s,id){
+ const level=s.coreUpgrades[id];
+ return 1+Math.floor(level/2)+Math.floor(level*level/8);
+}
+function coreProgressForClear(stage){
+ // Beyond this distance cap the per-clear yield, preventing overflow in
+ // very long saves while keeping deeper victories worth more.
+ const exponent=Math.max(-9,Math.min(35,integer(stage,1,100000)-10));
+ return CORE_PROGRESS_PER_CLEAR*Math.pow(CORE_PROGRESS_GROWTH,exponent);
+}
 function traitRemaining(s){return Math.max(0,s.heroLevel-1-s.traits.command-s.traits.supply);}
 function xpNeeded(level){return Math.round(30+35*Math.pow(level,1.28));}
 function heroXp(s,amount){
@@ -187,6 +203,7 @@ function victory(s){
  const cleared=s.stage;
  const reward=Math.round((8+cleared*2.6)*Math.pow(1.105,Math.min(cleared,110))*(1+.12*relic(s,'bounty')));
  s.credits=Math.min(1e14,s.credits+reward);s.kills++;s.runKills++;
+ s.coreProgress=Math.min(1e9,s.coreProgress+coreProgressForClear(cleared));
  heroXp(s,5+cleared*.7+(isBoss(cleared)?20:0));
  if(isElite(cleared)){s.chests++;s.chestDepths.push(cleared);note(s,(isBoss(cleared)?'지휘급 목표 격파!':'정예 목표 격파!')+' 보급 상자 1개 확보');}
  s.stage++;s.runBest=Math.max(s.runBest,s.stage);s.best=Math.max(s.best,s.stage);
@@ -416,14 +433,15 @@ function buyTrait(s,id){if(!['command','supply'].includes(id)||traitRemaining(s)
 function buyCore(s,id){if(!['valor','trade'].includes(id)||s.cores<coreCost(s,id)||s.coreUpgrades[id]>=30)return false;const cost=coreCost(s,id);s.cores-=cost;s.coreSpent+=cost;s.coreUpgrades[id]++;return true;}
 function rebirthRewards(s){
  const stage=integer(s.runBest,1,100000);
- // Current distance means the current enemy; stage 10 must be defeated first.
- if(stage<=10)return {base:0,recordBonus:0,total:0,newMilestones:[]};
- const cleared=stage-1;
- const base=Math.max(1,Math.floor(Math.sqrt((stage-5)/5)));
+ // Current distance is the current enemy; stage 10 must be defeated first.
+ if(stage<=10)return {base:0,recordBonus:0,total:0,newMilestones:[],pending:0,fraction:0};
+ const cleared=stage-1,progress=num(s.coreReserve+s.coreProgress,0,1e9);
+ const base=Math.floor(progress+1e-9);
  const claimed=integer(s.claimedBreakthroughDistance,0,100000);
  const newMilestones=BREAKTHROUGHS.filter(b=>b.stage>claimed&&b.stage<=cleared);
  const recordBonus=newMilestones.reduce((sum,b)=>sum+b.cores,0);
- return {base,recordBonus,total:base+recordBonus,newMilestones};
+ return {base,recordBonus,total:base+recordBonus,newMilestones,
+  pending:progress,fraction:Math.max(0,progress-base)};
 }
 function rebirthGain(s){return rebirthRewards(s).total;}
 function rebirth(s){
@@ -432,7 +450,8 @@ function rebirth(s){
   manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
   chestsOpened:s.runMetrics.chestsOpened};
  const history=[...(s.runHistory||[]),summary].slice(-5);
- const keep={claimedBreakthroughDistance:Math.max(s.claimedBreakthroughDistance,s.runBest-1),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
+ const keep={claimedBreakthroughDistance:Math.max(s.claimedBreakthroughDistance,s.runBest-1),
+  coreReserve:Math.min(1,Math.max(0,reward.fraction)),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
  Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  note(s,'탐사 귀환 · 코어 '+gain+'개 획득'+(reward.recordBonus?' (최초 기록 +'+reward.recordBonus+')':'')+'. 영구 유물/레벨 유지');
@@ -443,5 +462,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,AUTO_BUY_INTERVAL,AUTO_MODES,BREAKTHROUGHS,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,AUTO_BUY_INTERVAL,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
