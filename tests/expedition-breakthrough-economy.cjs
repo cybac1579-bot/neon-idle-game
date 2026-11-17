@@ -26,9 +26,9 @@ function simulate(seed,target,seconds=1800){
   finalValor:s.coreUpgrades.valor};
 }
 const scenarios=targets.map(target=>({target,samples:SEEDS.map(seed=>simulate(seed,target))}));
-assert.ok(scenarios[0].samples.every(x=>x.bonus===0&&x.discoveredKinds===5));
-assert.ok(scenarios[1].samples.every(x=>x.bonus===3&&x.discoveredKinds>=8));
-assert.ok(scenarios[2].samples.every(x=>x.bonus===6&&x.discoveredKinds>=10));
+assert.ok(scenarios[0].samples.every(x=>x.bonus===1&&x.discoveredKinds===5));
+assert.ok(scenarios[1].samples.every(x=>x.bonus===4&&x.discoveredKinds>=8));
+assert.ok(scenarios[2].samples.every(x=>x.bonus===7&&x.discoveredKinds>=10));
 assert.ok(scenarios[2].samples.every(x=>x.firstReturn>scenarios[0].samples[0].firstReturn));
 console.log(JSON.stringify({experiment:'first-clear-core-versus-relic-depth',
  method:'synthetic seeded engine; 4-second steps; immediate player-confirmed chest opens and rebirth; balanced auto purchase; earned cores invested in valor',
