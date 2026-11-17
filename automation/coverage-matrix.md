@@ -359,3 +359,8 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 - HEAD `4dbd248a`, +70 commits since previous automated `b5558e9f`: depth-restricted relic drops, batch opening, auto-purchase, first-clear core milestones, run analytics and first-boss return are present in manual code/tests. Prior automated cue regression is superseded by latest shared source; do not overwrite it.
 - CI at HEAD: save 44120016622 PASS; first-rebirth 44120016798 PASS; three-rebirth 44120016976 PASS; portrait 44120016634 RUNNING (not PASS). No Android/30-minute human validation.
 - **P0:** verify portrait completion and mobile expedition behavior at 360/390/412px. **P1:** first-boss return + permanent core economy across two runs, chest provenance and older prototype save migration. **P1:** 30m six-check-in auto-purchase simulation versus real phone interaction. Release remains blocked; main read-only, no Pages deploy. Legacy readiness 60% cannot substantiate new prototype readiness.
+
+
+### 2026-11-18 01:51 KST — new expedition return progress integrity
+- **Targeted test added** `780919b4`: real enemy clear → fractional core accumulation → JSON reload → blocked early return without consuming fraction. Source reviewed, commit verified; **new test CI not yet verified**. Previous `81792df8` four workflow runs succeeded, but cannot substitute for this commit.
+- **Next P0:** inspect new test/portrait CI for `780919b4` and fix failures before declaring success. **P1:** 30-minute low-input expedition route, return economics at 25/35, Android lifecycle and UI. Legacy 60% estimate unchanged but not transferable to new prototype. Main/Pages protected; Preview currently stale due quota.
