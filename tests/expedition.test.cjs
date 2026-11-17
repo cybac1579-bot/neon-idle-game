@@ -750,6 +750,8 @@ test('guard remains primary target but normal/elite/boss flank blows reach both 
  for(const {stage,share} of percentages){
   const s=E.newState(1000);
   s.stage=s.best=s.runBest=stage;s.enemyHp=1e12;
+  // Give the fixed roster enough HP to measure distribution without deaths.
+  s.training=10;s.actors.forEach(a=>a.hp=E.actorMaxHp(s,a.id));
   s.units.ranger=1;s.units.medic=1;
   s.actors.push({id:'ranger',hp:E.actorMaxHp(s,'ranger'),revive:0,progress:1,cooldown:100});
   s.actors.push({id:'medic',hp:E.actorMaxHp(s,'medic'),revive:0,progress:1,cooldown:100});
