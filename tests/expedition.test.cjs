@@ -234,3 +234,16 @@ test('interleaved recruit order survives save/load without resetting HP or progr
  assert.equal(restored.actors[3].hp,3.5);
  assert.equal(restored.actors[3].progress,.71);
 });
+
+
+test('simultaneous medic healing does not hide the attack cue',()=>{
+ const s=E.normalize(E.newState(),Date.now());
+ s.units.medic=1;s.actors.push({id:'medic',hp:25,revive:0,progress:1,cooldown:3});
+ s.actors.forEach(a=>{a.progress=1;a.cooldown=a.id==='guard'?0:3;});
+ s.actors[0].hp=10;s.enemyHp=1e9;
+ const hp=s.actors[0].hp,enemy=s.enemyHp;
+ E.tick(s,.5);
+ assert.ok(s.actors[0].hp>hp,'medic still heals');
+ assert.ok(s.enemyHp<enemy,'guards still attack');
+ assert.equal(s.battleEvent.type,'hit','attack feedback remains visible');
+});
