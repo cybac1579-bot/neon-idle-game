@@ -11,6 +11,18 @@ async function main(){
  assert.ok(file.includes('data-inline-source="expedition-field.js"'));
  assert.ok(file.includes('data-inline-source="expedition-app.js"'));
  assert.ok(!/<script[^>]+src=/.test(file),'no script network dependency');
+ // Artifact provenance: the packaged executable must embed the current checkout's
+ // exact scripts, not just scripts with the expected filenames.
+ for(const name of ['expedition-engine.js','expedition-field.js','expedition-app.js']){
+  const source=fs.readFileSync(path.resolve(__dirname,'../site',name),'utf8').replace(/<\\/script/gi,'<\\\\/script');
+  assert.ok(file.includes('<script data-inline-source="'+name+'">\\n'+source+'\\n</script>'),
+   'standalone package must embed current source: '+name);
+ }
+ const expectedSha=(process.env.GITHUB_SHA||'local-source').replace(/[^a-z0-9]/gi,'').slice(0,12);
+ assert.ok(file.includes('<meta name="neon-expedition-build" content="'+expectedSha+'">'),
+  'standalone package build SHA must match current checkout');
+ const readme=fs.readFileSync(path.resolve(__dirname,'../artifacts/expedition-standalone/README-KO.txt'),'utf8');
+ assert.ok(readme.includes('기준 커밋: '+expectedSha),'artifact README must match build SHA');
  const browser=await chromium.launch({headless:true});
  try{
   for(const width of [360,390,412]){
