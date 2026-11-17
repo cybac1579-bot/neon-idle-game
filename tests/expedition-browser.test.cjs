@@ -38,9 +38,18 @@ async function main(){
    // saves the old game state; modifying storage immediately before reload loses the fixture.
    await page.addInitScript(()=>{
     const key='neon_expedition_prototype_v1',s=JSON.parse(localStorage.getItem(key));
-    if(s){s.stage=10;s.best=10;s.runBest=10;s.enemyHp=100;s.chests=1;s.credits=5000;s.lastSaved=Date.now();localStorage.setItem(key,JSON.stringify(s));}
+    if(s){
+     s.stage=10;s.best=10;s.runBest=10;s.enemyHp=100;s.chests=1;s.credits=5000;s.lastSaved=Date.now();
+     s.units={guard:5,ranger:4,medic:3};
+     s.actors=['guard','ranger','guard','medic','ranger','guard','medic','guard','ranger','medic','guard','ranger']
+      .map(id=>({id,hp:id==='guard'?48:id==='ranger'?17:25,revive:0,progress:.5,cooldown:1}));
+     s.squadHp=5*48+4*17+3*25;
+     localStorage.setItem(key,JSON.stringify(s));
+    }
    });
    await page.reload({waitUntil:'networkidle'});
+   assert.equal(await page.locator('#squad .fighter').count(),8,'mobile preview caps drawn actors');
+   assert.equal(await page.locator('.roster-note').isVisible(),true,'hidden reserve members must be signaled');
    await page.locator('[data-tab="archive"]').click();
    assert.equal(await page.locator('#openArchiveChest').isVisible(),true);
    await page.locator('#openArchiveChest').click();
