@@ -363,7 +363,10 @@ test('explicit training mode saves credits and buys only once each four seconds'
  assert.equal(s.autoBuy.purchases,1);
  assert.equal(s.autoBuy.spent,E.trainCost(E.newState()));
  // One expensive training step is not affordable yet, so lower-cost recruit is NOT a fallback.
- s.credits=E.trainCost(s)-1;
+ // Hold the enemy so combat rewards cannot unexpectedly fund the target.
+ // Existing 6-second quest income may still arrive, but remains below training price.
+ s.credits=E.hireCost(s)+1;
+ s.stage=1;s.enemyHp=1e13;
  const units=s.units.guard;
  E.tick(s,4);
  assert.equal(s.training,1);
@@ -425,7 +428,8 @@ test('automated buying never opens chests, spends cores or performs rebirth',()=
  assert.ok(E.setAutoBuy(s,'train',true));
  E.tick(s,32);
  assert.ok(s.autoBuy.purchases>0);
- assert.equal(s.chests,3);
+ assert.ok(s.chests>=3,'automatic buying must not consume any chest, even if combat earns more');
+ assert.equal(s.chestsOpened,0);
  assert.equal(s.cores,10);
  assert.equal(s.rebirths,0);
  assert.equal(s.coreUpgrades.valor,0);
