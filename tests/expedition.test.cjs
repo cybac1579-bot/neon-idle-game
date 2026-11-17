@@ -706,3 +706,6 @@ test('malformed return reports and opening values are sanitized on load',()=>{
  assert.deepEqual(cleaned.latestReturn.after,{attack:4.5,hp:100,income:10});
  assert.equal(Object.hasOwn(cleaned.latestReturn,'inventedDeviceId'),false);
 });
+
+// Exact early clear timestamps are tracked independently of 60-second snapshots.
+require('./expedition-milestones.test.cjs');
