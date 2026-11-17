@@ -572,3 +572,70 @@ test('old saves have no invented relic journal and malformed IDs are never displ
  assert.equal(s.relicHistory.length,2);
  assert.deepEqual(s.relicHistory.map(x=>x.id),['ember',null]);
 });
+
+
+test('playtest checkpoints sample each simulated minute without changing combat outcome',()=>{
+ const a=E.normalize(E.newState(1000),1000);
+ const b=E.normalize(E.newState(1000),1000);
+ E.tick(a,59);
+ assert.equal(a.playtest.snapshots.length,0);
+ E.tick(a,1);
+ assert.equal(a.playtest.snapshots.length,1);
+ assert.equal(a.playtest.snapshots[0].sec,60);
+ assert.equal(a.playtest.snapshots[0].source,'foreground');
+ E.tick(a,120);
+ E.tick(b,180);
+ assert.equal(a.playtest.snapshots.length,3);
+ assert.deepEqual(a.playtest.snapshots.map(x=>x.sec),[60,120,180]);
+ assert.equal(a.stage,b.stage);
+ assert.equal(a.seed,b.seed);
+ assert.deepEqual(a.relics,b.relics);
+ assert.equal(a.credits,b.credits);
+ assert.equal(a.runBest,b.runBest);
+ assert.equal(a.playtest.snapshots[0].run,1);
+});
+
+test('offline time is marked separately and 2-hour cap remains in place',()=>{
+ const now=8*3600*1000;
+ const s=E.normalize(E.newState(now),now);
+ s.lastSaved=now;
+ const elapsed=E.offline(s,now+3*3600*1000);
+ assert.equal(elapsed,7200);
+ assert.equal(s.playtest.offlineSeconds,7200);
+ assert.equal(s.playtest.snapshots.length,120);
+ assert.ok(s.playtest.snapshots.every(x=>x.source==='offline'));
+ assert.equal(s.clock,7200);
+ const restored=E.normalize(JSON.parse(JSON.stringify(s)),now);
+ assert.deepEqual(restored.playtest,s.playtest);
+});
+
+test('minute snapshots persist across rebirth while the new run receives a new run ID',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ E.tick(s,120);
+ assert.equal(s.playtest.snapshots.length,2);
+ s.stage=s.best=s.runBest=15;
+ assert.ok(E.rebirth(s)>0);
+ assert.equal(s.clock,0);
+ assert.equal(s.playtest.snapshots.length,2);
+ E.tick(s,60);
+ assert.deepEqual(s.playtest.snapshots.map(x=>x.run),[1,1,2]);
+ assert.deepEqual(s.playtest.snapshots.map(x=>x.sec),[60,120,60]);
+ assert.equal(s.playtest.offlineSeconds,0);
+});
+
+test('playtest snapshots are save-bounded and corrupted records normalized safely',()=>{
+ const raw=E.newState();
+ raw.playtest={offlineSeconds:Infinity,snapshots:Array.from({length:500},(_,i)=>({
+  run:1,sec:i*60,stage:5,credits:30,recruits:2,
+  source:i%2?'offline':'malicious',heroLevel:9,
+  injected:'private',relicKinds:99
+ }))};
+ const s=E.normalize(raw,1234);
+ assert.equal(s.playtest.snapshots.length,E.MAX_PLAYTEST_SNAPSHOTS);
+ assert.equal(s.playtest.offlineSeconds,0);
+ assert.ok(s.playtest.snapshots.every(x=>x.relicKinds<=E.RELICS.length));
+ assert.ok(s.playtest.snapshots.every(x=>!Object.hasOwn(x,'injected')));
+ assert.ok(s.playtest.snapshots.some(x=>x.source==='foreground'));
+ const old=E.newState();delete old.playtest;
+ assert.deepEqual(E.normalize(old).playtest,{snapshots:[],offlineSeconds:0});
+});
