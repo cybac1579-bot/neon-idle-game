@@ -157,7 +157,8 @@ function breakthroughGoal(){if(s.stage<75)return '';if(!s.breakthroughReward)ret
 function chooseBreakthroughReward(kind){if(s.stage<75||s.breakthroughReward||!BREAKTHROUGH_REWARDS[kind])return false;
  if(kind==='skill'&&!s.skillsEquipped.some(id=>(s.skillLevels[id]||1)<20))return false;
  if(kind==='weapon'&&!s.weapon)s.weapon={tier:0,stage:s.stage};
- if(kind==='skill'){for(const id of s.skillsEquipped)if((s.skillLevels[id]||1)<20)addSkillXp(id,skillXpNeeded(s.skillLevels[id]||1));}
+ let improvedSkills=[];
+ if(kind==='skill'){for(const id of s.skillsEquipped)if((s.skillLevels[id]||1)<20){const before=s.skillLevels[id]||1;addSkillXp(id,skillXpNeeded(before));improvedSkills.push(SKILLS[id][0]+' Lv.'+before+'→'+s.skillLevels[id]);}}
  let awardedCredits=0;
  if(kind==='credits'){
   const before=s.credits;
@@ -165,12 +166,12 @@ function chooseBreakthroughReward(kind){if(s.stage<75||s.breakthroughReward||!BR
   awardedCredits=s.credits-before;
  }
  s.breakthroughReward=kind;
- const rewardLabel=BREAKTHROUGH_REWARDS[kind][0]+(kind==='credits'?' · +'+fmt(awardedCredits)+' 크레딧':'');
+ const rewardLabel=BREAKTHROUGH_REWARDS[kind][0]+(kind==='credits'?' · +'+fmt(awardedCredits)+' 크레딧':kind==='skill'?' · '+improvedSkills.join(' / '):'');
  logText='STAGE 75 후반 보급 · '+rewardLabel;
  showRewardNotice('후반 보급 · '+rewardLabel);save();render();return true;
 }
 function renderBreakthroughReward(){const ready=s.stage>=75,chosen=s.breakthroughReward;$('breakthroughPanel').classList.toggle('hide',!ready);
- $('breakthroughInfo').textContent=chosen?'이번 회차 보급 완료 · '+BREAKTHROUGH_REWARDS[chosen][0]+' (재구성 후 다시 선택 가능)':'무료 보급 1회 · 무기/스킬/경제 중 선택 · 경제 선택 시 '+fmt(Math.max(enemyReward(75)*4,creditRate()*30))+' 크레딧 (미선택해도 전투 진행)';
+ $('breakthroughInfo').textContent=chosen?'이번 회차 보급 완료 · '+BREAKTHROUGH_REWARDS[chosen][0]+' (재구성 후 다시 선택 가능)':'무료 보급 1회 · 무기/스킬/경제 중 선택 · 스킬 선택 시 '+s.skillsEquipped.filter(id=>(s.skillLevels[id]||1)<20).length+'개 장착 스킬 성장 · 경제 선택 시 '+fmt(Math.max(enemyReward(75)*4,creditRate()*30))+' 크레딧 (미선택해도 전투 진행)';
  for(const b of $('breakthroughChoices').querySelectorAll('[data-breakthrough]')){b.disabled=!!chosen||(b.dataset.breakthrough==='skill'&&!s.skillsEquipped.some(id=>(s.skillLevels[id]||1)<20));b.classList.toggle('support-selected',b.dataset.breakthrough===chosen);}
 }
 function allocationComparison(){
