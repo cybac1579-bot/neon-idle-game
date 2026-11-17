@@ -123,7 +123,7 @@ function renderArchive(){
   const n=E.relic(s,r.id);
   return '<div class="relic '+(n?'owned':'')+'"><div class="glyph" aria-hidden="true">'+(n?'✦':'◇')+'</div>'+
    '<strong>'+safe(n?r.name:'아직 발견하지 않은 유물')+'</strong><small>'+safe(n?r.desc:'다음 탐사에서 새로운 유물을 찾아보자')+'</small>'+
-   '<div class="count">'+(n?'보유 '+n+' / 상한 '+r.cap:'미발견')+'</div></div>';
+   '<div class="count">'+(n?'보유 '+n+' / 상한 '+r.cap:'미발견 · '+r.unlockStage+'거리 상자에서 등장')+'</div></div>';
  }).join('');
  $('openArchiveChest').hidden=s.chests<1;
  $('openArchiveChest').textContent='상자 1개 열기';
@@ -131,12 +131,14 @@ function renderArchive(){
  $('openArchiveBatch').textContent='상자 '+fmt(Math.min(20,s.chests))+'개 함께 열기'+(s.chests>20?' (나머지 보관)':'');
  $('relicRecent').innerHTML=s.relicHistory.length?s.relicHistory.slice(-8).reverse().map(r=>{
   const data=E.RELICS.find(x=>x.id===r.id);
-  const label=data?r.duplicate?'중복 · '+data.name:'첫 발견 · '+data.name:'수집 완료 · 크레딧 보상';
+  const label=(data?(r.duplicate?'중복 · ':'첫 발견 · ')+data.name:'수집 완료 · 크레딧 보상')+(r.depth?' · '+r.depth+'거리 상자':'');
   return '<div class="collection-log"><span>'+safe(label)+'</span><strong>'+
    safe(r.id?'×'+r.stack:'+'+fmt(r.credits)+' 크레딧')+'</strong></div>';
  }).join(''):'아직 발견한 유물이 없어.';
  const gain=E.rebirthGain(s);
+ const nextDeep=[15,25,30].find(distance=>distance>=s.stage);
  $('rebirthSummary').innerHTML=row('이번 탐사 최고 거리',fmt(s.runBest))+
+  row('다음 새 유물 등급',nextDeep?nextDeep+'거리 목표 격파 시 상자':'현재 공개된 모든 깊이 개방')+
   row('귀환 시 코어 획득',fmt(gain)+'개')+row('누적 귀환 횟수',fmt(s.rebirths)+'회')+
   row('보유 영구 코어',fmt(s.cores)+'개');
  $('rebirth').disabled=gain<1;
@@ -193,9 +195,10 @@ function openChestWithCount(count,source){
   const title=data?data.name:'수집 완료 보상';
   const detail=data?data.desc:'모든 유물의 보유 상한에 도달해서 크레딧으로 교환했어.';
   const countLabel=data?' · '+r.stack+'/'+data.cap+'개 보유':'';
+  const depthLabel=r.depth?' · 획득 '+r.depth+'거리 상자':' · 기존 저장 상자';
   const tag=isNew?'첫 발견':data?'중복 강화':'크레딧 교환';
   return '<div class="reward-item'+(isNew?' first':'')+'"><div class="reward-glyph" aria-hidden="true">'+(isNew?'✦':'◇')+
-   '</div><div><strong>'+safe(tag+' · '+title)+'</strong><small>'+safe(detail+countLabel+
+   '</div><div><strong>'+safe(tag+' · '+title)+'</strong><small>'+safe(detail+countLabel+depthLabel+
    (r.credits?' · +'+fmt(r.credits)+' 크레딧':''))+'</small></div></div>';
  }).join('');
  const pct=n=>Math.max(0,(n-1)*100).toFixed(1);
