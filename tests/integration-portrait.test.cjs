@@ -229,6 +229,24 @@ const server=createServer((req,res)=>{
    assert.equal(afterStage75.overflow,false,'STAGE75 growth overflow at '+width);
    await page.evaluate(prev=>{s=prev.state;spawn();enemyHp=prev.enemyHp;attackClock=prev.attackClock;render();save()},stage75Seed);
    assert.equal(await page.locator('#breakthroughPanel').isVisible(),false,'STAGE75 fixture contamination at '+width);
+   // Economy option must matter for a developed mint, without breaking the one-time choice.
+   const economy75=await page.evaluate(()=>{
+    const previous=JSON.parse(JSON.stringify(s));
+    s.stage=75;s.best=Math.max(s.best,75);s.breakthroughReward=null;s.credits=0;
+    s.forge=10;s.gen=8;
+    const expected=Math.max(enemyReward(75)*4,creditRate()*30);
+    const chosen=chooseBreakthroughReward('credits');
+    const granted=s.credits;
+    const repeated=chooseBreakthroughReward('credits');
+    const afterRepeat=s.credits;
+    s=previous;spawn();render();save();
+    return {expected,chosen,granted,repeated,afterRepeat};
+   });
+   assert.equal(economy75.chosen,true,'STAGE75 economy reward not claimable at '+width);
+   assert.ok(Math.abs(economy75.granted-economy75.expected)<Math.max(1e-6,economy75.expected*1e-9),'STAGE75 credit reward mismatch at '+width);
+   assert.equal(economy75.repeated,false,'STAGE75 reward claimed twice at '+width);
+   assert.equal(economy75.afterRepeat,economy75.granted,'STAGE75 duplicate credit payout at '+width);
+
    // Real growth-tab interaction: the STAGE85 passive resonance reacts to loadout changes.
    // Restore the entire scenario so previous-stage and persistence tests are isolated.
    const resonanceSeed=await page.evaluate(()=>{
