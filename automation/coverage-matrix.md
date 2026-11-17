@@ -389,3 +389,9 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 ### 2026-11-18 06:57 KST — standalone package source-parity CI
 - **Prior failed evidence:** integration portrait [44174195744](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44174195744), `066bba00`: 360/390/412 portrait browser smoke passed, standalone parity assertion failed on engine source. Builder adds real newline; test incorrectly expected literal backslash-n. Test-only fix `81be8d1a` uses matching newline, with fresh blob SHA conditional update.
 - **Status:** new portrait CI and exact-SHA offline artifact pending. P0 verify new run and artifact. P1 20–30m low-input first/second expedition; real Galaxy S25+ file:// save/restore still unverified. main/Pages untouched; PR #2 draft.
+
+
+## 2026-11-18 07:55 KST — current integration review
+- Confirmed prior `e1ba33bf` CI: save 44185372854, portrait 44185372841, first-rebirth 44185372969, three-rebirth 44185372902 — all successful. **Does not cover later 15 commits.**
+- Latest changed surface: stage40/45 chest-earned relic pool, enlist/train cost discounts, save/rebirth persistence; source-level tests in `tests/expedition-deep-relic-economy.test.cjs` reviewed, execution pending. Next high priority: run this suite and verify newer HEAD CI, then 30-minute low-input growth and real-device portrait/save lifecycle.
+- Release: main and Pages untouched; new prototype readiness unverified; old provisional 60% unchanged.
