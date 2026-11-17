@@ -737,3 +737,6 @@ require('./expedition-adaptive-buy.test.cjs');
 
 // Late-expedition relic rewards and pre-upgrade save compatibility.
 require('./expedition-deep-relic-economy.test.cjs');
+
+// First stage-50 chest is a capped collection-synergy reward, never a free return bonus.
+require('./expedition-stage50-chronicle.test.cjs');
