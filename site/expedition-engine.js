@@ -48,7 +48,7 @@ const newState=(now=Date.now())=>({
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],relicHistory:[],events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -86,6 +86,13 @@ function normalize(raw,now=Date.now()){
   manualPurchases:integer(x.manualPurchases,0,1e9),
   autoPurchases:integer(x.autoPurchases,0,1e9),
   chestsOpened:integer(x.chestsOpened,0,1e9)
+ })):[];
+ // Bound the lifetime discovery journal. No historical reroll or reward is granted
+ // when migrating a save made before this field existed.
+ s.relicHistory=Array.isArray(raw.relicHistory)?raw.relicHistory.slice(-24).filter(x=>x&&typeof x==='object'&&(x.id===null||RELICS.some(r=>r.id===x.id))).map(x=>({
+  id:x.id===null?null:x.id,duplicate:x.duplicate===true,
+  stack:integer(x.stack,0,5),credits:num(x.credits,0,1e14),
+  stage:integer(x.stage,1,100000),run:integer(x.run,1,1e9)
  })):[];
  s.contribution=emptyContribution();
  for(const kind of ['damage','healing','taken','falls','attacks'])for(const u of UNITS)
@@ -313,19 +320,44 @@ function permanentBonuses(s){
   income:questIncome(s,q)/Math.max(.00001,questIncome(noPermanent,q))
  };
 }
+function rememberRelic(s,result){
+ s.relicHistory.push({id:result.id,duplicate:result.duplicate===true,
+  stack:result.stack||0,credits:result.credits||0,stage:s.stage,run:s.rebirths+1});
+ if(s.relicHistory.length>24)s.relicHistory.shift();
+}
 function openChest(s){
  if(s.chests<1)return null;s.chests--;s.chestsOpened++;s.runMetrics.chestsOpened++;
  const eligible=RELICS.filter(r=>relic(s,r.id)<r.cap);
- if(!eligible.length){const credits=300+50*s.best;s.credits+=credits;note(s,'유물 수집 상한 · '+credits+' 크레딧으로 교환');return {id:null,duplicate:true,credits};}
+ if(!eligible.length){
+  const credits=300+50*s.best;s.credits=Math.min(1e14,s.credits+credits);
+  const result={id:null,duplicate:true,credits,stack:0};
+  rememberRelic(s,result);note(s,'유물 수집 상한 · '+credits+' 크레딧으로 교환');return result;
+ }
  const missing=eligible.filter(r=>relic(s,r.id)===0);
  const pool=missing.length&&rand(s)<.7?missing:eligible;
  const found=pool[Math.floor(rand(s)*pool.length)];
  const duplicate=relic(s,found.id)>0;
  s.relics[found.id]=(s.relics[found.id]||0)+1;
  let bonus=0;
- if(duplicate){bonus=75*relic(s,'fortune');s.credits+=bonus;}
+ if(duplicate){bonus=75*relic(s,'fortune');s.credits=Math.min(1e14,s.credits+bonus);}
+ const result={id:found.id,duplicate,credits:bonus,stack:s.relics[found.id]};
+ rememberRelic(s,result);
  note(s,(duplicate?'유물 중복 수집: ':'새 유물 발견! ')+found.name+(bonus?' · +'+bonus+' 크레딧':''));
- return {id:found.id,duplicate,credits:bonus};
+ return result;
+}
+// One deliberate collection action can reveal multiple rewards, but the
+// exact sequence and relic odds match one-by-one opening. No auto chest claims.
+function openChestBatch(s,count=20){
+ const limit=[1,5,20].includes(count)?count:1;
+ const size=Math.min(s.chests,limit);
+ const before=permanentBonuses(s),results=[];
+ for(let i=0;i<size;i++)results.push(openChest(s));
+ const after=permanentBonuses(s);
+ return {results,first:results.filter(x=>x.id&&!x.duplicate).length,
+  duplicates:results.filter(x=>x.id&&x.duplicate).length,
+  exchanges:results.filter(x=>!x.id).length,
+  credits:results.reduce((sum,x)=>sum+x.credits,0),
+  before,after};
 }
 function buyTrait(s,id){if(!['command','supply'].includes(id)||traitRemaining(s)<1||s.traits[id]>=10)return false;s.traits[id]++;return true;}
 function buyCore(s,id){if(!['valor','trade'].includes(id)||s.cores<coreCost(s,id)||s.coreUpgrades[id]>=30)return false;const cost=coreCost(s,id);s.cores-=cost;s.coreSpent+=cost;s.coreUpgrades[id]++;return true;}
@@ -336,7 +368,7 @@ function rebirth(s){
   manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
   chestsOpened:s.runMetrics.chestsOpened};
  const history=[...(s.runHistory||[]),summary].slice(-5);
- const keep={runHistory:history,seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
+ const keep={runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
  Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  note(s,'탐사 귀환 · 코어 '+gain+'개 획득. 영구 유물/레벨 유지');
@@ -347,5 +379,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1)tick(s,Math.floor(elapsed));
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,MAX_ACTORS,AUTO_BUY_INTERVAL,AUTO_MODES,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,MAX_ACTORS,AUTO_BUY_INTERVAL,AUTO_MODES,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
