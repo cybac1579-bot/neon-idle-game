@@ -141,7 +141,13 @@ function renderArchive(){
  $('coreTrade').textContent='보급 강화 · '+E.coreCost(s,'trade')+'코어';
  $('coreValor').disabled=s.cores<E.coreCost(s,'valor')||s.coreUpgrades.valor>=30;
  $('coreTrade').disabled=s.cores<E.coreCost(s,'trade')||s.coreUpgrades.trade>=30;
- $('history').innerHTML=s.events.slice().reverse().map(m=>'<div class="sub" style="padding:5px 0;border-bottom:1px solid #304359">'+safe(m)+'</div>').join('');
+ const duration=seconds=>{const n=Math.floor(seconds||0);return Math.floor(n/3600)+'시간 '+Math.floor(n%3600/60)+'분 '+n%60+'초';};
+ $('history').innerHTML='<div class="sub" style="margin:4px 0 10px">이번 탐사: '+safe(duration(s.clock))+
+  ' · 수동 구매 '+fmt(s.runMetrics.manualPurchases)+'회 · 자동 구매 '+fmt(s.autoBuy.purchases)+'회 · 상자 개봉 '+fmt(s.runMetrics.chestsOpened)+'개</div>'+
+  (s.runHistory.length?'<h3 style="font-size:13px;color:#d6f4ed">최근 귀환 5회</h3>'+s.runHistory.slice().reverse().map((r,i)=>
+   '<div class="statline"><span>'+safe('거리 '+r.best+' · '+duration(r.duration))+'</span><b>'+
+   safe('수동 '+r.manualPurchases+' / 자동 '+r.autoPurchases+' · 코어 '+r.cores)+'</b></div>').join(''):'')+
+  s.events.slice().reverse().map(m=>'<div class="sub" style="padding:5px 0;border-bottom:1px solid #304359">'+safe(m)+'</div>').join('');
 }
 function render(){
  renderBattle();
