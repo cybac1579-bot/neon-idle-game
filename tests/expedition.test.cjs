@@ -762,7 +762,12 @@ test('guard remains primary target but normal/elite/boss flank blows reach both 
   assert.ok(hit.ranger>0,'ranger is no longer invulnerable behind living guards');
   assert.ok(hit.medic>0,'medic is no longer invulnerable behind living guards');
   const total=hit.guard+hit.ranger+hit.medic;
-  assert.ok(Math.abs((hit.ranger+hit.medic)/total-share)<.00001,'rear share is conserved at stage '+stage);
+  const actualShare=(hit.ranger+hit.medic)/total;
+  assert.ok(actualShare>0&&actualShare<=share+1e-9,'rear side damage remains positive and bounded at stage '+stage);
+  // Damage is divided, not duplicated, even when the rear HP safety cap
+  // diverts some elite/boss attack back to the front line.
+  const expectedDps=.4*Math.pow(1.17,stage-1)*(E.isBoss(stage)?2.2:E.isElite(stage)?1.4:1);
+  assert.ok(Math.abs(total-expectedDps*9)<.00001,'total enemy attack strength is conserved');
   assert.ok(s.actors.every(a=>a.revive===0),'smoke case must not introduce artificial deaths');
   assert.equal(s.stage,stage,'target must not be defeated by test fixture');
  }
