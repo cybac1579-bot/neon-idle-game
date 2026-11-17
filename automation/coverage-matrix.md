@@ -347,3 +347,9 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 | Recent local playtest telemetry | 2026-11-17, `a135003d` | Shared commits `170f253` through `a135003` add bounded private recording, explicit JSON export, and documentation; portrait CI [44090227706](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44090227706) success | **High:** verify actual mobile UX and consent; never upload data automatically or treat synthetic events as human evidence |
 | Shared regression gate | 2026-11-17, `a135003d` | Four completed successful workflows: save 44090227885, portrait 44090227706, first-rebirth 44090227581, three-rebirth 44090227726 | **High:** real Android session and long-run performance unverified; recheck CI on next gameplay change |
 | Release isolation | 2026-11-17, `a135003d` | Integration PR #2 draft/open/unmerged; main `9918709e` read-only | **Critical:** no unattended merge, Pages deployment, or claim of live candidate parity |
+
+
+### 2026-11-17 23:55 KST — new expedition combat visual cue
+- **Source:** `site/expedition-engine.js` commit `28ca3b9b` prevents medic heal cue from hiding a same-tick hit; actual heal/damage remain unchanged. `tests/expedition.test.cjs` commit `355e9442` adds mixed-role cue regression. Evidence: code inspection + GitHub accepted both writes; **new test-commit CI unverified**.
+- **Prior baseline:** `d0bb1801` all four shared CI checks passed. Current modified-HEAD CI must be rechecked. Main protected, PR #2 draft, no Pages deployment.
+- **Next high priority:** verify new CI, then prototype actor rendering/cue at 360/390/412px and save migration; synthetic 30m multi-run pacing and real phone play remain separate unverified gates. Legacy readiness 60% held, not transferred as a validated new-prototype percentage.
