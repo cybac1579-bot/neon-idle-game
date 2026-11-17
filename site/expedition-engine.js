@@ -300,15 +300,28 @@ function fight(s,dt){
   }
  }
  const enemyDps=.4*Math.pow(1.17,Math.min(s.stage-1,100))*(boss?2.2:isElite(s.stage)?1.4:1);
+ // Guards anchor the front, but ordinary flank shots and elite/boss splash
+ // reach rear fighters too. Split existing enemy DPS: never create extra
+ // enemy damage merely because the player recruited a ranger or medic.
  const frontline=living.filter(a=>a.progress>.25).sort((a,b)=>
   (a.id==='guard'?0:a.id==='ranger'?1:2)-(b.id==='guard'?0:b.id==='ranger'?1:2)||
   b.progress-a.progress)[0];
- if(frontline){
-  const taken=Math.min(frontline.hp,enemyDps*dt);
-  s.contribution.taken[frontline.id]+=taken;
-  frontline.hp=Math.max(0,frontline.hp-taken);
-  if(frontline.hp<=0){s.contribution.falls[frontline.id]++;frontline.revive=6;frontline.progress=0;frontline.cooldown=.5;
-   battleCue(s,'fallen',frontline.id);note(s,(UNITS.find(u=>u.id===frontline.id)||UNITS[0]).name+' 후퇴 · 재합류 대기');}
+ const rear=living.filter(a=>a.id!=='guard'&&a.progress>.25&&a!==frontline);
+ const pierce=rear.length?(boss?.22:isElite(s.stage)?.14:.08):0;
+ function hit(actor,amount){
+  if(!actor||amount<=0)return;
+  const taken=Math.min(actor.hp,amount);
+  s.contribution.taken[actor.id]+=taken;
+  actor.hp=Math.max(0,actor.hp-taken);
+  if(actor.hp<=0){s.contribution.falls[actor.id]++;actor.revive=6;actor.progress=0;actor.cooldown=.5;
+   battleCue(s,'fallen',actor.id);note(s,(UNITS.find(u=>u.id===actor.id)||UNITS[0]).name+' 후퇴 · 재합류 대기');}
+ }
+ hit(frontline,enemyDps*dt*(1-pierce));
+ if(pierce){
+  // Rotate pressure among living rear actors instead of always striking
+  // the first ranger. This is deterministic and consumes no combat RNG.
+  const target=rear[Math.floor(s.clock/3)%rear.length];
+  hit(target,enemyDps*dt*pierce);
  }
  updateSquadHealth(s);
  if(s.squadHp<=0){s.enemyHp=enemyMax(s.stage);battleCue(s,'rally','guard');note(s,'부대 전원 후퇴 · 적 전선 재정비');}
