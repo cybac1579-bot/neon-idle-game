@@ -35,6 +35,9 @@ async function main(){
    assert.ok(await page.locator('#roleContribution').textContent());
    assert.equal(await page.locator('#autoMode').inputValue(),'balanced');
    assert.equal(await page.locator('#autoToggle').getAttribute('aria-pressed'),'false');
+   await page.locator('#autoMode').selectOption('adaptive');
+   assert.equal(await page.locator('#autoMode').inputValue(),'adaptive');
+   await page.locator('#autoMode').selectOption('balanced');
    await page.locator('#autoMode').selectOption('recruit');
    await page.locator('#autoToggle').click();
    assert.equal(await page.locator('#autoToggle').getAttribute('aria-pressed'),'true');
