@@ -158,8 +158,16 @@ function chooseBreakthroughReward(kind){if(s.stage<75||s.breakthroughReward||!BR
  if(kind==='skill'&&!s.skillsEquipped.some(id=>(s.skillLevels[id]||1)<20))return false;
  if(kind==='weapon'&&!s.weapon)s.weapon={tier:0,stage:s.stage};
  if(kind==='skill'){for(const id of s.skillsEquipped)if((s.skillLevels[id]||1)<20)addSkillXp(id,skillXpNeeded(s.skillLevels[id]||1));}
- if(kind==='credits')s.credits=Math.min(1e100,s.credits+Math.max(enemyReward(75)*4,creditRate()*30));
- s.breakthroughReward=kind;logText='STAGE 75 후반 보급 · '+BREAKTHROUGH_REWARDS[kind][0];showRewardNotice('후반 보급 · '+BREAKTHROUGH_REWARDS[kind][0]);save();render();return true;
+ let awardedCredits=0;
+ if(kind==='credits'){
+  const before=s.credits;
+  s.credits=Math.min(1e100,s.credits+Math.max(enemyReward(75)*4,creditRate()*30));
+  awardedCredits=s.credits-before;
+ }
+ s.breakthroughReward=kind;
+ const rewardLabel=BREAKTHROUGH_REWARDS[kind][0]+(kind==='credits'?' · +'+fmt(awardedCredits)+' 크레딧':'');
+ logText='STAGE 75 후반 보급 · '+rewardLabel;
+ showRewardNotice('후반 보급 · '+rewardLabel);save();render();return true;
 }
 function renderBreakthroughReward(){const ready=s.stage>=75,chosen=s.breakthroughReward;$('breakthroughPanel').classList.toggle('hide',!ready);
  $('breakthroughInfo').textContent=chosen?'이번 회차 보급 완료 · '+BREAKTHROUGH_REWARDS[chosen][0]+' (재구성 후 다시 선택 가능)':'무료 보급 1회 · 무기/스킬/경제 중 선택 · 경제 선택 시 '+fmt(Math.max(enemyReward(75)*4,creditRate()*30))+' 크레딧 (미선택해도 전투 진행)';
