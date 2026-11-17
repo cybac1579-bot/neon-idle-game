@@ -743,3 +743,50 @@ require('./expedition-stage50-chronicle.test.cjs');
 
 // No post-50 core explosion; no automatic rebirth-count benefits.
 require('./expedition-post50-core-guard.test.cjs');
+
+
+test('guard remains primary target but normal/elite/boss flank blows reach both rear professions',()=>{
+ const percentages=[{stage:14,share:.08},{stage:15,share:.14},{stage:20,share:.22}];
+ for(const {stage,share} of percentages){
+  const s=E.newState(1000);
+  s.stage=s.best=s.runBest=stage;s.enemyHp=1e12;
+  s.units.ranger=1;s.units.medic=1;
+  s.actors.push({id:'ranger',hp:E.actorMaxHp(s,'ranger'),revive:0,progress:1,cooldown:100});
+  s.actors.push({id:'medic',hp:E.actorMaxHp(s,'medic'),revive:0,progress:1,cooldown:100});
+  s.actors.forEach(a=>{a.progress=1;a.cooldown=100});
+  E.tick(s,9);
+  const hit=s.contribution.taken;
+  assert.ok(hit.guard>hit.ranger+hit.medic,'frontline must still absorb most pressure');
+  assert.ok(hit.ranger>0,'ranger is no longer invulnerable behind living guards');
+  assert.ok(hit.medic>0,'medic is no longer invulnerable behind living guards');
+  const total=hit.guard+hit.ranger+hit.medic;
+  assert.ok(Math.abs((hit.ranger+hit.medic)/total-share)<.00001,'rear share is conserved at stage '+stage);
+  assert.ok(s.actors.every(a=>a.revive===0),'smoke case must not introduce artificial deaths');
+  assert.equal(s.stage,stage,'target must not be defeated by test fixture');
+ }
+});
+
+test('enemy damage is not multiplied by having a rear line and guard-only formations take full damage',()=>{
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=15;s.enemyHp=1e12;
+ s.actors.forEach(a=>{a.progress=1;a.cooldown=100});
+ const expected=.4*Math.pow(1.17,14)*1.4*5;
+ E.tick(s,5);
+ assert.ok(Math.abs(s.contribution.taken.guard-expected)<.00001,'all damage still lands on the guard when no rear can be hit');
+ assert.equal(s.contribution.taken.ranger,0);
+ assert.equal(s.contribution.taken.medic,0);
+});
+
+test('living rear squad members can be struck when all guards are down',()=>{
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=15;s.enemyHp=1e12;
+ s.units.ranger=1;s.units.medic=1;
+ s.actors.push({id:'ranger',hp:17,revive:0,progress:1,cooldown:100});
+ s.actors.push({id:'medic',hp:25,revive:0,progress:1,cooldown:100});
+ for(const a of s.actors){a.progress=1;a.cooldown=100;if(a.id==='guard'){a.hp=0;a.revive=5;a.progress=0;}}
+ E.tick(s,1);
+ assert.equal(s.contribution.taken.guard,0);
+ assert.ok(s.contribution.taken.ranger>0);
+ assert.ok(s.contribution.taken.medic>0);
+ assert.ok(s.squadHp>0);
+});
