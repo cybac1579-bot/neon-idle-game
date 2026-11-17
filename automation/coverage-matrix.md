@@ -369,3 +369,8 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 ### 2026-11-18 02:59 KST — adaptive auto-buy selection / save safety
 - New test `daf7f991` added to `tests/expedition.test.cjs`: fixed balanced keeps highest-grade supply reservation, adaptive skips unaffordable supply for affordable training, advances cursor, survives JSON normalization and never spends cores/opens chests. GitHub write confirmed; **test CI still pending**.
 - **P0:** verify latest HEAD CI after manual concurrent changes, fix failed engine/browser checks. **P1:** expose and verify adaptive option at 360/390/412px and compare 30m no-tap economy/first-run milestones; real Android lifecycle unverified. Legacy 60% is not a proven expedition readiness score. Main protected; PR #2 draft.
+
+
+### 2026-11-18 04:00 KST — offline standalone and release isolation
+- Shared `6d573067`: portrait/save/first-rebirth/three-rebirth Actions 44144162707/44144162700/44144162772/44144162383 all SUCCESS. Source includes standalone offline HTML builder and 360/390/412px Chromium file:// test; earlier artifact run 44143464585 succeeded with 86/86 engine tests, but artifact SHA `43a0803e` differs from current HEAD. Android file launch, localStorage persistence and 20–30m fun remain **unverified**.
+- **P0:** obtain/check artifact generated from current HEAD and validate physical Galaxy S25+ launch + backup/restore. **P1:** compare adaptive auto-buy 30m growth and second-run permanent gains using actual play records. No main/Pages changes, no authorized production deployment; legacy 60% historical only.
