@@ -32,6 +32,8 @@ const RELICS=[
 const num=(n,min=0,max=1e14)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):min;
 const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
 const total=s=>UNITS.reduce((n,u)=>n+s.units[u.id],0);
+const emptyContribution=()=>({damage:{guard:0,ranger:0,medic:0},healing:{guard:0,ranger:0,medic:0},taken:{guard:0,ranger:0,medic:0},falls:{guard:0,ranger:0,medic:0},attacks:{guard:0,ranger:0,medic:0}});
+
 const isBoss=stage=>stage%10===0;
 const isElite=stage=>stage%5===0;
 const relic=(s,id)=>integer(s.relics[id],0,RELICS.find(x=>x.id===id)?.cap||0);
@@ -42,7 +44,7 @@ const newState=(now=Date.now())=>({
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,contribution:emptyContribution(),events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -60,6 +62,9 @@ function normalize(raw,now=Date.now()){
  for(const id of ['command','supply'])s.traits[id]=integer(raw.traits?.[id],0,10);
  RELICS.forEach(r=>s.relics[r.id]=integer(raw.relics?.[r.id],0,r.cap));
  for(const id of ['valor','trade'])s.coreUpgrades[id]=integer(raw.coreUpgrades?.[id],0,30);
+ s.contribution=emptyContribution();
+ for(const kind of ['damage','healing','taken','falls','attacks'])for(const u of UNITS)
+  s.contribution[kind][u.id]=kind==='falls'||kind==='attacks'?integer(raw.contribution?.[kind]?.[u.id],0,1e9):num(raw.contribution?.[kind]?.[u.id],0,1e14);
  s.events=Array.isArray(raw.events)?raw.events.filter(x=>typeof x==='string').slice(-8):base.events.slice();
  const expected=UNITS.flatMap(u=>Array(s.units[u.id]).fill(u.id));
  // Recruitment orders can interleave types, so validate counts rather than sorting actors.
@@ -151,8 +156,13 @@ function fight(s,dt){
   const multiplier=(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
    (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*
    (a.id==='ranger'?1+.15*relic(s,'archer'):1)*(boss?1+.14*relic(s,'boss'):1);
-  damage+=u.dps*attackInterval(a.id)*multiplier;
-  a.cooldown+=attackInterval(a.id);battleCue(s,'hit',a.id,u.dps*attackInterval(a.id)*multiplier);
+  const amount=u.dps*attackInterval(a.id)*multiplier;
+  // Exclude overkill from useful damage statistics; retain original combat damage.
+  const dealt=Math.min(Math.max(0,s.enemyHp-damage),amount);
+  s.contribution.damage[a.id]+=dealt;
+  s.contribution.attacks[a.id]++;
+  damage+=amount;
+  a.cooldown+=attackInterval(a.id);battleCue(s,'hit',a.id,amount);
  }
  s.enemyHp-=damage;
  if(s.enemyHp<=0){victory(s);return;}
@@ -162,7 +172,7 @@ function fight(s,dt){
    .sort((a,b)=>a.hp/actorMaxHp(s,a.id)-b.hp/actorMaxHp(s,b.id))[0];
   if(patient){
    const amount=Math.min(actorMaxHp(s,patient.id)-patient.hp,2.7*(1+.18*relic(s,'medkit'))*(1+.08*s.training)*dt);
-   if(amount>0){patient.hp+=amount;if(s.battleCueSeq===cueBeforeAttacks)battleCue(s,'heal',patient.id,amount);}
+   if(amount>0){patient.hp+=amount;s.contribution.healing.medic+=amount;if(s.battleCueSeq===cueBeforeAttacks)battleCue(s,'heal',patient.id,amount);}
   }
  }
  const enemyDps=.4*Math.pow(1.17,Math.min(s.stage-1,100))*(boss?2.2:isElite(s.stage)?1.4:1);
@@ -170,8 +180,10 @@ function fight(s,dt){
   (a.id==='guard'?0:a.id==='ranger'?1:2)-(b.id==='guard'?0:b.id==='ranger'?1:2)||
   b.progress-a.progress)[0];
  if(frontline){
-  frontline.hp=Math.max(0,frontline.hp-enemyDps*dt);
-  if(frontline.hp<=0){frontline.revive=6;frontline.progress=0;frontline.cooldown=.5;
+  const taken=Math.min(frontline.hp,enemyDps*dt);
+  s.contribution.taken[frontline.id]+=taken;
+  frontline.hp=Math.max(0,frontline.hp-taken);
+  if(frontline.hp<=0){s.contribution.falls[frontline.id]++;frontline.revive=6;frontline.progress=0;frontline.cooldown=.5;
    battleCue(s,'fallen',frontline.id);note(s,(UNITS.find(u=>u.id===frontline.id)||UNITS[0]).name+' 후퇴 · 재합류 대기');}
  }
  updateSquadHealth(s);
@@ -202,6 +214,29 @@ function train(s){const cost=trainCost(s);if(s.credits<cost)return false;
  s.actors.forEach((a,i)=>{if(a.revive===0)a.hp=Math.min(actorMaxHp(s,a.id),a.hp+actorMaxHp(s,a.id)-oldMax[i]);});
  updateSquadHealth(s);return true;}
 function upgradeQuest(s,id){const q=QUESTS.find(x=>x.id===id);if(!q||s.stage<q.unlock||s.credits<questCost(s,q))return false;s.credits-=questCost(s,q);s.questLevels[id]++;return true;}
+// A bounded multi-buy performs exactly the same cost and RNG sequence as repeated singles.
+// No auto strategy is hidden here: the player still chooses what to invest in.
+function purchase(s,kind,amount=1,id=null){
+ const limit=[1,5,10].includes(amount)?amount:1;
+ let count=0,spent=0;
+ for(let i=0;i<limit;i++){
+  const before=s.credits;
+  const result=kind==='recruit'?recruit(s):kind==='train'?train(s):kind==='quest'?upgradeQuest(s,id):false;
+  if(!result)break;
+  count++;spent+=Math.max(0,before-s.credits);
+ }
+ if(count>1)note(s,(kind==='recruit'?'용병 소집':kind==='train'?'부대 훈련':'보급 의뢰')+' '+count+'회 연속 구매');
+ return {count,spent};
+}
+function permanentBonuses(s){
+ const noPermanent={...s,relics:{},traits:{command:0,supply:0},coreUpgrades:{valor:0,trade:0}};
+ const q=QUESTS[0];
+ return {
+  attack:partyDps(s)/Math.max(.00001,partyDps(noPermanent)),
+  hp:maxHp(s)/Math.max(.00001,maxHp(noPermanent)),
+  income:questIncome(s,q)/Math.max(.00001,questIncome(noPermanent,q))
+ };
+}
 function openChest(s){
  if(s.chests<1)return null;s.chests--;s.chestsOpened++;
  const eligible=RELICS.filter(r=>relic(s,r.id)<r.cap);
@@ -232,5 +267,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1)tick(s,Math.floor(elapsed));
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,MAX_ACTORS,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,openChest,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,MAX_ACTORS,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,permanentBonuses,openChest,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
