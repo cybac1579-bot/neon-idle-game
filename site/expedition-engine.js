@@ -5,11 +5,13 @@
 const VERSION=1;
 const MAX_ACTORS=120; // protect save size and two-hour offline ticks
 const AUTO_BUY_INTERVAL=4; // seconds between optional single-step purchases
+const BALANCED_SAVING_HORIZON_SECONDS=240;
+const BALANCED_FALLBACK_BUDGET_RATIO=.35;
 // Earn fractional return progress by defeating enemies, not by pushing
 // the return button. This is NOT spendable currency until a return.
 const CORE_PROGRESS_PER_CLEAR=0.025;
 const CORE_PROGRESS_GROWTH=1.18;
-const AUTO_MODES=['balanced','adaptive','train','recruit','supply'];
+const AUTO_MODES=['balanced','reserve','adaptive','train','recruit','supply'];
 // One-time first-clear exploration cores. Repeat rebirths have no inherent multiplier.
 const BREAKTHROUGHS=[{stage:10,cores:1},{stage:15,cores:1},{stage:25,cores:2},{stage:35,cores:3},{stage:50,cores:5},{stage:75,cores:8},{stage:100,cores:13}];
 const SAVE_KEY='neon_expedition_prototype_v1';
@@ -204,7 +206,13 @@ function normalize(raw,now=Date.now()){
 }
 function rand(s){let x=(s.seed>>>0)||123456789;x^=x<<13;x^=x>>>17;x^=x<<5;s.seed=x>>>0;return s.seed/4294967296;}
 function note(s,m){s.events.push(m);if(s.events.length>8)s.events.shift();}
-function enemyMax(stage){return Math.min(1e13,Math.round((isBoss(stage)?3.8:isElite(stage)?2:1)*13*Math.pow(1.235,Math.min(stage-1,100))));}
+function enemyMax(stage){
+ // Keep stages 1..40 exactly as before. After 40, slow exponential HP
+ // growth without hiding a boss or eliminating progressive combat difficulty.
+ const early=Math.min(stage-1,39),late=Math.max(0,Math.min(stage-40,60));
+ return Math.min(1e13,Math.round((isBoss(stage)?3.8:isElite(stage)?2:1)*
+  13*Math.pow(1.235,early)*Math.pow(1.18,late)));
+}
 function actorMaxHp(s,id){
  const unit=UNITS.find(u=>u.id===id)||UNITS[0];
  return unit.hp*(1+.16*s.training)*(1+.10*relic(s,'shield'))*(1+.06*s.coreUpgrades.valor)*(id==='guard'?1+.20*relic(s,'guard'):1);
@@ -389,12 +397,14 @@ function purchase(s,kind,amount=1,id=null){
 }
 // Explicit player-selected automation: only existing run-credit purchases.
 // Never opens collectible chests, spends permanent cores, invests traits, or rebirths.
-// In balanced mode, one successful transaction moves to the next category.
-// An unaffordable chosen upgrade is saved for, not bypassed by cheaper purchases.
+// Balanced: save up to four minutes of passive income for the selected upgrade;
+// when the short-term target is unrealistic, buy small affordable upgrades in
+// the other categories. The reserve mode preserves the original unlimited
+// saving behavior; both always choose the highest unlocked supply grade.
 function autoTarget(s){
  const mode=s.autoBuy.mode,flexible=mode==='adaptive';
- const order=mode==='balanced'||flexible?['train','recruit','supply']:[mode];
- const start=mode==='balanced'||flexible?s.autoBuy.cursor:0;
+ const order=mode==='balanced'||mode==='reserve'||flexible?['train','recruit','supply']:[mode];
+ const start=mode==='balanced'||mode==='reserve'||flexible?s.autoBuy.cursor:0;
  let preferred=null;
  for(let i=0;i<order.length;i++){
   const kind=order[(start+i)%order.length];
@@ -411,7 +421,22 @@ function autoTarget(s){
    if(q)candidate={kind,id:q.id,cost:questCost(s,q)};
   }
   if(!candidate)continue;
-  // Fixed balanced and exclusive modes still save for their preferred item.
+  if(mode==='balanced'){
+   if(i===0){
+    preferred=candidate;
+    if(s.stage<30||s.credits>=candidate.cost)return candidate;
+    const passivePerSecond=QUESTS.filter(q=>s.stage>=q.unlock)
+     .reduce((income,q)=>income+questIncome(s,q)/q.interval,0);
+    if(candidate.cost-s.credits<=passivePerSecond*BALANCED_SAVING_HORIZON_SECONDS)
+     return candidate;
+    continue;
+   }
+   // Spend at most 35% of the preferred target's cost on an alternative,
+   // with no fall back to a lower grade within the supply category.
+   if(s.credits>=candidate.cost&&candidate.cost<=preferred.cost*BALANCED_FALLBACK_BUDGET_RATIO)
+    return candidate;
+   continue;
+  }
   if(!flexible)return candidate;
   if(!preferred)preferred=candidate;
   if(s.credits>=candidate.cost)return candidate;
@@ -435,9 +460,9 @@ function autoPurchaseOnce(s){
  if(!result)return null;
  s.autoBuy.purchases++;
  s.autoBuy.spent+=Math.max(0,before-s.credits);
- if(s.autoBuy.mode==='adaptive'){
+ if(s.autoBuy.mode==='adaptive'||s.autoBuy.mode==='balanced'){
   s.autoBuy.cursor=(['train','recruit','supply'].indexOf(target.kind)+1)%3;
- }else if(s.autoBuy.mode==='balanced')s.autoBuy.cursor=(s.autoBuy.cursor+1)%3;
+ }else if(s.autoBuy.mode==='reserve')s.autoBuy.cursor=(s.autoBuy.cursor+1)%3;
  return {kind:target.kind,id:target.id,spent:before-s.credits};
 }
 function permanentBonuses(s){
@@ -546,5 +571,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
