@@ -7,6 +7,10 @@ const assert=require('node:assert/strict');
 const E=require('../site/expedition-engine.js');
 const TARGETS=[10,15,20,25,30,35],SEEDS=[123456789,987654321,20261118];
 const TOTAL_SECONDS=3600;
+const beforeBoss=E.newState(1000000),afterBoss=E.newState(1000000);
+beforeBoss.runBest=10;afterBoss.runBest=11;
+assert.equal(E.rebirthGain(beforeBoss),0,'arriving at stage 10 is not yet a boss clear');
+assert.equal(E.rebirthGain(afterBoss),1,'clearing stage 10 unlocks the first return');
 function simulate(seed,target){
  const s=E.newState(1000000);s.seed=seed;E.setAutoBuy(s,'balanced',true);
  const summary={seed,target,elapsed:0,returns:0,totalCoresEarned:0,
@@ -17,7 +21,7 @@ function simulate(seed,target){
   // A stage is cleared only when the state advances to the next enemy.
   if(s.stage<=target)continue;
   const actual=s.stage-1,elapsedRun=Math.floor(s.clock),reward=E.rebirthGain(s);
-  assert.ok(reward>0,'benchmark target must allow return');
+  assert.ok(reward>0,'cleared distance '+actual+' must allow return (current '+s.stage+', runBest '+s.runBest+')');
   const count=s.chests;
   for(let i=0;i<count;i+=20){
    const r=E.openChestBatch(s,20);
