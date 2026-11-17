@@ -354,3 +354,13 @@ Previous ~67% is historical estimate only; no current evidence-based revised per
 - ***증거:*** 77/77 엔진 단위 테스트 + 360/390/412px 독립 원형 Chromium 결과창/리로드/JSON 내보내기/기존 게임 회귀 PASS. [GitHub Actions 44133251938](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44133251938), 코드 SHA `c98dd7479ab80f1afc83a99ad27dd793f74df737`.
 - ***제약:*** 실제 Galaxy S25+ 20–30분 조작 피로/발열/기기 잠금 복귀 및 체감 재미 **미검증**. 기존 Vercel pinned preview `c8bd6bc2`는 이 결과창을 담지 않으며 새 Preview READY 여부 미검증; 공개 `main`/Pages 미수정.
 - ***인계:*** `docs/EXPEDITION_RETURN_FEEDBACK_20261118.md` 실기기 체크리스트. 반복 환생이 너무 잦지 않은지, 결과창이 추가 클릭 때문에 거슬리지 않는지 검증 후에만 다음 UI/수치 결정을 권장.
+
+
+## 2026-11-18 · 검증된 실사용 독립 오프라인 단일 HTML 테스트파일
+- **빌드 및 테스트 코드 고정 SHA:** `43a0803e41184f488a96e2377901fbcecae79920`. GitHub Actions [44143464585](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44143464585) **SUCCESS**. Node 엔진 **86 tests / 86 passed / 0 failed**, 종전 360/390/412px Chromium 신형·기존 게임 테스트 PASS.
+- **단일 HTML 실물 테스트:** 동일 CI에서 `node scripts/build-expedition-standalone.cjs` 실행해 **86,729바이트 HTML** 생성. **인터넷 OFF(file://)** Chromium 화면 360·390·412px에서 수동 전체 저장 JSON 다운로드, JSON 선택·복원, 새로고침 후 데이터 유지, 외부 HTTP 요청 0건 PASS.
+- **30일 private artifact:** [neon-expedition-offline-playable](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44143464585/artifacts/14356485280), 내부 파일 `neon-expedition-offline.html` + `README-KO.txt`. 사용자가 직접 다운로드할 수 있는 HTML/ZIP을 ChatGPT 현재 답변에도 제공. **실제 Galaxy S25+ Android Chrome/삼성 인터넷에서 장시간 플레이 검증은 아직 수행되지 않음.**
+- **전체 저장 백업과 복원:** 도감 마지막에 `전체 저장 백업`/`저장 파일 복원`을 추가. 원형 저장 상태 전체를 `neon-expedition-full-save-v1` JSON으로 다운로드, 스키마/저장키/버전/파일 용량 검증, 현재 저장 덮어쓰기 사전 확인, 복원 후 기존 파일 timestamp로 오프라인 보상을 중복 획득하지 못하도록 현재 시간으로 재설정. 분석용 `내 플레이 기록 JSON 내보내기`와 완전히 별개.
+- **배포 정책:** 추가 공개 URL을 만들거나 `main`/GitHub Pages/Vercel 기존 프로젝트 production alias를 바꾸지 않음. GitHub Actions artifact에 묶어서 파일 앱에서 테스트. file:// 자동 저장은 브라우저 정책마다 다를 수 있어 사용자 파일 백업을 권장. 실제 사용자 기기 검증 미완.
+- **독립 원형 저장 키** `neon_expedition_prototype_v1`, 기존 게임 `neon_rework_07` 미변경. 이 전용 배포 파일의 SHA 이후 공동 브랜치 커밋 2개는 문서 파일 변경뿐임(2026-11-18 현재 확인).
+- 구체적인 실행방법, 데이터 이동/주의점은 `docs/EXPEDITION_OFFLINE_PLAYTEST_20261118.md` 참고. 향후 새 플레이 파일을 만들 때엔 이 CI에서 별도 산출물 버전과 아티팩트 SHA를 고정해 전달해야 함.
