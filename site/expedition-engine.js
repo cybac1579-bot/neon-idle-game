@@ -49,7 +49,7 @@ const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
 // Bounded in-run boss/elite clear timestamps: 60-second snapshots miss the opening.
-const MILESTONE_STAGES=[5,10,15,20,25,30,35,50,75,100];
+const MILESTONE_STAGES=[5,10,15,20,25,30,35,40,45,50,75,100];
 function normalizedMilestones(raw){
  const out={};if(!raw||typeof raw!=='object')return out;
  for(const stage of MILESTONE_STAGES){
@@ -442,7 +442,10 @@ function openChest(s){
  s.chests--;s.chestsOpened++;s.runMetrics.chestsOpened++;
  // A chest's loot pool is fixed by its clear distance, not by a later return or
  // opening. Depth 0 means a pre-upgrade legacy save and keeps its original odds.
- const eligible=RELICS.filter(r=>relic(s,r.id)<r.cap&&(depth===0||r.unlockStage<=depth));
+ // Depth 0 is a pre-upgrade save. Preserve its original 12-relic pool,
+ // not the new 40/45-distance discoveries.
+ const eligible=RELICS.filter(r=>relic(s,r.id)<r.cap&&
+  (depth===0?r.unlockStage<=30:r.unlockStage<=depth));
  if(!eligible.length){
   const credits=300+50*s.best;s.credits=Math.min(1e14,s.credits+credits);
   const result={id:null,duplicate:true,credits,stack:0,depth};
