@@ -18,18 +18,18 @@ const QUESTS=[
  {id:'contract',name:'호송 계약',interval:60,income:270,unlock:12,upgradeCost:780}
 ];
 const RELICS=[
- {id:'ember',name:'용광로 문장',desc:'용병단 피해량이 수집 수마다 8% 증가',cap:5},
- {id:'shield',name:'합금 배지',desc:'용병단 체력이 수집 수마다 10% 증가',cap:5},
- {id:'income',name:'교역 인장',desc:'자동 보급 수익이 수집 수마다 12% 증가',cap:5},
- {id:'swift',name:'진군 북',desc:'용병단 피해량이 수집 수마다 5% 증가',cap:5},
- {id:'medkit',name:'재생 결속선',desc:'정비사의 회복력이 수집 수마다 18% 증가',cap:4},
- {id:'boss',name:'균열 렌즈',desc:'지휘급 적에게 주는 피해가 수집 수마다 14% 증가',cap:5},
- {id:'bounty',name:'현상금 표식',desc:'전투 크레딧 보상이 수집 수마다 12% 증가',cap:5},
- {id:'guard',name:'호위 계약서',desc:'방벽병 체력이 수집 수마다 20% 증가',cap:4},
- {id:'archer',name:'초점 조준기',desc:'척후사수의 피해량이 수집 수마다 15% 증가',cap:4},
- {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치가 수집 수마다 15% 증가',cap:4},
- {id:'fortune',name:'중복 해체권',desc:'중복 유물 발견 시 수집 수마다 추가 크레딧 획득',cap:3},
- {id:'relay',name:'작전 통신기',desc:'전체 병종의 피해량이 수집 수마다 5% 증가',cap:5}
+ {id:'ember',name:'용광로 문장',desc:'용병단 피해량이 수집 수마다 8% 증가',cap:5,unlockStage:5},
+ {id:'shield',name:'합금 배지',desc:'용병단 체력이 수집 수마다 10% 증가',cap:5,unlockStage:5},
+ {id:'income',name:'교역 인장',desc:'자동 보급 수익이 수집 수마다 12% 증가',cap:5,unlockStage:5},
+ {id:'swift',name:'진군 북',desc:'용병단 피해량이 수집 수마다 5% 증가',cap:5,unlockStage:15},
+ {id:'medkit',name:'재생 결속선',desc:'정비사의 회복력이 수집 수마다 18% 증가',cap:4,unlockStage:15},
+ {id:'boss',name:'균열 렌즈',desc:'지휘급 적에게 주는 피해가 수집 수마다 14% 증가',cap:5,unlockStage:25},
+ {id:'bounty',name:'현상금 표식',desc:'전투 크레딧 보상이 수집 수마다 12% 증가',cap:5,unlockStage:5},
+ {id:'guard',name:'호위 계약서',desc:'방벽병 체력이 수집 수마다 20% 증가',cap:4,unlockStage:5},
+ {id:'archer',name:'초점 조준기',desc:'척후사수의 피해량이 수집 수마다 15% 증가',cap:4,unlockStage:15},
+ {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치가 수집 수마다 15% 증가',cap:4,unlockStage:25},
+ {id:'fortune',name:'중복 해체권',desc:'중복 유물 발견 시 수집 수마다 추가 크레딧 획득',cap:3,unlockStage:30},
+ {id:'relay',name:'작전 통신기',desc:'전체 병종의 피해량이 수집 수마다 5% 증가',cap:5,unlockStage:30}
 ];
 const num=(n,min=0,max=1e14)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):min;
 const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
@@ -49,7 +49,7 @@ const newState=(now=Date.now())=>({
  questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,squadHp:96,respawn:0,
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
- relics:{},chests:0,chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
+ relics:{},chests:0,chestDepths:[],chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
  rebirths:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],relicHistory:[],playtest:initialPlaytest(),events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
@@ -58,6 +58,10 @@ function normalize(raw,now=Date.now()){
  for(const k of ['credits','stage','best','runBest','training','enemyHp','squadHp','respawn','kills','runKills','heroLevel','heroXp','traitPoints','chests','chestsOpened','cores','coreSpent','rebirths','clock','lastSaved','seed','battleCueSeq'])s[k]=num(raw[k],0,k==='credits'?1e14:1e9);
  for(const k of ['stage','best','runBest','heroLevel'])s[k]=integer(s[k],1,100000);
  for(const k of ['training','kills','runKills','traitPoints','chests','chestsOpened','cores','coreSpent','rebirths','seed'])s[k]=integer(s[k]);
+ // Saved legacy chests have no known source distance: preserve their old full-pool odds (depth 0).
+ // Newer chests use their earned distance, never the distance when opened.
+ const depths=Array.isArray(raw.chestDepths)?raw.chestDepths.slice(0,s.chests).map(x=>integer(x,0,100000)):[];
+ s.chestDepths=Array(Math.max(0,s.chests-depths.length)).fill(0).concat(depths);
  s.lastSaved=num(raw.lastSaved,0,now)||now;s.best=Math.max(s.stage,s.best);s.runBest=Math.max(s.stage,s.runBest);
  for(const kind of ['units','questLevels','questClocks','traits','relics','coreUpgrades'])s[kind]={};
  UNITS.forEach(u=>s.units[u.id]=integer(raw.units?.[u.id],0,MAX_ACTORS));
@@ -94,7 +98,7 @@ function normalize(raw,now=Date.now()){
  s.relicHistory=Array.isArray(raw.relicHistory)?raw.relicHistory.slice(-24).filter(x=>x&&typeof x==='object'&&(x.id===null||RELICS.some(r=>r.id===x.id))).map(x=>({
   id:x.id===null?null:x.id,duplicate:x.duplicate===true,
   stack:integer(x.stack,0,5),credits:num(x.credits,0,1e14),
-  stage:integer(x.stage,1,100000),run:integer(x.run,1,1e9)
+  stage:integer(x.stage,1,100000),depth:integer(x.depth,0,100000),run:integer(x.run,1,1e9)
  })):[];
  // Local-only playtest time series, never sent anywhere by the engine.
  // Validate old or malformed saved snapshots and impose a fixed size ceiling.
@@ -179,7 +183,7 @@ function victory(s){
  const reward=Math.round((8+cleared*2.6)*Math.pow(1.105,Math.min(cleared,110))*(1+.12*relic(s,'bounty')));
  s.credits=Math.min(1e14,s.credits+reward);s.kills++;s.runKills++;
  heroXp(s,5+cleared*.7+(isBoss(cleared)?20:0));
- if(isElite(cleared)){s.chests++;note(s,(isBoss(cleared)?'지휘급 목표 격파!':'정예 목표 격파!')+' 보급 상자 1개 확보');}
+ if(isElite(cleared)){s.chests++;s.chestDepths.push(cleared);note(s,(isBoss(cleared)?'지휘급 목표 격파!':'정예 목표 격파!')+' 보급 상자 1개 확보');}
  s.stage++;s.runBest=Math.max(s.runBest,s.stage);s.best=Math.max(s.best,s.stage);
  s.enemyHp=enemyMax(s.stage);
  // New wave: units regroup behind the front line, survivors recover a little.
@@ -357,25 +361,34 @@ function permanentBonuses(s){
 }
 function rememberRelic(s,result){
  s.relicHistory.push({id:result.id,duplicate:result.duplicate===true,
-  stack:result.stack||0,credits:result.credits||0,stage:s.stage,run:s.rebirths+1});
+  stack:result.stack||0,credits:result.credits||0,stage:s.stage,depth:result.depth||0,run:s.rebirths+1});
  if(s.relicHistory.length>24)s.relicHistory.shift();
 }
 function openChest(s){
- if(s.chests<1)return null;s.chests--;s.chestsOpened++;s.runMetrics.chestsOpened++;
- const eligible=RELICS.filter(r=>relic(s,r.id)<r.cap);
+ if(s.chests<1)return null;
+ const depth=s.chestDepths.length?s.chestDepths.shift():0;
+ s.chests--;s.chestsOpened++;s.runMetrics.chestsOpened++;
+ // A chest's loot pool is fixed by its clear distance, not by a later return or
+ // opening. Depth 0 means a pre-upgrade legacy save and keeps its original odds.
+ const eligible=RELICS.filter(r=>relic(s,r.id)<r.cap&&(depth===0||r.unlockStage<=depth));
  if(!eligible.length){
   const credits=300+50*s.best;s.credits=Math.min(1e14,s.credits+credits);
-  const result={id:null,duplicate:true,credits,stack:0};
+  const result={id:null,duplicate:true,credits,stack:0,depth};
   rememberRelic(s,result);note(s,'유물 수집 상한 · '+credits+' 크레딧으로 교환');return result;
  }
  const missing=eligible.filter(r=>relic(s,r.id)===0);
- const pool=missing.length&&rand(s)<.7?missing:eligible;
+ // First chest at a new depth guarantees a first discovery in that newly
+ // reached tier, if there are still undiscovered relics from the milestone.
+ const milestoneMissing=[15,25,30].includes(depth)?
+  missing.filter(r=>r.unlockStage===depth):[];
+ const pool=milestoneMissing.length?milestoneMissing:
+  missing.length&&rand(s)<.7?missing:eligible;
  const found=pool[Math.floor(rand(s)*pool.length)];
  const duplicate=relic(s,found.id)>0;
  s.relics[found.id]=(s.relics[found.id]||0)+1;
  let bonus=0;
  if(duplicate){bonus=75*relic(s,'fortune');s.credits=Math.min(1e14,s.credits+bonus);}
- const result={id:found.id,duplicate,credits:bonus,stack:s.relics[found.id]};
+ const result={id:found.id,duplicate,credits:bonus,stack:s.relics[found.id],depth};
  rememberRelic(s,result);
  note(s,(duplicate?'유물 중복 수집: ':'새 유물 발견! ')+found.name+(bonus?' · +'+bonus+' 크레딧':''));
  return result;
@@ -403,7 +416,7 @@ function rebirth(s){
   manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
   chestsOpened:s.runMetrics.chestsOpened};
  const history=[...(s.runHistory||[]),summary].slice(-5);
- const keep={runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
+ const keep={chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
  Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  note(s,'탐사 귀환 · 코어 '+gain+'개 획득. 영구 유물/레벨 유지');
