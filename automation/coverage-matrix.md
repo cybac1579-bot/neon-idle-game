@@ -379,3 +379,8 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 ### 2026-11-18 05:00 KST — offline package provenance
 - **Source**: `94f2e729` extends `tests/expedition-offline-browser.test.cjs` to verify exact embedded engine/field/app sources, HTML build commit metadata and README commit metadata. Prior artifact `43a0803e` is not current HEAD.
 - **Evidence**: conditional GitHub write accepted; **new CI and rebuilt artifact pending/unverified**. P0: confirm CI runs and exact-SHA artifact; if assertion fails, fix test/build and rerun. P0 physical Android file:// storage and 20–30m human session still unverified. main/Pages protected.
+
+
+### 2026-11-18 05:53 KST — offline provenance test blocker
+- **P0 CI failure confirmed:** portrait run 44164733339 failed in standalone HTML browser test before browser launch due invalid JS regex in source parity assertion (line 17). Other three CI workflows succeeded at `f90f8f03`. Test-only fix committed as `1c554198` using fresh blob SHA; new CI **pending/unverified**.
+- **Next P0:** check portrait run at `1c554198` and exact-SHA artifact; do not claim success based on previous 3 passing workflows. Android file:// storage, 20–30m real player test and prototype readiness remain unverified. main/Pages protected.
