@@ -62,11 +62,15 @@ function normalize(raw,now=Date.now()){
  for(const id of ['valor','trade'])s.coreUpgrades[id]=integer(raw.coreUpgrades?.[id],0,30);
  s.events=Array.isArray(raw.events)?raw.events.filter(x=>typeof x==='string').slice(-8):base.events.slice();
  const expected=UNITS.flatMap(u=>Array(s.units[u.id]).fill(u.id));
- const usable=Array.isArray(raw.actors)&&raw.actors.length===expected.length&&
-  expected.every((id,i)=>raw.actors[i]&&raw.actors[i].id===id);
+ // Recruitment orders can interleave types, so validate counts rather than sorting actors.
+ const rawActors=Array.isArray(raw.actors)?raw.actors:[];
+ const usable=rawActors.length===expected.length&&
+  UNITS.every(u=>rawActors.filter(a=>a&&a.id===u.id).length===s.units[u.id]);
+ const roster=usable?rawActors:expected.map(id=>({id}));
  const ratio=usable?1:Math.min(1,s.squadHp/maxHp(s));
- s.actors=expected.map((id,i)=>{
-  const a=usable?raw.actors[i]:null;
+ s.actors=roster.map((a,i)=>{
+  const id=a.id;
+  a=usable?a:null;
   return {id,hp:a?num(a.hp,0,actorMaxHp(s,id)):actorMaxHp(s,id)*ratio,
    revive:a?num(a.revive,0,60):s.respawn,
    progress:a?num(a.progress,0,1):0,
