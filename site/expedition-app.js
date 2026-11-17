@@ -280,6 +280,8 @@ function exportPlaytest(){
    returns:s.rebirths
   },
   recentReturns:s.runHistory.map(x=>({...x})),
+  latestReturnComparison:s.latestReturn?{...s.latestReturn,before:s.latestReturn.before?{...s.latestReturn.before}:null,after:s.latestReturn.after?{...s.latestReturn.after}:null}:null,
+  currentRunOpening:s.runOpening?{...s.runOpening}:null,
   minuteSnapshots:s.playtest.snapshots.map(x=>({...x})),
   offlineSettledSeconds:s.playtest.offlineSeconds
  };
