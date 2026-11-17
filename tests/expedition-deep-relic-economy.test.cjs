@@ -6,7 +6,7 @@ function chest(depth,seed=123456789){
  const s=E.newState(1000);s.seed=seed;s.chests=1;s.chestDepths=[depth];return s;
 }
 test('40 and 45 have separate newly discovered permanent cost relics',()=>{
- assert.equal(E.RELICS.length,14);
+ assert.equal(E.RELICS.length,15);
  assert.equal(E.RELICS.find(r=>r.id==='enlist').unlockStage,40);
  assert.equal(E.RELICS.find(r=>r.id==='drill').unlockStage,45);
  assert.ok(E.RELICS.filter(r=>r.unlockStage<=30).length===12);
