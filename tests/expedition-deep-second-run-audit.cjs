@@ -39,6 +39,13 @@ function simulate(mode,seed){
  assert.ok(Number.isFinite(second.stages[45]));
  assert.ok(second.stages[45]<first.seconds,'second run should clear the same stage45 faster');
  assert.ok(second.stages[50]>second.stages[45]);
+ assert.equal(E.relic(s,'chronicle'),1,
+  'the user-opened stage50 boss chest gives the unique permanent chronicle');
+ const foundKinds=E.RELICS.filter(r=>E.relic(s,r.id)>0).length;
+ const noChronicle={...s,relics:{...s.relics,chronicle:0}};
+ const chronicleRatio=E.partyDps(s)/E.partyDps(noChronicle);
+ assert.ok(Math.abs(chronicleRatio-(1+.02*Math.min(15,foundKinds)))<1e-9,
+  'collection bonus must follow unique discovery count only');
  assert.equal(s.rebirths,1,'exploration must not auto return');
  const nextReward=E.rebirthRewards(s);
  assert.ok(nextReward.newMilestones.some(item=>item.stage===50&&item.cores===5),
@@ -48,6 +55,7 @@ function simulate(mode,seed){
   preservedDeepRelics:relicsAtReturn,firstChestsOpened:first.opened,
   secondChestsOpened:second.opened,secondBestDistance:s.runBest,
   nextReturnBaseCores:nextReward.base,nextFirstClearCores:nextReward.recordBonus,
+  chronicleCopies:E.relic(s,'chronicle'),foundRelicKinds:foundKinds,collectionDpsMultiplier:chronicleRatio,
   combatCoreLevel:s.coreUpgrades.valor};
 }
 const samples=MODES.flatMap(mode=>SEEDS.map(seed=>simulate(mode,seed)));
