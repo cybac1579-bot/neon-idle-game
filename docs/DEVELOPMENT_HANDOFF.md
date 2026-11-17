@@ -263,3 +263,11 @@ Current next development intent: enable a mobile-accessible **separate shared-br
 - **검증:** `tests/expedition.test.cjs` **44/44 PASS**, 순차/일괄 개봉 동등성, 20개 한도, 상한 크레딧, 24개 일지 보존, 버전1 레거시 원형 저장 마이그레이션. `tests/expedition-browser.test.cjs`에서 360/390/412px 1개 개봉 + 3개 묶음 + 모달 + 새/중복 수량 + 환생 보존 확인. GitHub Actions `44114913268` **SUCCESS**, legacy 모바일/새 원형 브라우저 및 합성 30분/2회차 회귀도 통과. 배포 고정 SHA `c8bd6bc21ae1de6ce264c500d8505572f4e2aac0`. 뒤의 테스트 fixture 보정 및 자동개발 커밋은 별도 CI로 확인.
 - **실제 TEST 프리뷰:** Vercel 프로젝트 `neon-idle-game-playtest`에 Preview만 새로 빌드. Deployment `dpl_62bh5YJjSZD9jySGo5ajBiqQy9mP` status **READY**; pinned page `https://neon-idle-game-playtest-c1njedh34-cybac1579-9456.vercel.app/expedition.html`. 기존 preview 프로젝트의 프로덕션 alias, 공개 main/Pages/기존판/기존 저장키 미변경. Vercel SSO 보호가 있으므로 실제 유저 접속 여부는 미확인.
 - **테스트 안내:** `docs/EXPEDITION_PLAYTEST_20261118.md`를 기준으로 실제 Galaxy S25+ 관전/상자/환생/백그라운드 20–30분 체감 피드백 수집. 새 원형의 로컬 JSON 내보내기는 아직 미구현이므로 구형 텔레메트리와 혼동하지 말 것. 임시 그림/유물 수 제한/사용자 재미는 아직 검증 전.
+
+## 2026-11-18 · 3회 환생 CI 증거 + 신형 플레이 기록 JSON + 코어 파밍 위험
+- **CI 고정코드 SHA:** `91629827801a23e96954d437a6f381657a922666`; GitHub Actions `44117565727` SUCCESS, 엔진 55/55, 360/390/412px 기존 게임 및 새 원형 Playwright 통과. 기존 세 회 환생/30분 검증 및 새 1시간 짧은 환생 효율 비교도 CI에서 실행.
+- 3회 환생 목표35: 균형 자동은 3개 시드 모두 3회 성공, 총 2924~3236초; 수동 4초 간격은 3회 성공, 20초 간격 수동은 약 3660~3892초. 실제 인간 플레이 아님.
+- **P0 핵심 위험:** 1시간 균형 자동+스크립트 수동 환생 시 거리10 목표 코어 120/120/123 vs 거리35 목표 4/6/6 (20~30배 효율 차). 짧은 목표는 사람이 한 시간에 120회 이상 직접 환생해야 하는 나쁜 유인. 유물 종수는 거리35 12종 vs 거리10 5종. 새로운 핵심 콘텐츠보다 환생 보상/코어 강화 비용의 동시 설계가 우선. 임의로 무료 환생횟수 보너스, 강제 시간 제한 또는 큰 단독 코어 보상 인상을 하지 않음.
+- 신형 원형 `site/expedition-engine.js`는 매 60초 기준 360개까지 로컬 단면 샘플을 기록, 오프라인 정산과 화면 진행을 구분하며 환생 보존. `site/expedition-app.js` 및 `site/expedition.html`의 도감 탭에서 **사용자가 직접 선택할 때만** 새 플레이 기록 JSON 다운로드. 서버 분석/식별자/자동 전송 없음. 브라우저 JSON 다운로드 UI 테스트 통과. 저장 상태 및 개인정보를 포함하는 파일이므로 사용자 명시적 공유 필요.
+- **배포 차단:** Vercel Preview 생성을 시도했으나 일일 무료 API 배포 한도(402 `api-deployments-free-per-day`)에 막힘. 이전 Preview `c8bd6bc2` READY는 그대로이며 **신형 JSON 기능은 미포함**. 다음 날짜 배포 한도 갱신/권한·플랜 사용자가 해결하기 전 미리보기 갱신 성공 주장 금지. 공개 main/Pages/기존 원형 저장키는 변경 없음.
+- 근거와 다음 작업 체크리스트: `docs/EXPEDITION_REBIRTH_AUDIT_20261118.md`; 기존 테스트 안내 `docs/EXPEDITION_PLAYTEST_20261118.md`는 오래된 고정 Preview를 가리키므로 버전 차이를 함께 볼 것.
