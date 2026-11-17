@@ -209,10 +209,12 @@ function renderArchive(){
   row('현재 자동 성장',s.autoBuy.enabled?'켜짐 · '+s.autoBuy.mode:'꺼짐');
 }
 function render(){
- renderBattle();
- if(tab==='squad')renderSquad();
- if(tab==='supply')renderSupply();
- if(tab==='archive')renderArchive();
+ // Simulate regardless of tab, but do not rebuild an off-screen battlefield
+ // or recreate the archive's dozens of DOM nodes three times per second.
+ if(tab==='battle')renderBattle();
+ else if(tab==='squad')renderSquad();
+ else if(tab==='supply')renderSupply();
+ else if(tab==='archive')renderArchive();
 }
 function act(fn,fail){const result=fn();if(result===false||result===null){notify(fail||'아직 실행할 수 없어.');}else save();render();return result;}
 let chestOpener=null;
@@ -363,12 +365,16 @@ document.addEventListener('visibilitychange',()=>{
  else{const elapsed=E.offline(s,Date.now());if(elapsed>1)notify('복귀 정산: '+fmt(elapsed)+'초 탐사');lastFrame=performance.now();save();render();}
 });
 window.addEventListener('pagehide',save);
+let lastPassiveRender=0;
 setInterval(()=>{
  if(document.hidden)return;
  const now=performance.now(),elapsed=Math.min(2,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
  E.tick(s,elapsed);
  if(Date.now()-saveAt>5000)save();
- render();
+ // Combat positioning stays smooth, while list-heavy inactive tabs refresh
+ // at ~1.2-second cadence. Every explicit player action still renders now.
+ if(tab==='battle')render();
+ else if(now-lastPassiveRender>=1200){lastPassiveRender=now;render();}
 },350);
 render();
 })();
