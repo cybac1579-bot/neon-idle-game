@@ -163,7 +163,7 @@ function renderArchive(){
  if(last)$('returnReportContent').innerHTML=returnReportHtml(last);
  const rewards=E.rebirthRewards(s),gain=rewards.total;
  const nextRecord=E.BREAKTHROUGHS.find(b=>b.stage>Math.max(s.claimedBreakthroughDistance,s.runBest-1));
- const nextDeep=[15,25,30].find(distance=>distance>=s.stage);
+ const nextDeep=[...new Set(E.RELICS.map(r=>r.unlockStage))].filter(distance=>distance>5).sort((a,b)=>a-b).find(distance=>distance>=s.stage);
  $('rebirthSummary').innerHTML=row('이번 탐사 최고 거리',fmt(s.runBest))+
   row('다음 새 유물 등급',nextDeep?nextDeep+'거리 목표 격파 시 상자':'현재 공개된 모든 깊이 개방')+
   row('격파 성과로 적립한 코어',fmt(rewards.base)+'개')+
@@ -181,7 +181,9 @@ function renderArchive(){
  const pct=n=>'+'+Math.max(0,(n-1)*100).toFixed(1)+'%';
  $('permanentBonusSummary').innerHTML='<h3>현재 편성 기준 영구 성장 효과</h3>'+
   row('전체 전투 화력',pct(b.attack))+row('부대 최대 체력',pct(b.hp))+
-  row('자동 보급 수익',pct(b.income));
+  row('자동 보급 수익',pct(b.income))+
+  row('용병 소집 비용 절약',Math.max(0,(1-b.hireCost)*100).toFixed(1)+'%')+
+  row('부대 훈련 비용 절약',Math.max(0,(1-b.trainCost)*100).toFixed(1)+'%');
  $('coreValor').textContent='전선 강화 · '+E.coreCost(s,'valor')+'코어';
  $('coreTrade').textContent='보급 강화 · '+E.coreCost(s,'trade')+'코어';
  $('coreValor').disabled=s.cores<E.coreCost(s,'valor')||s.coreUpgrades.valor>=30;
@@ -192,7 +194,7 @@ function renderArchive(){
   Math.floor(seconds/60)+'분 '+(seconds%60).toFixed(1)+'초';
  const former=s.runHistory.at(-1)?.milestones||{};
  $('milestoneSummary').innerHTML='<p class="sub">해당 거리의 적을 격파한 시각 · 직전 탐사와 비교</p>'+
-  [5,10,15,25,35].map(stage=>row(
+  [5,10,15,25,35,40,45].map(stage=>row(
    stage+'거리 '+(stage%10===0?'보스':'정예'),
    '이번 '+milestoneTime(s.runMilestones[stage])+
    (former[stage]!==undefined?' · 직전 '+milestoneTime(former[stage]):'')
@@ -250,7 +252,9 @@ function openChestWithCount(count,source){
  $('popupImpact').textContent='이번 개봉의 영구 효과 변화 · 화력 +'+
   delta(opened.before.attack,opened.after.attack)+'%p · 체력 +'+
   delta(opened.before.hp,opened.after.hp)+'%p · 보급 +'+
-  delta(opened.before.income,opened.after.income)+'%p'+
+  delta(opened.before.income,opened.after.income)+'%p · 소집 비용 절약 +'+
+  delta(opened.after.hireCost,opened.before.hireCost)+'%p · 훈련 비용 절약 +'+
+  delta(opened.after.trainCost,opened.before.trainCost)+'%p'+
   (opened.credits?' · 크레딧 '+fmt(opened.credits)+' 획득':'')+
   ' (현재 편성 기준)';
  $('relicPopup').hidden=false;
