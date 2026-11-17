@@ -797,3 +797,6 @@ test('living rear squad members can be struck when all guards are down',()=>{
  assert.ok(s.contribution.taken.medic>0);
  assert.ok(s.squadHp>0);
 });
+
+// Fix for unaffordable growth targets causing late-stage empty waits.
+require('./expedition-late-pacing-fix.test.cjs');
