@@ -7,11 +7,11 @@ function chest(depth,seed=123456789){
  const s=E.newState(1000);s.seed=seed;s.chests=1;s.chestDepths=[depth];return s;
 }
 test('all fourteen prototype relics have explicit tiered discovery depths',()=>{
- assert.equal(E.RELICS.length,14);
- assert.deepEqual([...new Set(E.RELICS.map(r=>r.unlockStage))].sort((a,b)=>a-b),[5,15,25,30,40,45]);
+ assert.equal(E.RELICS.length,15);
+ assert.deepEqual([...new Set(E.RELICS.map(r=>r.unlockStage))].sort((a,b)=>a-b),[5,15,25,30,40,45,50]);
 });
 test('actual elite and boss clears stamp the defeated distance on each chest',()=>{
- for(const depth of [5,15,25,30,40,45]){
+ for(const depth of [5,15,25,30,40,45,50]){
   const s=E.newState(1000);
   s.stage=s.best=s.runBest=depth;s.enemyHp=1;
   for(const a of s.actors){a.progress=1;a.cooldown=0;}
@@ -31,7 +31,7 @@ test('shallow earned chests never yield deep relics even when opened at stage 90
  }
 });
 test('first tier milestone chest guarantees one new matching-depth relic',()=>{
- for(const depth of [15,25,30,40,45]){
+ for(const depth of [15,25,30,40,45,50]){
   const s=chest(depth);
   const reward=E.openChest(s),item=E.RELICS.find(r=>r.id===reward.id);
   assert.ok(item);
