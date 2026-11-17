@@ -210,7 +210,11 @@ function enemyMax(stage){
  // Keep stages 1..40 exactly as before. After 40, slow exponential HP
  // growth without hiding a boss or eliminating progressive combat difficulty.
  const early=Math.min(stage-1,39),late=Math.max(0,Math.min(stage-40,60));
- return Math.min(1e13,Math.round((isBoss(stage)?3.8:isElite(stage)?2:1)*
+ // From distance 50 onward, boss HP previously ran for 15-17 minutes
+ // with essentially linear health-bar drain. Keep a distinct boss tier
+ // (2.2x versus the regular enemy), but avoid a prolonged stationary wall.
+ const rankMultiplier=isBoss(stage)?(stage>=50?2.2:3.8):isElite(stage)?2:1;
+ return Math.min(1e13,Math.round(rankMultiplier*
   13*Math.pow(1.235,early)*Math.pow(1.18,late)));
 }
 function actorMaxHp(s,id){
