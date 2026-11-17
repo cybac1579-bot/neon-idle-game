@@ -184,8 +184,25 @@ async function main(){
    const comparisonBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(comparisonBounds.scroll<=comparisonBounds.width+1,
     'archive comparison horizontal overflow: '+JSON.stringify(comparisonBounds));
+   // Activate a deep relic on a saved return and show its precise bonus only
+   // in the archive. No permanent HUD numbers or manual combat input added.
+   await page.addInitScript(()=>{
+    const key='neon_expedition_prototype_v1',state=JSON.parse(localStorage.getItem(key));
+    if(state?.rebirths===1){
+     state.relics=state.relics||{};state.relics.chronicle=1;
+     state.lastSaved=Date.now();
+     localStorage.setItem(key,JSON.stringify(state));
+    }
+   });
+   await page.reload({waitUntil:'networkidle'});
+   await page.locator('[data-tab="archive"]').click();
+   assert.match(await page.locator('#permanentBonusSummary').textContent(),/원정 연대기 수집 효과/);
+   assert.match(await page.locator('#permanentBonusSummary').textContent(),/피해량 \+\d+%/);
+   const chronicleBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
+   assert.ok(chronicleBounds.scroll<=chronicleBounds.width+1,
+    'chronicle archive horizontal overflow: '+JSON.stringify(chronicleBounds));
    await context.close();
-   console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison');
+   console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison/chronicle');
   }
  }finally{await browser.close();await new Promise(r=>server.close(r));}
 }
