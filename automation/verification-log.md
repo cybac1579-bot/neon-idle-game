@@ -1237,3 +1237,11 @@
 - Deployment: no push/merge to main or Pages; main remains `9918709e`; PR #2 remains draft. No live-device deployment parity claimed.
 - Readiness: 60% unchanged (+0 pp); physical Galaxy S25+ 30-minute play, background lifecycle, actual input burden and optimal ~60-minute first rebirth remain unverified.
 - Next: measure 30-minute low-input purchase/claim/action bursts against 60s visit policy and implement a verified reduction of unnecessary interaction if supported by measured evidence; preserve STAGE55/60 and skill/rebirth mechanics.
+
+
+## 2026-11-17 21:52 KST — 30-minute manual-action burst instrumentation
+- Base shared HEAD: `cb04308a17e517c77225f9211fbc6adb6c678cae` (previous reported); protected main `9918709e31325e41cfb93e9506cb48ce11638496` confirmed by branch comparison. Read automation README/log/matrix and manual decisions/status/handoff/reactor trial; compared main with shared branch. Main remains read-only.
+- Problem: mean 67–68 modeled actions at 30m hides visit clustering and whether purchases, quest claims or trait investments drive touch load. Competing hypotheses are excessive purchases vs bundled actions at each 60-second visit. Neither is established by mean alone.
+- Changed `tests/balance-simulation.cjs` commit `4a6843ea881a051cbec8971767efcd4dc0a3ae56`: record per-visit action bursts and 30m breakdown (purchases, claims, traits, allocation, loadout, one-time choices), maximum actions per visit, multi-action visits and mean summary fields. No gameplay, save, art, HUD, or balance formula changes. Source blob SHA re-read before conditional write.
+- Evidence: GitHub content API accepted simulator source update; **new CI execution and resulting numeric burst metrics not yet verified**, so no claim of reduced input burden. Previous four successful CI runs at `ee2dfe49` remain prior baseline only. No main/Pages deployment or PR merge. Readiness 60% → 60% (0pp).
+- Next: execute 60-second low-input simulation and verify breakdown against 30m action total; compare batching/claim actions and implement minimal real gameplay change only if measured friction warrants. Galaxy S25+ physical 30m, Android lifecycle and optimized ~60m rebirth remain unverified.
