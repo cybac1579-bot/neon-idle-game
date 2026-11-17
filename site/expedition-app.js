@@ -10,6 +10,7 @@ let loaded=null;
 try{loaded=JSON.parse(localStorage.getItem(E.SAVE_KEY)||'null');}catch(err){loaded=null;}
 const s=E.normalize(loaded||E.newState(),Date.now());
 const startup=loaded?E.offline(s,Date.now()):0;
+let buyCount=5;
 let tab='battle',saveAt=Date.now(),lastFrame=performance.now(),toast=startup?'오프라인 '+Math.floor(startup/60)+'분 '+(startup%60)+'초 정산 완료':'',toastUntil=Date.now()+5000;
 function notify(message){toast=message;toastUntil=Date.now()+4000;}
 function save(){try{s.lastSaved=Date.now();localStorage.setItem(E.SAVE_KEY,JSON.stringify(s));saveAt=Date.now();return true;}catch(err){notify('저장 오류: 브라우저 저장 공간을 확인해 줘');return false;}}
@@ -47,16 +48,29 @@ function renderBattle(){
    row('전열 현황',fmt(s.actors.filter(a=>a.revive===0&&a.hp>0).length)+'명 활동 / '+fmt(s.actors.length)+'명')+
    (s.respawn>0?row('재정비 중',s.respawn.toFixed(1)+'초'):'');
 }
+function updateBuyCount(){
+ for(const id of ['buyCountSquad','buyCountSupply'])$(id).textContent=buyCount===1?'1회':'최대 '+buyCount+'회';
+}
+function doPurchase(kind,id=null){
+ const result=E.purchase(s,kind,buyCount,id);
+ if(result.count===0){notify('구매 가능한 단계가 없어. 크레딧이나 해금 상태를 확인해 줘.');}
+ else{
+  save();
+  if(result.count>1)notify(result.count+'회 구매 · '+fmt(result.spent)+' 크레딧 사용');
+ }
+ render();
+}
 function renderSquad(){
+ updateBuyCount();
  $('unitList').innerHTML=E.UNITS.map(u=>{
   const locked=s.best<u.unlock;
   return '<div class="action"><div><strong>'+safe(u.symbol)+' '+safe(u.name)+(locked?' · 미해금':' ×'+fmt(s.units[u.id]))+'</strong><p>'+safe(locked?u.unlock+'거리 도달 시 모집 가능':u.id==='guard'?'전열 유지 · 높은 내구력':u.id==='ranger'?'강력한 단일 화력':'부대 체력 회복')+'</p></div><span class="sub">'+safe(locked?'잠김':'소집 풀')+'</span></div>';
  }).join('');
  const recruitCost=E.hireCost(s);
- $('hire').textContent='용병 1명 소집 · '+fmt(recruitCost)+' 크레딧';
+ $('hire').textContent='용병 소집 · 다음 1명 '+fmt(recruitCost)+' 크레딧';
  $('hire').disabled=s.credits<recruitCost||(s.actors||[]).length>=E.MAX_ACTORS;
  $('trainingSummary').innerHTML='<span>공통 훈련 LV.'+fmt(s.training)+'</span><b>피해·내구 상승</b>';
- $('train').textContent='훈련 강화 · '+fmt(E.trainCost(s))+' 크레딧';
+ $('train').textContent='훈련 강화 · 다음 1단계 '+fmt(E.trainCost(s))+' 크레딧';
  $('train').disabled=s.credits<E.trainCost(s);
  const remaining=E.traitRemaining(s);
  $('heroSummary').innerHTML=row('지휘관 레벨 / 누적 경험치','LV.'+fmt(s.heroLevel)+' / '+fmt(s.heroXp))+
@@ -66,8 +80,16 @@ function renderSquad(){
  $('traitSupply').textContent='보급 지휘 +8% (LV.'+s.traits.supply+')';
  $('traitCommand').disabled=remaining<1||s.traits.command>=10;
  $('traitSupply').disabled=remaining<1||s.traits.supply>=10;
+ const c=s.contribution;
+ $('roleContribution').innerHTML=E.UNITS.map(u=>{
+  const id=u.id;
+  return '<div class="statline"><span>'+safe(u.name)+'</span><b>피해 '+fmt(c.damage[id])+
+   ' · 회복 '+fmt(c.healing[id])+' · 방어 '+fmt(c.taken[id])+
+   (c.falls[id]?' · 후퇴 '+fmt(c.falls[id]):'')+'</b></div>';
+ }).join('');
 }
 function renderSupply(){
+ updateBuyCount();
  $('questList').innerHTML=E.QUESTS.map(q=>{
   const unlocked=s.stage>=q.unlock;
   const value=E.questIncome(s,q);
@@ -97,6 +119,11 @@ function renderArchive(){
  $('rebirth').textContent=gain?'귀환하고 코어 '+fmt(gain)+'개 받기':'10거리 이상 도달하면 귀환 가능';
  $('coreSummary').innerHTML=row('전선 코어 · 전투 강화','LV.'+fmt(s.coreUpgrades.valor))+
   row('보급 코어 · 경제 강화','LV.'+fmt(s.coreUpgrades.trade));
+ const b=E.permanentBonuses(s);
+ const pct=n=>'+'+Math.max(0,(n-1)*100).toFixed(1)+'%';
+ $('permanentBonusSummary').innerHTML='<h3>현재 편성 기준 영구 성장 효과</h3>'+
+  row('전체 전투 화력',pct(b.attack))+row('부대 최대 체력',pct(b.hp))+
+  row('자동 보급 수익',pct(b.income));
  $('coreValor').textContent='전선 강화 · '+E.coreCost(s,'valor')+'코어';
  $('coreTrade').textContent='보급 강화 · '+E.coreCost(s,'trade')+'코어';
  $('coreValor').disabled=s.cores<E.coreCost(s,'valor')||s.coreUpgrades.valor>=30;
@@ -121,9 +148,12 @@ function openChest(){
  }
 }
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>screen(b.dataset.tab)));
-$('hire').addEventListener('click',()=>act(()=>E.recruit(s),'크레딧이 부족해.'));
-$('train').addEventListener('click',()=>act(()=>E.train(s),'크레딧이 부족해.'));
-$('questList').addEventListener('click',e=>{const b=e.target.closest('[data-quest]');if(b)act(()=>E.upgradeQuest(s,b.dataset.quest),'의뢰를 강화할 수 없어.');});
+function cyclePurchaseCount(){buyCount=buyCount===1?5:buyCount===5?10:1;updateBuyCount();render();}
+$('buyCountSquad').addEventListener('click',cyclePurchaseCount);
+$('buyCountSupply').addEventListener('click',cyclePurchaseCount);
+$('hire').addEventListener('click',()=>doPurchase('recruit'));
+$('train').addEventListener('click',()=>doPurchase('train'));
+$('questList').addEventListener('click',e=>{const b=e.target.closest('[data-quest]');if(b)doPurchase('quest',b.dataset.quest);});
 $('traitCommand').addEventListener('click',()=>act(()=>E.buyTrait(s,'command'),'사용할 특성 포인트가 없어.'));
 $('traitSupply').addEventListener('click',()=>act(()=>E.buyTrait(s,'supply'),'사용할 특성 포인트가 없어.'));
 $('coreValor').addEventListener('click',()=>act(()=>E.buyCore(s,'valor'),'코어가 부족해.'));
