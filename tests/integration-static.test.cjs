@@ -4,10 +4,24 @@ const vm=require('node:vm');
 const assert=require('node:assert/strict');
 const html=fs.readFileSync('site/index.html','utf8');
 const js=fs.readFileSync('site/game.js','utf8');
+const playtest=fs.readFileSync('site/playtest.js','utf8');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 const refs=[...js.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]);
 const tests=[
  ['game JavaScript parses',()=>new vm.Script(js)],
+ ['local telemetry JavaScript parses',()=>new vm.Script(playtest)],
+ ['playtest metrics remain local-only, bounded and export explicitly to JSON',()=>{
+  assert.match(html,/<script src="game\.js"><\/script><script src="playtest\.js"><\/script>/);
+  for(const id of ['playtestStatus','playtestExport','playtestClear','playtestExportStatus'])
+   assert.match(html,new RegExp('id="'+id+'"'));
+  assert.match(playtest,/const KEY='neon_playtest_log_v1'/);
+  assert.match(playtest,/MAX_EVENTS=1200/);
+  assert.match(playtest,/localStorage\.setItem\(KEY,JSON\.stringify\(log\)\)/);
+  assert.match(playtest,/new Blob\(\[JSON\.stringify\(exportData\(\),null,2\)\]/);
+  assert.doesNotMatch(playtest,/\b(fetch|sendBeacon|XMLHttpRequest|WebSocket)\s*\(/);
+  assert.doesNotMatch(js,/neon_playtest_log_v1/,'game save and telemetry are independent');
+  assert.doesNotMatch(html,/data-view="playtest"/,'do not add a navigation tab');
+ }],
  ['portrait browser regression file parses before Chromium setup',()=>{
    new vm.Script(fs.readFileSync('tests/integration-portrait.test.cjs','utf8'),{filename:'tests/integration-portrait.test.cjs'});
  }],
