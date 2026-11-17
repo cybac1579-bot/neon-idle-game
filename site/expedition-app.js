@@ -30,7 +30,8 @@ function renderBattle(){
  $('foe').classList.toggle('boss',boss);
  $('foe').querySelector('.silhouette').textContent=boss?'♛':elite?'◆':'♜';
  $('enemyLabel').textContent=boss?'지휘급 적 · '+fmt(s.stage):elite?'정예 적 · '+fmt(s.stage):'전선 적 · '+fmt(s.stage);
- $('squad').innerHTML=E.UNITS.filter(u=>s.units[u.id]>0).map(u=>'<div class="unit '+u.id+'"><div class="silhouette" aria-hidden="true">'+safe(u.symbol)+'</div><small>'+safe(u.name)+' ×'+fmt(s.units[u.id])+'</small></div>').join('');
+ // Keep DOM nodes stable between renders so march/hit animations are not restarted.
+ if(window.ExpeditionField)window.ExpeditionField.sync(s);
  $('partyBar').style.width=ratio(s.squadHp,E.maxHp(s));
  $('enemyBar').style.width=ratio(s.enemyHp,E.enemyMax(s.stage));
  $('partyHp').textContent=fmt(s.squadHp)+' / '+fmt(E.maxHp(s));
@@ -43,6 +44,7 @@ function renderBattle(){
    row('용병 총원',fmt(E.UNITS.reduce((sum,u)=>sum+s.units[u.id],0))+'명')+
    row('이번 탐사 격파',fmt(s.runKills)+'회')+
    row('부대 화력',fmt(E.partyDps(s))+'/초')+
+   row('전열 현황',fmt(s.actors.filter(a=>a.revive===0&&a.hp>0).length)+'명 활동 / '+fmt(s.actors.length)+'명')+
    (s.respawn>0?row('재정비 중',s.respawn.toFixed(1)+'초'):'');
 }
 function renderSquad(){
@@ -52,7 +54,7 @@ function renderSquad(){
  }).join('');
  const recruitCost=E.hireCost(s);
  $('hire').textContent='용병 1명 소집 · '+fmt(recruitCost)+' 크레딧';
- $('hire').disabled=s.credits<recruitCost;
+ $('hire').disabled=s.credits<recruitCost||(s.actors||[]).length>=E.MAX_ACTORS;
  $('trainingSummary').innerHTML='<span>공통 훈련 LV.'+fmt(s.training)+'</span><b>피해·내구 상승</b>';
  $('train').textContent='훈련 강화 · '+fmt(E.trainCost(s))+' 크레딧';
  $('train').disabled=s.credits<E.trainCost(s);
