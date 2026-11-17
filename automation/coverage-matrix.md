@@ -337,3 +337,13 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 ### 2026-11-17 21:52 KST — action-burst telemetry added
 - Shared simulator source `4a6843ea` now emits per-visit action counts and first-30-minute action category breakdown, plus maximum actions per visit and multi-action visit count. Prior mean ~67.8 actions did not expose concentration. **No new CI or actual metrics verified yet.**
 - **P0:** run and inspect 60s low-input action-burst distribution; validate category sum and identify dominant unnecessary touch load before changing gameplay. Physical mobile 30m and ~60m optimized first rebirth unverified. Readiness 60%; main/Pages untouched.
+
+
+## 2026-11-17 22:51 KST — latest shared candidate coverage update
+
+| Area | Last checked | Evidence | Remaining priority |
+| --- | --- | --- | --- |
+| 30m low-input action bursts | 2026-11-17, `a135003d` | [first-rebirth CI 44090227581](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44090227581) successful; 60s/3-level value policy: chain 67.8 actions = 31 purchases, 30 claims, 6 traits + choices; bounty 67.2 actions; max 3 actions/visit, 30 multi-action visits | **High:** model is not actual taps; measure tab switching/reading and local playtest JSON; do not infer 30 claims are forced because LV2 auto-claim exists |
+| Recent local playtest telemetry | 2026-11-17, `a135003d` | Shared commits `170f253` through `a135003` add bounded private recording, explicit JSON export, and documentation; portrait CI [44090227706](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44090227706) success | **High:** verify actual mobile UX and consent; never upload data automatically or treat synthetic events as human evidence |
+| Shared regression gate | 2026-11-17, `a135003d` | Four completed successful workflows: save 44090227885, portrait 44090227706, first-rebirth 44090227581, three-rebirth 44090227726 | **High:** real Android session and long-run performance unverified; recheck CI on next gameplay change |
+| Release isolation | 2026-11-17, `a135003d` | Integration PR #2 draft/open/unmerged; main `9918709e` read-only | **Critical:** no unattended merge, Pages deployment, or claim of live candidate parity |
