@@ -97,3 +97,6 @@ console.log(JSON.stringify({experiment:'expedition-3-run-auto-versus-manual',
 require('./expedition-breakthrough-economy.cjs');
 // Independent exact early-clear pacing audit; never asserts a fixed balance target.
 require('./expedition-first-run-milestone-audit.cjs');
+
+// Compare stage30-35 growth-purchase gaps without imposing artificial pacing targets.
+require('./expedition-stage30-growth-audit.cjs');
