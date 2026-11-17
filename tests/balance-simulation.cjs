@@ -174,7 +174,8 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
    .map(r=>r.stageTimes[65]-r.stageTimes[55]);
  const stages30=runs.map(r=>r.stageAt30??100);
  const row={policy,skill,loadoutPolicy:LOADOUT_POLICY,skillChoiceStage:SKILL_CHOICE_STAGE,successCount:finish.length,seedCount:SEEDS.length, 
-  scriptedChoiceCount:runs.filter(r=>r.firstSkillDecision!==null).length,preownedChoiceCount:runs.filter(r=>r.firstSkillAlreadyOwnedAtDecision).length,\n  noChoiceCount:runs.filter(r=>r.firstSkillDecision===null&&!r.firstSkillAlreadyOwnedAtDecision).length,
+  scriptedChoiceCount:runs.filter(r=>r.firstSkillDecision!==null).length,preownedChoiceCount:runs.filter(r=>r.firstSkillAlreadyOwnedAtDecision).length,
+  noChoiceCount:runs.filter(r=>r.firstSkillDecision===null&&!r.firstSkillAlreadyOwnedAtDecision).length,
   meanReadySec:finish.length===SEEDS.length?avg(finish):null,
   minReadySec:finish.length?Math.min(...finish):null,
   maxReadySec:finish.length?Math.max(...finish):null,
