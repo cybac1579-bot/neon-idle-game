@@ -40,10 +40,14 @@ function simulate(mode,seed){
  assert.ok(second.stages[45]<first.seconds,'second run should clear the same stage45 faster');
  assert.ok(second.stages[50]>second.stages[45]);
  assert.equal(s.rebirths,1,'exploration must not auto return');
+ const nextReward=E.rebirthRewards(s);
+ assert.ok(nextReward.newMilestones.some(item=>item.stage===50&&item.cores===5),
+  'first defeat of the stage50 boss unlocks its one-time breakthrough bonus');
  return {seed,mode,first45Seconds:first.seconds,second45Seconds:second.stages[45],
   second50Seconds:second.stages[50],firstCoresPaid:paid,coresInvestedInValor:investments,
   preservedDeepRelics:relicsAtReturn,firstChestsOpened:first.opened,
   secondChestsOpened:second.opened,secondBestDistance:s.runBest,
+  nextReturnBaseCores:nextReward.base,nextFirstClearCores:nextReward.recordBonus,
   combatCoreLevel:s.coreUpgrades.valor};
 }
 const samples=MODES.flatMap(mode=>SEEDS.map(seed=>simulate(mode,seed)));
