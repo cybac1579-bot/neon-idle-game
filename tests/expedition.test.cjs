@@ -800,3 +800,6 @@ test('living rear squad members can be struck when all guards are down',()=>{
 
 // Fix for unaffordable growth targets causing late-stage empty waits.
 require('./expedition-late-pacing-fix.test.cjs');
+
+// In-progress legacy boss saves must survive the 50-distance HP pacing fix.
+require('./expedition-boss50-pacing.test.cjs');
