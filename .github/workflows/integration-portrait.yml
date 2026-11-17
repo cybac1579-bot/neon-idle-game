@@ -31,6 +31,8 @@ jobs:
         run: node tests/expedition-route-audit.cjs
       - name: Probe early versus deep return core farming economics
         run: node tests/expedition-return-efficiency.cjs
+      - name: Build self-contained offline expedition tester
+        run: node scripts/build-expedition-standalone.cjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.56.1
@@ -41,6 +43,16 @@ jobs:
         run: timeout --signal=TERM --kill-after=10s 100s node tests/playthrough-browser.test.cjs
       - name: Run independent expedition browser smoke
         run: timeout --signal=TERM --kill-after=10s 90s node tests/expedition-browser.test.cjs
+      - name: Test standalone HTML with network disabled and backup round trip
+        run: timeout --signal=TERM --kill-after=10s 110s node tests/expedition-offline-browser.test.cjs
+      - name: Upload private playable offline HTML
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-expedition-offline-playable
+          path: artifacts/expedition-standalone/
+          if-no-files-found: error
+          retention-days: 30
       - name: Upload actual Chromium screenshots and playthrough report
         if: always()
         uses: actions/upload-artifact@v4
