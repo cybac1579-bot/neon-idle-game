@@ -105,3 +105,6 @@ require('./expedition-deep-run-relic-audit.cjs');
 
 // Check repeat-expedition payoff after a deep return: stage45 versus stage50.
 require('./expedition-deep-second-run-audit.cjs');
+
+// Regression: previously observed 45-50 growth freeze is bounded.
+require('./expedition-stage45-growth-fix-audit.cjs');
