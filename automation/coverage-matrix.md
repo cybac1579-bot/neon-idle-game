@@ -310,3 +310,6 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | 2026-11-17 12:57 KST — STAGE75 economy choice relevance | Game `330cb8d5`: credit option now pays max(4 stage75 kills, 30s production); portrait regression `71511d45` checks payout and no double claim. Prior `2bd48eda` CI 4/4 success (44006409504/44006409450/44006409443/44006409465). New CI **pending**. | **P0:** confirm new save/portrait/balance/multi-rebirth CI; measure 30–90m credit/first rebirth impact across strategies; revert or tune if imbalance. Real Galaxy S25+ 30m and Pages parity unverified. Readiness 60% provisional. |
+
+
+| 2026-11-17 13:53 KST · STAGE75 reward choice visibility | `site/game.js` `f4ced98a`: growth panel now displays current projected economic payout via existing formatter and exact award formula; no battle HUD clutter or balance change. Prior shared HEAD `321d9f64` four CI SUCCESS; new CI pending. | **P0:** confirm new CI/portrait, compare economic reward impact vs weapon/skill in seeded low-input play, verify Galaxy S25+ 30min manually. Readiness 60% unchanged. |
