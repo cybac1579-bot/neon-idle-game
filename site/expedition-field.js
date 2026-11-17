@@ -7,6 +7,7 @@ const $=id=>document.getElementById(id);
 const field=$('squad'),arena=document.querySelector('.arena');
 if(!field||!arena)return;
 const fx=document.createElement('div');fx.id='battleFx';fx.setAttribute('aria-hidden','true');arena.appendChild(fx);
+const rosterNote=document.createElement('div');rosterNote.className='roster-note';rosterNote.hidden=true;arena.appendChild(rosterNote);
 let visibleKey='',lastCue=-1;
 const safe=n=>Math.max(0,Math.min(100,Number(n)||0));
 const selected=s=>{
@@ -45,7 +46,8 @@ function sync(s){
   el.title=a.id+' HP '+Math.floor(a.hp)+' / '+Math.floor(E.actorMaxHp(s,a.id))+(down?' · 재합류 '+a.revive.toFixed(1)+'초':'');
  });
  const extra=Math.max(0,(s.actors||[]).length-shown.length);
- arena.dataset.reserve=extra>0?'+'+extra:'';
+ rosterNote.hidden=extra===0;
+ if(extra)rosterNote.textContent='전투원 '+shown.length+'명 표시 · 후방 '+extra+'명';
  arena.classList.toggle('arena-boss',E.isBoss(s.stage));
  if(s.battleCueSeq===lastCue||!s.battleEvent)return;
  lastCue=s.battleCueSeq;
