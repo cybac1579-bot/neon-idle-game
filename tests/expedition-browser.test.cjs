@@ -33,6 +33,18 @@ async function main(){
    await page.locator('#hire').click();
    assert.equal(await page.locator('#hire').isVisible(),true);
    assert.ok(await page.locator('#roleContribution').textContent());
+   assert.equal(await page.locator('#autoMode').inputValue(),'balanced');
+   assert.equal(await page.locator('#autoToggle').getAttribute('aria-pressed'),'false');
+   await page.locator('#autoMode').selectOption('recruit');
+   await page.locator('#autoToggle').click();
+   assert.equal(await page.locator('#autoToggle').getAttribute('aria-pressed'),'true');
+   await page.waitForFunction(()=>/이번 탐사 자동 구매 [1-9]/.test(document.querySelector('#autoDetails')?.textContent||''),null,{timeout:8000});
+   await page.locator('#autoToggle').click();
+   assert.equal(await page.locator('#autoToggle').getAttribute('aria-pressed'),'false');
+   const autoSaved=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')).autoBuy);
+   assert.equal(autoSaved.mode,'recruit');
+   assert.equal(autoSaved.enabled,false);
+   assert.ok(autoSaved.purchases>=1);
    await page.locator('#buyCountSquad').click();
    assert.match(await page.locator('#buyCountSquad').textContent(),/최대 10회/);
    await page.locator('#buyCountSquad').click();
@@ -74,6 +86,9 @@ async function main(){
    const savedAfter=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')));
    assert.equal(savedAfter.stage,1);
    assert.equal(Object.values(savedAfter.relics).reduce((a,b)=>a+b,0),1);
+   assert.equal(savedAfter.autoBuy.mode,'recruit');
+   assert.equal(savedAfter.autoBuy.enabled,false);
+   assert.equal(savedAfter.autoBuy.purchases,0);
    assert.equal(await page.evaluate(()=>localStorage.getItem('neon_rework_07')),null);
    const bounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(bounds.scroll<=bounds.width+1,'mobile horizontal overflow: '+JSON.stringify(bounds));
