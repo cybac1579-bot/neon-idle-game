@@ -46,6 +46,7 @@ test('shallow relic cap exchanges for credits instead of leaking deeper relics',
  assert.equal(result.id,null);
  assert.ok(result.credits>0);
  assert.equal(result.depth,5);
+ assert.match(s.events.at(-1),/이 상자 깊이의 유물 수집 상한/);
  assert.ok(E.RELICS.filter(r=>r.unlockStage>5).every(r=>E.relic(s,r.id)===0));
 });
 test('earned chest distances survive save, FIFO opening, and rebirth',()=>{
