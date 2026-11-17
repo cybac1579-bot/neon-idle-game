@@ -25,3 +25,9 @@ The records are shared reference material for both future scheduled runs and int
 - At each run, re-read the current working branch HEAD and touched file blob SHA. Never force-push or overwrite concurrently updated manual files. Compare before any conflicting write; re-run targeted + broader regressions when gameplay changes.
 - Shared readiness must reflect the same integrated candidate, not a parallel production-only percentage. Distinguish production deployment and physical Android validation. Manual docs in `docs/` and automated evidence in `automation/` remain separate for auditability, **not separate development tracks**.
 - If no critical failures exist, advance actual player-facing gameplay and realistic low-input 30–60 minute tests, rather than repeating research/log-only runs.
+
+
+## 2026-11-17 · 사용자 승인으로 우선 개발 목표 교체
+- 최신 승인 목표는 《환생용병단》식 **용병단 자동 전진 → 소집/업그레이드 및 자동 수익 퀘스트 → 정예/보스 상자 → 영구 유물 → 플레이어 성장·환생** 의 일관된 게임 원형이다. 사용자의 자체 추가 콘텐츠는 초기 원형의 성공적인 플레이 확인 후에만 진행.
+- 새 독립 원형의 시작점은 `site/expedition.html`/`site/expedition-engine.js`; 기존 `site/game.js`와 `main` 릴리스는 보존. 매 자동 실행에 앞서 `docs/PROJECT_DECISIONS.md`의 마지막 승인 섹션을 다시 읽고 새 원형과 직접 무관한 기능 확장을 금지한다.
+- 첫 구현 후 우선 검증은 개별 용병 전장 표현, 관전 재미, 소집/퀘스트/상자/환생 루프, 실제 20~30분 재미. 구판의 STAGE 60/65/75/85 미세 튜닝이나 신규 위상·고품질 이미지 확대를 진행하지 않는다.
