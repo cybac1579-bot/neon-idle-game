@@ -29,10 +29,19 @@ async function main(){
    assert.ok(await page.locator('#squad .fighter-health').count()>=2);
    await page.locator('[data-tab="squad"]').click();
    assert.equal(await page.locator('#squadScreen').isVisible(),true);
+   assert.match(await page.locator('#buyCountSquad').textContent(),/최대 5회/);
    await page.locator('#hire').click();
    assert.equal(await page.locator('#hire').isVisible(),true);
+   assert.ok(await page.locator('#roleContribution').textContent());
+   await page.locator('#buyCountSquad').click();
+   assert.match(await page.locator('#buyCountSquad').textContent(),/최대 10회/);
+   await page.locator('#buyCountSquad').click();
+   assert.equal((await page.locator('#buyCountSquad').textContent()).trim(),'1회');
    await page.locator('[data-tab="supply"]').click();
    assert.equal(await page.locator('#supplyScreen').isVisible(),true);
+   assert.equal((await page.locator('#buyCountSupply').textContent()).trim(),'1회');
+   await page.locator('#buyCountSupply').click();
+   assert.match(await page.locator('#buyCountSupply').textContent(),/최대 5회/);
    await page.locator('[data-tab="archive"]').click();
    // Inject on the next document before expedition-app.js loads. Ordinary pagehide
    // saves the old game state; modifying storage immediately before reload loses the fixture.
@@ -56,6 +65,7 @@ async function main(){
    assert.equal(await page.locator('#relicPopup').isVisible(),true);
    await page.locator('#popupClose').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),false);
+   assert.match(await page.locator('#permanentBonusSummary').textContent(),/영구 성장 효과/);
    const savedBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')));
    assert.equal(Object.values(savedBefore.relics).reduce((a,b)=>a+b,0),1);
    page.on('dialog',d=>d.accept());
