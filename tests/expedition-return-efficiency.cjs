@@ -61,6 +61,13 @@ const grouped=TARGETS.map(target=>{
 });
 const shallow=grouped[0],deep=grouped.at(-1);
 const coreRateAdvantage=shallow.coresEarned.map((v,i)=>+(v/Math.max(1,deep.coresEarned[i])).toFixed(2));
+ // Fail the release gate if repeatedly rushing the first boss again yields
+ // a gross core-farming advantage over sustained exploration. A policy
+ // benchmark, not a claim about players or a mandate to equalize all routes.
+assert.ok(coreRateAdvantage.every(rate=>rate<=1.5),
+ 'short-return farming must not exceed sustained deep returns by >50% in the seeded benchmark');
+assert.ok(shallow.manualReturnActions.every((clicks,i)=>clicks>deep.manualReturnActions[i]),
+ 'deep exploration should require fewer return clicks in this benchmark');
 console.log(JSON.stringify({experiment:'expedition-early-return-efficiency',
  synthetic:true,observationSeconds:TOTAL_SECONDS,
  assumptions:'balanced automatic purchases; targets are minimum CLEARED stages, and zero-core return opportunities are skipped until earned. After a valid return, the script opens stored chests and invests in combat. No automatic rebirth in the actual game. No human interface/reading delay.',
