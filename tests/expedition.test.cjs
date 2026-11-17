@@ -642,3 +642,6 @@ test('playtest snapshots are save-bounded and corrupted records normalized safel
 
 // Run depth-bound treasure, legacy-save and batch parity checks in the existing CI workflow.
 require('./expedition-depth-relic.test.cjs');
+
+// First-clear reward never depends on rebirth count and never duplicates after reload.
+require('./expedition-breakthrough.test.cjs');
