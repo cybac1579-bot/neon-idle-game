@@ -243,8 +243,8 @@ const server=createServer((req,res)=>{
    assert.match(skill75.preview,/2개 장착 스킬 성장/,'STAGE75 skill preview missing at '+width);
    assert.equal(skill75.chosen,true,'STAGE75 skill choice failed at '+width);
    assert.deepEqual(skill75.levels,[4,6],'STAGE75 skill levels not gained at '+width);
-   assert.match(skill75.notice,/연쇄 방전 Lv\\.3→4/,'STAGE75 chain level feedback missing at '+width);
-   assert.match(skill75.notice,/과부하 사격 Lv\\.5→6/,'STAGE75 overload level feedback missing at '+width);
+   assert.match(skill75.notice,/연쇄 방전 Lv\.3→4/,'STAGE75 chain level feedback missing at '+width);
+   assert.match(skill75.notice,/과부하 사격 Lv\.5→6/,'STAGE75 overload level feedback missing at '+width);
    assert.equal(skill75.repeated,false,'STAGE75 skill reward repeated at '+width);
    // Economy option must matter for a developed mint, without breaking the one-time choice.
    const economy75=await page.evaluate(()=>{
