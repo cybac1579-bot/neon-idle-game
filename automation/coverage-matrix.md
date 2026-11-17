@@ -332,3 +332,8 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 - **First-rebirth / STAGE75 choices:** latest `ee2dfe49` workflow **success**, run [44069331731](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44069331731). Need action-burst telemetry and optimal-policy calibration; no balance change justified by CI pass alone.
 - **Three-rebirth routes:** latest `ee2dfe49` workflow **success**, run [44069331464](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44069331464). Real mobile experience unverified.
 - **Release:** main `9918709e` unchanged; PR #2 remains draft/unmerged; no Pages update authorized.
+
+
+### 2026-11-17 21:52 KST — action-burst telemetry added
+- Shared simulator source `4a6843ea` now emits per-visit action counts and first-30-minute action category breakdown, plus maximum actions per visit and multi-action visit count. Prior mean ~67.8 actions did not expose concentration. **No new CI or actual metrics verified yet.**
+- **P0:** run and inspect 60s low-input action-burst distribution; validate category sum and identify dominant unnecessary touch load before changing gameplay. Physical mobile 30m and ~60m optimized first rebirth unverified. Readiness 60%; main/Pages untouched.
