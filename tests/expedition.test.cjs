@@ -490,3 +490,85 @@ test('offline catchup follows active selection without extra purchases or unlimi
  assert.equal(s.stage,direct.stage);
  assert.equal(s.credits,direct.credits);
 });
+
+
+test('batch relic reveal matches one-by-one RNG, reward order, and permanent buffs exactly',()=>{
+ const a=E.normalize(E.newState(1000),1000),b=E.normalize(E.newState(1000),1000);
+ a.chests=b.chests=12;a.best=b.best=30;
+ const batched=E.openChestBatch(a,20);
+ const sequential=[];
+ while(b.chests)sequential.push(E.openChest(b));
+ assert.equal(batched.results.length,12);
+ assert.deepEqual(batched.results,sequential);
+ assert.equal(batched.first,sequential.filter(x=>x.id&&!x.duplicate).length);
+ assert.equal(batched.duplicates,sequential.filter(x=>x.id&&x.duplicate).length);
+ assert.deepEqual(a.relics,b.relics);
+ assert.equal(a.credits,b.credits);
+ assert.equal(a.seed,b.seed);
+ assert.equal(a.chests,0);
+ assert.equal(a.chestsOpened,12);
+ assert.equal(a.runMetrics.chestsOpened,12);
+ assert.deepEqual(a.relicHistory,b.relicHistory);
+ assert.ok(batched.after.attack>=batched.before.attack);
+});
+
+test('batch opening is bounded to 20 and never creates rewards from empty storage',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ s.chests=31;
+ const result=E.openChestBatch(s,20);
+ assert.equal(result.results.length,20);
+ assert.equal(s.chests,11);
+ assert.equal(E.openChestBatch(s,5).results.length,5);
+ assert.equal(s.chests,6);
+ const without=s.chestsOpened;
+ assert.equal(E.openChestBatch(s,0).results.length,1,'invalid count falls back to a single open');
+ assert.equal(s.chestsOpened,without+1);
+ s.chests=0;
+ const before=JSON.stringify(s.relics),seed=s.seed;
+ const empty=E.openChestBatch(s,20);
+ assert.deepEqual(empty.results,[]);
+ assert.equal(s.seed,seed);
+ assert.equal(JSON.stringify(s.relics),before);
+});
+
+test('collection at all caps converts each chest to credits and records the exchange',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ for(const r of E.RELICS)s.relics[r.id]=r.cap;
+ s.chests=3;s.best=20;
+ const prior=s.credits,opened=E.openChestBatch(s,5);
+ assert.equal(opened.first,0);
+ assert.equal(opened.duplicates,0);
+ assert.equal(opened.exchanges,3);
+ assert.equal(opened.credits,3*(300+50*s.best));
+ assert.equal(s.credits,prior+opened.credits);
+ assert.ok(opened.results.every(x=>x.id===null));
+ assert.equal(s.relicHistory.length,3);
+ assert.ok(s.relicHistory.every(x=>x.id===null&&x.credits>0));
+});
+
+test('relic collection journal remains bounded, validated on load and persistent after rebirth',()=>{
+ const s=E.normalize(E.newState(1000),1000);
+ s.best=s.runBest=15;s.stage=15;s.chests=40;
+ E.openChestBatch(s,20);
+ E.openChestBatch(s,20);
+ assert.equal(s.relicHistory.length,24);
+ const previous=s.relicHistory.map(x=>({...x}));
+ const reloaded=E.normalize(JSON.parse(JSON.stringify(s)),1000);
+ assert.deepEqual(reloaded.relicHistory,previous);
+ const count=Object.values(s.relics).reduce((sum,n)=>sum+n,0);
+ assert.ok(E.rebirth(reloaded)>0);
+ assert.deepEqual(reloaded.relicHistory,previous);
+ assert.equal(reloaded.relicHistory.length,24);
+ assert.equal(Object.values(reloaded.relics).reduce((sum,n)=>sum+n,0),count);
+ assert.equal(reloaded.runMetrics.chestsOpened,0);
+});
+
+test('old saves have no invented relic journal and malformed IDs are never displayed',()=>{
+ const raw=E.newState(1000);
+ delete raw.relicHistory;
+ assert.deepEqual(E.normalize(raw,1000).relicHistory,[]);
+ raw.relicHistory=[{id:'unknown',duplicate:false,credits:10},{id:'ember',duplicate:false,stack:1,credits:0,stage:12,run:1},{id:null,duplicate:true,credits:500,stage:15,run:2}];
+ const s=E.normalize(raw,1000);
+ assert.equal(s.relicHistory.length,2);
+ assert.deepEqual(s.relicHistory.map(x=>x.id),['ember',null]);
+});
