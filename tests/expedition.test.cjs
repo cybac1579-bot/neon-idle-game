@@ -247,3 +247,93 @@ test('simultaneous medic healing does not hide the attack cue',()=>{
  assert.ok(s.enemyHp<enemy,'guards still attack');
  assert.equal(s.battleEvent.type,'hit','attack feedback remains visible');
 });
+
+
+test('bounded bulk purchases match exact individual recruit RNG, credits, and roster',()=>{
+ const create=()=>{const s=E.normalize(E.newState(1000),1000);s.credits=10000;s.best=12;return s;};
+ const bulk=create(),single=create(),before=bulk.credits;
+ const result=E.purchase(bulk,'recruit',5);
+ let count=0;while(count<5&&E.recruit(single))count++;
+ assert.equal(result.count,count);
+ assert.equal(result.spent,before-bulk.credits);
+ assert.equal(bulk.credits,single.credits);
+ assert.equal(bulk.seed,single.seed);
+ assert.deepEqual(bulk.units,single.units);
+ assert.deepEqual(bulk.actors,single.actors);
+});
+
+test('bulk training and quests preserve sequential prices and stop at unaffordable next level',()=>{
+ for(const [kind,id] of [['train',null],['quest','dispatch']]){
+  const create=()=>{const s=E.normalize(E.newState(1000),1000);s.credits=350;return s;};
+  const a=create(),b=create(),before=a.credits;
+  const result=E.purchase(a,kind,10,id);
+  let count=0;
+  for(let n=0;n<10;n++){const ok=kind==='train'?E.train(b):E.upgradeQuest(b,id);if(!ok)break;count++;}
+  assert.equal(result.count,count);
+  assert.equal(result.spent,before-a.credits);
+  assert.equal(a.credits,b.credits);
+  assert.equal(a.training,b.training);
+  assert.deepEqual(a.questLevels,b.questLevels);
+  assert.ok(a.credits>=0);
+ }
+});
+
+test('bulk calls cannot bypass locked quests, actor cap, or unknown purchases',()=>{
+ const s=E.normalize(E.newState(),Date.now()),originalCredits=s.credits;
+ assert.equal(E.purchase(s,'quest',10,'contract').count,0);
+ assert.equal(E.purchase(s,'invalid',10).count,0);
+ assert.equal(s.credits,originalCredits);
+ s.credits=1e12;s.best=10;
+ for(let n=0;n<15;n++)E.purchase(s,'recruit',10);
+ assert.equal(s.actors.length,E.MAX_ACTORS);
+ assert.equal(E.purchase(s,'recruit',10).count,0);
+});
+
+test('role contribution tracks actual damage, healing and tanking without counting overkill',()=>{
+ const s=E.normalize(E.newState(),Date.now());
+ s.stage=s.best=7;s.enemyHp=1e8;
+ s.units.medic=1;
+ s.actors.push({id:'medic',hp:25,revive:0,progress:1,cooldown:3});
+ s.actors.forEach(a=>{a.progress=1;a.cooldown=a.id==='guard'?0:3;});
+ s.actors[0].hp=12;
+ E.tick(s,.5);
+ assert.ok(s.contribution.damage.guard>0);
+ assert.ok(s.contribution.healing.medic>0);
+ assert.ok(s.contribution.taken.guard>0);
+ assert.equal(s.contribution.damage.ranger,0);
+ const restored=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.deepEqual(restored.contribution,s.contribution);
+ s.enemyHp=1;
+ s.actors.forEach(a=>{a.cooldown=0;a.progress=1;});
+ const before=s.contribution.damage.guard;
+ E.tick(s,.5);
+ assert.ok(s.contribution.damage.guard-before<=1.0001,'overkill is not useful contribution');
+});
+
+test('contribution is per-run while relic and player investments persist across rebirth',()=>{
+ const s=E.normalize(E.newState(),Date.now());
+ s.relics.ember=2;s.heroLevel=3;s.traits.command=1;s.runBest=15;s.best=15;s.stage=15;
+ s.contribution.damage.guard=100;s.contribution.taken.guard=40;
+ const before=E.permanentBonuses(s);
+ assert.ok(before.attack>1);
+ const gain=E.rebirth(s);
+ assert.ok(gain>0);
+ assert.equal(s.contribution.damage.guard,0);
+ assert.equal(s.contribution.taken.guard,0);
+ assert.equal(s.relics.ember,2);
+ assert.equal(s.heroLevel,3);
+ assert.equal(s.traits.command,1);
+ assert.ok(E.permanentBonuses(s).attack>1);
+ const fresh=E.normalize(E.newState(),Date.now());
+ assert.equal(E.permanentBonuses(fresh).attack,1);
+ assert.equal(E.permanentBonuses(fresh).hp,1);
+ assert.equal(E.permanentBonuses(fresh).income,1);
+});
+
+test('old prototype saves without contribution telemetry migrate to zeros',()=>{
+ const raw=E.newState();delete raw.contribution;
+ const s=E.normalize(JSON.parse(JSON.stringify(raw)),Date.now());
+ assert.equal(s.contribution.damage.guard,0);
+ assert.equal(s.contribution.healing.medic,0);
+ assert.equal(s.contribution.falls.guard,0);
+});
