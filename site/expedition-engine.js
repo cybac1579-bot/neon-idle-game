@@ -37,6 +37,8 @@ const total=s=>UNITS.reduce((n,u)=>n+s.units[u.id],0);
 const emptyContribution=()=>({damage:{guard:0,ranger:0,medic:0},healing:{guard:0,ranger:0,medic:0},taken:{guard:0,ranger:0,medic:0},falls:{guard:0,ranger:0,medic:0},attacks:{guard:0,ranger:0,medic:0}});
 const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purchases:0,spent:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
+const MAX_PLAYTEST_SNAPSHOTS=360;
+const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
 
 const isBoss=stage=>stage%10===0;
 const isElite=stage=>stage%5===0;
@@ -48,7 +50,7 @@ const newState=(now=Date.now())=>({
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],relicHistory:[],events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],relicHistory:[],playtest:initialPlaytest(),events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -94,6 +96,25 @@ function normalize(raw,now=Date.now()){
   stack:integer(x.stack,0,5),credits:num(x.credits,0,1e14),
   stage:integer(x.stage,1,100000),run:integer(x.run,1,1e9)
  })):[];
+ // Local-only playtest time series, never sent anywhere by the engine.
+ // Validate old or malformed saved snapshots and impose a fixed size ceiling.
+ s.playtest=initialPlaytest();
+ s.playtest.offlineSeconds=num(raw.playtest?.offlineSeconds,0,1e9);
+ if(Array.isArray(raw.playtest?.snapshots)){
+  s.playtest.snapshots=raw.playtest.snapshots.slice(-MAX_PLAYTEST_SNAPSHOTS)
+   .filter(x=>x&&typeof x==='object').map(x=>({
+    run:integer(x.run,1,1e9),sec:integer(x.sec,0,1e9),
+    stage:integer(x.stage,1,100000),credits:num(x.credits,0,1e14),
+    training:integer(x.training,0,100000),heroLevel:integer(x.heroLevel,1,500),
+    recruits:integer(x.recruits,0,MAX_ACTORS),
+    chests:integer(x.chests,0,1e9),
+    relicKinds:integer(x.relicKinds,0,RELICS.length),
+    relicTotal:integer(x.relicTotal,0,1000),
+    manualBuys:integer(x.manualBuys,0,1e9),
+    autoBuys:integer(x.autoBuys,0,1e9),
+    source:x.source==='offline'?'offline':'foreground'
+   }));
+ }
  s.contribution=emptyContribution();
  for(const kind of ['damage','healing','taken','falls','attacks'])for(const u of UNITS)
   s.contribution[kind][u.id]=kind==='falls'||kind==='attacks'?integer(raw.contribution?.[kind]?.[u.id],0,1e9):num(raw.contribution?.[kind]?.[u.id],0,1e14);
@@ -221,11 +242,24 @@ function fight(s,dt){
  updateSquadHealth(s);
  if(s.squadHp<=0){s.enemyHp=enemyMax(s.stage);battleCue(s,'rally','guard');note(s,'부대 전원 후퇴 · 적 전선 재정비');}
 }
-function tick(s,seconds){
+function recordPlaytestMinute(s,source){
+ const count=RELICS.reduce((sum,r)=>sum+relic(s,r.id),0);
+ s.playtest.snapshots.push({
+  run:s.rebirths+1,sec:Math.floor(s.clock),stage:s.stage,
+  credits:Math.floor(s.credits),training:s.training,heroLevel:s.heroLevel,
+  recruits:total(s),chests:s.chests,
+  relicKinds:RELICS.filter(r=>relic(s,r.id)>0).length,relicTotal:count,
+  manualBuys:s.runMetrics.manualPurchases,autoBuys:s.autoBuy.purchases,
+  source:source==='offline'?'offline':'foreground'
+ });
+ if(s.playtest.snapshots.length>MAX_PLAYTEST_SNAPSHOTS)s.playtest.snapshots.shift();
+}
+function tick(s,seconds,source='foreground'){
  const duration=num(seconds,0,7200);
  let remaining=duration;
  while(remaining>0){
-  const dt=Math.min(1,remaining);remaining-=dt;s.clock+=dt;
+  const dt=Math.min(1,remaining);remaining-=dt;
+  const previousMinute=Math.floor((s.clock+1e-8)/60);s.clock+=dt;
   for(const q of QUESTS){if(s.stage<q.unlock)continue;s.questClocks[q.id]+=dt;const cycles=Math.floor((s.questClocks[q.id]+1e-9)/q.interval);if(cycles){s.questClocks[q.id]-=cycles*q.interval;s.credits=Math.min(1e14,s.credits+cycles*questIncome(s,q));}}
   fight(s,dt);
   if(s.autoBuy.enabled){
@@ -235,6 +269,7 @@ function tick(s,seconds){
     autoPurchaseOnce(s);
    }
   }
+  if(Math.floor((s.clock+1e-8)/60)>previousMinute)recordPlaytestMinute(s,source);
  }
  return s;
 }
@@ -368,7 +403,7 @@ function rebirth(s){
   manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
   chestsOpened:s.runMetrics.chestsOpened};
  const history=[...(s.runHistory||[]),summary].slice(-5);
- const keep={runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
+ const keep={runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
  Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  note(s,'탐사 귀환 · 코어 '+gain+'개 획득. 영구 유물/레벨 유지');
@@ -376,8 +411,8 @@ function rebirth(s){
 }
 function offline(s,now=Date.now()){
  const elapsed=Math.min(7200,Math.max(0,(now-num(s.lastSaved,0,now))/1000));
- if(elapsed>=1)tick(s,Math.floor(elapsed));
+ if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,MAX_ACTORS,AUTO_BUY_INTERVAL,AUTO_MODES,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,AUTO_BUY_INTERVAL,AUTO_MODES,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
