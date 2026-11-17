@@ -116,6 +116,9 @@ function renderSupply(){
 function renderArchive(){
  let found=0,copies=0;E.RELICS.forEach(r=>{if(E.relic(s,r.id))found++;copies+=E.relic(s,r.id);});
  $('relicSummary').textContent=found+'/'+E.RELICS.length+' 발견 · '+copies+'개 수집';
+ const capped=E.RELICS.reduce((sum,r)=>sum+r.cap,0);
+ $('relicCollectionProgress').textContent='발견한 종류 '+found+'/'+E.RELICS.length+
+   ' · 보유 '+copies+'/'+capped+'개 (중복 강화 포함) · 미개봉 '+fmt(s.chests)+'상자';
  $('relicList').innerHTML=E.RELICS.map(r=>{
   const n=E.relic(s,r.id);
   return '<div class="relic '+(n?'owned':'')+'"><div class="glyph" aria-hidden="true">'+(n?'✦':'◇')+'</div>'+
@@ -123,7 +126,15 @@ function renderArchive(){
    '<div class="count">'+(n?'보유 '+n+' / 상한 '+r.cap:'미발견')+'</div></div>';
  }).join('');
  $('openArchiveChest').hidden=s.chests<1;
- $('openArchiveChest').textContent='보급 상자 '+fmt(s.chests)+'개 열기';
+ $('openArchiveChest').textContent='상자 1개 열기';
+ $('openArchiveBatch').hidden=s.chests<2;
+ $('openArchiveBatch').textContent='상자 '+fmt(Math.min(20,s.chests))+'개 함께 열기'+(s.chests>20?' (나머지 보관)':'');
+ $('relicRecent').innerHTML=s.relicHistory.length?s.relicHistory.slice(-8).reverse().map(r=>{
+  const data=E.RELICS.find(x=>x.id===r.id);
+  const label=data?r.duplicate?'중복 · '+data.name:'첫 발견 · '+data.name:'수집 완료 · 크레딧 보상';
+  return '<div class="collection-log"><span>'+safe(label)+'</span><strong>'+
+   safe(r.id?'×'+r.stack:'+'+fmt(r.credits)+' 크레딧')+'</strong></div>';
+ }).join(''):'아직 발견한 유물이 없어.';
  const gain=E.rebirthGain(s);
  $('rebirthSummary').innerHTML=row('이번 탐사 최고 거리',fmt(s.runBest))+
   row('귀환 시 코어 획득',fmt(gain)+'개')+row('누적 귀환 횟수',fmt(s.rebirths)+'회')+
@@ -156,15 +167,49 @@ function render(){
  if(tab==='archive')renderArchive();
 }
 function act(fn,fail){const result=fn();if(result===false||result===null){notify(fail||'아직 실행할 수 없어.');}else save();render();return result;}
-function openChest(){
- const result=act(()=>E.openChest(s),'보급 상자가 없어.');
- if(result&&result.id){
-  const data=E.RELICS.find(r=>r.id===result.id);
-  $('popupTitle').textContent=(result.duplicate?'중복 발견 · ':'첫 발견! ')+data.name;
-  $('popupDesc').textContent=data.desc+' · 누적 '+E.relic(s,result.id)+'개';
-  $('relicPopup').hidden=false;
-  $('popupClose').focus();
- }
+let chestOpener=null;
+function openChestWithCount(count,source){
+ if(s.chests<1){notify('아직 모은 상자가 없어.');render();return;}
+ // Reward draws are always sequential and exactly match one-by-one opening.
+ const opened=E.openChestBatch(s,count);
+ if(!opened.results.length)return;
+ chestOpener=source||null;
+ save();render();
+ const n=opened.results.length;
+ $('popupTitle').textContent=n===1?
+   (opened.first?'새 유물 발견!':opened.exchanges?'도감 수집 완료':'유물 강화 획득!'):
+   n+'개 상자 개봉 · 새 유물 '+opened.first+'종';
+ $('popupDesc').textContent=n===1?
+   '상자에서 나온 보상은 환생 후에도 남아.':
+   '첫 발견 '+opened.first+'개 · 중복 강화 '+opened.duplicates+'개 · 상한 교환 '+opened.exchanges+'개';
+ $('popupResults').innerHTML=opened.results.map(r=>{
+  const data=E.RELICS.find(x=>x.id===r.id);
+  const isNew=data&&!r.duplicate;
+  const title=data?data.name:'수집 완료 보상';
+  const detail=data?data.desc:'모든 유물의 보유 상한에 도달해서 크레딧으로 교환했어.';
+  const countLabel=data?' · '+r.stack+'/'+data.cap+'개 보유':'';
+  const tag=isNew?'첫 발견':data?'중복 강화':'크레딧 교환';
+  return '<div class="reward-item'+(isNew?' first':'')+'"><div class="reward-glyph" aria-hidden="true">'+(isNew?'✦':'◇')+
+   '</div><div><strong>'+safe(tag+' · '+title)+'</strong><small>'+safe(detail+countLabel+
+   (r.credits?' · +'+fmt(r.credits)+' 크레딧':''))+'</small></div></div>';
+ }).join('');
+ const pct=n=>Math.max(0,(n-1)*100).toFixed(1);
+ const delta=(before,after)=>Math.max(0,(after-before)*100).toFixed(1);
+ $('popupImpact').textContent='이번 개봉의 영구 효과 변화 · 화력 +'+
+  delta(opened.before.attack,opened.after.attack)+'%p · 체력 +'+
+  delta(opened.before.hp,opened.after.hp)+'%p · 보급 +'+
+  delta(opened.before.income,opened.after.income)+'%p'+
+  (opened.credits?' · 크레딧 '+fmt(opened.credits)+' 획득':'')+
+  ' (현재 편성 기준)';
+ $('relicPopup').hidden=false;
+ $('popupClose').focus();
+}
+function closeRelicPopup(){
+ $('relicPopup').hidden=true;
+ render();
+ const target=chestOpener&&!chestOpener.hidden?chestOpener:document.querySelector('[data-tab="archive"]');
+ if(target)target.focus();
+ chestOpener=null;
 }
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>screen(b.dataset.tab)));
 function cyclePurchaseCount(){buyCount=buyCount===1?5:buyCount===5?10:1;updateBuyCount();render();}
@@ -184,9 +229,11 @@ $('traitCommand').addEventListener('click',()=>act(()=>E.buyTrait(s,'command'),'
 $('traitSupply').addEventListener('click',()=>act(()=>E.buyTrait(s,'supply'),'사용할 특성 포인트가 없어.'));
 $('coreValor').addEventListener('click',()=>act(()=>E.buyCore(s,'valor'),'코어가 부족해.'));
 $('coreTrade').addEventListener('click',()=>act(()=>E.buyCore(s,'trade'),'코어가 부족해.'));
-$('openChest').addEventListener('click',openChest);
-$('openArchiveChest').addEventListener('click',openChest);
-$('popupClose').addEventListener('click',()=>{$('relicPopup').hidden=true;render();});
+$('openChest').addEventListener('click',e=>openChestWithCount(1,e.currentTarget));
+$('openArchiveChest').addEventListener('click',e=>openChestWithCount(1,e.currentTarget));
+$('openArchiveBatch').addEventListener('click',e=>openChestWithCount(20,e.currentTarget));
+$('popupClose').addEventListener('click',closeRelicPopup);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('relicPopup').hidden)closeRelicPopup();});
 $('rebirth').addEventListener('click',()=>{
  const gain=E.rebirthGain(s);
  if(!gain)return;
