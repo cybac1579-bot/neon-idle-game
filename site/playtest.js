@@ -9,6 +9,7 @@
  const sample=()=>({
   stage:s.stage,best:s.best,rebirths:s.rebirths,heroLevel:s.heroLevel,kills:s.kills,
   credits:safeNumber(s.credits),energy:safeNumber(s.energy),cores:safeNumber(s.cores),
+  corePower:s.corePower,coreEconomy:s.coreEconomy,autoLevel:s.autoLevel,phases:s.phases,
   weaponTier:s.weapon?s.weapon.tier:null,skillsEquipped:s.skillsEquipped.slice(0,5),
   levels:Object.fromEntries(types.map(k=>[k,s[k]])),allocation:s.allocation
  });
