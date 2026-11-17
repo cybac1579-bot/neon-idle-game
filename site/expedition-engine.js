@@ -374,7 +374,7 @@ function openChest(s){
  if(!eligible.length){
   const credits=300+50*s.best;s.credits=Math.min(1e14,s.credits+credits);
   const result={id:null,duplicate:true,credits,stack:0,depth};
-  rememberRelic(s,result);note(s,'유물 수집 상한 · '+credits+' 크레딧으로 교환');return result;
+  rememberRelic(s,result);note(s,(RELICS.every(r=>relic(s,r.id)>=r.cap)?'모든 유물 수집 상한':'이 상자 깊이의 유물 수집 상한')+' · '+credits+' 크레딧으로 교환');return result;
  }
  const missing=eligible.filter(r=>relic(s,r.id)===0);
  // First chest at a new depth guarantees a first discovery in that newly
