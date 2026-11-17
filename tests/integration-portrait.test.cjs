@@ -237,13 +237,16 @@ const server=createServer((req,res)=>{
     const expected=Math.max(enemyReward(75)*4,creditRate()*30);
     const chosen=chooseBreakthroughReward('credits');
     const granted=s.credits;
+    const notice=rewardNotice;
+    const expectedNotice='+'+fmt(granted)+' 크레딧';
     const repeated=chooseBreakthroughReward('credits');
     const afterRepeat=s.credits;
     s=previous;spawn();render();save();
-    return {expected,chosen,granted,repeated,afterRepeat};
+    return {expected,chosen,granted,repeated,afterRepeat,notice,expectedNotice};
    });
    assert.equal(economy75.chosen,true,'STAGE75 economy reward not claimable at '+width);
    assert.ok(Math.abs(economy75.granted-economy75.expected)<Math.max(1e-6,economy75.expected*1e-9),'STAGE75 credit reward mismatch at '+width);
+   assert.ok(economy75.notice.includes(economy75.expectedNotice),'STAGE75 payout feedback missing at '+width);
    assert.equal(economy75.repeated,false,'STAGE75 reward claimed twice at '+width);
    assert.equal(economy75.afterRepeat,economy75.granted,'STAGE75 duplicate credit payout at '+width);
 
