@@ -71,8 +71,10 @@ function normalize(raw,now=Date.now()){
  s.actors=roster.map((a,i)=>{
   const id=a.id;
   a=usable?a:null;
-  return {id,hp:a?num(a.hp,0,actorMaxHp(s,id)):actorMaxHp(s,id)*ratio,
-   revive:a?num(a.revive,0,60):s.respawn,
+  const hp=a?num(a.hp,0,actorMaxHp(s,id)):actorMaxHp(s,id)*ratio;
+  const revive=a?num(a.revive,0,60):s.respawn;
+  return {id,hp,
+   revive:hp===0&&revive===0?4:revive,
    progress:a?num(a.progress,0,1):0,
    cooldown:a?num(a.cooldown,0,3):attackInterval(id)*(.55+(i%3)*.2)};
  });
