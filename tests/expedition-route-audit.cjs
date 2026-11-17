@@ -95,3 +95,5 @@ console.log(JSON.stringify({experiment:'expedition-3-run-auto-versus-manual',
  results:results.map(({samples,...summary})=>summary)}));
 // Compare first-clear core boosts with long-route artifact discoveries.
 require('./expedition-breakthrough-economy.cjs');
+// Independent exact early-clear pacing audit; never asserts a fixed balance target.
+require('./expedition-first-run-milestone-audit.cjs');
