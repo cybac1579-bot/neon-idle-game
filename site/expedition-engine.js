@@ -3,6 +3,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ExpeditionEngine=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const VERSION=1;
+const MAX_ACTORS=120; // protect save size and two-hour offline ticks
 const SAVE_KEY='neon_expedition_prototype_v1';
 const UNITS=[
  {id:'guard',name:'방벽병',symbol:'🛡',dps:1.65,hp:48,heal:0,unlock:1},
@@ -38,6 +39,7 @@ const newState=(now=Date.now())=>({
  version:VERSION,lastSaved:now,seed:123456789,clock:0,credits:65,stage:1,best:1,runBest:1,
  units:{guard:2,ranger:0,medic:0},training:0,questLevels:{dispatch:0,salvage:0,contract:0},
  questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,squadHp:96,respawn:0,
+ actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
  rebirths:0,events:['첫 번째 탐사를 시작했어.']
@@ -45,26 +47,56 @@ const newState=(now=Date.now())=>({
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
  const s={...base};
- for(const k of ['credits','stage','best','runBest','training','enemyHp','squadHp','respawn','kills','runKills','heroLevel','heroXp','traitPoints','chests','chestsOpened','cores','coreSpent','rebirths','clock','lastSaved','seed'])s[k]=num(raw[k],0,k==='credits'?1e14:1e9);
+ for(const k of ['credits','stage','best','runBest','training','enemyHp','squadHp','respawn','kills','runKills','heroLevel','heroXp','traitPoints','chests','chestsOpened','cores','coreSpent','rebirths','clock','lastSaved','seed','battleCueSeq'])s[k]=num(raw[k],0,k==='credits'?1e14:1e9);
  for(const k of ['stage','best','runBest','heroLevel'])s[k]=integer(s[k],1,100000);
  for(const k of ['training','kills','runKills','traitPoints','chests','chestsOpened','cores','coreSpent','rebirths','seed'])s[k]=integer(s[k]);
  s.lastSaved=num(raw.lastSaved,0,now)||now;s.best=Math.max(s.stage,s.best);s.runBest=Math.max(s.stage,s.runBest);
  for(const kind of ['units','questLevels','questClocks','traits','relics','coreUpgrades'])s[kind]={};
- UNITS.forEach(u=>s.units[u.id]=integer(raw.units?.[u.id],0,500));
+ UNITS.forEach(u=>s.units[u.id]=integer(raw.units?.[u.id],0,MAX_ACTORS));
+ // Older prototype saves held only aggregate health. Reconstruct individual fighters safely.
+ let spaces=MAX_ACTORS;for(const u of UNITS){s.units[u.id]=Math.min(s.units[u.id],spaces);spaces-=s.units[u.id];}
  if(!total(s))s.units.guard=2;
  QUESTS.forEach(q=>{s.questLevels[q.id]=integer(raw.questLevels?.[q.id],0,100);s.questClocks[q.id]=num(raw.questClocks?.[q.id],0,q.interval);});
  for(const id of ['command','supply'])s.traits[id]=integer(raw.traits?.[id],0,10);
  RELICS.forEach(r=>s.relics[r.id]=integer(raw.relics?.[r.id],0,r.cap));
  for(const id of ['valor','trade'])s.coreUpgrades[id]=integer(raw.coreUpgrades?.[id],0,30);
  s.events=Array.isArray(raw.events)?raw.events.filter(x=>typeof x==='string').slice(-8):base.events.slice();
- s.squadHp=Math.min(s.squadHp,maxHp(s));if(s.squadHp===0&&s.respawn===0)s.respawn=4;
+ const expected=UNITS.flatMap(u=>Array(s.units[u.id]).fill(u.id));
+ const usable=Array.isArray(raw.actors)&&raw.actors.length===expected.length&&
+  expected.every((id,i)=>raw.actors[i]&&raw.actors[i].id===id);
+ const ratio=usable?1:Math.min(1,s.squadHp/maxHp(s));
+ s.actors=expected.map((id,i)=>{
+  const a=usable?raw.actors[i]:null;
+  return {id,hp:a?num(a.hp,0,actorMaxHp(s,id)):actorMaxHp(s,id)*ratio,
+   revive:a?num(a.revive,0,60):s.respawn,
+   progress:a?num(a.progress,0,1):0,
+   cooldown:a?num(a.cooldown,0,3):attackInterval(id)*(.55+(i%3)*.2)};
+ });
+ s.battleEvent=raw.battleEvent&&typeof raw.battleEvent==='object'
+  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
+     id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
+ s.battleCueSeq=integer(raw.battleCueSeq);
+ updateSquadHealth(s);
  s.enemyHp=s.enemyHp||enemyMax(s.stage);
  return s;
 }
 function rand(s){let x=(s.seed>>>0)||123456789;x^=x<<13;x^=x>>>17;x^=x<<5;s.seed=x>>>0;return s.seed/4294967296;}
 function note(s,m){s.events.push(m);if(s.events.length>8)s.events.shift();}
 function enemyMax(stage){return Math.min(1e13,Math.round((isBoss(stage)?3.8:isElite(stage)?2:1)*13*Math.pow(1.235,Math.min(stage-1,100))));}
-function maxHp(s){return Math.max(1,UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.hp*(u.id==='guard'?1+.20*relic(s,'guard'):1),0)*(1+.16*s.training)*(1+.10*relic(s,'shield'))*(1+.06*s.coreUpgrades.valor));}
+function actorMaxHp(s,id){
+ const unit=UNITS.find(u=>u.id===id)||UNITS[0];
+ return unit.hp*(1+.16*s.training)*(1+.10*relic(s,'shield'))*(1+.06*s.coreUpgrades.valor)*(id==='guard'?1+.20*relic(s,'guard'):1);
+}
+function maxHp(s){return Math.max(1,UNITS.reduce((sum,u)=>sum+s.units[u.id]*actorMaxHp(s,u.id),0));}
+function attackInterval(id){return id==='guard'?1.35:id==='ranger'?1.65:1.9;}
+function actorSpeed(id){return id==='guard'?.51:id==='ranger'?.70:.56;}
+function attackRange(id){return id==='guard'?.83:.36;}
+function updateSquadHealth(s){
+ s.squadHp=s.actors.reduce((sum,a)=>sum+(a.revive>0?0:a.hp),0);
+ const waits=s.actors.filter(a=>a.revive>0).map(a=>a.revive);
+ s.respawn=s.squadHp<=0&&waits.length?Math.min(...waits):0;
+}
+function battleCue(s,type,id,value=0){s.battleCueSeq++;s.battleEvent={seq:s.battleCueSeq,type,id,value:Math.max(0,value)};}
 function partyDps(s){return UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.dps*(u.id==='ranger'?1+.15*relic(s,'archer'):1),0)*(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*(1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor);}
 function healDps(s){return s.units.medic*2.7*(1+.18*relic(s,'medkit'))*(1+.08*s.training);}
 function questIncome(s,q){return q.income*(1+1.1*s.questLevels[q.id])*(1+.12*relic(s,'income'))*(1+.08*s.traits.supply)*(1+.09*s.coreUpgrades.trade);}
@@ -86,16 +118,57 @@ function victory(s){
  if(isElite(cleared)){s.chests++;note(s,(isBoss(cleared)?'지휘급 목표 격파!':'정예 목표 격파!')+' 보급 상자 1개 확보');}
  s.stage++;s.runBest=Math.max(s.runBest,s.stage);s.best=Math.max(s.best,s.stage);
  s.enemyHp=enemyMax(s.stage);
- s.squadHp=Math.min(maxHp(s),s.squadHp+Math.max(4,maxHp(s)*.15));
+ // New wave: units regroup behind the front line, survivors recover a little.
+ for(const a of s.actors){a.progress=Math.max(0,a.progress-.75);if(a.revive===0)a.hp=Math.min(actorMaxHp(s,a.id),a.hp+actorMaxHp(s,a.id)*.15);}
+ updateSquadHealth(s);battleCue(s,'clear','guard',cleared);
 }
 function fight(s,dt){
- if(s.respawn>0){s.respawn=Math.max(0,s.respawn-dt);if(s.respawn===0){s.squadHp=maxHp(s);s.enemyHp=enemyMax(s.stage);note(s,'부대 재정비 완료');}return;}
- const damage=partyDps(s)*(isBoss(s.stage)?1+.14*relic(s,'boss'):1)*dt;
+ // Individual fighters move to the clash; guards engage up close, rangers attack
+ // from the rear, and medics heal the most injured living squad member.
+ let returned=false;
+ for(const a of s.actors){
+  if(a.revive>0){
+   a.revive=Math.max(0,a.revive-dt);
+   if(a.revive===0){a.hp=actorMaxHp(s,a.id);a.progress=0;a.cooldown=.5;returned=true;battleCue(s,'returned',a.id);}
+  }else a.progress=Math.min(1,a.progress+actorSpeed(a.id)*dt);
+ }
+ if(returned)note(s,'후퇴한 용병이 전선에 재합류했어.');
+ const living=s.actors.filter(a=>a.revive===0&&a.hp>0);
+ if(!living.length){updateSquadHealth(s);return;}
+ const boss=isBoss(s.stage);
+ let damage=0;
+ for(const a of living){
+  a.cooldown-=dt;
+  if(a.progress<attackRange(a.id)||a.cooldown>0)continue;
+  const u=UNITS.find(u=>u.id===a.id);
+  const multiplier=(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
+   (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*
+   (a.id==='ranger'?1+.15*relic(s,'archer'):1)*(boss?1+.14*relic(s,'boss'):1);
+  damage+=u.dps*attackInterval(a.id)*multiplier;
+  a.cooldown+=attackInterval(a.id);battleCue(s,'hit',a.id,u.dps*attackInterval(a.id)*multiplier);
+ }
  s.enemyHp-=damage;
  if(s.enemyHp<=0){victory(s);return;}
- const enemyDps=.4*Math.pow(1.17,Math.min(s.stage-1,100))*(isBoss(s.stage)?2.2:isElite(s.stage)?1.4:1);
- s.squadHp=Math.min(maxHp(s),s.squadHp+(healDps(s)-enemyDps)*dt);
- if(s.squadHp<=0){s.squadHp=0;s.respawn=5;note(s,'부대 후퇴 · 5초 후 재정비');}
+ // Medics work only while alive; injury persists on individual actors.
+ for(const medic of living.filter(a=>a.id==='medic'&&a.progress>=.25)){
+  const patient=living.filter(a=>a.hp<actorMaxHp(s,a.id)-.001)
+   .sort((a,b)=>a.hp/actorMaxHp(s,a.id)-b.hp/actorMaxHp(s,b.id))[0];
+  if(patient){
+   const amount=Math.min(actorMaxHp(s,patient.id)-patient.hp,2.7*(1+.18*relic(s,'medkit'))*(1+.08*s.training)*dt);
+   if(amount>0){patient.hp+=amount;battleCue(s,'heal',patient.id,amount);}
+  }
+ }
+ const enemyDps=.4*Math.pow(1.17,Math.min(s.stage-1,100))*(boss?2.2:isElite(s.stage)?1.4:1);
+ const frontline=living.filter(a=>a.progress>.25).sort((a,b)=>
+  (a.id==='guard'?0:a.id==='ranger'?1:2)-(b.id==='guard'?0:b.id==='ranger'?1:2)||
+  b.progress-a.progress)[0];
+ if(frontline){
+  frontline.hp=Math.max(0,frontline.hp-enemyDps*dt);
+  if(frontline.hp<=0){frontline.revive=6;frontline.progress=0;frontline.cooldown=.5;
+   battleCue(s,'fallen',frontline.id);note(s,(UNITS.find(u=>u.id===frontline.id)||UNITS[0]).name+' 후퇴 · 재합류 대기');}
+ }
+ updateSquadHealth(s);
+ if(s.squadHp<=0){s.enemyHp=enemyMax(s.stage);battleCue(s,'rally','guard');note(s,'부대 전원 후퇴 · 적 전선 재정비');}
 }
 function tick(s,seconds){
  const duration=num(seconds,0,7200);
@@ -108,15 +181,19 @@ function tick(s,seconds){
  return s;
 }
 function recruit(s){
- const options=UNITS.filter(u=>s.best>=u.unlock);const cost=hireCost(s);if(s.credits<cost)return false;
+ const options=UNITS.filter(u=>s.best>=u.unlock);const cost=hireCost(s);if(s.credits<cost||total(s)>=MAX_ACTORS)return false;
  s.credits-=cost;
  // Choice-pool biased toward lower-population roles; unlocked types can join during any run.
  const weights=options.map(u=>1/(1+s.units[u.id]*.45));const sum=weights.reduce((a,b)=>a+b,0);let roll=rand(s)*sum;
  let chosen=options[options.length-1];for(let i=0;i<options.length;i++){roll-=weights[i];if(roll<=0){chosen=options[i];break;}}
- s.units[chosen.id]++;s.squadHp=Math.min(maxHp(s),s.squadHp+chosen.hp);
- note(s,chosen.name+' 소집');return chosen.id;
+ if(total(s)>=MAX_ACTORS)return false;
+ s.units[chosen.id]++;s.actors.push({id:chosen.id,hp:actorMaxHp(s,chosen.id),revive:0,progress:0,cooldown:.6});
+ updateSquadHealth(s);note(s,chosen.name+' 소집');return chosen.id;
 }
-function train(s){const cost=trainCost(s);if(s.credits<cost)return false;s.credits-=cost;s.training++;s.squadHp=Math.min(maxHp(s),s.squadHp+18);return true;}
+function train(s){const cost=trainCost(s);if(s.credits<cost)return false;
+ const oldMax=s.actors.map(a=>actorMaxHp(s,a.id));s.credits-=cost;s.training++;
+ s.actors.forEach((a,i)=>{if(a.revive===0)a.hp=Math.min(actorMaxHp(s,a.id),a.hp+actorMaxHp(s,a.id)-oldMax[i]);});
+ updateSquadHealth(s);return true;}
 function upgradeQuest(s,id){const q=QUESTS.find(x=>x.id===id);if(!q||s.stage<q.unlock||s.credits<questCost(s,q))return false;s.credits-=questCost(s,q);s.questLevels[id]++;return true;}
 function openChest(s){
  if(s.chests<1)return null;s.chests--;s.chestsOpened++;
@@ -138,7 +215,8 @@ function rebirthGain(s){return s.runBest<10?0:Math.max(1,Math.floor(Math.sqrt((s
 function rebirth(s){
  const gain=rebirthGain(s);if(!gain)return false;
  const keep={seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills};
- Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);s.squadHp=maxHp(s);
+ Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
+ s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  note(s,'탐사 귀환 · 코어 '+gain+'개 획득. 영구 유물/레벨 유지');
  return gain;
 }
@@ -147,5 +225,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1)tick(s,Math.floor(elapsed));
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,openChest,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,MAX_ACTORS,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,openChest,buyTrait,buyCore,rebirth,rebirthGain,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
