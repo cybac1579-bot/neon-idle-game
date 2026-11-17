@@ -32,3 +32,12 @@
 5. 실제 플레이 분석을 원하면 도감의 **내 플레이 기록 JSON 내보내기**를 사용해 직접 파일 공유. 사용자 체감 피드백도 함께 남기기.
 
 확정 전제: 더 많은 콘텐츠, 새 재화, 강제 시간 제한, 환생 횟수 무료 보너스 등은 실제 장기 재미 검증 전 추가하지 않는다.
+
+
+## 최신 검증된 아티팩트 (실제 생성)
+- GitHub Actions 실행 ID: `44143464585`, **SUCCESS**
+- 코드 SHA: `43a0803e41184f488a96e2377901fbcecae79920`
+- 다운로드: [GitHub Actions 아티팩트](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44143464585/artifacts/14356485280)
+- Artifact id: `14356485280`, `neon-expedition-offline-playable`, 만료 예정: **2026-12-17 18:04 UTC**
+- 엔진 테스트 **86/86**, 360·390·412px Chromium 정상 동작, `file://` 네트워크 차단·백업/복원/새로고침 PASS.
+- **실기기 테스트는 별도 단계**이며 실행 가능성만 엔진과 데스크톱 Chromium으로 확인했다. ZIP 내 `neon-expedition-offline.html`을 실행하면 된다.
