@@ -645,3 +645,64 @@ require('./expedition-depth-relic.test.cjs');
 
 // First-clear reward never depends on rebirth count and never duplicates after reload.
 require('./expedition-breakthrough.test.cjs');
+
+
+test('return report compares exact before/after untrained two-guard opening power',()=>{
+ const s=E.newState(1000),initial={...s.runOpening};
+ assert.equal(initial.attack,E.partyDps(s));
+ assert.equal(initial.hp,E.maxHp(s));
+ assert.equal(initial.income,E.questIncome(s,E.QUESTS[0]));
+ s.stage=s.runBest=s.best=26;s.clock=1200;
+ s.coreProgress=2.4;s.relics.ember=2;s.relics.shield=1;s.relics.income=1;
+ const result=E.rebirth(s);
+ assert.ok(result>0);
+ assert.equal(s.latestReturn.number,1);
+ assert.equal(s.latestReturn.cleared,25);
+ assert.equal(s.latestReturn.cores,result);
+ assert.deepEqual(s.latestReturn.before,initial);
+ assert.deepEqual(s.latestReturn.after,s.runOpening);
+ assert.ok(s.runOpening.attack>initial.attack);
+ assert.ok(s.runOpening.hp>initial.hp);
+ assert.ok(s.runOpening.income>initial.income);
+ assert.equal(s.runOpening.attack,E.partyDps(s));
+ assert.equal(s.runOpening.hp,E.maxHp(s));
+ assert.equal(s.runOpening.income,E.questIncome(s,E.QUESTS[0]));
+ assert.ok(Math.abs(s.coreReserve-.4)<1e-9);
+ const restored=E.normalize(JSON.parse(JSON.stringify(s)),2000);
+ assert.deepEqual(restored.latestReturn,s.latestReturn);
+ assert.deepEqual(restored.runOpening,s.runOpening);
+ const startAttack=restored.runOpening.attack;
+ if(E.buyCore(restored,'valor'))assert.equal(restored.runOpening.attack,startAttack,'opening snapshot must not change after subsequent investment');
+});
+
+test('legacy saves without opening snapshots never invent a historical power comparison',()=>{
+ const old=E.newState(1000);
+ old.stage=old.runBest=old.best=26;old.rebirths=3;
+ delete old.runOpening;delete old.latestReturn;
+ const loaded=E.normalize(JSON.parse(JSON.stringify(old)),2000);
+ assert.equal(loaded.runOpening,null);
+ assert.equal(loaded.latestReturn,null);
+ loaded.coreProgress=1.25;
+ assert.ok(E.rebirth(loaded)>0);
+ assert.equal(loaded.latestReturn.before,null,'unknown old-run opening stats stay unknown');
+ assert.ok(loaded.latestReturn.after.attack>0);
+ assert.deepEqual(loaded.runOpening,loaded.latestReturn.after);
+});
+
+test('malformed return reports and opening values are sanitized on load',()=>{
+ const raw=E.newState(1000);
+ raw.runOpening={attack:'overwritten',hp:96,income:9};
+ raw.latestReturn={
+  number:1,cleared:35,cores:2,earned:1,firstClear:1,
+  relicKinds:9999,relicCopies:4,duration:120,chests:0,
+  before:{attack:-10,hp:96,income:9},
+  after:{attack:4.5,hp:100,income:10},
+  inventedDeviceId:'not part of the schema'
+ };
+ const cleaned=E.normalize(JSON.parse(JSON.stringify(raw)),2000);
+ assert.equal(cleaned.runOpening,null);
+ assert.equal(cleaned.latestReturn.before,null);
+ assert.equal(cleaned.latestReturn.relicKinds,E.RELICS.length);
+ assert.deepEqual(cleaned.latestReturn.after,{attack:4.5,hp:100,income:10});
+ assert.equal(Object.hasOwn(cleaned.latestReturn,'inventedDeviceId'),false);
+});
