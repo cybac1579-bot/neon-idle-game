@@ -159,6 +159,11 @@ function renderArchive(){
    '<div class="statline"><span>'+safe('거리 '+r.best+' · '+duration(r.duration))+'</span><b>'+
    safe('수동 '+r.manualPurchases+' / 자동 '+r.autoPurchases+' · 코어 '+r.cores)+'</b></div>').join(''):'')+
   s.events.slice().reverse().map(m=>'<div class="sub" style="padding:5px 0;border-bottom:1px solid #304359">'+safe(m)+'</div>').join('');
+ const samples=s.playtest.snapshots.length;
+ $('playtestSummary').innerHTML=row('기록한 1분 단위 상태',fmt(samples)+'개')+
+  row('지난 오프라인 정산',fmt(Math.floor(s.playtest.offlineSeconds/60))+'분')+
+  row('기록된 귀환',fmt(s.runHistory.length)+'회')+
+  row('현재 자동 성장',s.autoBuy.enabled?'켜짐 · '+s.autoBuy.mode:'꺼짐');
 }
 function render(){
  renderBattle();
@@ -204,6 +209,48 @@ function openChestWithCount(count,source){
  $('relicPopup').hidden=false;
  $('popupClose').focus();
 }
+function exportPlaytest(){
+ // User-initiated local download. No analytics endpoint, device ID or credentials.
+ save();
+ const data={
+  schema:'neon-expedition-playtest-v1',
+  exportedAt:new Date().toISOString(),
+  origin:'local-user-export',game:'네온 방치단 독립 용병단 탐사 원형',
+  note:'자동 전송되지 않은 사용자 기기의 플레이 관찰 기록',
+  currentRun:{
+   number:s.rebirths+1,seconds:Math.floor(s.clock),distance:s.stage,
+   best:s.runBest,credits:s.credits,heroLevel:s.heroLevel,
+   training:s.training,units:{...s.units},questLevels:{...s.questLevels},
+   chests:s.chests,kills:s.runKills,
+   manualGrowthPurchases:s.runMetrics.manualPurchases,
+   manualGrowthSpent:s.runMetrics.manualSpent,
+   automaticPurchases:s.autoBuy.purchases,
+   automaticSpent:s.autoBuy.spent,chestsOpened:s.runMetrics.chestsOpened,
+   autoMode:s.autoBuy.enabled?s.autoBuy.mode:'off'
+  },
+  lifetime:{
+   bestDistance:s.best,commanderLevel:s.heroLevel,
+   relics:{...s.relics},cores:s.cores,coreUpgrades:{...s.coreUpgrades},
+   returns:s.rebirths
+  },
+  recentReturns:s.runHistory.map(x=>({...x})),
+  minuteSnapshots:s.playtest.snapshots.map(x=>({...x})),
+  offlineSettledSeconds:s.playtest.offlineSeconds
+ };
+ const json=JSON.stringify(data,null,2);
+ const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+ const url=URL.createObjectURL(blob);
+ const link=document.createElement('a');
+ link.href=url;
+ link.download='neon-expedition-playtest-'+new Date().toISOString().slice(0,10)+'.json';
+ document.body.appendChild(link);
+ link.click();
+ link.remove();
+ // Delay revocation for Android Chrome and other browsers that start downloads asynchronously.
+ setTimeout(()=>URL.revokeObjectURL(url),30000);
+ notify('플레이 기록 JSON 파일을 생성했어. 기기 다운로드를 확인해 줘.');
+ render();
+}
 function closeRelicPopup(){
  $('relicPopup').hidden=true;
  render();
@@ -241,6 +288,7 @@ $('rebirth').addEventListener('click',()=>{
  act(()=>E.rebirth(s));screen('battle');
 });
 $('saveNow').addEventListener('click',()=>{if(save())notify('탐사 기록 저장 완료');render();});
+$('exportPlaytest').addEventListener('click',exportPlaytest);
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden){save();}
  else{const elapsed=E.offline(s,Date.now());if(elapsed>1)notify('복귀 정산: '+fmt(elapsed)+'초 탐사');lastFrame=performance.now();save();render();}
