@@ -5,10 +5,12 @@
 // one upgrade type per visit, up to 3 levels per click, optional STAGE75 reward and 5 seeded scenarios.
 // It is NOT a human playtest and does not establish a globally optimal strategy.
 const fs=require('node:fs');
+const crypto=require('node:crypto');
 const vm=require('node:vm');
 const path=require('node:path');
 const assert=require('node:assert/strict');
 const source=fs.readFileSync(path.resolve(__dirname,'../site/game.js'),'utf8');
+const gameSourceSha256=crypto.createHash('sha256').update(source).digest('hex');
 const LOW_INPUT=['low-input','one-buy','two-minute'].includes(process.env.BALANCE_MODE);
 const TWO_MINUTE=process.env.BALANCE_MODE==='two-minute';
 const ONE_BUY=process.env.BALANCE_MODE==='one-buy';
@@ -59,6 +61,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
  const attackOrder=['atk','spd','amp','reactor','gen','forge','relay'];
  const checkpoints={},milestones=[20,45,55,60,65,70,75,85,95,100];
  const purchases=Object.fromEntries(kinds.map(k=>[k,0]));
+ let firstSkillDecision=null,firstSkillAlreadyOwnedAtDecision=false;
  let firstSlot=null,manualBuys=0,manualPurchaseActions=0,manualClaims=0,manualTraitBuys=0,allocationActions=0,loadoutActions=0,visits=0,stageAt30=null,stageAt60=null,actionsAt30=null,actionsAt60=null,purchaseActionsAt30=null,purchaseActionsAt60=null,purchaseCountAt30=null,purchaseCountAt60=null,skillSnapshot30=null,skillSnapshot60=null;
  const tmax=5400, steps=Math.round(tmax/.25);
  function chooseUpgrade(choices){
@@ -104,7 +107,10 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
   const seconds=tick*.25;
   if(tick%(twoMinute?480:lowInput?240:40)===0){
    visits++;
-   if(s.stage>=skillChoiceStage&&!s.skillChoiceUsed&&!s.skillsOwned.includes(skill))chooseSkill(skill);
+   if(s.stage>=skillChoiceStage&&!s.skillChoiceUsed){
+    if(s.skillsOwned.includes(skill))firstSkillAlreadyOwnedAtDecision=true;
+    else if(chooseSkill(skill))firstSkillDecision={seconds,stage:s.stage,skill};
+   }
    if(s.stage>=55){
      // A realistic two-decision experiment: finance reactor unlock (55-64), then push.
      const target=allocationPolicy==='supply-pivot'?(s.stage<65?'supply':'assault'):allocationPolicy;
@@ -143,7 +149,7 @@ function runPolicy(policy,skill,lowInput,oneBuy,twoMinute,allocationPolicy,loado
  if(s.stage<1||s.rebirths!==0||s.cores!==0||!Number.isFinite(s.credits))throw Error('First-run invariant failed');
  const manualActions=actionCount();
  if(lowInput){const maxPerVisit=oneBuy?1:3;if(manualPurchaseActions>visits)throw Error('Purchase clicks exceeded low-input visits');if(manualBuys>manualPurchaseActions*maxPerVisit)throw Error('One visit bought more levels than the actual selector permits');}
- return {readySec:checkpoints[100]??null,stageAt30,stageAt60,actionsAt30,actionsAt60,stageAt90:s.stage,
+ return {firstSkillDecision,firstSkillAlreadyOwnedAtDecision,readySec:checkpoints[100]??null,stageAt30,stageAt60,actionsAt30,actionsAt60,stageAt90:s.stage,
   heroLevel:s.heroLevel,heroLv10Sec:firstSlot,stageTimes:checkpoints,
   manualActions,purchaseCount:manualBuys,purchaseActions:manualPurchaseActions,visitCount:visits,loadoutActions,
   purchaseActionsAt30,purchaseActionsAt60,purchaseCountAt30,purchaseCountAt60,skillSnapshot30,skillSnapshot60,claimCount:manualClaims,traitCount:manualTraitBuys,
@@ -185,7 +191,7 @@ for(const policy of POLICIES)for(const skill of SKILL_IDS){
  console.log('SIM_POLICY '+JSON.stringify(row));
 }
 const payload={title:LOW_INPUT?'Constrained-input first reconstruction; decisions every '+(TWO_MINUTE?120:60)+'s, at most '+(ONE_BUY?1:3)+' purchases and 1 trait per visit; not human play':'First reconstruction baseline; simulated 0.25s ticks, manual decisions every 10s, not human play',
- observedAtUtc:new Date().toISOString(),seeds:SEEDS,allocationPolicy:ALLOCATION_POLICY,loadoutPolicy:LOADOUT_POLICY,diagnostic:BALANCE_DIAGNOSTIC,skillChoiceStage:SKILL_CHOICE_STAGE,policies:POLICIES,skills:SKILL_IDS,summary,detailed};
+ observedAtUtc:new Date().toISOString(),gameSourceSha256,simulatorMode:{lowInput:LOW_INPUT,oneBuy:ONE_BUY,twoMinute:TWO_MINUTE,decisionIntervalSec:TWO_MINUTE?120:LOW_INPUT?60:10},seeds:SEEDS,allocationPolicy:ALLOCATION_POLICY,loadoutPolicy:LOADOUT_POLICY,diagnostic:BALANCE_DIAGNOSTIC,skillChoiceStage:SKILL_CHOICE_STAGE,policies:POLICIES,skills:SKILL_IDS,summary,detailed};
 fs.mkdirSync(path.resolve(__dirname,'../artifacts/balance'),{recursive:true});
 const allocationFile=DELAYED_SKILL_DIAGNOSTIC?'../artifacts/balance/skill-choice-stage-'+SKILL_CHOICE_STAGE+'.json':LOADOUT_DIAGNOSTIC?'../artifacts/balance/skill-loadout-'+LOADOUT_POLICY+'.json':BALANCE_DIAGNOSTIC?'../artifacts/balance/allocation-'+ALLOCATION_POLICY+'.json':
  LOW_INPUT?(ONE_BUY?'../artifacts/balance/first-rebirth-one-buy.json':TWO_MINUTE?'../artifacts/balance/first-rebirth-two-minute.json':'../artifacts/balance/first-rebirth-low-input.json'):'../artifacts/balance/first-rebirth-baseline.json';
