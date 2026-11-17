@@ -42,3 +42,6 @@ for(const mode of modes){
  summaries.push(result);
 }
 console.log(JSON.stringify({experiment:'30-minute low-touch selected auto-buy',evidence:'Deterministic engine simulation only, not human playing',notes:'Up to six player check-ins, every 300 sec, to open all earned relic chests. Manual growth purchases = 0; all purchases require opt-in. Under a no-check-in scenario chests remain unopened and growth is weaker.',summaries}));
+
+// Keep the longer three-expedition comparison on the same proven CI path.
+require('./expedition-route-audit.cjs');
