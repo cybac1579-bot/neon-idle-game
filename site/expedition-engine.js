@@ -45,6 +45,17 @@ const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purc
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
+// Record only the two-guard, untrained *opening* formation. New saves use
+// the actual engine-derived values; old saves without an opening snapshot
+// never receive an invented historic comparison.
+const initialRunOpening=()=>({
+ attack:UNITS[0].dps*2,hp:UNITS[0].hp*2,income:QUESTS[0].income
+});
+const validOpening=x=>x&&typeof x==='object'&&
+ ['attack','hp','income'].every(k=>Number.isFinite(x[k])&&x[k]>0)?{
+  attack:num(x.attack,0,1e14),hp:num(x.hp,0,1e14),
+  income:num(x.income,0,1e14)
+ }:null;
 
 const isBoss=stage=>stage%10===0;
 const isElite=stage=>stage%5===0;
@@ -56,7 +67,7 @@ const newState=(now=Date.now())=>({
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestDepths:[],chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],relicHistory:[],playtest:initialPlaytest(),events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runHistory:[],relicHistory:[],playtest:initialPlaytest(),runOpening:initialRunOpening(),latestReturn:null,events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -95,6 +106,17 @@ function normalize(raw,now=Date.now()){
  s.runMetrics=initialRunMetrics();
  for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
  s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
+ s.runOpening=validOpening(raw.runOpening);
+ const report=raw.latestReturn;
+ s.latestReturn=report&&typeof report==='object'&&Number.isFinite(report.cleared)&&Number.isFinite(report.cores)?{
+  number:integer(report.number,1,1e9),cleared:integer(report.cleared,10,100000),
+  duration:integer(report.duration,0,1e9),cores:integer(report.cores,0,1e9),
+  earned:integer(report.earned,0,1e9),firstClear:integer(report.firstClear,0,1e9),
+  relicKinds:integer(report.relicKinds,0,RELICS.length),
+  relicCopies:integer(report.relicCopies,0,1000),
+  chests:integer(report.chests,0,1e9),
+  before:validOpening(report.before),after:validOpening(report.after)
+ }:null;
  s.runHistory=Array.isArray(raw.runHistory)?raw.runHistory.slice(-5).filter(x=>x&&typeof x==='object').map(x=>({
   duration:integer(x.duration,0,1e9),best:integer(x.best,1,100000),
   kills:integer(x.kills,0,1e9),cores:integer(x.cores,0,1e9),
@@ -444,8 +466,17 @@ function rebirthRewards(s){
   pending:progress,fraction:Math.max(0,progress-base)};
 }
 function rebirthGain(s){return rebirthRewards(s).total;}
+function runOpeningSnapshot(s){
+ return {attack:partyDps(s),hp:maxHp(s),income:questIncome(s,QUESTS[0])};
+}
 function rebirth(s){
  const reward=rebirthRewards(s),gain=reward.total;if(!gain)return false;
+ const before=validOpening(s.runOpening);
+ const previous={number:s.rebirths+1,cleared:s.runBest-1,
+  duration:Math.floor(s.clock),cores:gain,earned:reward.base,firstClear:reward.recordBonus,
+  relicKinds:RELICS.filter(r=>relic(s,r.id)>0).length,
+  relicCopies:RELICS.reduce((sum,r)=>sum+relic(s,r.id),0),
+  chests:s.chests,before};
  const summary={duration:Math.floor(s.clock),best:s.runBest,kills:s.runKills,cores:gain,
   manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
   chestsOpened:s.runMetrics.chestsOpened};
@@ -454,7 +485,9 @@ function rebirth(s){
   coreReserve:Math.min(1,Math.max(0,reward.fraction)),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
  Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
- note(s,'탐사 귀환 · 코어 '+gain+'개 획득'+(reward.recordBonus?' (최초 기록 +'+reward.recordBonus+')':'')+'. 영구 유물/레벨 유지');
+ s.runOpening=runOpeningSnapshot(s);
+ s.latestReturn={...previous,after:{...s.runOpening}};
+ note(s,'탐사 귀환 · 코어 +gain+'개 획득'+(reward.recordBonus?' (최초 기록 +'+reward.recordBonus+')':'')+'. 영구 유물/레벨 유지');
  return gain;
 }
 function offline(s,now=Date.now()){
