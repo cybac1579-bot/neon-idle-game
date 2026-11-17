@@ -186,6 +186,16 @@ function renderArchive(){
  $('coreValor').disabled=s.cores<E.coreCost(s,'valor')||s.coreUpgrades.valor>=30;
  $('coreTrade').disabled=s.cores<E.coreCost(s,'trade')||s.coreUpgrades.trade>=30;
  const duration=seconds=>{const n=Math.floor(seconds||0);return Math.floor(n/3600)+'시간 '+Math.floor(n%3600/60)+'분 '+n%60+'초';};
+ // Exact boss/elite clear timing stays here in the archive, not on the battle HUD.
+ const milestoneTime=seconds=>seconds===undefined?'미격파':
+  Math.floor(seconds/60)+'분 '+(seconds%60).toFixed(1)+'초';
+ const former=s.runHistory.at(-1)?.milestones||{};
+ $('milestoneSummary').innerHTML='<p class="sub">해당 거리의 적을 격파한 시각 · 직전 탐사와 비교</p>'+
+  [5,10,15,25,35].map(stage=>row(
+   stage+'거리 '+(stage%10===0?'보스':'정예'),
+   '이번 '+milestoneTime(s.runMilestones[stage])+
+   (former[stage]!==undefined?' · 직전 '+milestoneTime(former[stage]):'')
+  )).join('');
  $('history').innerHTML='<div class="sub" style="margin:4px 0 10px">이번 탐사: '+safe(duration(s.clock))+
   ' · 수동 구매 '+fmt(s.runMetrics.manualPurchases)+'회 · 자동 구매 '+fmt(s.autoBuy.purchases)+'회 · 상자 개봉 '+fmt(s.runMetrics.chestsOpened)+'개</div>'+
   (s.runHistory.length?'<h3 style="font-size:13px;color:#d6f4ed">최근 귀환 5회</h3>'+s.runHistory.slice().reverse().map((r,i)=>
@@ -261,7 +271,8 @@ function exportPlaytest(){
    automaticPurchases:s.autoBuy.purchases,
    automaticSpent:s.autoBuy.spent,chestsOpened:s.runMetrics.chestsOpened,
    autoMode:s.autoBuy.enabled?s.autoBuy.mode:'off',
-   pendingReturnProgress:s.coreProgress,carryReturnFraction:s.coreReserve
+   pendingReturnProgress:s.coreProgress,carryReturnFraction:s.coreReserve,
+   milestoneClears:{...s.runMilestones}
   },
   lifetime:{
    bestDistance:s.best,commanderLevel:s.heroLevel,
