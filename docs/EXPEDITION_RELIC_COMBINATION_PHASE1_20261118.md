@@ -28,3 +28,11 @@
 ## 배포·저장
 - 개발 기준 브랜치 `integration/reconcile-main-redesign-20261114`에만 반영. 공개 `main`/기존 `site/game.js` 변경 없음.
 - 실제 사용자 플레이 HTML은 자동으로 교체되지 않음. 구 파일에서 **유물 → 전체 저장 백업** 후 새 파일에서 **유물 → 저장 파일 복원**해야 기존 유물/귀환 현황을 이어갈 수 있다. 분석용 플레이 기록 JSON과 혼동하지 않는다.
+
+
+## CI 통과와 독립 테스트판
+- **검증된 통합 브랜치 push SHA** `3ceea876880c59ba4a7a93c7b31877e9f3f3aef1`; [GitHub Actions #44225113862](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44225113862) **SUCCESS**.
+- Node 엔진 회귀 `159/159 PASS`, 기존 모바일 세로 360/390/412px 탐사·도감·귀환·저장 및 `file://` 오프라인 단일 HTML 백업·복원·재로드 테스트 모두 PASS. 2시간 × 3시드 × 2자동 구매 전략 수동 엔진 재현에서도 깊이별 유물 조기 획득 위반 0, 40/45거리의 정상 해금 보장 위반 0.
+- 빌드 [`neon-expedition-offline-playable`](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44225113862/artifacts/14392871830)에는 `neon-expedition-build=3ceea876880c`가 포함되어 있음. 브라우저에서 기존 진행을 유지하려면 **구 파일 전체 저장 백업 → 신 파일 저장 파일 복원**.
+- 이후 작은 화면 설명 문구 변경은 별도 커밋으로 기록된다. 본 159-test PASS/아티팩트는 위 **정확한 SHA**에서 검증한 것이며 후속 코드 변경까지 검증했다고 주장하지 않는다.
+- 이 조합은 1개 수직 기능이며 유물 15종 한계, 장기 지루함, 실제 실기기 경험을 완전히 해결했다고 볼 수 없다. 인터페이스도 사용자가 승인한 최종 디자인이 아니므로 추후 전면 교체 가능하게 유지.
