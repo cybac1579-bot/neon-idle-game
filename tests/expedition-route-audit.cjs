@@ -120,3 +120,6 @@ require('./expedition-auto-chest-impact-audit.cjs');
 
 // First 25 clear farming vs a deep 45 expedition through the full 50 boss.
 require('./expedition-stage50-two-routes-audit.cjs');
+
+// Deep 55 discovery / 60 boss second-phase pacing, real three-run progression.
+require('./expedition-post50-pursuit-audit.cjs');
