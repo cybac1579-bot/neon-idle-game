@@ -7,6 +7,7 @@ on:
       - 'site/expedition-engine.js'
       - 'tests/expedition*.test.cjs'
       - 'tests/expedition-first-playable-gate.cjs'
+      - 'tests/expedition-first-playable-stall-audit.cjs'
       - 'tests/expedition.test.cjs'
       - '.github/workflows/expedition-fast-regression.yml'
   pull_request:
@@ -16,9 +17,8 @@ on:
       - 'site/expedition-engine.js'
       - 'tests/expedition*.test.cjs'
       - 'tests/expedition-first-playable-gate.cjs'
-      - 'tests/expedition-first-playable-gate.cjs'
+      - 'tests/expedition-first-playable-stall-audit.cjs'
       - 'tests/expedition.test.cjs'
-      - 'tests/expedition-first-playable-gate.cjs'
       - '.github/workflows/expedition-fast-regression.yml'
   workflow_dispatch:
 permissions:
@@ -42,8 +42,12 @@ jobs:
           node --check tests/expedition-stage65-diagram.test.cjs
           node --check tests/expedition-elite65-hp-migration.test.cjs
           node --check tests/expedition-first-playable-gate.cjs
+          node --check tests/expedition-first-playable-stall-audit.cjs
           node --check tests/expedition-first-playable-gate.cjs
+          node --check tests/expedition-first-playable-stall-audit.cjs
       - name: Run expedition engine regression before browser installation
         run: node --test tests/expedition.test.cjs tests/expedition-stage65-diagram.test.cjs tests/expedition-elite65-hp-migration.test.cjs
       - name: Verify first playable 30-minute loop and two-hour resume
         run: node tests/expedition-first-playable-gate.cjs
+      - name: Observe first-run 15-to-30-minute stall and reward intervals
+        run: node tests/expedition-first-playable-stall-audit.cjs
