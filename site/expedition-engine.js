@@ -34,8 +34,8 @@ const RELICS=[
  {id:'medkit',name:'재생 결속선',desc:'정비사 회복력 +18%/개 · 방벽병 긴급 재합류 지원 (18초마다 최대 1회) · 작전 통신기와 함께 교란 사격 대응',cap:4,unlockStage:15},
  {id:'boss',name:'균열 렌즈',desc:'지휘급 적에게 주는 피해가 수집 수마다 14% 증가',cap:5,unlockStage:25},
  {id:'bounty',name:'현상금 표식',desc:'전투 크레딧 보상이 수집 수마다 12% 증가',cap:5,unlockStage:5},
- {id:'guard',name:'호위 계약서',desc:'방벽병 체력 +20%/개 · 초점 조준기와 측면 호위 · 55거리 이상 합금 배지와 함께 방벽병 단타 피해 경감',cap:4,unlockStage:5},
- {id:'archer',name:'초점 조준기',desc:'사수 3번째 사격마다 정밀 일제사격 · 호위 계약서와 조합하면 측면 조준 차단·자동 반격',cap:4,unlockStage:15},
+ {id:'guard',name:'호위 계약서',desc:'방벽병 체력 +20%/개 · 초점 조준기와 측면 호위 · 양쪽 2개씩·사수 2명일 때 40거리 이후 호위 협공 · 55거리 이상 합금 배지와 방벽병 단타 피해 경감',cap:4,unlockStage:5},
+ {id:'archer',name:'초점 조준기',desc:'사수 3번째 사격마다 정밀 일제사격 · 호위 계약서와 측면 호위 · 양쪽 2개씩·사수 2명일 때 40거리 이후 호위 협공',cap:4,unlockStage:15},
  {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치 +15%/개 · 작전 통신기와 함께 탐사 정보망 활성화',cap:4,unlockStage:25},
  {id:'fortune',name:'중복 해체권',desc:'중복 유물 발견 시 수집 수마다 추가 크레딧 획득',cap:3,unlockStage:30},
  {id:'relay',name:'작전 통신기',desc:'전체 피해량 +5%/개 · 탐사 일지와 함께 자동 유물 조사 · 재생 결속선과 함께 교란 사격 대응',cap:5,unlockStage:30},
@@ -65,7 +65,7 @@ const normalizedLongestEncounter=raw=>raw&&typeof raw==='object'&&
  stage:integer(raw.stage,0,100000),seconds:num(raw.seconds,0,1e9)
 }:initialLongestEncounter();
 // Per-run relic action telemetry; old saves default to no past activations.
-const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0});
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0});
 // New standard-enemy role is deterministic per stage and independent of drop RNG.
 function enemyKind(stage){
  if(isBoss(stage))return 'boss';
@@ -83,7 +83,7 @@ const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  counterDamage:num(raw.counterDamage,0,1e14),rushes:integer(raw.rushes,0,1e9),
  braces:integer(raw.braces,0,1e9),braceDamage:num(raw.braceDamage,0,1e14),
   jams:integer(raw.jams,0,1e9),cleanses:integer(raw.cleanses,0,1e9),cleanseDamage:num(raw.cleanseDamage,0,1e14),
-  commandMoves:integer(raw.commandMoves,0,1e9),commandSurges:integer(raw.commandSurges,0,1e9),guardPlateBlocks:integer(raw.guardPlateBlocks,0,1e9)
+  commandMoves:integer(raw.commandMoves,0,1e9),commandSurges:integer(raw.commandSurges,0,1e9),guardPlateBlocks:integer(raw.guardPlateBlocks,0,1e9),escortDuets:integer(raw.escortDuets,0,1e9)
 }:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
@@ -184,7 +184,7 @@ function normalize(raw,now=Date.now()){
  s.longestEncounter=normalizedLongestEncounter(raw.longestEncounter);
  s.longEngagements=integer(raw.longEngagements,0,1e9);
  s.relicEffects=initialRelicEffects();
- for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','jams','cleanses','commandMoves','commandSurges','guardPlateBlocks'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','jams','cleanses','commandMoves','commandSurges','guardPlateBlocks','escortDuets'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
  s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
  s.relicEffects.intelFinds=integer(raw.relicEffects?.intelFinds,0,2);
  s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
@@ -301,7 +301,7 @@ function normalize(raw,now=Date.now()){
    shots:a?integer(a.shots,0,2):0};
  });
  s.battleEvent=raw.battleEvent&&typeof raw.battleEvent==='object'
-  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','pursuit','triage','intel','aim','flank','intercept','rush-aim','rush','brace','jam-aim','jam','unjam'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
+  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','pursuit','triage','intel','aim','flank','intercept','intercept-duet','rush-aim','rush','brace','jam-aim','jam','unjam'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
@@ -635,11 +635,18 @@ function fight(s,dt){
     (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
     (1+.06*s.traits.command)*valorMultiplier(s)*pursuitBoost(s)*
     (boss?1+.14*relic(s,'boss'):1)*collection;
-   const counter=Math.min(s.enemyHp,.5*counterBase);
+   // Repeated collecting changes the actual defensive response only on
+   // deep commander focus: a second *living* ranger joins the counter shot.
+   // Early fights and formations with one ranger retain the old .5x answer.
+   const escortDuet=s.stage>=40&&relic(s,'guard')>=2&&relic(s,'archer')>=2&&
+    living.filter(a=>a.id==='ranger'&&a.progress>=.36&&a.hp>0&&a.revive===0).length>=2;
+   const counter=Math.min(s.enemyHp,(escortDuet?.75:.5)*counterBase);
    s.enemyHp-=counter;s.contribution.damage.ranger+=counter;
+   if(escortDuet)s.relicEffects.escortDuets=Math.min(1e9,s.relicEffects.escortDuets+1);
    s.relicEffects.counterDamage=Math.min(1e14,s.relicEffects.counterDamage+counter);
-   battleCue(s,'intercept','guard',counter);
-   note(s,'호위 사격 연계 · 후열 보호 · 척후사수 자동 반격');
+   battleCue(s,escortDuet?'intercept-duet':'intercept','guard',counter);
+   note(s,escortDuet?'호위 협공 · 방벽병 호위 아래 사수 2명이 후열 자동 역습':
+    '호위 사격 연계 · 후열 보호 · 척후사수 자동 반격');
   }else{
    s.enemyTactic.result='flank';
    battleCue(s,'flank',target.id,rearShot);
