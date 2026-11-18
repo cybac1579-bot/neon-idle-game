@@ -545,7 +545,12 @@ async function main(){
     s.enemyTactic.stage=70;s.enemyTactic.kind=E.enemyKind(70);
     s.relics.diagram=1;s.enemyHp=E.enemyMax(70)*.75+1;
     for(const a of s.actors){a.hp=1e8;a.progress=1;a.cooldown=0;}
-    E.tick(s,1);field.sync(s);
+    E.tick(s,1);
+    // Independent synthetic battle fixtures can reuse small event sequence
+    // numbers. Give this isolated preview a distinct number so the field's
+    // real incremental-render guard does not suppress the next cue.
+    s.battleCueSeq+=1000;s.battleEvent.seq=s.battleCueSeq;
+    field.sync(s);
     const cue=document.querySelector('.combat-cue')?.textContent;
     const saved=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
     return {proc:s.relicEffects.diagrams,cue,
