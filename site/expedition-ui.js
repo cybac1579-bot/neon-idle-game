@@ -345,7 +345,7 @@ function renderArchive(){
    '<div class="statline"><span>'+safe('거리 '+r.best+' · '+duration(r.duration))+'</span><b>'+
    safe('수동 '+r.manualPurchases+' / 자동 '+r.autoPurchases+' · 코어 '+r.cores+
     (Number.isFinite(r.autoChestOpened)?' · 상자 자동 '+r.autoChestOpened+'개':'')+
-    (r.relicEffects?' · 정밀 '+r.relicEffects.volleys+'회 · 긴급 '+r.relicEffects.triages+'회 · 정보망 '+(r.relicEffects.intelFinds||0)+'회 · 호위 반격 '+(r.relicEffects.intercepts||0)+'회 · 호위 협공 '+(r.relicEffects.escortDuets||0)+'회 · 돌격 저지 +(r.relicEffects.braces||0)+'회 · 역통신 '+(r.relicEffects.cleanses||0)+'회 · 지휘 전술 '+(r.relicEffects.commandMoves||0)+'회':''))+'</b></div>').join(''):'')+
+    (r.relicEffects?' · 정밀 '+r.relicEffects.volleys+'회 · 긴급 '+r.relicEffects.triages+'회 · 정보망 '+(r.relicEffects.intelFinds||0)+'회 · 호위 반격 '+(r.relicEffects.intercepts||0)+'회 · 호위 협공 '+(r.relicEffects.escortDuets||0)+'회 · 돌격 저지 '+(r.relicEffects.braces||0)+'회 · 역통신 '+(r.relicEffects.cleanses||0)+'회 · 지휘 전술 '+(r.relicEffects.commandMoves||0)+'회':''))+'</b></div>').join(''):'')+
   s.events.slice().reverse().map(m=>'<div class="sub" style="padding:5px 0;border-bottom:1px solid #304359">'+safe(m)+'</div>').join('');
  const samples=s.playtest.snapshots.length;
  $('playtestSummary').innerHTML=row('기록한 1분 단위 상태',fmt(samples)+'개')+
