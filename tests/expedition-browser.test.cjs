@@ -426,7 +426,7 @@ async function main(){
     if(!state)return;
     state.best=46;state.runBest=1;state.stage=1;
     state.claimedBreakthroughDistance=45;state.rebirths=2;
-    state.enemyHp=13;state.lastSaved=Date.now();
+    state.enemyHp=13;state.coreUpgrades.valor=3;state.lastSaved=Date.now();
     localStorage.setItem(key,JSON.stringify(state));
    });
    await frontierPage.reload({waitUntil:'networkidle'});
@@ -437,6 +437,9 @@ async function main(){
    assert.match(depthGoals,/다음 신규 유물 개방50거리 격파 · 원정 연대기/);
    assert.doesNotMatch(depthGoals,/15거리 격파 · 진군 북/,
     'return should never make a previously unlocked depth look new');
+   // LV3 attack power shown accurately after a legacy save reload.
+   assert.match(await frontierPage.locator('#coreSummary').textContent(),
+    /전선 코어 화력 효과\+9\.0%/);
    const goalBounds=await frontierPage.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(goalBounds.scroll<=goalBounds.width+1,
     'next deep collectible goal portrait overflow: '+JSON.stringify(goalBounds));
