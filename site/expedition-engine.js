@@ -348,13 +348,13 @@ function victory(s){
 // A visible single-use enemy pattern: only elites and bosses at depth 15+
 // prepare a rear-line focus attack. Existing enemy DPS is redistributed, not
 // added. Time and phase persist across save/reload and offline settlement.
-function advanceEnemyTactic(s,dt){
+function advanceEnemyTactic(s,dt,canTargetRear){
  if(!s.enemyTactic||s.enemyTactic.stage!==s.stage)s.enemyTactic=initialEnemyTactic(s.stage);
  const t=s.enemyTactic;
  t.flash=Math.max(0,t.flash-dt);
  if(s.stage<15||!isElite(s.stage)||t.used)return false;
  t.elapsed+=dt;
- if(t.phase==='idle'&&t.elapsed>=3){
+ if(t.phase==='idle'&&canTargetRear&&t.elapsed>=3){
   t.phase='windup';t.windup=2;
   battleCue(s,'aim','ranger',2);
   note(s,'적 측면 조준 · 2초 뒤 후열 집중 타격');
@@ -417,7 +417,7 @@ function fight(s,dt){
  if(precisionCue!==null)battleCue(s,'volley','ranger',precisionCue);
  s.enemyHp-=damage;
  if(s.enemyHp<=0){victory(s);return;}
- const flankFire=advanceEnemyTactic(s,dt);
+ const flankFire=advanceEnemyTactic(s,dt,living.some(a=>a.id!=='guard'&&a.progress>.25));
  // Medics work only while alive; injury persists on individual actors.
  for(const medic of living.filter(a=>a.id==='medic'&&a.progress>=.25)){
   const patient=living.filter(a=>a.hp<actorMaxHp(s,a.id)-.001)
