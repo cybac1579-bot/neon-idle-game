@@ -192,9 +192,19 @@ async function main(){
    assert.equal(payload.schema,'neon-expedition-playtest-v1');
    assert.equal(payload.origin,'local-user-export');
    assert.equal(payload.currentRun.number,2);
+   // exported chest telemetry uses the opt-in, never guessed
+   assert.equal(payload.currentRun.autoChestEnabled,false);
+   assert.equal(payload.currentRun.automaticChestsOpened,0);
+   assert.equal(payload.currentRun.manuallyOpenedChests,
+    Math.max(0,payload.currentRun.chestsOpened-payload.currentRun.automaticChestsOpened));
+   assert.equal(payload.latestReturnComparison.autoChestOpened,0);
+   assert.equal(payload.recentReturns[0].autoChestOpened,0);
    assert.equal(typeof payload.currentRun.milestoneClears,'object');
    assert.equal(payload.minuteSnapshots.length,1);
    assert.equal(payload.minuteSnapshots[0].stage,7);
+   // Old recorded snapshots predate auto chest instrumentation.
+   assert.equal(payload.minuteSnapshots[0].autoChestEnabled,null);
+   assert.equal(payload.minuteSnapshots[0].autoChestOpened,null);
    assert.equal(payload.offlineSettledSeconds,90);
    assert.equal(payload.recentReturns.length,1);
    assert.deepEqual(payload.latestReturnComparison,savedAfter.latestReturn);
