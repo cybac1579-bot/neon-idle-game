@@ -62,7 +62,8 @@ async function main(){
      const engineEvent=sample.battleEvent?.type;
      view.sync(sample);
      const effects=document.querySelector('#battleMotion');
-     const trail=effects.querySelector('.battle-trail');
+     const guardMeleeHasTrail=!!effects.querySelector('.battle-trail');
+     const guardImpact=!!effects.querySelector('.battle-burst.normal');
      const first=effects.firstElementChild;
      view.sync(sample);
      const replayed=effects.firstElementChild!==first;
@@ -71,6 +72,14 @@ async function main(){
      const growthTraining=document.querySelector('#battleGrowth')?.textContent||'';
      sample.units.ranger=1;
      sample.actors.push({id:'ranger',hp:17,revive:0,progress:1,cooldown:0,shots:0});
+     sample.battleCueSeq++;
+     sample.battleEvent={seq:sample.battleCueSeq,type:'volley',id:'ranger',value:20};
+     view.sync(sample);
+     // Normal ranger fire is a projectile, unlike an authentic guard hit.
+     sample.battleCueSeq++;
+     sample.battleEvent={seq:sample.battleCueSeq,type:'hit',id:'ranger',value:5};
+     view.sync(sample);
+     const rangerShot=!!effects.querySelector('.battle-trail.normal');
      sample.battleCueSeq++;
      sample.battleEvent={seq:sample.battleCueSeq,type:'volley',id:'ranger',value:20};
      view.sync(sample);
@@ -85,7 +94,34 @@ async function main(){
      sample.battleCueSeq++;
      sample.battleEvent={seq:sample.battleCueSeq,type:'brace',id:'guard',value:3};
      view.sync(sample);
-     const shield=!!effects.querySelector('.battle-burst.shield');
+     const shieldEl=effects.querySelector('.battle-burst.shield');
+     const shield=!!shieldEl;
+     const guardRect=document.querySelector('.fighter.guard').getBoundingClientRect();
+     const arenaRect=document.querySelector('.arena').getBoundingClientRect();
+     const guardCenter=guardRect.left-arenaRect.left+guardRect.width/2;
+     const shieldOnGuard=shield&&Math.abs(Number.parseFloat(shieldEl.style.left)-guardCenter)<2;
+     // The actual 2-ranger escort has two visible counters, a guard shield
+     // and a distinct shared impact; it must not display fake third actors.
+     sample.units.ranger=2;
+     sample.actors.push({id:'ranger',hp:17,revive:0,progress:1,cooldown:0,shots:0});
+     sample.battleCueSeq++;
+     sample.battleEvent={seq:sample.battleCueSeq,type:'intercept-duet',id:'guard',value:8};
+     view.sync(sample);
+     const duetTrails=effects.querySelectorAll('.battle-trail.counter').length;
+     const duetShield=!!effects.querySelector('.battle-burst.shield');
+     const duetBurst=!!effects.querySelector('.battle-burst.duet');
+     // Long fights show damage wear only after crossing actual HP ratios.
+     sample.stage=40;
+     sample.enemyHp=E.enemyMax(40)*.7;
+     view.sync(sample);
+     const worn=document.querySelector('.arena').classList.contains('boss-worn');
+     sample.enemyHp=E.enemyMax(40)*.2;
+     view.sync(sample);
+     const critical=document.querySelector('.arena').classList.contains('boss-critical');
+     sample.enemyHp=E.enemyMax(40)*.9;
+     view.sync(sample);
+     const healedBoss=!document.querySelector('.arena').classList.contains('boss-worn')&&
+      !document.querySelector('.arena').classList.contains('boss-critical');
      sample.battleCueSeq++;
      sample.battleEvent={seq:sample.battleCueSeq,type:'clear',id:'guard',value:5};
      view.sync(sample);
@@ -95,12 +131,15 @@ async function main(){
      sample.battleCueSeq++;
      sample.battleEvent=null;view.sync(sample);
      const fabricated=effects.firstElementChild!==previousEffect;
-     return {engineEvent,hasHitTrail:!!trail&&!replayed,visibleMiniatures:
+     return {engineEvent,guardMeleeHasTrail,guardImpact,rangerShot,shieldOnGuard,
+      duetTrails,duetShield,duetBurst,worn,critical,healedBoss,visibleMiniatures:
       document.querySelectorAll('.actor-head').length>=2,
       volley,heal,shield,trainingTier,growthTraining,growthReinforcement,milestone,chestNotice,replayed,fabricated};
     });
     assert.equal(combatVisual.engineEvent,'hit','visual probe must start from a real engine attack');
-    assert.equal(combatVisual.hasHitTrail,true,'attack should be an origin-target motion');
+    assert.equal(combatVisual.guardMeleeHasTrail,false,'guard melee may not fire fake projectiles');
+    assert.equal(combatVisual.guardImpact,true,'guard melee contact is shown at enemy');
+    assert.equal(combatVisual.rangerShot,true,'ranger attack has a real projectile');
     assert.equal(combatVisual.visibleMiniatures,true,'role miniatures render instead of lone glyphs');
     assert.equal(combatVisual.trainingTier,'2','real training value changes visual tier');
     assert.match(combatVisual.growthTraining,/부대 훈련/);
@@ -109,6 +148,13 @@ async function main(){
     assert.equal(combatVisual.volley,true,'precision volley gets a distinct projectile');
     assert.equal(combatVisual.heal,true,'field healing gets a distinct support effect');
     assert.equal(combatVisual.shield,true,'brace gets a visible shield effect');
+    assert.equal(combatVisual.shieldOnGuard,true,'brace shield must appear on the defending guard');
+    assert.equal(combatVisual.duetTrails,2,'two living rangers show two counter trails');
+    assert.equal(combatVisual.duetShield,true,'escort duet still shields guard');
+    assert.equal(combatVisual.duetBurst,true,'escort duet distinguishes combined impact');
+    assert.equal(combatVisual.worn,true,'boss wear follows actual HP below 75%');
+    assert.equal(combatVisual.critical,true,'boss critical wear follows HP below 25%');
+    assert.equal(combatVisual.healedBoss,true,'wounds disappear when boss is not injured');
     assert.equal(combatVisual.milestone,true,'only real 5-distance clear gets milestone burst');
     assert.match(combatVisual.chestNotice,/보급 상자 획득/);
     assert.equal(combatVisual.fabricated,false);
