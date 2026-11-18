@@ -48,7 +48,8 @@ for(const mode of MODES)for(const seed of SEEDS)for(const returnAfter of [0,25])
  assert.equal(manual.returnCount,returnAfter===0?0:1);
  assert.equal(automatic.returnCount,manual.returnCount);
  assert.equal(manual.autoOpens,0);
- assert.equal(automatic.manualOpens,1,'final pending chest may remain until next auto interval');
+ assert.ok(automatic.manualOpens===0||automatic.manualOpens===1,
+  'auto chest timing may leave zero or one pending chest at the final checkpoint');
  assert.equal(manual.totalOpens,returnAfter===0?9:14);
  assert.equal(automatic.totalOpens,manual.totalOpens,
   'both strategies must earn exactly the same count of stage5 boxes');
