@@ -63,9 +63,10 @@ test('balanced and reserve never downgrade unlocked supply grade',()=>{
   E.tick(s,4);assert.equal(s.questLevels.dispatch,0);assert.equal(s.questLevels.salvage,0);
  }
 });
-test('enemy HP unchanged through 40; late bosses remain harder but no exponential wall',()=>{
+test('enemy HP unchanged through 39; isolated 40 boss trims 10% without a late wall',()=>{
  const prior=stage=>Math.min(1e13,Math.round((stage%10===0?3.8:stage%5===0?2:1)*13*Math.pow(1.235,Math.min(stage-1,100))));
- for(const stage of [1,5,10,25,35,39,40])assert.equal(E.enemyMax(stage),prior(stage));
+ for(const stage of [1,5,10,25,35,39])assert.equal(E.enemyMax(stage),prior(stage));
+ assert.equal(E.enemyMax(40),Math.round(prior(40)*.9),'depth40 boss is selectively eased');
  assert.ok(E.enemyMax(50)<prior(50));
  assert.ok(E.enemyMax(50)>E.enemyMax(49)*2,'50 boss remains a stronger target');
  const ratio=E.enemyMax(42)/E.enemyMax(41);
