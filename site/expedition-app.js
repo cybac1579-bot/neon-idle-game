@@ -135,7 +135,15 @@ function exportPlaytest(){
    manuallyOpenedChests:Math.max(0,s.runMetrics.chestsOpened-s.autoChest.opened),
    pendingReturnProgress:s.coreProgress,carryReturnFraction:s.coreReserve,
    relicEffects:{volleys:s.relicEffects.volleys,volleyBonusDamage:s.relicEffects.volleyBonusDamage,triages:s.relicEffects.triages,intelFinds:s.relicEffects.intelFinds,intelClears:s.relicEffects.intelClears,flankShots:s.relicEffects.flankShots,intercepts:s.relicEffects.intercepts,counterDamage:s.relicEffects.counterDamage,rushes:s.relicEffects.rushes,braces:s.relicEffects.braces,braceDamage:s.relicEffects.braceDamage},
-   milestoneClears:{...s.runMilestones}
+   milestoneClears:{...s.runMilestones},
+   currentEngagement:s.engagement?.stage===s.stage?{
+    stage:s.stage,observedSeconds:s.engagement.seconds,
+    legacyResume:s.engagement.legacyResume===true,
+    enemyHpRemaining:s.enemyHp,enemyHpMax:E.enemyMax(s.stage),
+    automaticPurchasesDuringFight:Math.max(0,s.autoBuy.purchases-s.engagement.autoBuyStart)
+   }:null,
+   longestCompletedEngagement:{...s.longestEncounter},
+   completedFightsOverOneMinute:s.longEngagements
   },
   lifetime:{
    bestDistance:s.best,commanderLevel:s.heroLevel,
