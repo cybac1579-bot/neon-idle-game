@@ -62,6 +62,38 @@ async function main(){
     assert.ok(boxes.scrollWidth<=boxes.screen.width+1,'no horizontal overflow: '+label);
    };
    await assertBattleFrame('fresh first run');
+   // A hands-off first visitor can accumulate enough credits for growth,
+   // yet default-OFF automation must not silently spend them. Explain the
+   // deliberate choice inside the growth panel and hide it after a choice.
+   if(width===390){
+    const helpContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
+    const helpPage=await helpContext.newPage();
+    await helpPage.goto(url,{waitUntil:'networkidle'});
+    await helpPage.addInitScript(()=>{
+     const key='neon_expedition_prototype_v1';
+     const s=JSON.parse(localStorage.getItem(key));
+     if(!s)return;
+     s.clock=240;s.stage=s.best=s.runBest=14;s.enemyHp=1e10;s.credits=8000;
+     s.autoBuy.enabled=false;s.runMetrics.manualPurchases=0;s.lastSaved=Date.now();
+     localStorage.setItem(key,JSON.stringify(s));
+    });
+    await helpPage.reload({waitUntil:'networkidle'});
+    await helpPage.locator('[data-tab="squad"]').click();
+    assert.equal(await helpPage.locator('#autoToggle').getAttribute('aria-pressed'),'false');
+    assert.match(await helpPage.locator('#autoDetails').textContent(),/첫 탐사 성장 안내/);
+    assert.match(await helpPage.locator('#autoDetails').textContent(),/크레딧이 모여 있어도 강화는 자동으로 구매되지 않아/);
+    await helpPage.locator('#autoToggle').click();
+    assert.equal(await helpPage.locator('#autoToggle').getAttribute('aria-pressed'),'true');
+    assert.doesNotMatch(await helpPage.locator('#autoDetails').textContent(),/첫 탐사 성장 안내/,
+     'opting in must hide the passive-visitor help');
+    await helpPage.locator('#autoToggle').click();
+    assert.match(await helpPage.locator('#autoDetails').textContent(),/첫 탐사 성장 안내/);
+    await helpPage.locator('#train').click();
+    assert.doesNotMatch(await helpPage.locator('#autoDetails').textContent(),/첫 탐사 성장 안내/,
+     'manual upgrade also dismisses the inactivity-only help');
+    assert.equal(await helpPage.locator('#autoToggle').getAttribute('aria-pressed'),'false');
+    await helpContext.close();
+   }
    await page.locator('[data-tab="squad"]').click();
    assert.equal(await page.locator('#squadScreen').isVisible(),true);
    await page.locator('#workbench').evaluate(el=>{el.scrollTop=el.scrollHeight;});
