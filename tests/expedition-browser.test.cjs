@@ -453,7 +453,10 @@ async function main(){
     await engagementPage.goto(url,{waitUntil:'networkidle'});
     await engagementPage.addInitScript(()=>{
      const key='neon_expedition_prototype_v1',raw=localStorage.getItem(key);
-     if(!raw)return;
+     // This reload fixture is installed for the current context's lifetime.
+     // Only prepare it once, otherwise the later "16/16" reload is wiped.
+     if(!raw||sessionStorage.getItem('__test_engagement_once')==='yes')return;
+     sessionStorage.setItem('__test_engagement_once','yes');
      const state=JSON.parse(raw);
      state.stage=state.best=state.runBest=50;
      state.enemyHp=213787;state.lastSaved=Date.now();
