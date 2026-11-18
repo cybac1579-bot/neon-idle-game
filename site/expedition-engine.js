@@ -74,7 +74,7 @@ function enemyKind(stage){
  if(stage>=8&&stage%6===2)return 'charger';
   return stage>=16&&stage%6===4?'disruptor':'regular';
 }
-const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null,turns:0,nextAt:0,move:'flank',pursuitTriggered:false,diagramTriggered:false});
+const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null,turns:0,nextAt:0,move:'flank',pursuitTriggered:false,diagramTriggered:false,diagramFlash:0});
 const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  volleys:integer(raw.volleys,0,1e9),
  volleyBonusDamage:num(raw.volleyBonusDamage,0,1e14),
@@ -209,6 +209,7 @@ function normalize(raw,now=Date.now()){
   s.enemyTactic.move=raw.enemyTactic.move==='rush'?'rush':'flank';
   s.enemyTactic.pursuitTriggered=raw.enemyTactic.pursuitTriggered===true;
   s.enemyTactic.diagramTriggered=raw.enemyTactic.diagramTriggered===true;
+  s.enemyTactic.diagramFlash=num(raw.enemyTactic.diagramFlash,0,4);
   s.enemyTactic.nextAt=Number.isFinite(raw.enemyTactic.nextAt)?
    num(raw.enemyTactic.nextAt,0,7200):
    (s.stage>=40&&s.enemyTactic.used?s.enemyTactic.elapsed+36:0);
@@ -567,6 +568,9 @@ function fight(s,dt){
     ((boss&&s.stage>=70)||(isElite(s.stage)&&!boss&&s.stage>=75))&&
     s.enemyHp<=enemyMax(s.stage)*.75&&!s.enemyTactic.diagramTriggered){
   s.enemyTactic.diagramTriggered=true;
+  // This earned one-shot cue must remain legible when a fallen guard or
+  // another shot overwrites the single last battleEvent in this tick.
+  s.enemyTactic.diagramFlash=4;
   const strike=Math.min(s.enemyHp,enemyMax(s.stage)*.06);
   s.enemyHp-=strike;
   s.relicEffects.diagrams=Math.min(1e9,s.relicEffects.diagrams+1);
@@ -778,6 +782,9 @@ function tick(s,seconds,source='foreground'){
    s.engagement=initialEngagement(s.stage,s.autoBuy.purchases);
   s.engagement.seconds=Math.min(1e9,s.engagement.seconds+dt);
   for(const q of QUESTS){if(s.stage<q.unlock)continue;s.questClocks[q.id]+=dt;const cycles=Math.floor((s.questClocks[q.id]+1e-9)/q.interval);if(cycles){s.questClocks[q.id]-=cycles*q.interval;s.credits=Math.min(1e14,s.credits+cycles*questIncome(s,q));}}
+  // Display-only tactical cue ages even if the whole squad is recovering.
+  if(s.enemyTactic?.stage===s.stage)
+   s.enemyTactic.diagramFlash=Math.max(0,s.enemyTactic.diagramFlash-dt);
   fight(s,dt);
   if(s.autoChest.enabled){
    s.autoChest.elapsed+=dt;
