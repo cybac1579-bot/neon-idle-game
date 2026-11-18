@@ -1226,3 +1226,6 @@ test('charger run counters reset on rebirth but prior report keeps observed tact
 
 // Ranged enemy variant and relic-assisted signal response.
 require('./expedition-disruptor.test.cjs');
+
+// A five-core first return must not instantly yield a +24% attack spike.
+require('./expedition-valor-first-return-balance.test.cjs');
