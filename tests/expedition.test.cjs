@@ -1241,6 +1241,8 @@ require('./expedition-return-choice.test.cjs');
 
 // Report actual per-expedition collection progress instead of inventing new drops.
 require('./expedition-relic-run-count.test.cjs');
+// Exact first-vs-second copy payoff in the archive must match the real engine.
+require('./expedition-relic-copy-preview.test.cjs');
 
 // Deep shield+escort combination must allow melee participation, no free rewards.
 require('./expedition-deep-guard-formation.test.cjs');
