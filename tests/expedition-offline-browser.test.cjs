@@ -9,11 +9,18 @@ async function main(){
  const file=fs.readFileSync(packaged,'utf8');
  assert.ok(file.includes('data-inline-source="expedition-engine.js"'));
  assert.ok(file.includes('data-inline-source="expedition-field.js"'));
+ assert.ok(file.includes('data-inline-source="expedition-ui.js"'));
+ assert.ok(file.includes('data-inline-skin="prototype-v1"'));
  assert.ok(file.includes('data-inline-source="expedition-app.js"'));
  assert.ok(!/<script[^>]+src=/.test(file),'no script network dependency');
+ assert.ok(!/<link[^>]+href=/.test(file),'no stylesheet network dependency');
+ const skin=fs.readFileSync(path.resolve(__dirname,'../site/expedition-ui.css'),'utf8');
+ assert.ok(file.includes('<style data-inline-skin="prototype-v1">'+skin+'</style>'),
+  'standalone package must embed the current replaceable visual skin');
+
  // Artifact provenance: the packaged executable must embed the current checkout's
  // exact scripts, not just scripts with the expected filenames.
- for(const name of ['expedition-engine.js','expedition-field.js','expedition-app.js']){
+ for(const name of ['expedition-engine.js','expedition-field.js','expedition-ui.js','expedition-app.js']){
   const source=fs.readFileSync(path.resolve(__dirname,'../site',name),'utf8').replace(/<\/script/gi,'<\\/script');
   assert.ok(file.includes('<script data-inline-source="'+name+'">\n'+source+'\n</script>'),
    'standalone package must embed current source: '+name);
