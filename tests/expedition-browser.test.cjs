@@ -310,8 +310,9 @@ async function main(){
    await page.addInitScript(()=>{
     const key='neon_expedition_prototype_v1',state=JSON.parse(localStorage.getItem(key));
     if(state){
-     state.relics.archer=2;state.relics.medkit=2;
-     state.relicEffects={volleys:3,volleyBonusDamage:45,triages:2,triageCooldown:0};
+     state.relics.archer=2;state.relics.medkit=2;state.relics.scout=1;state.relics.relay=1;
+     state.relicEffects={volleys:3,volleyBonusDamage:45,triages:2,triageCooldown:0,intelClears:1,intelFinds:1};
+     if(!state.relicHistory.some(r=>r.source==='intel'))state.relicHistory.push({id:'bounty',duplicate:false,source:'intel',stack:1,credits:0,stage:35,depth:35,run:state.rebirths+1});
      state.lastSaved=Date.now();
      localStorage.setItem(key,JSON.stringify(state));
     }
@@ -321,8 +322,13 @@ async function main(){
    assert.equal(await page.locator('#relicEffectSummary').isVisible(),true);
    assert.match(await page.locator('#relicEffectSummary').textContent(),/정밀 일제사격 3회/);
    assert.match(await page.locator('#relicEffectSummary').textContent(),/긴급 재합류 2회/);
+   assert.match(await page.locator('#relicEffectSummary').textContent(),/탐사 정보망 1\/2회 자동 발견/);
+   assert.match(await page.locator('#relicEffectSummary').textContent(),/정예 조사 1\/2/);
+   assert.match(await page.locator('#relicRecent').textContent(),/정보망 자동 조사/);
    assert.match(await page.locator('#relicList').textContent(),/정밀 일제사격/);
    assert.match(await page.locator('#relicList').textContent(),/긴급 재합류/);
+   assert.match(await page.locator('#relicList').textContent(),/작전 통신기와 함께 탐사 정보망/);
+   assert.match(await page.locator('#relicList').textContent(),/탐사 일지와 함께 자동 유물 조사/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
    await context.close();
    console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison/chronicle');
