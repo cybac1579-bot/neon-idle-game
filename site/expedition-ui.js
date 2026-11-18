@@ -267,6 +267,15 @@ function renderArchive(){
  // Reveal the named two-copy goal only once BOTH relics have been found;
  // this is a multi-run option, not a guaranteed future random chest result.
  const escortGuard=E.relic(s,'guard'),escortArcher=E.relic(s,'archer');
+ const longFightSeconds=s.engagement?.stage===s.stage?Math.floor(s.engagement.seconds):0;
+ const longFight=longFightSeconds>=300;
+ const longFightHp=Math.max(0,Math.min(100,100*s.enemyHp/E.enemyMax(s.stage))).toFixed(1);
+ // The active enemy resets on voluntary return; clarify that tradeoff
+ // only in the detailed return panel, not on the uncluttered battle HUD.
+ const abandonFight=longFight?
+  '지금 귀환하면 이 적과의 교전 진행(남은 체력 '+longFightHp+'%)은 초기화돼. 유물·지휘관 레벨·획득 코어는 유지돼.':'';
+ const persistFight=longFight?
+  '현재 '+fmt(s.stage)+'거리 교전 '+Math.floor(longFightSeconds/60)+'분 이상 · 적 체력 '+longFightHp+'% 남음. 계속하면 이 적의 남은 체력과 성장 진행을 유지해.':'';
  const duetGoal=escortGuard>0&&escortArcher>0?
   (escortGuard>=2&&escortArcher>=2?
    '호위 협공 준비 완료 · 40거리 이상 정예/보스 측면 공격 때 살아 있는 사수 2명으로 자동 발동':
@@ -276,10 +285,12 @@ function renderArchive(){
  $('returnChoices').innerHTML=
   '<div class="return-choice"><strong>↻ 지금 귀환</strong><p>'+safe(returnText)+'</p>'+
   '<p>'+safe(choice.canReturn?'귀환 후 다음 1회 강화 선택: '+investLabel:
-   '이미 보유한 코어는 귀환하지 않아도 영구 강화에 사용 가능')+'</p></div>'+
+   '이미 보유한 코어는 귀환하지 않아도 영구 강화에 사용 가능')+'</p>'+
+  (abandonFight?'<p>'+safe(abandonFight)+'</p>':'')+'</div>'+
   '<div class="return-choice"><strong>↗ 계속 탐사</strong><p>'+safe(chestText)+'</p>'+
   '<p>'+safe('현재 깊이까지 해금됐지만 미발견 유물 '+fmt(choice.uncollectedUnlockedKinds)+
    '종 · '+unlockGoal)+'</p>'+
+  (persistFight?'<p>'+safe(persistFight)+'</p>':'')+
   (duetGoal?'<p>'+safe(duetGoal)+'</p>':'')+'</div>';
  const rewards=E.rebirthRewards(s),gain=rewards.total;
  const nextRecord=E.BREAKTHROUGHS.find(b=>b.stage>Math.max(s.claimedBreakthroughDistance,s.runBest-1));
