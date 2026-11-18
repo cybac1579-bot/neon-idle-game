@@ -40,6 +40,12 @@ function showMotion(evt){
  const target=offensive.has(kind)?foe:
    (incoming.has(kind)||warning.has(kind))?fighter(evt.id):
    support.has(kind)?fighter(evt.id):defense.has(kind)?guard:null;
+ // Briefly pose only the unit implicated in this real cue, never the army.
+ field.querySelectorAll('.battle-acting').forEach(el=>el.classList.remove('battle-acting'));
+ if(offensive.has(kind)||kind==='heal'||kind==='triage'){
+  const acting=from?.closest('.fighter');
+  if(acting){void acting.offsetWidth;acting.classList.add('battle-acting');}
+ }
  const p1=centerOf(from),p2=centerOf(target);
  const emphasis=kind==='volley'?'volley':
   kind==='diagram'?'diagram':
@@ -111,6 +117,8 @@ function sync(s){
  rosterNote.hidden=extra===0;
  if(extra)rosterNote.textContent='전투원 '+shown.length+'명 표시 · 후방 '+extra+'명';
  arena.classList.toggle('arena-boss',E.isBoss(s.stage));
+ // Training changes only the presentation tier; combat damage stays in the engine.
+ arena.dataset.trainingTier=String(Math.min(3,Math.floor(s.training/4)));
  const intent=s.enemyTactic;
  const aiming=intent?.stage===s.stage&&intent.phase==='windup';
  const last=intent?.stage===s.stage&&intent.phase==='fired'&&intent.flash>0;
