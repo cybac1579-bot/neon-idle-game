@@ -10,6 +10,7 @@ const E=require('../site/expedition-engine.js');
 const SEEDS=[123456789,987654321,20261118];
 const MODES=['balanced','adaptive'];
 const ROUTES=[[25,45,50],[45,50,55]];
+const CADENCES=[30,300]; // Same voluntary returns; chest pickup timing is the only policy change.
 const LIMIT_PER_RUN=15000;
 const COUNT_KEYS=[
  'volleys','triages','flankShots','intercepts','escortDuets',
@@ -21,7 +22,7 @@ const CUE_TYPES=new Set([
  'volley','triage','intercept','intercept-duet','brace','brace-step','unjam'
 ]);
 const avg=xs=>xs.length?Math.round(xs.reduce((a,b)=>a+b,0)*100/xs.length)/100:null;
-function scenario(seed,mode,route){
+function scenario(seed,mode,route,openEvery){
  const s=E.newState(1000);s.seed=seed;
  assert.equal(E.setAutoBuy(s,mode,true),true);
  assert.equal(s.autoChest.enabled,false);
@@ -74,7 +75,7 @@ function scenario(seed,mode,route){
     record.firstFlankStage=record.first.flankShots.stage;
    if(record.firstInterceptStage===null&&record.first.intercepts)
     record.firstInterceptStage=record.first.intercepts.stage;
-   if(sec%300===0)open();
+   if(sec%openEvery===0)open();
    if(s.stage>goal){open();record.seconds=sec;record.completed=true;break;}
   }
   record.stageAtFinish=s.stage;
@@ -103,14 +104,14 @@ function scenario(seed,mode,route){
   assert.deepEqual(E.RELICS.filter(r=>E.relic(s,r.id)>0).map(r=>r.id),
    record.relicsAtFinish,'all permanent relics survive each return');
  }
- return {seed,mode,route:route.join('>'),completed:runs.length===3&&runs.every(x=>x.completed),runs};
+ return {seed,mode,openEvery,route:route.join('>'),completed:runs.length===3&&runs.every(x=>x.completed),runs};
 }
-const samples=ROUTES.flatMap(route=>MODES.flatMap(mode=>SEEDS.map(seed=>scenario(seed,mode,route))));
-assert.equal(samples.length,12);
+const samples=ROUTES.flatMap(route=>MODES.flatMap(mode=>SEEDS.flatMap(seed=>CADENCES.map(c=>scenario(seed,mode,route,c)))));
+assert.equal(samples.length,24);
 assert.ok(samples.every(s=>s.completed),'scripted three-return baseline should still clear');
-const summary=ROUTES.map(route=>{
- const group=samples.filter(s=>s.route===route.join('>'));
- return {route:route.join('>'),scenarios:group.length,completed:group.filter(s=>s.completed).length,
+const summary=ROUTES.flatMap(route=>CADENCES.map(openEvery=>{
+ const group=samples.filter(s=>s.route===route.join('>')&&s.openEvery===openEvery);
+ return {route:route.join('>'),openEvery,scenarios:group.length,completed:group.filter(s=>s.completed).length,
   runs:[0,1,2].map(i=>{
    const rows=group.map(s=>s.runs[i]).filter(Boolean);
    return {number:i+1,goal:route[i],samples:rows.length,
@@ -123,11 +124,11 @@ const summary=ROUTES.map(route=>{
     scenariosWithAction:Object.fromEntries(COUNT_KEYS.map(k=>[k,rows.filter(r=>r.counts[k]>0).length])),
     avgDistinctObservedCueTypes:avg(rows.map(r=>Object.keys(r.observedCueTypes).length))};
   })};
-});
+}));
 const output={
  experiment:'natural-three-return-combat-variety',synthetic:true,
- methodology:'Engine tick(1), seeded low-touch auto-buy, manual chest batch each 300s and at target, voluntary return, earned core valor; no forced loot or roster.',
- seeds:SEEDS,modes:MODES,routes:ROUTES,limitPerRun:LIMIT_PER_RUN,
+ methodology:'Engine tick(1), seeded low-touch auto-buy, manual chest batch each 30s or 300s and at target, voluntary return, earned core valor; no forced loot or roster.',
+ seeds:SEEDS,modes:MODES,routes:ROUTES,chestOpenCadences:CADENCES,limitPerRun:LIMIT_PER_RUN,
  caveats:['Final battleEvent per second may hide earlier cues from the same second.',
   'Distinct combat actions are not necessarily distinct animations.',
   'These fixed seeded routes cannot estimate population-wide player engagement.',
