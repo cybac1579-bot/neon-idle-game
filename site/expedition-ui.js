@@ -143,6 +143,7 @@ function returnReportHtml(r){
  return row('완료한 탐사',fmt(r.number)+'회차 · '+fmt(r.cleared)+'거리까지 격파')+
   row('이번 귀환 코어',fmt(r.cores)+'개 (격파 적립 '+fmt(r.earned)+' · 첫 기록 '+fmt(r.firstClear)+')')+
   row('영구 유물 수집',fmt(r.relicKinds)+'종 · 총 '+fmt(r.relicCopies)+'개')+
+  (Number.isFinite(r.autoChestOpened)?row('지난 탐사 자동 개봉',fmt(r.autoChestOpened)+'개'):'')+
   (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회'):'')+
   comparison;
 }
@@ -237,17 +238,21 @@ function renderArchive(){
    relativeClear(s.runMilestones[stage],former[stage])
   )).join('');
  $('history').innerHTML='<div class="sub" style="margin:4px 0 10px">이번 탐사: '+safe(duration(s.clock))+
-  ' · 수동 구매 '+fmt(s.runMetrics.manualPurchases)+'회 · 자동 구매 '+fmt(s.autoBuy.purchases)+'회 · 상자 개봉 '+fmt(s.runMetrics.chestsOpened)+'개</div>'+
+  ' · 수동 구매 '+fmt(s.runMetrics.manualPurchases)+'회 · 자동 구매 '+fmt(s.autoBuy.purchases)+
+  '회 · 상자 수동 '+fmt(Math.max(0,s.runMetrics.chestsOpened-s.autoChest.opened))+
+  '개 / 자동 '+fmt(s.autoChest.opened)+'개</div>'+
   (s.runHistory.length?'<h3 style="font-size:13px;color:#d6f4ed">최근 귀환 5회</h3>'+s.runHistory.slice().reverse().map((r,i)=>
    '<div class="statline"><span>'+safe('거리 '+r.best+' · '+duration(r.duration))+'</span><b>'+
    safe('수동 '+r.manualPurchases+' / 자동 '+r.autoPurchases+' · 코어 '+r.cores+
+    (Number.isFinite(r.autoChestOpened)?' · 상자 자동 '+r.autoChestOpened+'개':'')+
     (r.relicEffects?' · 정밀 '+r.relicEffects.volleys+'회 · 긴급 '+r.relicEffects.triages+'회':''))+'</b></div>').join(''):'')+
   s.events.slice().reverse().map(m=>'<div class="sub" style="padding:5px 0;border-bottom:1px solid #304359">'+safe(m)+'</div>').join('');
  const samples=s.playtest.snapshots.length;
  $('playtestSummary').innerHTML=row('기록한 1분 단위 상태',fmt(samples)+'개')+
   row('지난 오프라인 정산',fmt(Math.floor(s.playtest.offlineSeconds/60))+'분')+
   row('기록된 귀환',fmt(s.runHistory.length)+'회')+
-  row('현재 자동 성장',s.autoBuy.enabled?'켜짐 · '+s.autoBuy.mode:'꺼짐');
+  row('현재 자동 성장',s.autoBuy.enabled?'켜짐 · '+s.autoBuy.mode:'꺼짐')+
+  row('상자 자동 개봉','이번 탐사 '+fmt(s.autoChest.opened)+'개 · '+(s.autoChest.enabled?'켜짐':'꺼짐'));
 }
 
 function renderPanel(){
