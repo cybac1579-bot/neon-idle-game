@@ -19,6 +19,8 @@ function storageWritable(){
  }catch(err){return false;}
 }
 let storageAvailable=storageWritable();
+const storageBlockedAtStartup=!storageAvailable;
+let failedSaveAttempts=0,verifiedSaveRecoveries=0;
 function showStorageStatus(ok){
  storageAvailable=ok;
  document.querySelectorAll('[data-storage-warning]').forEach(el=>{el.hidden=ok;});
@@ -30,7 +32,7 @@ try{
  if(raw){try{loaded=JSON.parse(raw);}catch(err){loaded=null;}}
 }catch(err){showStorageStatus(false);}
 const s=E.normalize(loaded||E.newState(),Date.now());
-const startup=loaded?E.offline(s,Date.now()):0;
+const startup=loaded?E.offline(s,Date.now(),'startup'):0;
 let buyCount=5;
 let saveAt=Date.now(),lastFrame=performance.now(),toast=startup?'오프라인 '+Math.floor(startup/60)+'분 '+(startup%60)+'초 정산 완료':'',toastUntil=Date.now()+5000;
 function notify(message){toast=message;toastUntil=Date.now()+4000;}
@@ -41,9 +43,10 @@ function save(){
   localStorage.setItem(E.SAVE_KEY,payload);
   if(localStorage.getItem(E.SAVE_KEY)!==payload)throw Error('storage-readback');
   saveAt=Date.now();
-  if(!storageAvailable)showStorageStatus(true);
+  if(!storageAvailable){verifiedSaveRecoveries++;showStorageStatus(true);}
   return true;
  }catch(err){
+  failedSaveAttempts++;
   showStorageStatus(false);
   notify('자동 저장 실패 · 유물 탭의 전체 저장 백업을 받아 둬');
   return false;
@@ -202,7 +205,15 @@ function exportPlaytest(){
   latestReturnComparison:s.latestReturn?{...s.latestReturn,before:s.latestReturn.before?{...s.latestReturn.before}:null,after:s.latestReturn.after?{...s.latestReturn.after}:null}:null,
   currentRunOpening:s.runOpening?{...s.runOpening}:null,
   minuteSnapshots:s.playtest.snapshots.map(x=>({...x})),
-  offlineSettledSeconds:s.playtest.offlineSeconds
+  offlineSettledSeconds:s.playtest.offlineSeconds,
+  // Bounded, anonymous session evidence: no device ID, URLs or credentials.
+  offlineResumeHistory:s.playtest.offlineEvents.map(x=>({...x})),
+  saveDiagnostics:{
+   storageAvailableAtExport:storageAvailable,
+   blockedAtStartup:storageBlockedAtStartup,
+   failedSaveAttempts,verifiedSaveRecoveries,
+   originKind:location.protocol==='file:'?'offline-file':'web'
+  }
  };
  const json=JSON.stringify(data,null,2);
  const blob=new Blob([json],{type:'application/json;charset=utf-8'});
