@@ -157,25 +157,34 @@ function sync(s){
   }
   visibleKey=key;
  }
- shown.forEach(({a,index},i)=>{
+ // Role-specific slots are stable by *role*, not the mixed roster index.
+ // In narrow portrait layouts the old 5/36/67% heights clipped the top
+ // fighters, while rear gunners could overlap medics and appear to march
+ // endlessly even after reaching their firing position.
+ const slots={guard:0,ranger:0,medic:0};
+ const rowLimits={guard:3,ranger:3,medic:2};
+ shown.forEach(({a,index})=>{
   const el=field.querySelector('[data-actor-index="'+index+'"]');if(!el)return;
-  const lane=a.id==='guard'?i%3:a.id==='ranger'?i%3:i%2;
-  // Formation lanes are deliberately separated by roughly a full fighter
-  // height in the compact persistent arena. The former 7–8% lane gaps
-  // stacked duplicate names/health bars directly on top of each other.
-  const x=a.id==='guard'?7+safe(a.progress)*55+lane*2:
-   a.id==='ranger'?3+safe(a.progress)*33+lane*4:
-   2+safe(a.progress)*24+lane*5;
+  const lane=slots[a.id]++;
+  const progress=safe(a.progress)/100;
+  // Three separated deployment zones: rear support, rear shooters, front.
+  // In all zones horizontal progress remains driven by the *real* actor.
+  const x=a.id==='guard'?50+progress*12+lane*2:
+   a.id==='ranger'?23+progress*9+lane*2:
+   3+progress*6+lane*3;
   el.style.left=x+'%';
-  el.style.bottom=(a.id==='guard'?5+lane*31:
-   a.id==='ranger'?12+lane*28:
-   16+lane*30)+'%';
+  const room=Math.max(0,field.clientHeight-el.offsetHeight-3);
+  el.style.bottom=(room*lane/Math.max(1,rowLimits[a.id]-1))+'px';
   const down=a.revive>0||a.hp<=0;
+  const hpMax=E.actorMaxHp(s,a.id),hpRatio=down?0:a.hp/Math.max(1,hpMax);
+  const active=!down&&a.progress>=.95;
   el.classList.toggle('down',down);
-  el.classList.toggle('advance',!down&&a.progress<.83);
+  el.classList.toggle('advance',!down&&!active);
+  el.classList.toggle('engaged',active);
+  el.classList.toggle('wounded',!down&&hpRatio<=.35);
   const bar=el.querySelector('.fighter-health>div');
-  if(bar)bar.style.width=(down?0:safe(a.hp/E.actorMaxHp(s,a.id)*100))+'%';
-  el.title=a.id+' HP '+Math.floor(a.hp)+' / '+Math.floor(E.actorMaxHp(s,a.id))+(down?' · 재합류 '+a.revive.toFixed(1)+'초':'');
+  if(bar)bar.style.width=(down?0:safe(hpRatio*100))+'%';
+  el.title=a.id+' HP '+Math.floor(a.hp)+' / '+Math.floor(hpMax)+(down?' · 재합류 '+a.revive.toFixed(1)+'초':'');
  });
  const extra=Math.max(0,(s.actors||[]).length-shown.length);
  rosterNote.hidden=extra===0;
