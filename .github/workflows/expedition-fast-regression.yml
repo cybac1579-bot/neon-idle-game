@@ -43,8 +43,6 @@ jobs:
           node --check tests/expedition-elite65-hp-migration.test.cjs
           node --check tests/expedition-first-playable-gate.cjs
           node --check tests/expedition-first-playable-stall-audit.cjs
-          node --check tests/expedition-first-playable-gate.cjs
-          node --check tests/expedition-first-playable-stall-audit.cjs
       - name: Run expedition engine regression before browser installation
         run: node --test tests/expedition.test.cjs tests/expedition-stage65-diagram.test.cjs tests/expedition-elite65-hp-migration.test.cjs
       - name: Verify first playable 30-minute loop and two-hour resume
