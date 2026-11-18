@@ -42,19 +42,23 @@ function play(E,seed,seconds,condition){
  const entries={regular:0,charger:0,disruptor:0,elite:0,boss:0};
  const secondsByKind={regular:0,charger:0,disruptor:0,elite:0,boss:0};
  const longEncounters={regular:0,charger:0,disruptor:0,elite:0,boss:0};
- let seen=s.stage,age=0,longMarked=false;
+ const longestEncounter={regular:0,charger:0,disruptor:0,elite:0,boss:0};
+ const stalledEncounters={regular:0,charger:0,disruptor:0,elite:0,boss:0};
+ let seen=s.stage,age=0,longMarked=false,stallMarked=false;
  entries[E.enemyKind(seen)]++;
  const milestoneSet=new Set([10,15,20,25,30,35,40,45,50,60,75]);
  for(let sec=1;sec<=seconds;sec++){
   const kind=E.enemyKind(s.stage);
   secondsByKind[kind]++;
   age++;
+  longestEncounter[kind]=Math.max(longestEncounter[kind],age);
   if(age===3&&!longMarked){longEncounters[kind]++;longMarked=true;}
+  if(age===60&&!stallMarked){stalledEncounters[kind]++;stallMarked=true;}
   E.tick(s,1);
   if(s.stage!==seen){
    for(const target of milestoneSet)if(!(target in checkpoints)&&s.stage>target)
     checkpoints[target]=sec;
-   seen=s.stage;age=0;longMarked=false;
+   seen=s.stage;age=0;longMarked=false;stallMarked=false;
    entries[E.enemyKind(seen)]++;
   }
  }
@@ -65,7 +69,7 @@ function play(E,seed,seconds,condition){
   relicCopies:E.RELICS.reduce((n,x)=>n+E.relic(s,x.id),0),
   chestOpens:s.chestsOpened,credits:Math.round(s.credits),
   training:s.training,actors:s.actors.length,autobuys:s.autoBuy.purchases,
-  rebirths:s.rebirths,entries,longEncounters,secondsByKind,checkpoints,
+  rebirths:s.rebirths,entries,longEncounters,stalledEncounters,longestEncounter,secondsByKind,checkpoints,
   tactics:{rushes:fx.rushes||0,braces:fx.braces||0,flanks:fx.flankShots||0,
    intercepts:fx.intercepts||0,jams:fx.jams||0,cleanses:fx.cleanses||0,
    cleanseDamage:ROUND(fx.cleanseDamage||0)}};
@@ -100,7 +104,8 @@ for(const condition of CONDITIONS)for(const seconds of DURATIONS)for(const seed 
  console.log('TACTICS_PAIR '+JSON.stringify({seed,minutes:seconds/60,condition,delta,
   currentStage:current.stage,coresIfReturned:current.coresIfReturned,
   enemies:current.entries,eligibleBySurvival:current.longEncounters,
-  elapsedByKind:current.secondsByKind,tactics:current.tactics}));
+  elapsedByKind:current.secondsByKind,stalled:current.stalledEncounters,
+  longestEncounter:current.longestEncounter,tactics:current.tactics}));
 }
 assert.equal(pairs.length,12);
 const summary=CONDITIONS.flatMap(condition=>DURATIONS.map(seconds=>{
@@ -112,7 +117,11 @@ const summary=CONDITIONS.flatMap(condition=>DURATIONS.map(seconds=>{
   totalJams:rows.reduce((n,p)=>n+p.current.tactics.jams,0),
   totalCleanses:rows.reduce((n,p)=>n+p.current.tactics.cleanses,0),
   totalDisruptorsEncountered:rows.reduce((n,p)=>n+p.current.entries.disruptor,0),
-  totalDisruptorsSurvivedThreeSeconds:rows.reduce((n,p)=>n+p.current.longEncounters.disruptor,0)};
+  totalDisruptorsSurvivedThreeSeconds:rows.reduce((n,p)=>n+p.current.longEncounters.disruptor,0),
+  totalStalledEncounters:rows.reduce((n,p)=>n+Object.values(p.current.stalledEncounters).reduce((a,b)=>a+b,0),0),
+  maxEncounterSeconds:Math.max(...rows.flatMap(p=>Object.values(p.current.longestEncounter))),
+  totalBossSeconds:rows.reduce((n,p)=>n+p.current.secondsByKind.boss,0),
+  totalBattleSeconds:rows.reduce((n,p)=>n+Object.values(p.current.secondsByKind).reduce((a,b)=>a+b,0),0)};
 }));
 const result={experiment:'ranged-disruptor-vs-charger-only',baseline:BASELINE,
  synthetic:true,mode:'balanced auto-buy + 60s auto-chest; no manual return',
