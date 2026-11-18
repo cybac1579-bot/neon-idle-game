@@ -8,8 +8,13 @@ const outDir=path.join(root,'artifacts','expedition-standalone');
 const out=path.join(outDir,'neon-expedition-offline.html');
 const source=fs.readFileSync(path.join(site,'expedition.html'),'utf8');
 const sha=(process.env.GITHUB_SHA||'local-source').replace(/[^a-z0-9]/gi,'').slice(0,12);
-const files=['expedition-engine.js','expedition-field.js','expedition-app.js'];
+const files=['expedition-engine.js','expedition-field.js','expedition-ui.js','expedition-app.js'];
 let compiled=source;
+const cssTag='<link rel="stylesheet" href="./expedition-ui.css" data-expedition-skin="prototype-v1">';
+assert.equal(compiled.split(cssTag).length,2,'expected exactly one replaceable prototype stylesheet');
+const css=fs.readFileSync(path.join(site,'expedition-ui.css'),'utf8');
+assert.ok(!css.includes('</style'),'CSS must not close the inline HTML style tag');
+compiled=compiled.replace(cssTag,'<style data-inline-skin="prototype-v1">\\n'+css+'\\n</style>');
 for(const name of files){
  const tag='<script src="./'+name+'"></script>';
  assert.equal(compiled.split(tag).length,2,'exactly one expected script include '+name);
@@ -36,9 +41,9 @@ fs.writeFileSync(path.join(outDir,'README-KO.txt'),[
  '1. GitHub Actions의 neon-expedition-offline-playable 아티팩트 ZIP을 내려받아 압축을 해제해.',
  '2. neon-expedition-offline.html 파일을 Galaxy S25+ 파일 앱에서 Chrome/삼성 인터넷 등 HTML을 실행하는 브라우저로 열어.',
  '3. 데이터 연결 없이도 게임의 전투·성장·유물·환생은 파일 안에서 작동하도록 묶었어.',
- '4. 도감 → 탐사 저장 데이터 백업·복원 → 전체 저장 백업을 눌러 JSON 파일로 진행 상태를 보관해.',
+ '4. 유물 → 탐사 저장 데이터 백업·복원 → 전체 저장 백업을 눌러 JSON 파일로 진행 상태를 보관해.',
  '5. 파일 경로, 브라우저 또는 웹 주소를 바꾸면 자동 저장 공간도 달라질 수 있어. 저장 파일 복원으로 불러올 수 있어.',
- '6. 도감 → 내 플레이 기록 JSON 내보내기는 분석용 기록이고, 전체 저장 백업 JSON과는 달라.',
+ '6. 유물 → 내 플레이 기록 JSON 내보내기는 분석용 기록이고, 전체 저장 백업 JSON과는 달라.',
  '',
  '주의: Android 실제 기기 동작은 아직 별도로 확인되지 않았어.',
  '파일 HTML에 대한 브라우저 저장 허용 여부는 기종·브라우저 정책에 따라 달라질 수 있으므로 전체 저장 백업을 권장해.',
