@@ -39,3 +39,12 @@
 ## 배포 및 기록
 - **유일 작업 브랜치** `integration/reconcile-main-redesign-20261114`; CI 검증 및 독립 플레이 HTML은 확인된 GitHub Actions run/SHA로 인계 문서에 추가.
 - 사용자의 이전 HTML은 자동 업데이트되지 않음. 실제 기기에서 새 테스트판으로 바꾸기 전 **유물 → 전체 저장 백업**을 먼저 하고 새 파일에서 **유물 → 저장 파일 복원**. 분석용 플레이 기록 JSON은 백업이 아님.
+
+
+## 독립 실행 HTML과 실제 CI 검증 결과
+- **검증 대상 SHA:** `756caad3c5ec993a9943e1614d66c8584f8cb460`; GitHub Actions [#44227590805](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44227590805) **SUCCESS**.
+- Node 단위/시뮬레이션 테스트 **164 PASS / 0 FAIL**. 교체형 UI 포트 테스트, 모바일 세로 360/390/412px 기존 플레이/귀환/유물/저장 회귀 및 실제 `ExpeditionEngine.tick()`으로 생성한 측면 조준·호위 반격 화면 경고 확인 통과.
+- 외부 네트워크를 차단한 `file://` 자체 포함 단일 HTML에서 360/390/412px 저장 백업·불러오기·재로드 확인 통과.
+- 비공개 Actions 아티팩트 [`neon-expedition-offline-playable`](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44227590805/artifacts/14393104102). HTML meta `neon-expedition-build=756caad3c5ec`, 원본 빌드 124052 bytes. 만료 시점 2026-12-18 UTC.
+- 테스트 중 기존 레거시 `neon_rework_07` 저장값 미수정. 기존 2회 귀환 데이터를 계속 플레이하려면 구 파일 `유물 → 전체 저장 백업` JSON을 내려받고 새 파일 `유물 → 저장 파일 복원`으로 가져와야 함.
+- 실제 Galaxy S25+ 조작/관전 체감, 유물 수집의 재미는 **미검증**. 이번 구현은 최종 일러스트/UI 시안이 아니다. 공개 `main` 병합 없음.
