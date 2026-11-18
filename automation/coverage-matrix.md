@@ -412,3 +412,9 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 - **P0 progression:** first-return control test covers 3 seeds × 2 modes × 5 routes and milestone chest fairness; source reviewed, latest CI success covers its workflow but no separate manual numeric trace read. P1 compare 30-minute low-input event/reward cadence and first/second expedition payoff.
 - **P1 UI:** exact-HEAD Chromium portrait workflow success, not proof of Galaxy S25+ visual clarity or touch fatigue. P1 inspect real screenshot and test Android lock/resume.
 - **Release:** main unchanged; PR #2 draft; no public deployment. Historic provisional readiness 60% (+0pp), new expedition readiness unscored.
+
+
+## 2026-11-18 10:54 KST — current risk priority: first-return advantage decomposition
+- **Source reviewed:** `9ad28244` first-return audit now uses 12 seeds × balanced/adaptive × 6 routes including return25-core-only counterfactual. Repeat shallow relic stacks are removed only in synthetic state, keeping chest RNG consumption aligned; production code unaffected. This can distinguish core investment from replay relic amplification, **but does not yet establish either effect's measured size**.
+- **CI:** latest portrait run [44218865642](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44218865642) in progress at check. P0 verify completion, timeout and numeric telemetry. Existing older successful CI must not be attributed to this HEAD.
+- **P1:** low-input 20–30m actual event cadence, 1st/2nd expedition improvement, browser screenshot and exact-HEAD offline artifact; Android real-device resume remains unverified. Main/Pages read-only; historical provisional 60% unchanged and not a new-prototype readiness score.
