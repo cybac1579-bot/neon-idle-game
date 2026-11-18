@@ -537,6 +537,31 @@ async function main(){
    assert.match(elite65View.details,/추격 신호기 · 후반전 화력/);
    assert.equal(elite65View.savedCue,'pursuit');
    assert.equal(elite65View.savedBoost,1.6);
+   // A depth65 earned diagram shows one distinct strike at the NEXT
+   // commander tier. It must still fit 360/390/412 portrait battle layouts.
+   const diagramView=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,field=window.ExpeditionField;
+    const s=E.newState(Date.now());s.stage=s.best=s.runBest=70;
+    s.enemyTactic.stage=70;s.enemyTactic.kind=E.enemyKind(70);
+    s.relics.diagram=1;s.enemyHp=E.enemyMax(70)*.75+1;
+    for(const a of s.actors){a.hp=1e8;a.progress=1;a.cooldown=0;}
+    E.tick(s,1);field.sync(s);
+    const cue=document.querySelector('.combat-cue')?.textContent;
+    const saved=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+    return {proc:s.relicEffects.diagrams,cue,
+     triggered:s.enemyTactic.diagramTriggered,
+     persisted:saved.enemyTactic.diagramTriggered,
+     savedCount:saved.relicEffects.diagrams,savedCue:saved.battleEvent?.type,
+     damage:s.relicEffects.diagramDamage};
+   });
+   assert.equal(diagramView.proc,1);
+   assert.equal(diagramView.triggered,true);
+   assert.equal(diagramView.persisted,true);
+   assert.equal(diagramView.savedCount,1);
+   assert.equal(diagramView.savedCue,'diagram');
+   assert.ok(diagramView.damage>0);
+   assert.match(diagramView.cue,/전장 도해.*균열 타격/);
+   await assertBattleFrame('earned diagram cue at 70 boss');
    // At a real boss-only duplicate reward, generic DPS can remain 0%,
    // but each individual chest must explain the permanent conditional gain.
    if(width===390){
