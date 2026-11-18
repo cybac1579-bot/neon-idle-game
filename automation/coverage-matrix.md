@@ -486,3 +486,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Combat spectator event-to-visual mapping and shared-head CI | 2026-11-19 03:54 KST, `92af2db8` | Source audit: `site/expedition-field.js` maps real `battleEvent` types to actor poses, trails, bursts and warning cues; current SHA five associated workflows SUCCESS (fast, save, portrait, first/three rebirth) | **P0:** actual 30-minute visible cue density/legibility on S25+ remains unmeasured; compare browser replay against human feedback before a focused change. 92% provisional; main/Pages not deployed. |
+
+| Spectator nonvisual event motion retention | 2026-11-19 04:57 KST; code `a59753b2`, regression `33600163` | Found metadata events cleared `#battleMotion` before drawable-event filtering; now clear only for drawable kinds, with structural regression assertion. Exact new CI pending verification. | **P0:** verify exact-HEAD fast/portrait CI and actual on-device motion legibility and timing; 92% provisional, no main/Pages deployment |
