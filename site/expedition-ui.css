@@ -441,3 +441,39 @@ main.game-shell{
 }
 
 @keyframes expedition-growth-reduced{0%,85%{opacity:1}100%{opacity:0}}
+
+/* BATTLE READABILITY V2 — contact/hit are distinct from live rear projectiles.
+   Enemy wear shows existing HP loss; it does NOT imply a new combat phase. */
+.arena-boss.boss-worn .foe .silhouette{
+ border-color:#e3a16f;
+ background:
+   linear-gradient(122deg,transparent 28%,#edb48180 29%,transparent 30% 55%,#f7d6b363 56%,transparent 57%),
+   radial-gradient(ellipse at 52% 20%,#f0aa9d26,transparent 55%),
+   linear-gradient(170deg,#614058,#302840 70%,#171c32);
+ box-shadow:inset 0 0 17px #2e1d38a0,0 0 17px #d8917455;
+}
+.arena-boss.boss-critical .foe .silhouette{
+ border-color:#f1c195;
+ background:
+   linear-gradient(120deg,transparent 19%,#f4c0a68c 20%,transparent 21% 47%,#fcd4a1a3 48%,transparent 49% 72%,#f6b5a37d 73%,transparent 74%),
+   radial-gradient(ellipse at 43% 43%,#8e30487a,transparent 54%),
+   linear-gradient(155deg,#512a4a,#211a34 72%);
+ box-shadow:inset 0 0 22px #140b2bc0,0 0 25px #ec977d91;
+}
+.battle-burst.duet{
+ width:42px;height:42px;border:5px double #a1e9f3;
+ box-shadow:0 0 21px #77e6e2,inset 0 0 16px #d6ffff;
+}
+.battle-burst.warning{
+ width:32px;height:32px;border-style:dashed;border-width:2px;
+ box-shadow:0 0 13px #e4b3a4;
+ animation:expedition-warning .8s ease-out both;
+}
+.battle-burst.power{
+ width:48px;height:48px;border:4px double #e6b6f9;
+ box-shadow:0 0 27px #a78cea,inset 0 0 10px #bca7ea;
+}
+@keyframes expedition-warning{
+ 0%{opacity:0;transform:translate(-50%,-50%) scale(1.6)}
+ 18%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}
+}
