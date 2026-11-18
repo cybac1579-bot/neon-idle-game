@@ -39,6 +39,11 @@ assert.ok(!/document\.|window\.|querySelector|localStorage/.test(engine),
  'game logic must stay independent of browser view and storage');
 assert.ok(!/\b(?:function|const|let)\s+(?:fight|tick|rebirth)\b/.test(view),
  'UI adapter must not redefine simulation operations');
+// Nonvisual metadata must not erase a still-visible combat cue or trail.
+assert.match(field,/if\(!visibleKinds\.has\(evt\.type\)\)return;/,
+ 'nonvisual events must leave the current combat label intact');
+assert.ok(field.indexOf('if(!visibleKinds.has(evt.type))return;')<field.indexOf('fx.replaceChildren();'),
+ 'ignore metadata before clearing the current battle cue');
 // It is OK to replace all CSS and markup, but not to silently drop a
 // controller binding or to alter the user's old or current save keys.
 assert.ok(engine.includes('neon_expedition_prototype_v1'),'stable prototype save key');
