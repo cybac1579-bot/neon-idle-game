@@ -455,6 +455,27 @@ async function main(){
     assert.match(report,/남음 · 자동 구매 5회/);
     assert.match(report,/1분 이상 교전 격파3회/);
     assert.match(report,/최장 격파 교전40거리 · 9분 10초/);
+    assert.equal(await engagementPage.locator('#returnChoices .return-choice').count(),2,
+     'return vs continue are separate notes in the existing detail tray');
+    assert.equal(await engagementPage.locator('#battleScreen #returnChoices').count(),0,
+     'battle HUD stays clear of return decisions');
+    const choiceText=await engagementPage.locator('#returnChoices').textContent();
+    assert.match(choiceText,/지금 귀환/);
+    assert.match(choiceText,/계속 탐사/);
+    assert.match(choiceText,/귀환 후 다음 1회 강화 선택/);
+    assert.match(choiceText,/미개봉 상자 없음/);
+    assert.match(choiceText,/50거리 상자에서 새로운 유물군 개방/);
+    const choiceProof=await engagementPage.evaluate(()=>{
+     const raw=JSON.parse(localStorage.getItem('neon_expedition_prototype_v1'));
+     const before=JSON.stringify(raw);
+     const d=window.ExpeditionEngine.returnChoiceSnapshot(raw);
+     return {untouched:JSON.stringify(raw)===before,available:d.returnCores,
+      after:d.coresAfterReturn};
+    });
+    assert.equal(choiceProof.untouched,true,'read-only planning cannot spend currency');
+    assert.ok(choiceProof.available>0);
+    assert.ok(choiceProof.after>=choiceProof.available);
+
     const bounds=await engagementPage.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
     assert.ok(bounds.scroll<=bounds.width+1,'long-fight detail must not overflow on mobile');
     await engagementPage.locator('[data-tab="archive"]').click();
@@ -491,6 +512,9 @@ async function main(){
    assert.match(depthGoals,/아직 미개방 유물 등급2종 · 누적 최고 45거리 격파/,
     'legacy return depth 45 must offer chronicle unlock');
    assert.match(depthGoals,/다음 신규 유물 개방50거리 격파 · 원정 연대기/);
+   const choiceAfterReturn=await frontierPage.locator('#returnChoices').textContent();
+   assert.match(choiceAfterReturn,/현재 귀환 보상이 없어/);
+   assert.match(choiceAfterReturn,/50거리 상자에서 새로운 유물군 개방/);
    assert.doesNotMatch(depthGoals,/15거리 격파 · 진군 북/,
     'return should never make a previously unlocked depth look new');
    // LV3 attack power shown accurately after a legacy save reload.
