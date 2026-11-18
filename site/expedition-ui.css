@@ -245,3 +245,16 @@ main.game-shell{
 
 /* Temporary combat cue skin: can be replaced without touching synergy rules. */
 .combat-cue.intel{color:#b7f4e6;text-shadow:0 2px 5px #07101c,0 0 15px #40dab9a6;font-size:clamp(12px,3.6vw,18px);font-weight:800}
+
+/* Replaceable first-pass telegraph: the warning is anchored to battle art,
+   not to a management tab or permanent HUD statistic. */
+.enemy-intent{position:absolute;z-index:7;top:38px;right:10px;max-width:60%;font-size:12px;line-height:1.35;text-align:right;font-weight:800;color:#ffd0b3;background:#402925ee;border:1px solid #d58c71;border-radius:10px;padding:7px 10px;box-shadow:0 3px 12px #0008;pointer-events:none}
+.enemy-intent.aiming{animation:enemy-aim-pulse .85s ease-in-out infinite alternate}
+.enemy-intent.intercepted{background:#204a49e8;color:#a2f2db;border-color:#71d2bb}
+.enemy-intent[hidden]{display:none!important}
+.combat-cue.aim{color:#ffbd96;font-weight:900;text-shadow:0 1px 6px #07101c,0 0 12px #df4e30}
+.combat-cue.flank{color:#ffb997;font-weight:900;text-shadow:0 1px 6px #07101c}
+.combat-cue.intercept{color:#9ff2d7;font-weight:900;text-shadow:0 1px 6px #07101c,0 0 12px #41bfa1}
+@keyframes enemy-aim-pulse{from{opacity:1}to{opacity:.67}}
+@media(max-width:380px){.enemy-intent{font-size:10px;top:36px;max-width:65%;padding:6px 8px}}
+@media(prefers-reduced-motion:reduce){.enemy-intent.aiming{animation:none}}
