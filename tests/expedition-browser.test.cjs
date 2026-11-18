@@ -762,7 +762,7 @@ async function main(){
    await frontierPage.reload({waitUntil:'networkidle'});
    await frontierPage.locator('[data-tab="return"]').click();
    const depthGoals=await frontierPage.locator('#rebirthSummary').textContent();
-   assert.match(depthGoals,/아직 미개방 유물 등급2종 · 누적 최고 45거리 격파/,
+   assert.match(depthGoals,/아직 미개방 유물 등급3종 · 누적 최고 45거리 격파/,
     'legacy return depth 45 must offer chronicle unlock');
    assert.match(depthGoals,/다음 신규 유물 개방50거리 격파 · 원정 연대기/);
    const choiceAfterReturn=await frontierPage.locator('#returnChoices').textContent();
