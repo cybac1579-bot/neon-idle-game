@@ -503,7 +503,9 @@ async function main(){
     if(!state)return;
     state.best=46;state.runBest=1;state.stage=1;
     state.claimedBreakthroughDistance=45;state.rebirths=2;
-    state.enemyHp=13;state.coreUpgrades.valor=3;state.lastSaved=Date.now();
+    state.enemyHp=13;state.coreUpgrades.valor=3;
+    state.relics.shield=1;state.relics.guard=1;
+    state.relicEffects.guardPlateBlocks=12;state.lastSaved=Date.now();
     localStorage.setItem(key,JSON.stringify(state));
    });
    await frontierPage.reload({waitUntil:'networkidle'});
@@ -520,6 +522,10 @@ async function main(){
    // LV3 attack power shown accurately after a legacy save reload.
    assert.match(await frontierPage.locator('#coreSummary').textContent(),
     /전선 코어 화력 효과\+9\.0%/);
+   // defensive guard formation archive readout is only in detailed tabs.
+   await frontierPage.locator('[data-tab="archive"]').click();
+   assert.match(await frontierPage.locator('#relicEffectSummary').textContent(),
+    /심층 방벽 진형.*일격 방어 12회/);
    const goalBounds=await frontierPage.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(goalBounds.scroll<=goalBounds.width+1,
     'next deep collectible goal portrait overflow: '+JSON.stringify(goalBounds));
