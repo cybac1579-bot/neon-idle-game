@@ -144,7 +144,7 @@ function returnReportHtml(r){
   row('이번 귀환 코어',fmt(r.cores)+'개 (격파 적립 '+fmt(r.earned)+' · 첫 기록 '+fmt(r.firstClear)+')')+
   row('영구 유물 수집',fmt(r.relicKinds)+'종 · 총 '+fmt(r.relicCopies)+'개')+
   (Number.isFinite(r.autoChestOpened)?row('지난 탐사 자동 개봉',fmt(r.autoChestOpened)+'개'):'')+
-  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회'):'')+
+  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 자동 발견 '+fmt(r.relicEffects.intelFinds||0)+'회'):'')+
   comparison;
 }
 function renderArchive(){
@@ -155,12 +155,16 @@ function renderArchive(){
    ' · 보유 '+copies+'/'+capped+'개 (중복 강화 포함) · 미개봉 '+fmt(s.chests)+'상자';
  // The battle HUD remains lean; collectors can confirm that an owned relic
  // changed combat behavior rather than merely inflating base damage.
- const effects=s.relicEffects||{volleys:0,volleyBonusDamage:0,triages:0};
- const hasTactics=E.relic(s,'archer')>0||E.relic(s,'medkit')>0;
+ const effects=s.relicEffects||{volleys:0,volleyBonusDamage:0,triages:0,intelClears:0,intelFinds:0};
+ const intelActive=E.relic(s,'scout')>0&&E.relic(s,'relay')>0;
+ const hasTactics=E.relic(s,'archer')>0||E.relic(s,'medkit')>0||intelActive;
  $('relicEffectSummary').hidden=!hasTactics;
  $('relicEffectSummary').textContent=hasTactics?
   '이번 탐사 전술 발동 · 정밀 일제사격 '+fmt(effects.volleys)+'회 (추가 유효 피해 '+fmt(effects.volleyBonusDamage)+
-  ') · 긴급 재합류 '+fmt(effects.triages)+'회 · 유물 효과는 자동 발동':'';
+  ') · 긴급 재합류 '+fmt(effects.triages)+'회'+
+  (intelActive?' · 탐사 정보망 '+fmt(effects.intelFinds)+'/2회 자동 발견'+
+    ((effects.intelFinds||0)<2?' · 정예 조사 '+fmt(effects.intelClears||0)+'/2':' · 이번 귀환 보상 완료'):'')+
+  ' · 추가 조작 없이 자동 발동':'';
 
  $('relicList').innerHTML=E.RELICS.map(r=>{
   const n=E.relic(s,r.id);
@@ -180,7 +184,9 @@ function renderArchive(){
   fmt(s.autoChest.opened)+'개 · 귀환/코어 투자는 수동';
  $('relicRecent').innerHTML=s.relicHistory.length?s.relicHistory.slice(-8).reverse().map(r=>{
   const data=E.RELICS.find(x=>x.id===r.id);
-  const label=(data?(r.duplicate?'중복 · ':'첫 발견 · ')+data.name:'해당 상자 등급 수집 완료 · 크레딧 보상')+(r.depth?' · '+r.depth+'거리 상자':'');
+  const label=(r.source==='intel'?'정보망 자동 조사 · ':'')+
+   (data?(r.duplicate?'중복 · ':'첫 발견 · ')+data.name:'해당 깊이 유물 수집 완료 · 크레딧 보상')+
+   (r.depth?' · '+r.depth+'거리'+(r.source==='intel'?' 발견':' 상자'):'');
   return '<div class="collection-log"><span>'+safe(label)+'</span><strong>'+
    safe(r.id?'×'+r.stack:'+'+fmt(r.credits)+' 크레딧')+'</strong></div>';
  }).join(''):'아직 발견한 유물이 없어.';
@@ -245,7 +251,7 @@ function renderArchive(){
    '<div class="statline"><span>'+safe('거리 '+r.best+' · '+duration(r.duration))+'</span><b>'+
    safe('수동 '+r.manualPurchases+' / 자동 '+r.autoPurchases+' · 코어 '+r.cores+
     (Number.isFinite(r.autoChestOpened)?' · 상자 자동 '+r.autoChestOpened+'개':'')+
-    (r.relicEffects?' · 정밀 '+r.relicEffects.volleys+'회 · 긴급 '+r.relicEffects.triages+'회':''))+'</b></div>').join(''):'')+
+    (r.relicEffects?' · 정밀 '+r.relicEffects.volleys+'회 · 긴급 '+r.relicEffects.triages+'회 · 정보망 '+(r.relicEffects.intelFinds||0)+'회':''))+'</b></div>').join(''):'')+
   s.events.slice().reverse().map(m=>'<div class="sub" style="padding:5px 0;border-bottom:1px solid #304359">'+safe(m)+'</div>').join('');
  const samples=s.playtest.snapshots.length;
  $('playtestSummary').innerHTML=row('기록한 1분 단위 상태',fmt(samples)+'개')+
