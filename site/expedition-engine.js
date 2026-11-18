@@ -53,7 +53,7 @@ const total=s=>UNITS.reduce((n,u)=>n+s.units[u.id],0);
 const emptyContribution=()=>({damage:{guard:0,ranger:0,medic:0},healing:{guard:0,ranger:0,medic:0},taken:{guard:0,ranger:0,medic:0},falls:{guard:0,ranger:0,medic:0},attacks:{guard:0,ranger:0,medic:0}});
 const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purchases:0,spent:0});
 const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
-const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
+const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0,firstRelicFinds:0,duplicateRelics:0,relicExchanges:0,legacyRelicCounter:false});
 // Duration is observed from the current build only; prior active fights
 // cannot be reconstructed from a legacy save.
 const initialEngagement=(stage=1,autoPurchases=0,legacyResume=false)=>({
@@ -170,7 +170,10 @@ function normalize(raw,now=Date.now()){
   s.autoChest.opened=integer(raw.autoChest.opened,0,1e9);
  }
  s.runMetrics=initialRunMetrics();
- for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
+ for(const k of ['manualPurchases','chestsOpened','firstRelicFinds','duplicateRelics','relicExchanges'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
+ // Old runs may already have collected relics; historical discoveries are unknown.
+ s.runMetrics.legacyRelicCounter=raw.runMetrics?.legacyRelicCounter===true||
+  (!Number.isFinite(raw.runMetrics?.firstRelicFinds)&&(s.stage>1||s.runKills>0));
  s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
  s.engagement=initialEngagement(s.stage,s.autoBuy.purchases,!raw.engagement&&s.stage>1);
  if(raw.engagement&&raw.engagement.stage===s.stage){
@@ -221,7 +224,11 @@ function normalize(raw,now=Date.now()){
   before:validOpening(report.before),after:validOpening(report.after),
   relicEffects:combatEffectReport(report.relicEffects),
   longestEncounter:report.longestEncounter?normalizedLongestEncounter(report.longestEncounter):null,
-  longEngagements:Number.isFinite(report.longEngagements)?integer(report.longEngagements,0,1e9):null
+  longEngagements:Number.isFinite(report.longEngagements)?integer(report.longEngagements,0,1e9):null,
+   relicFindCounts:report.relicFindCounts&&typeof report.relicFindCounts==='object'?{
+    first:integer(report.relicFindCounts.first,0,1e9),duplicates:integer(report.relicFindCounts.duplicates,0,1e9),
+    exchanges:integer(report.relicFindCounts.exchanges,0,1e9),partial:report.relicFindCounts.partial===true
+   }:null
  }:null;
  s.runMilestones=normalizedMilestones(raw.runMilestones);
  s.runHistory=Array.isArray(raw.runHistory)?raw.runHistory.slice(-5).filter(x=>x&&typeof x==='object').map(x=>({
@@ -234,7 +241,11 @@ function normalize(raw,now=Date.now()){
   milestones:normalizedMilestones(x.milestones),
   relicEffects:combatEffectReport(x.relicEffects),
   longestEncounter:x.longestEncounter?normalizedLongestEncounter(x.longestEncounter):null,
-  longEngagements:Number.isFinite(x.longEngagements)?integer(x.longEngagements,0,1e9):null
+  longEngagements:Number.isFinite(x.longEngagements)?integer(x.longEngagements,0,1e9):null,
+   relicFindCounts:x.relicFindCounts&&typeof x.relicFindCounts==='object'?{
+    first:integer(x.relicFindCounts.first,0,1e9),duplicates:integer(x.relicFindCounts.duplicates,0,1e9),
+    exchanges:integer(x.relicFindCounts.exchanges,0,1e9),partial:x.relicFindCounts.partial===true
+   }:null
  })):[];
  // Bound the lifetime discovery journal. No historical reroll or reward is granted
  // when migrating a save made before this field existed.
@@ -851,6 +862,9 @@ function permanentBonuses(s){
  };
 }
 function rememberRelic(s,result){
+ if(!result.id)s.runMetrics.relicExchanges=Math.min(1e9,s.runMetrics.relicExchanges+1);
+ else if(result.duplicate)s.runMetrics.duplicateRelics=Math.min(1e9,s.runMetrics.duplicateRelics+1);
+ else s.runMetrics.firstRelicFinds=Math.min(1e9,s.runMetrics.firstRelicFinds+1);
  s.relicHistory.push({id:result.id,duplicate:result.duplicate===true,source:result.source==='intel'?'intel':'chest',
   stack:result.stack||0,credits:result.credits||0,stage:s.stage,depth:result.depth||0,run:s.rebirths+1});
  if(s.relicHistory.length>24)s.relicHistory.shift();
@@ -981,13 +995,17 @@ function rebirth(s){
   relicKinds:RELICS.filter(r=>relic(s,r.id)>0).length,
   relicCopies:RELICS.reduce((sum,r)=>sum+relic(s,r.id),0),
   chests:s.chests,before,autoChestOpened:s.autoChest.opened,relicEffects:combatEffectReport(s.relicEffects),
-  longestEncounter:{...s.longestEncounter},longEngagements:s.longEngagements};
+  longestEncounter:{...s.longestEncounter},longEngagements:s.longEngagements,
+   relicFindCounts:{first:s.runMetrics.firstRelicFinds,duplicates:s.runMetrics.duplicateRelics,
+    exchanges:s.runMetrics.relicExchanges,partial:s.runMetrics.legacyRelicCounter}};
  const summary={duration:Math.floor(s.clock),best:s.runBest,kills:s.runKills,cores:gain,
   manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
   chestsOpened:s.runMetrics.chestsOpened,
   autoChestOpened:s.autoChest.opened,milestones:{...s.runMilestones},
   relicEffects:combatEffectReport(s.relicEffects),
-  longestEncounter:{...s.longestEncounter},longEngagements:s.longEngagements};
+  longestEncounter:{...s.longestEncounter},longEngagements:s.longEngagements,
+   relicFindCounts:{first:s.runMetrics.firstRelicFinds,duplicates:s.runMetrics.duplicateRelics,
+    exchanges:s.runMetrics.relicExchanges,partial:s.runMetrics.legacyRelicCounter}};
  const history=[...(s.runHistory||[]),summary].slice(-5);
  const keep={claimedBreakthroughDistance:Math.max(s.claimedBreakthroughDistance,s.runBest-1),
   coreReserve:Math.min(1,Math.max(0,reward.fraction)),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode},autoChest:{...initialAutoChest(),enabled:s.autoChest.enabled}};
