@@ -36,7 +36,7 @@ test('55-distance unopened special chest truthfully guarantees its undiscovered 
  s.stage=s.best=s.runBest=56;s.coreProgress=4.2;
  s.chests=1;s.chestDepths=[55];s.relics.pursuit=0;
  const before=clone(s),d=E.returnChoiceSnapshot(s);
- assert.equal(d.nextUnopenedTier,null);
+ assert.equal(d.nextUnopenedTier,65);
  assert.equal(d.pendingChests,1);
  assert.equal(d.retainedChestsOnReturn,1);
  assert.ok(d.pendingNewKinds>=1);
