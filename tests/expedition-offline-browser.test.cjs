@@ -73,6 +73,47 @@ async function main(){
    console.log('PASS standalone file:// offline',width,'export/import/reload/network=0');
    await ctx.close();
   }
+  // Android file:// browsers may block localStorage or exhaust its quota.
+  // The game must warn persistently and still permit a complete local JSON
+  // backup containing the *current in-memory* progress (not a stale save).
+  const blocked=await browser.newContext({viewport:{width:390,height:800},acceptDownloads:true});
+  await blocked.setOffline(true);
+  const blockedPage=await blocked.newPage(),blockedErrors=[];
+  blockedPage.on('pageerror',e=>blockedErrors.push(e.message));
+  await blockedPage.addInitScript(()=>{
+   const original=Storage.prototype.setItem;
+   Storage.prototype.setItem=function(key,value){
+    if(String(key).startsWith('neon_expedition_prototype_v1'))
+     throw new DOMException('persistent storage blocked','QuotaExceededError');
+    return original.call(this,key,value);
+   };
+  });
+  await blockedPage.goto(pathToFileURL(packaged).href,{waitUntil:'load'});
+  assert.equal(await blockedPage.locator('#battleScreen').isVisible(),true);
+  assert.equal(await blockedPage.locator('#squadScreen [data-storage-warning]').isVisible(),true,
+   'a first-run blocked browser must immediately reveal the persistent warning');
+  assert.match(await blockedPage.locator('#squadScreen [data-storage-warning]').textContent(),/전체 저장 백업/);
+  await blockedPage.locator('#hire').click();
+  const afterHire=await blockedPage.locator('#credits').textContent();
+  assert.notEqual(afterHire,'65','live gameplay must remain usable without automatic saving');
+  assert.equal(await blockedPage.locator('#squadScreen [data-storage-warning]').isVisible(),true);
+  await blockedPage.locator('[data-tab="archive"]').click();
+  assert.equal(await blockedPage.locator('#archiveScreen [data-storage-warning]').isVisible(),true,
+   'the reminder remains accessible beside the backup action');
+  const [blockedDownload]=await Promise.all([
+   blockedPage.waitForEvent('download'),blockedPage.locator('#exportSave').click()
+  ]);
+  const blockedBackup=JSON.parse(fs.readFileSync(await blockedDownload.path(),'utf8'));
+  assert.equal(blockedBackup.schema,'neon-expedition-full-save-v1');
+  assert.equal(Object.values(blockedBackup.state.units).reduce((a,b)=>a+b,0),3,
+   'failed local save must never prevent export of the new recruitment');
+  assert.equal(blockedBackup.state.credits<65,true);
+  assert.equal(await blockedPage.locator('#archiveScreen [data-storage-warning]').isVisible(),true);
+  assert.equal(await blockedPage.evaluate(()=>localStorage.getItem('neon_expedition_prototype_v1')),null,
+   'failed storage cannot be reported as a successful persisted save');
+  assert.deepEqual(blockedErrors,[],'storage failure should not crash the browser');
+  await blocked.close();
+  console.log('PASS standalone file:// storage-denied warning, continued growth and fresh JSON backup');
  }finally{await browser.close();}
 }
 main().catch(err=>{console.error(err);process.exitCode=1;});
