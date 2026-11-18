@@ -574,6 +574,9 @@ async function main(){
      state.autoBuy.purchases=12;
      state.longestEncounter={stage:40,seconds:550};
      state.longEngagements=3;
+     // Both prerequisite kinds are known, but only 1/2 each so the
+     // voluntary-return decision displays a truthful duplicate goal.
+     state.relics.guard=1;state.relics.archer=1;
      state.runMetrics.firstRelicFinds=4;
      state.runMetrics.duplicateRelics=3;
      state.runMetrics.relicExchanges=2;
@@ -636,6 +639,8 @@ async function main(){
      if(!raw)return;
      const state=JSON.parse(raw);
      for(const r of catalog)state.relics[r.id]=1;
+     // All 16 kinds and both mastery stacks are specifically available.
+     state.relics.guard=2;state.relics.archer=2;
      state.best=state.runBest=state.stage=Math.max(56,...catalog.map(r=>r.unlockStage+1));
      state.chests=2;state.chestDepths=[55,55];state.lastSaved=Date.now();
      localStorage.setItem(key,JSON.stringify(state));
