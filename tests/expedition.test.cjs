@@ -895,6 +895,12 @@ test('relic mechanics persist through rebirth but activation counters do not',()
  assert.equal(E.relic(s,'archer'),2);
  assert.equal(E.relic(s,'medkit'),3);
  assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0});
+ assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2},
+  'completed return keeps evidence of tactical relic activation');
+ assert.deepEqual(s.latestReturn.relicEffects,s.runHistory.at(-1).relicEffects);
+ const normalized=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.deepEqual(normalized.runHistory.at(-1).relicEffects,s.runHistory.at(-1).relicEffects);
+ assert.deepEqual(normalized.latestReturn.relicEffects,s.latestReturn.relicEffects);
  assert.ok(s.actors.every(a=>a.shots===0));
 });
 
