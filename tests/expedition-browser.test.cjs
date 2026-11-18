@@ -390,6 +390,31 @@ async function main(){
    assert.equal(chargeView.result.guardProgress,1);
    assert.match(chargeView.result.event,/철벽 진형/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
+   // Live tactical warning and response, with the archive panel left open.
+   const signalView=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,field=window.ExpeditionField;
+    const s=E.newState(Date.now());
+    s.stage=s.best=s.runBest=16;s.enemyHp=1e10;
+    s.relics.medkit=1;s.relics.relay=1;s.units.ranger=1;s.units.medic=1;
+    s.actors.push({id:'ranger',hp:10000,revive:0,progress:1,cooldown:100,shots:0});
+    s.actors.push({id:'medic',hp:10000,revive:0,progress:1,cooldown:100,shots:0});
+    for(const a of s.actors){a.hp=10000;a.progress=1;a.cooldown=100;}
+    E.tick(s,3);field.sync(s);
+    const intent=document.querySelector('.enemy-intent');
+    const warning={visible:!intent.hidden,text:intent.textContent,kind:E.enemyKind(s.stage)};
+    E.tick(s,2);field.sync(s);
+    const result={visible:!intent.hidden,text:intent.textContent,cleanses:s.relicEffects.cleanses,
+      event:document.querySelector('.combat-cue')?.textContent};
+    return {warning,result};
+   });
+   assert.equal(signalView.warning.kind,'disruptor');
+   assert.equal(signalView.warning.visible,true);
+   assert.match(signalView.warning.text,/교란 사수 원거리 조준/);
+   assert.equal(signalView.result.visible,true);
+   assert.match(signalView.result.text,/역통신 반격/);
+   assert.equal(signalView.result.cleanses,1);
+   assert.match(signalView.result.event,/역통신 반격/);
+   assert.equal(await page.locator('#battleScreen').isVisible(),true);
    // Regression: after a 45-clear voluntary return, the low-level run stage
    // must NOT advertise relic tiers 15/25/40 as "new" a second time.
    const frontierContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
