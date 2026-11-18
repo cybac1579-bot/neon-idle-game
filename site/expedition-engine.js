@@ -157,6 +157,7 @@ function normalize(raw,now=Date.now()){
   relicKinds:integer(report.relicKinds,0,RELICS.length),
   relicCopies:integer(report.relicCopies,0,1000),
   chests:integer(report.chests,0,1e9),
+  autoChestOpened:Number.isFinite(report.autoChestOpened)?integer(report.autoChestOpened,0,1e9):null,
   before:validOpening(report.before),after:validOpening(report.after),
   relicEffects:combatEffectReport(report.relicEffects)
  }:null;
@@ -166,7 +167,9 @@ function normalize(raw,now=Date.now()){
   kills:integer(x.kills,0,1e9),cores:integer(x.cores,0,1e9),
   manualPurchases:integer(x.manualPurchases,0,1e9),
   autoPurchases:integer(x.autoPurchases,0,1e9),
-  chestsOpened:integer(x.chestsOpened,0,1e9),milestones:normalizedMilestones(x.milestones),
+  chestsOpened:integer(x.chestsOpened,0,1e9),
+  autoChestOpened:Number.isFinite(x.autoChestOpened)?integer(x.autoChestOpened,0,1e9):null,
+  milestones:normalizedMilestones(x.milestones),
   relicEffects:combatEffectReport(x.relicEffects)
  })):[];
  // Bound the lifetime discovery journal. No historical reroll or reward is granted
@@ -194,6 +197,9 @@ function normalize(raw,now=Date.now()){
     relicTotal:integer(x.relicTotal,0,1000),
     manualBuys:integer(x.manualBuys,0,1e9),
     autoBuys:integer(x.autoBuys,0,1e9),
+    // Missing history is UNKNOWN: don't fabricate past OFF/0 from old saves.
+    autoChestEnabled:typeof x.autoChestEnabled==='boolean'?x.autoChestEnabled:null,
+    autoChestOpened:Number.isFinite(x.autoChestOpened)?integer(x.autoChestOpened,0,1e9):null,
     source:x.source==='offline'?'offline':'foreground'
    }));
  }
@@ -409,6 +415,7 @@ function recordPlaytestMinute(s,source){
   recruits:total(s),chests:s.chests,
   relicKinds:RELICS.filter(r=>relic(s,r.id)>0).length,relicTotal:count,
   manualBuys:s.runMetrics.manualPurchases,autoBuys:s.autoBuy.purchases,
+  autoChestEnabled:s.autoChest.enabled,autoChestOpened:s.autoChest.opened,
   source:source==='offline'?'offline':'foreground'
  });
  if(s.playtest.snapshots.length>MAX_PLAYTEST_SNAPSHOTS)s.playtest.snapshots.shift();
@@ -656,10 +663,11 @@ function rebirth(s){
   duration:Math.floor(s.clock),cores:gain,earned:reward.base,firstClear:reward.recordBonus,
   relicKinds:RELICS.filter(r=>relic(s,r.id)>0).length,
   relicCopies:RELICS.reduce((sum,r)=>sum+relic(s,r.id),0),
-  chests:s.chests,before,relicEffects:combatEffectReport(s.relicEffects)};
+  chests:s.chests,before,autoChestOpened:s.autoChest.opened,relicEffects:combatEffectReport(s.relicEffects)};
  const summary={duration:Math.floor(s.clock),best:s.runBest,kills:s.runKills,cores:gain,
   manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
-  chestsOpened:s.runMetrics.chestsOpened,milestones:{...s.runMilestones},
+  chestsOpened:s.runMetrics.chestsOpened,
+  autoChestOpened:s.autoChest.opened,milestones:{...s.runMilestones},
   relicEffects:combatEffectReport(s.relicEffects)};
  const history=[...(s.runHistory||[]),summary].slice(-5);
  const keep={claimedBreakthroughDistance:Math.max(s.claimedBreakthroughDistance,s.runBest-1),
