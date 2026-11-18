@@ -139,6 +139,10 @@ async function main(){
    assert.equal(await page.locator('#openArchiveBatch').isVisible(),false);
    assert.match(await page.locator('#permanentBonusSummary').textContent(),/영구 성장 효과/);
    assert.match(await page.locator('#permanentBonusSummary').textContent(),/용병 소집 비용 절약/);
+   assert.ok(await page.locator('#relicList .relic.owned .next-effect').count()>0,
+    'collection archive shows real next-copy payoff only for owned relics');
+   assert.match(await page.locator('#relicList .relic.owned .next-effect').first().textContent(),
+    /다음 1개 효과/);
    const savedBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')));
    assert.equal(Object.values(savedBefore.relics).reduce((a,b)=>a+b,0),4);
    assert.equal(savedBefore.relicHistory.length,4);
@@ -534,6 +538,11 @@ async function main(){
     assert.match(completedChoice,/새 종류 후보 없음/);
     await engagementPage.locator('[data-tab="archive"]').click();
     assert.match(await engagementPage.locator('#relicCollectionProgress').textContent(),/공개된 유물 종류 완성/);
+    assert.equal(await engagementPage.locator('#relicList .relic.owned .next-effect').count(),
+     require('../site/expedition-engine.js').RELICS.length,
+     'every collected relic has a full-stack or next-copy archive label');
+    assert.match(await engagementPage.locator('#relicList .next-effect').allTextContents().then(v=>v.join(' / ')),
+     /고유 유물 수집 완료/);
     await engagementContext.close();
    }
 
