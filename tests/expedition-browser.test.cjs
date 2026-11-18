@@ -517,18 +517,16 @@ async function main(){
     // Complete-catalog scenario is injected before engine startup, not via
     // live storage just before reload: the app's page-unload save can overwrite
     // a test-only localStorage mutation while the old in-memory run is active.
-    await engagementPage.addInitScript(()=>{
+    const relicIds=require('../site/expedition-engine.js').RELICS.map(r=>r.id);
+    await engagementPage.addInitScript((ids)=>{
      const key='neon_expedition_prototype_v1',raw=localStorage.getItem(key);
      if(!raw)return;
      const state=JSON.parse(raw);
-     for(const r of [
-      'ember','shield','income','swift','medkit','boss','bounty','guard',
-      'archer','scout','fortune','relay','enlist','drill','chronicle','pursuit'
-     ])state.relics[r]=1;
+     for(const id of ids)state.relics[id]=1;
      state.best=state.runBest=state.stage=56;
      state.chests=2;state.chestDepths=[55,55];state.lastSaved=Date.now();
      localStorage.setItem(key,JSON.stringify(state));
-    });
+    },relicIds);
     await engagementPage.reload({waitUntil:'networkidle'});
     await engagementPage.locator('[data-tab="return"]').click();
     const completedChoice=await engagementPage.locator('#returnChoices').textContent();
