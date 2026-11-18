@@ -424,12 +424,23 @@ async function main(){
     s.enemyHp=E.enemyMax(60)*.5+1;
     for(const a of s.actors){a.hp=1e8;a.progress=1;a.cooldown=0;}
     E.tick(s,1);field.sync(s);
+    const intent=document.querySelector('.enemy-intent');
+    const persistentIntent={visible:!intent.hidden,text:intent.textContent};
+    const saved=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+    field.sync(saved);
     return {cue:document.querySelector('.combat-cue')?.textContent,
-     activated:s.enemyTactic.pursuitTriggered,boost:E.pursuitBoost(s)};
+     activated:s.enemyTactic.pursuitTriggered,boost:E.pursuitBoost(s),
+     savedCue:saved.battleEvent?.type,savedBoost:E.pursuitBoost(saved),
+     persistentIntent,restoredIntent:{visible:!intent.hidden,text:intent.textContent}};
    });
    assert.equal(pursuitView.activated,true);
    assert.equal(pursuitView.boost,1.6);
    assert.match(pursuitView.cue,/추격 신호기/);
+   assert.equal(pursuitView.savedCue,'pursuit');
+   assert.equal(pursuitView.savedBoost,1.6);
+   assert.equal(pursuitView.persistentIntent.visible,true);
+   assert.match(pursuitView.persistentIntent.text,/추격 신호기 · 후반전 화력/);
+   assert.deepEqual(pursuitView.restoredIntent,pursuitView.persistentIntent);
    // Actual 10-minute combat evidence is visible only in the detail tray.
    // Check reloaded state and user-triggered JSON export, without a fake HUD.
    if(width===390){
