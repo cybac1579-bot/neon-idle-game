@@ -763,7 +763,8 @@ test('guard remains primary target but normal/elite/boss flank blows reach both 
   assert.ok(hit.medic>0,'medic is no longer invulnerable behind living guards');
   const total=hit.guard+hit.ranger+hit.medic;
   const actualShare=(hit.ranger+hit.medic)/total;
-  assert.ok(actualShare>0&&actualShare<=share+1e-9,'rear side damage remains positive and bounded at stage '+stage);
+  assert.ok(actualShare>0&&actualShare<=share*(stage>=15?1.25:1)+1e-9,
+   'telegraphed elite strike can concentrate, but cannot create unbounded rear damage at stage '+stage);
   // Damage is divided, not duplicated, even when the rear HP safety cap
   // diverts some elite/boss attack back to the front line.
   const expectedDps=.4*Math.pow(1.17,stage-1)*(E.isBoss(stage)?2.2:E.isElite(stage)?1.4:1);
