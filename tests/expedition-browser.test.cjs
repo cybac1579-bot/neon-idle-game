@@ -21,7 +21,17 @@ async function main(){
    await page.goto(url,{waitUntil:'networkidle'});
    assert.match(await page.title(),/용병단 탐사 원형/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
-   assert.ok(await page.locator('#squad .fighter').count()>=2);
+   // A slow CI browser can finish the DOM navigation before field sprites
+   // are placed. Allow startup rendering to complete, but keep hard failure
+   // with diagnostic detail if a genuine JavaScript bootstrap error occurs.
+   await page.waitForTimeout(300);
+   const initialFighters=await page.locator('#squad .fighter').count();
+   const boot=await page.evaluate(()=>({field:!!window.ExpeditionField,
+    engine:!!window.ExpeditionEngine,ui:!!window.ExpeditionUI,
+    stage:document.querySelector('#stage')?.textContent,
+    scripts:[...document.scripts].map(x=>x.getAttribute('src')).filter(Boolean)}));
+   assert.ok(initialFighters>=2,
+    'no initial fighters: '+JSON.stringify({initialFighters,boot,pageErrors:errors}));
    const firstActor=await page.locator('#squad .fighter').first().getAttribute('style');
    await page.waitForTimeout(500);
    const movedActor=await page.locator('#squad .fighter').first().getAttribute('style');
