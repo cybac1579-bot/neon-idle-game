@@ -123,3 +123,6 @@ require('./expedition-stage50-two-routes-audit.cjs');
 
 // Deep 55 discovery / 60 boss second-phase pacing, real three-run progression.
 require('./expedition-post50-pursuit-audit.cjs');
+
+// Fourth-run deep elite 65: earned pursuit must trigger, no forced rebirth.
+require('./expedition-stage65-pursuit-audit.cjs');
