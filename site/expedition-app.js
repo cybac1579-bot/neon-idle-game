@@ -25,7 +25,10 @@ function showStorageStatus(ok){
 }
 showStorageStatus(storageAvailable);
 let loaded=null;
-try{loaded=JSON.parse(localStorage.getItem(E.SAVE_KEY)||'null');}catch(err){loaded=null;showStorageStatus(false);}
+try{
+ const raw=localStorage.getItem(E.SAVE_KEY);
+ if(raw){try{loaded=JSON.parse(raw);}catch(err){loaded=null;}}
+}catch(err){showStorageStatus(false);}
 const s=E.normalize(loaded||E.newState(),Date.now());
 const startup=loaded?E.offline(s,Date.now()):0;
 let buyCount=5;
