@@ -455,6 +455,21 @@ async function main(){
      savedCue:saved.battleEvent?.type,savedBoost:E.pursuitBoost(saved),
      persistentIntent,restoredIntent:{visible:!intent.hidden,text:intent.textContent}};
    });
+   // 65+ elite HP migration must preserve an ongoing browser save's
+   // relative battle progress, and repeated reload must not shorten it again.
+   const eliteMigration=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine;
+    const old=E.newState(Date.now());old.stage=old.best=old.runBest=65;
+    old.enemyHp=Math.round(E.enemyMax(65)*.5/.8);
+    delete old.eliteHpBalanceVersion;
+    const a=E.normalize(JSON.parse(JSON.stringify(old)),Date.now());
+    const b=E.normalize(JSON.parse(JSON.stringify(a)),Date.now());
+    return {ratio:a.enemyHp/E.enemyMax(65),stable:a.enemyHp===b.enemyHp,
+     marker:a.eliteHpBalanceVersion};
+   });
+   assert.ok(Math.abs(eliteMigration.ratio-.5)<.00001);
+   assert.equal(eliteMigration.stable,true);
+   assert.equal(eliteMigration.marker,1);
    assert.equal(pursuitView.activated,true);
    assert.equal(pursuitView.boost,1.6);
    assert.match(pursuitView.cue,/추격 신호기/);
