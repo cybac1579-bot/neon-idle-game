@@ -40,8 +40,10 @@ function firstThirty(seed,mode){
    // A saved checkpoint must also remain playable after restoration, not
    // merely have matching fields immediately after normalize().
    const continued=E.normalize(copy(resumed),s.lastSaved||1000000);
+   const originalSnapshot=copy(s);
    const previousClock=continued.clock,previousStage=continued.stage;
    for(let step=0;step<60;step++)E.tick(continued,1);
+   assert.deepEqual(s,originalSnapshot,'independent restored run cannot mutate the live 30-minute session');
    assert.ok(continued.clock>=previousClock+60,'restored run must advance for another minute');
    assert.ok(continued.stage>=previousStage,'restored run cannot lose distance while advancing');
    assert.equal(continued.autoBuy.enabled,true,'restored run keeps opt-in automation active');
