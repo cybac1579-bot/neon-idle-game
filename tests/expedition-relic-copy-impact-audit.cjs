@@ -45,6 +45,13 @@ function metrics(id,copies){
  const before=combat.enemyHp;E.tick(combat,1);
  data.bossOpeningDamage=round(before-combat.enemyHp);
  data.volleyCount=combat.relicEffects.volleys;
+ // The depth65 unique diagram is deliberately silent below 70. Probe its
+ // real earned-target encounter instead of falsely declaring it inert.
+ const deep=state(id,copies,70);
+ deep.enemyHp=E.enemyMax(70)*.74;
+ E.tick(deep,1);
+ data.depth70DiagramHits=deep.relicEffects.diagrams;
+ data.depth70DiagramDamage=round(deep.relicEffects.diagramDamage);
  // Force each ranger to its third shot for a reproducible volley bonus.
  const burst=state(id,copies,35);
  burst.actors.filter(a=>a.id==='ranger').forEach(a=>a.shots=2);
