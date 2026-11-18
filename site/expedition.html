@@ -46,6 +46,9 @@ p{line-height:1.55}header .sub{margin:3px 0 0}.sub,small{color:#9db0c4;font-size
 /* Archive comparison is intentionally detailed; prevent overflow at 360px. */
 #milestoneSummary .statline{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:start;gap:8px}
 #milestoneSummary .statline b{text-align:right;overflow-wrap:anywhere;line-height:1.5}
+/* Return-planning detail is in the archive, never the compact battle HUD. */
+#rebirthSummary .statline{display:grid;grid-template-columns:112px minmax(0,1fr);gap:8px;align-items:start}
+#rebirthSummary .statline b{text-align:right;overflow-wrap:anywhere;line-height:1.5}
 .relics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .relic{border:1px solid #3d536b;border-radius:12px;padding:11px;background:#0e1b30;min-height:115px}
 .relic.owned{border-color:#ae9561;background:#20283a}.relic .glyph{font-size:22px;color:#eecb85}
