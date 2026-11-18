@@ -201,7 +201,7 @@ function renderArchive(){
   row('다음 최초 돌파 보너스',nextRecord?nextRecord.stage+'거리 보스 격파 · +'+nextRecord.cores+'코어':'공개된 돌파 보너스 모두 획득')+
   (nextReturnForecast?row('계속 탐사 시 귀환 예상',nextRecord.stage+'거리 격파 가정 · 총 '+
    fmt(nextReturnForecast.total)+'코어 (현재보다 +'+fmt(nextReturnForecast.additional)+
-   '개) · 처치 수당 기준, 소요 시간 미반영'):'')+
+   '개) · 격파 진척·첫 기록 보너스 기준, 소요 시간 미반영'):'')+
   row('누적 귀환 횟수',fmt(s.rebirths)+'회')+
   row('보유 영구 코어',fmt(s.cores)+'개');
  $('rebirth').disabled=gain<1;
