@@ -514,10 +514,17 @@ async function main(){
     assert.equal(engagementExport.currentRun.completedFightsOverOneMinute,3);
     assert.deepEqual(engagementExport.currentRun.relicDiscoveryThisRun,
      {first:4,duplicates:3,exchanges:2,partial:false});
-    // 16/16: no false promises of future new kinds or a new depth.
-    await engagementPage.evaluate(()=>{
-     const key='neon_expedition_prototype_v1',state=JSON.parse(localStorage.getItem(key));
-     for(const r of window.ExpeditionEngine.RELICS)state.relics[r.id]=1;
+    // Complete-catalog scenario is injected before engine startup, not via
+    // live storage just before reload: the app's page-unload save can overwrite
+    // a test-only localStorage mutation while the old in-memory run is active.
+    await engagementPage.addInitScript(()=>{
+     const key='neon_expedition_prototype_v1',raw=localStorage.getItem(key);
+     if(!raw)return;
+     const state=JSON.parse(raw);
+     for(const r of [
+      'ember','shield','income','swift','medkit','boss','bounty','guard',
+      'archer','scout','fortune','relay','enlist','drill','chronicle','pursuit'
+     ])state.relics[r]=1;
      state.best=state.runBest=state.stage=56;
      state.chests=2;state.chestDepths=[55,55];state.lastSaved=Date.now();
      localStorage.setItem(key,JSON.stringify(state));
