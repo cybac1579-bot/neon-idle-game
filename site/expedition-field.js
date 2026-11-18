@@ -8,6 +8,7 @@ const field=$('squad'),arena=document.querySelector('.arena');
 if(!field||!arena)return;
 const fx=document.createElement('div');fx.id='battleFx';fx.setAttribute('aria-hidden','true');arena.appendChild(fx);
 const rosterNote=document.createElement('div');rosterNote.className='roster-note';rosterNote.hidden=true;arena.appendChild(rosterNote);
+const enemyIntent=document.createElement('div');enemyIntent.className='enemy-intent';enemyIntent.hidden=true;enemyIntent.setAttribute('aria-live','off');arena.appendChild(enemyIntent);
 let visibleKey='',lastCue=-1;
 const safe=n=>Math.max(0,Math.min(100,Number(n)||0));
 const selected=s=>{
@@ -56,6 +57,15 @@ function sync(s){
  rosterNote.hidden=extra===0;
  if(extra)rosterNote.textContent='전투원 '+shown.length+'명 표시 · 후방 '+extra+'명';
  arena.classList.toggle('arena-boss',E.isBoss(s.stage));
+ const intent=s.enemyTactic;
+ const aiming=intent?.stage===s.stage&&intent.phase==='windup';
+ const last=intent?.stage===s.stage&&intent.phase==='fired'&&intent.flash>0;
+ enemyIntent.hidden=!(aiming||last);
+ enemyIntent.classList.toggle('aiming',!!aiming);
+ enemyIntent.classList.toggle('intercepted',!!last&&intent?.result==='intercept');
+ if(aiming)enemyIntent.textContent='⚠ 적 측면 조준 · '+Math.ceil(intent.windup)+'초';
+ else if(last)enemyIntent.textContent=intent.result==='intercept'?'🛡 방벽 호위 · 사수 반격 성공':'⚡ 적 후열 집중 타격';
+ else enemyIntent.textContent='';
  if(s.battleCueSeq===lastCue||!s.battleEvent)return;
  lastCue=s.battleCueSeq;
  const evt=s.battleEvent,unit=E.UNITS.find(u=>u.id===evt.id);
@@ -66,6 +76,9 @@ function sync(s){
  else if(evt.type==='volley')cue.textContent='정밀 사격! -'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='triage')cue.textContent='긴급 회수! · 복귀 '+evt.value.toFixed(1)+'초 단축';
  else if(evt.type==='intel')cue.textContent='탐사 정보망 · 새 조사 보상!';
+ else if(evt.type==='aim')cue.textContent='적 측면 조준 · 후열 경계!';
+ else if(evt.type==='flank')cue.textContent='측면 타격! 후열 -'+Math.max(1,Math.round(evt.value));
+ else if(evt.type==='intercept')cue.textContent='호위 반격! -'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='heal')cue.textContent='+'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='fallen')cue.textContent=(unit?.name||'용병')+' 후퇴';
  else if(evt.type==='returned')cue.textContent=(unit?.name||'용병')+' 재합류';
@@ -73,7 +86,7 @@ function sync(s){
  else if(evt.type==='rally')cue.textContent='부대 재정비';
  fx.appendChild(cue);
  arena.classList.remove('combat-impact');void arena.offsetWidth;
- if(evt.type==='hit'||evt.type==='clear')arena.classList.add('combat-impact');
+ if(evt.type==='hit'||evt.type==='clear'||evt.type==='flank'||evt.type==='intercept')arena.classList.add('combat-impact');
 }
 root.ExpeditionField={sync};
 })(window);
