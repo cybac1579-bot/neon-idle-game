@@ -1016,3 +1016,6 @@ test('pre-network backups migrate without invented network progress or earlier a
 
 // Optional automated collection must preserve manual loot and existing saved preferences.
 require('./expedition-auto-chest.test.cjs');
+
+// Auto chest collection is optional, observable, and not a forced strategy.
+require('./expedition-auto-chest-telemetry.test.cjs');
