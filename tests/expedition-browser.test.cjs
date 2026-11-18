@@ -299,6 +299,17 @@ async function main(){
    await page.locator('[data-tab="archive"]').click();
    assert.equal(await page.locator('#autoChestToggle').getAttribute('aria-pressed'),'true');
    assert.match(await page.locator('#autoChestStatus').textContent(),/오프라인 정산 포함/);
+   assert.match(await page.locator('#history').textContent(),/상자 수동 .*개 \/ 자동 .*개/);
+   assert.match(await page.locator('#playtestSummary').textContent(),/상자 자동 개봉/);
+   // auto-enabled playtest JSON must report the toggled preference and counts.
+   const [autoReport]=await Promise.all([
+    page.waitForEvent('download'),page.locator('#exportPlaytest').click()
+   ]);
+   const autoPayload=JSON.parse(fs.readFileSync(await autoReport.path(),'utf8'));
+   assert.equal(autoPayload.currentRun.autoChestEnabled,true);
+   assert.ok(Number.isInteger(autoPayload.currentRun.automaticChestsOpened));
+   assert.equal(autoPayload.currentRun.manuallyOpenedChests,
+    autoPayload.currentRun.chestsOpened-autoPayload.currentRun.automaticChestsOpened);
    const chestBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(chestBounds.scroll<=chestBounds.width+1,
     'chest automation portrait overflow: '+JSON.stringify(chestBounds));
