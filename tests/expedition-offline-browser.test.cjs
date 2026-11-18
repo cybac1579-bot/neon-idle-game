@@ -80,6 +80,31 @@ async function main(){
    assert.equal(stored.relics.ember,1);
    await page.reload({waitUntil:'load'});
    assert.equal(await page.locator('#credits').textContent(),'7,777');
+   if(width===390){
+    // Simulate a browser-start recovery after a 92-second background gap.
+    // The resume must be recorded separately from the existing total.
+    await page.addInitScript(()=>{
+     const key='neon_expedition_prototype_v1',saved=JSON.parse(localStorage.getItem(key));
+     if(saved){saved.lastSaved=Date.now()-92000;localStorage.setItem(key,JSON.stringify(saved));}
+    });
+    await page.reload({waitUntil:'load'});
+    await page.locator('[data-tab="archive"]').click();
+    const [resumeDownload]=await Promise.all([
+     page.waitForEvent('download'),page.locator('#exportPlaytest').click()
+    ]);
+    const report=JSON.parse(fs.readFileSync(await resumeDownload.path(),'utf8'));
+    const resumed=report.offlineResumeHistory.at(-1);
+    assert.ok(resumed,'mobile playtest JSON must record startup recovery events');
+    assert.equal(resumed.source,'startup');
+    assert.ok(resumed.requestedSeconds>=91&&resumed.requestedSeconds<=95);
+    assert.ok(resumed.settledSeconds>=91&&resumed.settledSeconds<=95);
+    assert.ok(report.offlineSettledSeconds>=resumed.settledSeconds);
+    assert.deepEqual(report.saveDiagnostics,{
+     storageAvailableAtExport:true,blockedAtStartup:false,
+     failedSaveAttempts:0,verifiedSaveRecoveries:0,originKind:'offline-file'
+    });
+    assert.equal(Object.hasOwn(report,'deviceId'),false);
+   }
    assert.deepEqual(requests,[],'network must not be requested by the standalone build');
    assert.deepEqual(errors,[],'browser runtime errors');
    console.log('PASS standalone file:// offline',width,'export/import/reload/network=0');
@@ -123,6 +148,16 @@ async function main(){
   assert.equal(backupActorCount,await renderedRosterCount(blockedPage),
    'backup must include visible fighters AND rear-line reserves after a batch purchase');
   assert.equal(blockedBackup.state.credits<65,true);
+  const [blockedReportDownload]=await Promise.all([
+   blockedPage.waitForEvent('download'),blockedPage.locator('#exportPlaytest').click()
+  ]);
+  const blockedReport=JSON.parse(fs.readFileSync(await blockedReportDownload.path(),'utf8'));
+  assert.equal(blockedReport.saveDiagnostics.storageAvailableAtExport,false);
+  assert.equal(blockedReport.saveDiagnostics.blockedAtStartup,true);
+  assert.ok(blockedReport.saveDiagnostics.failedSaveAttempts>=1);
+  assert.equal(blockedReport.saveDiagnostics.verifiedSaveRecoveries,0);
+  assert.equal(blockedReport.saveDiagnostics.originKind,'offline-file');
+  assert.equal(Object.hasOwn(blockedReport,'deviceId'),false);
   assert.equal(await blockedPage.locator('#archiveScreen [data-storage-warning]').isVisible(),true);
   assert.equal(await blockedPage.evaluate(()=>localStorage.getItem('neon_expedition_prototype_v1')),null,
    'failed storage cannot be reported as a successful persisted save');
@@ -162,6 +197,14 @@ async function main(){
   ));
   assert.equal(Object.values(storedAfter.units).reduce((a,b)=>a+b,0),recruitedActorCount,
    'recovery should persist the exact number recruited, not assume a one-unit purchase');
+  const [recoverReportDownload]=await Promise.all([
+   recoveredPage.waitForEvent('download'),recoveredPage.locator('#exportPlaytest').click()
+  ]);
+  const recoverReport=JSON.parse(fs.readFileSync(await recoverReportDownload.path(),'utf8'));
+  assert.equal(recoverReport.saveDiagnostics.storageAvailableAtExport,true);
+  assert.equal(recoverReport.saveDiagnostics.blockedAtStartup,false);
+  assert.equal(recoverReport.saveDiagnostics.failedSaveAttempts,1);
+  assert.equal(recoverReport.saveDiagnostics.verifiedSaveRecoveries,1);
   await recoveredPage.reload({waitUntil:'load'});
   const afterReload=await recoveredPage.evaluate(()=>JSON.parse(
    localStorage.getItem('neon_expedition_prototype_v1')||'null'
