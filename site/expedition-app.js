@@ -196,6 +196,7 @@ $('train').addEventListener('click',()=>doPurchase('train'));
 $('questList').addEventListener('click',e=>{const b=e.target.closest('[data-quest]');if(b)doPurchase('quest',b.dataset.quest);});
 $('traitCommand').addEventListener('click',()=>act(()=>E.buyTrait(s,'command'),'사용할 특성 포인트가 없어.'));
 $('traitSupply').addEventListener('click',()=>act(()=>E.buyTrait(s,'supply'),'사용할 특성 포인트가 없어.'));
+$('traitRespec').addEventListener('click',()=>act(()=>E.respecTraits(s),'되돌릴 투자 특성이 없어.'));
 $('coreValor').addEventListener('click',()=>act(()=>E.buyCore(s,'valor'),'코어가 부족해.'));
 $('coreTrade').addEventListener('click',()=>act(()=>E.buyCore(s,'trade'),'코어가 부족해.'));
 $('openChest').addEventListener('click',e=>openChestWithCount(1,e.currentTarget));
