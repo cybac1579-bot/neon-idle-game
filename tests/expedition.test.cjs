@@ -1133,7 +1133,7 @@ function chargeFixture({brace=false,guard=true}={}){
 }
 test('regular enemy archetype alternates deterministic chargers without replacing boss or elite tiers',()=>{
  for(const [stage,kind] of [[1,'regular'],[7,'regular'],[8,'charger'],[10,'boss'],
-  [13,'regular'],[14,'charger'],[15,'elite'],[16,'regular'],[20,'boss'],
+  [13,'regular'],[14,'charger'],[15,'elite'],[16,'disruptor'],[20,'boss'],
   [26,'charger'],[32,'charger'],[40,'boss'],[44,'charger']]){
   assert.equal(E.enemyKind(stage),kind,'enemy role by progression stage '+stage);
  }
