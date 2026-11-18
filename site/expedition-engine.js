@@ -31,14 +31,14 @@ const RELICS=[
  {id:'shield',name:'합금 배지',desc:'용병단 체력 +10%/개 · 진군 북과 함께 돌격병의 밀치기를 막고 자동 반격',cap:5,unlockStage:5},
  {id:'income',name:'교역 인장',desc:'자동 보급 수익이 수집 수마다 12% 증가',cap:5,unlockStage:5},
  {id:'swift',name:'진군 북',desc:'용병단 피해량 +5%/개 · 합금 배지와 함께 돌격병의 밀치기 방어',cap:5,unlockStage:15},
- {id:'medkit',name:'재생 결속선',desc:'정비사 회복력 +18%/개 · 살아 있는 정비사가 방벽병 긴급 재합류를 지원 (18초마다 최대 1회)',cap:4,unlockStage:15},
+ {id:'medkit',name:'재생 결속선',desc:'정비사 회복력 +18%/개 · 방벽병 긴급 재합류 지원 (18초마다 최대 1회) · 작전 통신기와 함께 교란 사격 대응',cap:4,unlockStage:15},
  {id:'boss',name:'균열 렌즈',desc:'지휘급 적에게 주는 피해가 수집 수마다 14% 증가',cap:5,unlockStage:25},
  {id:'bounty',name:'현상금 표식',desc:'전투 크레딧 보상이 수집 수마다 12% 증가',cap:5,unlockStage:5},
  {id:'guard',name:'호위 계약서',desc:'방벽병 체력 +20%/개 · 초점 조준기와 함께 적의 측면 조준 공격을 차단하고 사수가 자동 반격',cap:4,unlockStage:5},
  {id:'archer',name:'초점 조준기',desc:'사수 3번째 사격마다 정밀 일제사격 · 호위 계약서와 조합하면 측면 조준 차단·자동 반격',cap:4,unlockStage:15},
  {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치 +15%/개 · 작전 통신기와 함께 탐사 정보망 활성화',cap:4,unlockStage:25},
  {id:'fortune',name:'중복 해체권',desc:'중복 유물 발견 시 수집 수마다 추가 크레딧 획득',cap:3,unlockStage:30},
- {id:'relay',name:'작전 통신기',desc:'전체 피해량 +5%/개 · 탐사 일지와 함께 자동 유물 조사 보상 해금',cap:5,unlockStage:30},
+ {id:'relay',name:'작전 통신기',desc:'전체 피해량 +5%/개 · 탐사 일지와 함께 자동 유물 조사 · 재생 결속선과 함께 교란 사격 대응',cap:5,unlockStage:30},
  // Only deep-earned chests can reveal these permanent run-economy options.
  {id:'enlist',name:'선발권 묶음',desc:'용병 소집 비용이 수집 수마다 6% 감소',cap:3,unlockStage:40},
  {id:'drill',name:'훈련 규정집',desc:'부대 훈련 비용이 수집 수마다 6% 감소',cap:3,unlockStage:45},
@@ -53,12 +53,13 @@ const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purc
 const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 // Per-run relic action telemetry; old saves default to no past activations.
-const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0});
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0});
 // New standard-enemy role is deterministic per stage and independent of drop RNG.
 function enemyKind(stage){
  if(isBoss(stage))return 'boss';
  if(isElite(stage))return 'elite';
- return stage>=8&&stage%6===2?'charger':'regular';
+ if(stage>=8&&stage%6===2)return 'charger';
+  return stage>=16&&stage%6===4?'disruptor':'regular';
 }
 const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null});
 const combatEffectReport=raw=>raw&&typeof raw==='object'?{
@@ -68,7 +69,8 @@ const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  intelFinds:integer(raw.intelFinds,0,2),
  flankShots:integer(raw.flankShots,0,1e9),intercepts:integer(raw.intercepts,0,1e9),
  counterDamage:num(raw.counterDamage,0,1e14),rushes:integer(raw.rushes,0,1e9),
- braces:integer(raw.braces,0,1e9),braceDamage:num(raw.braceDamage,0,1e14)
+ braces:integer(raw.braces,0,1e9),braceDamage:num(raw.braceDamage,0,1e14),
+  jams:integer(raw.jams,0,1e9),cleanses:integer(raw.cleanses,0,1e9),cleanseDamage:num(raw.cleanseDamage,0,1e14)
 }:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
@@ -158,22 +160,23 @@ function normalize(raw,now=Date.now()){
  for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
  s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
  s.relicEffects=initialRelicEffects();
- for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','jams','cleanses'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
  s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
  s.relicEffects.intelFinds=integer(raw.relicEffects?.intelFinds,0,2);
  s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
  s.relicEffects.counterDamage=num(raw.relicEffects?.counterDamage,0,1e14);
  s.relicEffects.braceDamage=num(raw.relicEffects?.braceDamage,0,1e14);
+  s.relicEffects.cleanseDamage=num(raw.relicEffects?.cleanseDamage,0,1e14);
  s.relicEffects.triageCooldown=num(raw.relicEffects?.triageCooldown,0,18);
  s.enemyTactic=initialEnemyTactic(s.stage);
- if(raw.enemyTactic?.stage===s.stage&&(isElite(s.stage)||enemyKind(s.stage)==='charger')){
+ if(raw.enemyTactic?.stage===s.stage&&(isElite(s.stage)||['charger','disruptor'].includes(enemyKind(s.stage)))){
   s.enemyTactic.elapsed=num(raw.enemyTactic.elapsed,0,7200);
   s.enemyTactic.phase=['idle','windup','fired'].includes(raw.enemyTactic.phase)?raw.enemyTactic.phase:'idle';
   s.enemyTactic.kind=enemyKind(s.stage);
   s.enemyTactic.windup=num(raw.enemyTactic.windup,0,2);
   s.enemyTactic.used=raw.enemyTactic.used===true;
   s.enemyTactic.flash=num(raw.enemyTactic.flash,0,2);
-  s.enemyTactic.result=['flank','intercept','rush','brace'].includes(raw.enemyTactic.result)?raw.enemyTactic.result:null;
+  s.enemyTactic.result=['flank','intercept','rush','brace','jam','unjam'].includes(raw.enemyTactic.result)?raw.enemyTactic.result:null;
   if(s.enemyTactic.used)s.enemyTactic.phase='fired';
  }
  s.runOpening=validOpening(raw.runOpening);
@@ -254,7 +257,7 @@ function normalize(raw,now=Date.now()){
    shots:a?integer(a.shots,0,2):0};
  });
  s.battleEvent=raw.battleEvent&&typeof raw.battleEvent==='object'
-  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','triage','intel','aim','flank','intercept','rush-aim','rush','brace'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
+  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','triage','intel','aim','flank','intercept','rush-aim','rush','brace','jam-aim','jam','unjam'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
@@ -357,7 +360,7 @@ function victory(s){
 // A visible single-use enemy pattern: only elites and bosses at depth 15+
 // prepare a rear-line focus attack. Existing enemy DPS is redistributed, not
 // added. Time and phase persist across save/reload and offline settlement.
-function advanceEnemyTactic(s,dt,canTargetRear,canChargeGuard){
+function advanceEnemyTactic(s,dt,canTargetRear,canChargeGuard,canDisruptRanger){
  if(!s.enemyTactic||s.enemyTactic.stage!==s.stage)s.enemyTactic=initialEnemyTactic(s.stage);
  const t=s.enemyTactic;
  t.flash=Math.max(0,t.flash-dt);
@@ -376,6 +379,21 @@ function advanceEnemyTactic(s,dt,canTargetRear,canChargeGuard){
   if(t.phase==='windup'){
    t.windup=Math.max(0,t.windup-dt);
    if(t.windup<=0){t.used=true;t.phase='fired';t.flash=1.8;return 'rush';}
+  }
+  return false;
+ }
+ // Ranged saboteur delays one ranger shot; enemy attack power is unchanged.
+ if(t.kind==='disruptor'){
+  if(t.used)return false;
+  t.elapsed+=dt;
+  if(t.phase==='idle'&&canDisruptRanger&&t.elapsed>=3){
+   t.phase='windup';t.windup=1.5;
+   battleCue(s,'jam-aim','ranger',1.5);
+   note(s,'교란 사수 원거리 조준 · 1.5초 뒤 사격 지연');return false;
+  }
+  if(t.phase==='windup'){
+   t.windup=Math.max(0,t.windup-dt);
+   if(t.windup<=0){t.used=true;t.phase='fired';t.flash=1.8;return 'jam';}
   }
   return false;
  }
@@ -446,7 +464,8 @@ function fight(s,dt){
  if(s.enemyHp<=0){victory(s);return;}
  const tactic=advanceEnemyTactic(s,dt,
   living.some(a=>a.id!=='guard'&&a.progress>.25),
-  living.some(a=>a.id==='guard'&&a.progress>.25));
+  living.some(a=>a.id==='guard'&&a.progress>.25),
+   living.some(a=>a.id==='ranger'&&a.progress>.36));
  const flankFire=tactic==='flank';
  // Medics work only while alive; injury persists on individual actors.
  for(const medic of living.filter(a=>a.id==='medic'&&a.progress>=.25)){
@@ -465,7 +484,7 @@ function fight(s,dt){
   (a.id==='guard'?0:a.id==='ranger'?1:2)-(b.id==='guard'?0:b.id==='ranger'?1:2)||
   b.progress-a.progress)[0];
  const rear=living.filter(a=>a.id!=='guard'&&a.progress>.25&&a!==frontline);
- const pierce=rear.length?(boss?.22:isElite(s.stage)?.14:.08):0;
+ const pierce=rear.length?(boss?.22:isElite(s.stage)?.14:s.enemyTactic.kind==='disruptor'?.13:.08):0;
  function hit(actor,amount){
   if(!actor||amount<=0)return;
   const taken=Math.min(actor.hp,amount);
@@ -492,7 +511,7 @@ function fight(s,dt){
  // The rear can be clipped, but must not be shredded by the exponential
  // enemy damage curve past stage 40. Cap rear pressure per fighter HP per
  // second and give the unused attack strength back to the guarded front.
- const target=pierce?rear[Math.floor(s.clock/3)%rear.length]:null;
+ const target=pierce?(s.enemyTactic.kind==='disruptor'?rear.find(a=>a.id==='ranger'):null)||rear[Math.floor(s.clock/3)%rear.length]:null;
  const rearShot=target?Math.min(enemyDps*dt*(flankFire?(boss?.36:.28):pierce),
   actorMaxHp(s,target.id)*(flankFire?(boss?.16:.12):(boss?.08:isElite(s.stage)?.06:.04))*dt):0;
  const ranger=living.find(a=>a.id==='ranger'&&a.hp>0&&a.revive===0&&a.progress>=.36);
@@ -546,6 +565,31 @@ function fight(s,dt){
     s.enemyTactic.result='rush';
     battleCue(s,'rush','guard',1);
     note(s,'적 돌격 · 방벽병 후퇴 위치로 밀림');
+   }
+  }
+ }
+ if(tactic==='jam'){
+  const marked=living.find(a=>a.id==='ranger'&&a.hp>0&&a.revive===0&&a.progress>.36);
+  if(marked){
+   s.relicEffects.jams++;
+   const support=relic(s,'medkit')>0&&relic(s,'relay')>0&&
+    living.some(a=>a.id==='medic'&&a.hp>0&&a.revive===0&&a.progress>.25);
+   if(support){
+    const power=UNITS[1].dps*attackInterval('ranger')*
+     (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
+     (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*collection;
+    const answer=Math.min(s.enemyHp,power*.35);
+    s.enemyHp-=answer;s.contribution.damage.ranger+=answer;
+    s.relicEffects.cleanses++;
+    s.relicEffects.cleanseDamage=Math.min(1e14,s.relicEffects.cleanseDamage+answer);
+    s.enemyTactic.result='unjam';
+    battleCue(s,'unjam','ranger',answer);
+    note(s,'역통신 반격 · 사격 지연 무효 · 척후사수 자동 응사');
+   }else{
+    marked.cooldown=Math.min(3,Math.max(0,marked.cooldown)+1.25);
+    s.enemyTactic.result='jam';
+    battleCue(s,'jam','ranger',1.25);
+    note(s,'교란 사격 명중 · 척후사수 다음 사격 지연');
    }
   }
  }
