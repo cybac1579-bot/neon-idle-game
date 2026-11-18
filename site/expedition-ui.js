@@ -205,9 +205,18 @@ function renderArchive(){
  const rewards=E.rebirthRewards(s),gain=rewards.total;
  const nextRecord=E.BREAKTHROUGHS.find(b=>b.stage>Math.max(s.claimedBreakthroughDistance,s.runBest-1));
  const nextReturnForecast=nextRecord?E.projectedRebirthRewards(s,nextRecord.stage):null;
- const nextDeep=[...new Set(E.RELICS.map(r=>r.unlockStage))].filter(distance=>distance>5).sort((a,b)=>a-b).find(distance=>distance>=s.stage);
+ // New-depth unlocks are lifetime progress, not the current stage after a
+ // voluntary return. Otherwise veterans are incorrectly told that distance15
+ // is a fresh tier after already unlocking distance40.
+ const lifetimeCleared=Math.max(0,s.best-1);
+ const nextDeep=Math.min(Infinity,...E.RELICS.map(r=>r.unlockStage).filter(depth=>depth>lifetimeCleared));
+ const nextDepthRelics=Number.isFinite(nextDeep)?E.RELICS.filter(r=>r.unlockStage===nextDeep):[];
+ const lockedKinds=E.RELICS.filter(r=>r.unlockStage>lifetimeCleared).length;
  $('rebirthSummary').innerHTML=row('이번 탐사 최고 거리',fmt(s.runBest))+
-  row('다음 새 유물 등급',nextDeep?nextDeep+'거리 목표 격파 시 상자':'현재 공개된 모든 깊이 개방')+
+  row('아직 미개방 유물 등급',fmt(lockedKinds)+'종 · 누적 최고 '+fmt(lifetimeCleared)+'거리 격파')+
+  row('다음 신규 유물 개방',nextDepthRelics.length?
+   nextDeep+'거리 격파 · '+nextDepthRelics.map(r=>r.name).join(' · '):
+   '공개된 유물 15종 모두 깊이 개방 · 미수집 유물은 도감 확인')+
   row('격파 성과로 적립한 코어',fmt(rewards.base)+'개')+
   row('다음 코어 적립 진행',Math.min(99.9,Math.max(0,rewards.fraction*100)).toFixed(1)+'% · 다음 탐사로 이월')+
   row('이번 첫 기록 보너스',fmt(rewards.recordBonus)+'개')+
