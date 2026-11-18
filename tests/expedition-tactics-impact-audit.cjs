@@ -89,6 +89,13 @@ for(const condition of CONDITIONS)for(const seconds of DURATIONS)for(const seed 
  assert.ok(current.tactics.jams<=current.entries.disruptor,'at most one jam per disruptor');
  assert.ok(current.tactics.cleanses===0 || condition==='preowned-signal' ||
   current.relicKinds>=2,'unexpected defense without collecting relics');
+ // This is a safety tripwire, NOT a requirement for exact economic equality.
+ // A new tactics build may intentionally shift progress, but it must not
+ // silently turn a minor enemy behavior change into a large progression nerf.
+ assert.ok(Math.abs(delta.stage)<=3,
+  'tactics shifted expedition distance by >3 stages: '+JSON.stringify({seed,seconds,condition,delta}));
+ assert.ok(Math.abs(delta.core)<=Math.max(3,previous.coresIfReturned*.12),
+  'tactics shifted earned return cores by >12% or >3 cores: '+JSON.stringify({seed,seconds,condition,delta}));
  pairs.push({seed,minutes:seconds/60,condition,previous,current,delta});
  console.log('TACTICS_PAIR '+JSON.stringify({seed,minutes:seconds/60,condition,delta,
   currentStage:current.stage,coresIfReturned:current.coresIfReturned,
