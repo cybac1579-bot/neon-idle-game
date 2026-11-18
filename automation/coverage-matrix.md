@@ -473,3 +473,6 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Restored-run isolation from live 30-minute session | 2026-11-18 22:52 KST, test commit `058e1a3f` | Six-seed gate now snapshots the live state before ticking a separately normalized restored copy for 60 seconds, asserting no mutation of live state. Exact-change CI **pending** (no runs returned at first query). | **P0:** verify exact commit CI; if red repair test or engine; actual Android file:// save/background and V3 formation observation still require device evaluation. Readiness 92% provisional, +0pp. |
+
+
+| Restored 15m checkpoint: resume and live-state isolation, exact commit CI | 2026-11-18 23:59 KST; test `058e1a3f` | Five exact-commit workflow runs completed SUCCESS: fast 44318279973, save 44318279969, portrait 44318279976, first-rebirth 44318280007, three-rebirth 44318280060. Six seeded 30m low-input gate contains 60s continuation and live-state snapshot assertion. | **Technical gate green** for this test commit; **P0** physical S25+ file:// persistence/background and V3 visual enjoyment still unverified; readiness 92% provisional, no release |
