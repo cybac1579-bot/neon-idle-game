@@ -277,6 +277,24 @@ async function main(){
    const returnBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(returnBounds.scroll<=returnBounds.width+1,
     'return forecast horizontal overflow: '+JSON.stringify(returnBounds));
+   // Optional chest automation lives only in the archive. It stays off for
+   // old saves, persists through reload, and never takes away manual control.
+   await page.locator('[data-tab="archive"]').click();
+   assert.equal(await page.locator('#autoChestToggle').getAttribute('aria-pressed'),'false');
+   assert.match(await page.locator('#autoChestStatus').textContent(),/자동 개봉 꺼짐/);
+   await page.locator('#autoChestToggle').click();
+   assert.equal(await page.locator('#autoChestToggle').getAttribute('aria-pressed'),'true');
+   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')).autoChest.enabled),true);
+   await page.reload({waitUntil:'networkidle'});
+   await page.locator('[data-tab="archive"]').click();
+   assert.equal(await page.locator('#autoChestToggle').getAttribute('aria-pressed'),'true');
+   assert.match(await page.locator('#autoChestStatus').textContent(),/오프라인 정산 포함/);
+   const chestBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
+   assert.ok(chestBounds.scroll<=chestBounds.width+1,
+    'chest automation portrait overflow: '+JSON.stringify(chestBounds));
+   await page.locator('#autoChestToggle').click();
+   assert.equal(await page.locator('#autoChestToggle').getAttribute('aria-pressed'),'false');
+   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')).autoChest.enabled),false);
    await context.close();
    console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison/chronicle');
   }
