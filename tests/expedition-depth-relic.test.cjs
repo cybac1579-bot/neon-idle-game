@@ -6,9 +6,9 @@ const E=require('../site/expedition-engine.js');
 function chest(depth,seed=123456789){
  const s=E.newState(1000);s.seed=seed;s.chests=1;s.chestDepths=[depth];return s;
 }
-test('all fourteen prototype relics have explicit tiered discovery depths',()=>{
- assert.equal(E.RELICS.length,15);
- assert.deepEqual([...new Set(E.RELICS.map(r=>r.unlockStage))].sort((a,b)=>a-b),[5,15,25,30,40,45,50]);
+test('all sixteen prototype relics have explicit tiered discovery depths',()=>{
+ assert.equal(E.RELICS.length,16);
+ assert.deepEqual([...new Set(E.RELICS.map(r=>r.unlockStage))].sort((a,b)=>a-b),[5,15,25,30,40,45,50,55]);
 });
 test('actual elite and boss clears stamp the defeated distance on each chest',()=>{
  for(const depth of [5,15,25,30,40,45,50]){
