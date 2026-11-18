@@ -34,8 +34,8 @@ const RELICS=[
  {id:'medkit',name:'재생 결속선',desc:'정비사 회복력 +18%/개 · 살아 있는 정비사가 방벽병 긴급 재합류를 지원 (18초마다 최대 1회)',cap:4,unlockStage:15},
  {id:'boss',name:'균열 렌즈',desc:'지휘급 적에게 주는 피해가 수집 수마다 14% 증가',cap:5,unlockStage:25},
  {id:'bounty',name:'현상금 표식',desc:'전투 크레딧 보상이 수집 수마다 12% 증가',cap:5,unlockStage:5},
- {id:'guard',name:'호위 계약서',desc:'방벽병 체력이 수집 수마다 20% 증가',cap:4,unlockStage:5},
- {id:'archer',name:'초점 조준기',desc:'사수 3번째 사격마다 정밀 일제사격 발동 (수집 수마다 강화 · 평균 화력 +15%/개)',cap:4,unlockStage:15},
+ {id:'guard',name:'호위 계약서',desc:'방벽병 체력 +20%/개 · 초점 조준기와 함께 적의 측면 조준 공격을 차단하고 사수가 자동 반격',cap:4,unlockStage:5},
+ {id:'archer',name:'초점 조준기',desc:'사수 3번째 사격마다 정밀 일제사격 · 호위 계약서와 조합하면 측면 조준 차단·자동 반격',cap:4,unlockStage:15},
  {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치 +15%/개 · 작전 통신기와 함께 탐사 정보망 활성화',cap:4,unlockStage:25},
  {id:'fortune',name:'중복 해체권',desc:'중복 유물 발견 시 수집 수마다 추가 크레딧 획득',cap:3,unlockStage:30},
  {id:'relay',name:'작전 통신기',desc:'전체 피해량 +5%/개 · 탐사 일지와 함께 자동 유물 조사 보상 해금',cap:5,unlockStage:30},
@@ -53,12 +53,15 @@ const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purc
 const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 // Per-run relic action telemetry; old saves default to no past activations.
-const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0});
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0});
+const initialEnemyTactic=stage=>({stage,elapsed:0,phase:'idle',windup:0,used:false,flash:0});
 const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  volleys:integer(raw.volleys,0,1e9),
  volleyBonusDamage:num(raw.volleyBonusDamage,0,1e14),
  triages:integer(raw.triages,0,1e9),
- intelFinds:integer(raw.intelFinds,0,2)
+ intelFinds:integer(raw.intelFinds,0,2),
+ flankShots:integer(raw.flankShots,0,1e9),intercepts:integer(raw.intercepts,0,1e9),
+ counterDamage:num(raw.counterDamage,0,1e14)
 }:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
@@ -98,6 +101,7 @@ const newState=(now=Date.now())=>({
  units:{guard:2,ranger:0,medic:0},training:0,questLevels:{dispatch:0,salvage:0,contract:0},
  questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,bossHpBalanceVersion:2,squadHp:96,respawn:0,
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6,shots:0},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2,shots:0}],battleEvent:null,battleCueSeq:0,
+ enemyTactic:initialEnemyTactic(1),
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestDepths:[],chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
  rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),relicEffects:initialRelicEffects(),autoBuy:initialAutoBuy(),autoChest:initialAutoChest(),runMetrics:initialRunMetrics(),runMilestones:{},runHistory:[],relicHistory:[],playtest:initialPlaytest(),runOpening:initialRunOpening(),latestReturn:null,events:['첫 번째 탐사를 시작했어.']
@@ -147,11 +151,21 @@ function normalize(raw,now=Date.now()){
  for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
  s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
  s.relicEffects=initialRelicEffects();
- for(const k of ['volleys','triages'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ for(const k of ['volleys','triages','flankShots','intercepts'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
  s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
  s.relicEffects.intelFinds=integer(raw.relicEffects?.intelFinds,0,2);
  s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
+ s.relicEffects.counterDamage=num(raw.relicEffects?.counterDamage,0,1e14);
  s.relicEffects.triageCooldown=num(raw.relicEffects?.triageCooldown,0,18);
+ s.enemyTactic=initialEnemyTactic(s.stage);
+ if(raw.enemyTactic?.stage===s.stage&&isElite(s.stage)&&s.stage>=15){
+  s.enemyTactic.elapsed=num(raw.enemyTactic.elapsed,0,7200);
+  s.enemyTactic.phase=['idle','windup','fired'].includes(raw.enemyTactic.phase)?raw.enemyTactic.phase:'idle';
+  s.enemyTactic.windup=num(raw.enemyTactic.windup,0,2);
+  s.enemyTactic.used=raw.enemyTactic.used===true;
+  s.enemyTactic.flash=num(raw.enemyTactic.flash,0,2);
+  if(s.enemyTactic.used)s.enemyTactic.phase='fired';
+ }
  s.runOpening=validOpening(raw.runOpening);
  const report=raw.latestReturn;
  s.latestReturn=report&&typeof report==='object'&&Number.isFinite(report.cleared)&&Number.isFinite(report.cores)?{
@@ -230,7 +244,7 @@ function normalize(raw,now=Date.now()){
    shots:a?integer(a.shots,0,2):0};
  });
  s.battleEvent=raw.battleEvent&&typeof raw.battleEvent==='object'
-  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','triage','intel'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
+  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','triage','intel','aim','flank','intercept'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
@@ -324,10 +338,34 @@ function victory(s){
   }
  }
  s.stage++;s.runBest=Math.max(s.runBest,s.stage);s.best=Math.max(s.best,s.stage);
+ s.enemyTactic=initialEnemyTactic(s.stage);
  s.enemyHp=enemyMax(s.stage);
  // New wave: units regroup behind the front line, survivors recover a little.
  for(const a of s.actors){a.progress=Math.max(0,a.progress-.75);if(a.revive===0)a.hp=Math.min(actorMaxHp(s,a.id),a.hp+actorMaxHp(s,a.id)*.15);}
  updateSquadHealth(s);battleCue(s,networkFind?'intel':'clear','guard',cleared);
+}
+// A visible single-use enemy pattern: only elites and bosses at depth 15+
+// prepare a rear-line focus attack. Existing enemy DPS is redistributed, not
+// added. Time and phase persist across save/reload and offline settlement.
+function advanceEnemyTactic(s,dt){
+ if(!s.enemyTactic||s.enemyTactic.stage!==s.stage)s.enemyTactic=initialEnemyTactic(s.stage);
+ const t=s.enemyTactic;
+ t.flash=Math.max(0,t.flash-dt);
+ if(s.stage<15||!isElite(s.stage)||t.used)return false;
+ t.elapsed+=dt;
+ if(t.phase==='idle'&&t.elapsed>=3){
+  t.phase='windup';t.windup=2;
+  battleCue(s,'aim','ranger',2);
+  note(s,'적 측면 조준 · 2초 뒤 후열 집중 타격');
+ }
+ if(t.phase==='windup'){
+  t.windup=Math.max(0,t.windup-dt);
+  if(t.windup<=0){
+   t.used=true;t.phase='fired';t.flash=1.8;
+   return true;
+  }
+ }
+ return false;
 }
 function fight(s,dt){
  // Individual fighters move to the clash; guards engage up close, rangers attack
@@ -377,6 +415,7 @@ function fight(s,dt){
  if(precisionCue!==null)battleCue(s,'volley','ranger',precisionCue);
  s.enemyHp-=damage;
  if(s.enemyHp<=0){victory(s);return;}
+ const flankFire=advanceEnemyTactic(s,dt);
  // Medics work only while alive; injury persists on individual actors.
  for(const medic of living.filter(a=>a.id==='medic'&&a.progress>=.25)){
   const patient=living.filter(a=>a.hp<actorMaxHp(s,a.id)-.001)
@@ -422,11 +461,35 @@ function fight(s,dt){
  // enemy damage curve past stage 40. Cap rear pressure per fighter HP per
  // second and give the unused attack strength back to the guarded front.
  const target=pierce?rear[Math.floor(s.clock/3)%rear.length]:null;
- const rearShot=target?Math.min(enemyDps*dt*pierce,
-  actorMaxHp(s,target.id)*(boss?.08:isElite(s.stage)?.06:.04)*dt):0;
- hit(frontline,enemyDps*dt-rearShot);
- if(target)hit(target,rearShot);
+ const rearShot=target?Math.min(enemyDps*dt*(flankFire?(boss?.36:.28):pierce),
+  actorMaxHp(s,target.id)*(flankFire?(boss?.16:.12):(boss?.08:isElite(s.stage)?.06:.04))*dt):0;
+ const ranger=living.find(a=>a.id==='ranger'&&a.hp>0&&a.revive===0&&a.progress>=.36);
+ const intercept=flankFire&&target&&rearShot>0&&frontline?.id==='guard'&&ranger&&
+  relic(s,'guard')>0&&relic(s,'archer')>0;
+ // The coordinated guard absorbs the full shot instead of the marked
+ // rear fighter; one ranger answers with a single bounded automatic shot.
+ hit(frontline,enemyDps*dt-(intercept?0:rearShot));
+ if(target&&!intercept)hit(target,rearShot);
+ if(flankFire&&target&&rearShot>0){
+  s.relicEffects.flankShots++;
+  if(intercept){
+   s.relicEffects.intercepts++;
+   const counterBase=UNITS.find(u=>u.id==='ranger').dps*attackInterval('ranger')*
+    (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
+    (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*
+    (boss?1+.14*relic(s,'boss'):1)*collection;
+   const counter=Math.min(s.enemyHp,.5*counterBase);
+   s.enemyHp-=counter;s.contribution.damage.ranger+=counter;
+   s.relicEffects.counterDamage=Math.min(1e14,s.relicEffects.counterDamage+counter);
+   battleCue(s,'intercept','guard',counter);
+   note(s,'호위 사격 연계 · 후열 보호 · 척후사수 자동 반격');
+  }else{
+   battleCue(s,'flank',target.id,rearShot);
+   note(s,'적 측면 타격 · '+(UNITS.find(u=>u.id===target.id)?.name||'후열')+' 피격');
+  }
+ }
  updateSquadHealth(s);
+ if(s.enemyHp<=0){victory(s);return;}
  if(s.squadHp<=0){s.enemyHp=enemyMax(s.stage);battleCue(s,'rally','guard');note(s,'부대 전원 후퇴 · 적 전선 재정비');}
 }
 function recordPlaytestMinute(s,source){
