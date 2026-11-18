@@ -420,8 +420,10 @@ function tick(s,seconds,source='foreground'){
     s.autoChest.elapsed=Math.max(0,s.autoChest.elapsed-AUTO_CHEST_INTERVAL);
     // Open earned boxes only, in the original FIFO depth order using
     // exactly the same drop rules and RNG as manual opening.
-    const batch=openChestBatch(s,20);
-    s.autoChest.opened+=batch.results.length;
+    if(s.chests>0){
+     const batch=openChestBatch(s,20);
+     s.autoChest.opened+=batch.results.length;
+    }
    }
   }
   if(s.autoBuy.enabled){
