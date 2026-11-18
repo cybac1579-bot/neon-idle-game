@@ -364,6 +364,31 @@ async function main(){
    assert.match(tacticView.result.text,/호위.*반격/);
    assert.equal(tacticView.result.intercepts,1);
    assert.match(tacticView.result.event,/호위 반격/);
+   // New regular charging enemy must use the same always-visible field
+   // renderer as elite telegraphs, even when the player has Archive open.
+   const chargeView=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,field=window.ExpeditionField;
+    const s=E.newState(Date.now());
+    s.stage=s.best=s.runBest=14;s.enemyHp=1e10;
+    s.relics.shield=1;s.relics.swift=1;
+    for(const a of s.actors){a.hp=E.actorMaxHp(s,a.id);a.progress=1;a.cooldown=100;}
+    E.tick(s,3);field.sync(s);
+    const intent=document.querySelector('.enemy-intent');
+    const warning={visible:!intent.hidden,text:intent.textContent,kind:E.enemyKind(s.stage)};
+    E.tick(s,2);field.sync(s);
+    const result={visible:!intent.hidden,text:intent.textContent,braces:s.relicEffects.braces,
+      event:document.querySelector('.combat-cue')?.textContent,
+      guardProgress:s.actors[0].progress};
+    return {warning,result};
+   });
+   assert.equal(chargeView.warning.kind,'charger');
+   assert.equal(chargeView.warning.visible,true);
+   assert.match(chargeView.warning.text,/돌격병 전열 돌진/);
+   assert.equal(chargeView.result.visible,true);
+   assert.match(chargeView.result.text,/철벽 진형/);
+   assert.equal(chargeView.result.braces,1);
+   assert.equal(chargeView.result.guardProgress,1);
+   assert.match(chargeView.result.event,/철벽 진형/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
    // Regression: after a 45-clear voluntary return, the low-level run stage
    // must NOT advertise relic tiers 15/25/40 as "new" a second time.
