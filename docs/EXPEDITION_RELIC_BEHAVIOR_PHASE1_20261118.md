@@ -25,3 +25,12 @@
 ## 다음 단계 후보 (확정 아님)
 - 플레이어가 실제로 변화가 보이고 재미있다고 느꼈는지 확인한 뒤 추가 유물/적 행동/전투 조합의 **구조적 다양성**을 검토. 새로운 UI와 에셋·그래픽은 아직 임시.
 - 발동 결과가 지루하게 반복되는 경우 단순 일제사격 빈도/데미지만 늘리지 말고 전투 적 조합이나 탐사 선택지가 달라지는 설계 우선.
+
+
+## 검증 완료 및 1차 테스트판 인계 (2026-11-18)
+- **기준 커밋:** `d39d2258384b1f88f11215174bf2b4f559e83b7e`. [GitHub Actions #44222910914](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44222910914) **SUCCESS**.
+- 엔진 테스트 `147/147 PASS`. 교체형 UI 계약, 기존 모바일 브라우저 360/390/412px 전체 탐사·귀환·저장, 오프라인 단일 HTML의 `file://` 네트워크 차단 저장·복원 테스트 모두 통과.
+- GitHub Actions [비공개 HTML 아티팩트](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44222910914/artifacts/14391641666), 이름 `neon-expedition-offline-playable`, 만료 예정 2026-12-18 UTC.
+- HTML 아티팩트에는 엔진·전투연출·교체형 뷰 JS와 CSS가 모두 인라인됨. 사용자가 기존 HTML로 플레이 중이면 **구 버전은 자동 업데이트되지 않음**. 기존 파일 `유물 → 전체 저장 백업`을 받은 다음 새 파일 `유물 → 저장 파일 복원`으로 이어가야 한다. 플레이 분석용 `neon-expedition-playtest` JSON은 복원용이 아니다.
+- **추가 보존 사항:** `relicEffects`의 이번 탐사 발동 통계는 귀환 시 `runHistory[].relicEffects` / `latestReturn.relicEffects`에 스냅샷으로 기록되고, 새 탐사의 액션 카운터만 초기화된다. 예전 귀환 이력은 카운터 정보가 없으므로 `null`이며 과거 발동을 허위 추정하지 않는다.
+- 기존 공개 `main`, 구형 `site/game.js` 및 레거시 `neon_rework_07` 저장은 변경하지 않음. 갤럭시 S25+ 실제 하드웨어 관전 체감/기기별 파일열기/배터리 검증은 수행하지 않았다.
