@@ -157,7 +157,7 @@ function returnReportHtml(r){
   (Number.isFinite(r.autoChestOpened)?row('지난 탐사 자동 개봉',fmt(r.autoChestOpened)+'개'):'')+
   (r.longestEncounter?.stage?row('최장 적 격파 교전',fmt(r.longestEncounter.stage)+'거리 · '+Math.floor(r.longestEncounter.seconds/60)+'분 '+Math.floor(r.longestEncounter.seconds%60)+'초'):'')+
   (Number.isFinite(r.longEngagements)?row('1분 이상 걸린 격파',fmt(r.longEngagements)+'회'):'')+
-  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 '+fmt(r.relicEffects.intelFinds||0)+'회 · 측면 공격 '+fmt(r.relicEffects.flankShots||0)+'회 · 호위 반격 '+fmt(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+fmt(r.relicEffects.braces||0)+'회 · 부분 버팀 '+fmt(r.relicEffects.partialBraces||0)+'회 · 원거리 교란 '+fmt(r.relicEffects.jams||0)+'회 · 역통신 반격 '+fmt(r.relicEffects.cleanses||0)+'회 · 지휘 전술 전환 '+fmt(r.relicEffects.commandMoves||0)+'회 · 방벽 일격 방어 '+fmt(r.relicEffects.guardPlateBlocks||0)+'회 · 2인 호위 협공 '+fmt(r.relicEffects.escortDuets||0)+'회 · 전장 도해 균열 타격 '+fmt(r.relicEffects.diagrams||0)+'회'):'')+
+  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 '+fmt(r.relicEffects.intelFinds||0)+'회 · 측면 공격 '+fmt(r.relicEffects.flankShots||0)+'회 · 후열 절반 엄호 '+fmt(r.relicEffects.partialCovers||0)+'회 · 호위 반격 '+fmt(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+fmt(r.relicEffects.braces||0)+'회 · 부분 버팀 '+fmt(r.relicEffects.partialBraces||0)+'회 · 원거리 교란 '+fmt(r.relicEffects.jams||0)+'회 · 역통신 반격 '+fmt(r.relicEffects.cleanses||0)+'회 · 지휘 전술 전환 '+fmt(r.relicEffects.commandMoves||0)+'회 · 방벽 일격 방어 '+fmt(r.relicEffects.guardPlateBlocks||0)+'회 · 2인 호위 협공 '+fmt(r.relicEffects.escortDuets||0)+'회 · 전장 도해 균열 타격 '+fmt(r.relicEffects.diagrams||0)+'회'):'')+
   comparison;
 }
 function renderArchive(){
@@ -200,7 +200,7 @@ function renderArchive(){
     (E.relic(s,'guard')>=2&&E.relic(s,'archer')>=2?
       ' (준비 완료 · 40거리 이상/사수 2명 생존 시)':
       ' (숙련 목표 · 호위 계약서 '+E.relic(s,'guard')+'/2 · 초점 조준기 '+E.relic(s,'archer')+'/2)'):
-    escortPieces===1?' · 조합 목표 · 호위 역습 1/2 (미발견: '+(guardOwned?'초점 조준기':'호위 계약서')+')':'')+
+    escortPieces===1?(guardOwned?' · 호위 계약서 · 후열 절반 엄호 '+fmt(effects.partialCovers||0)+'회 · 초점 조준기 획득 시 완전 호위·반격':' · 조합 목표 · 호위 역습 1/2 (미발견: 호위 계약서)'):'')+
   (braceActive?' · 철벽 진형 · 돌격 저지 '+fmt(effects.braces||0)+'/'+fmt(effects.rushes||0)+'회'+
     ' · 반격 유효 피해 '+fmt(effects.braceDamage||0):
     bracePieces===1?(shieldOwned?' · 합금 배지 · 돌진 부분 버팀 '+fmt(effects.partialBraces||0)+'회 · 완전 돌격 저지는 진군 북 필요':' · 조합 목표 · 철벽 진형 1/2 (미발견: 합금 배지)'):'')+
