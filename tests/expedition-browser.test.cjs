@@ -273,7 +273,7 @@ async function main(){
    const returnView=await page.locator('#rebirthSummary').textContent();
    assert.match(returnView,/계속 탐사 시 귀환 예상/);
    assert.match(returnView,/거리 격파 가정 · 총 [0-9,]+코어/);
-   assert.match(returnView,/처치 수당 기준, 소요 시간 미반영/);
+   assert.match(returnView,/격파 진척·첫 기록 보너스 기준, 소요 시간 미반영/);
    const returnBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(returnBounds.scroll<=returnBounds.width+1,
     'return forecast horizontal overflow: '+JSON.stringify(returnBounds));
