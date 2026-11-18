@@ -60,16 +60,17 @@ function sync(s){
  const intent=s.enemyTactic;
  const aiming=intent?.stage===s.stage&&intent.phase==='windup';
  const last=intent?.stage===s.stage&&intent.phase==='fired'&&intent.flash>0;
- const rushing=intent?.kind==='charger';
+ const rushing=intent?.kind==='charger'||intent?.move==='rush'&&intent?.kind!=='disruptor';
+ const commanderSurge=rushing&&intent?.kind!=='charger';
  const disrupting=intent?.kind==='disruptor';
  enemyIntent.hidden=!(aiming||last);
  enemyIntent.classList.toggle('aiming',!!aiming);
  enemyIntent.classList.toggle('charging',!!rushing);
  enemyIntent.classList.toggle('disrupting',!!disrupting);
  enemyIntent.classList.toggle('intercepted',!!last&&(intent?.result==='intercept'||intent?.result==='brace'||intent?.result==='unjam'));
- if(aiming)enemyIntent.textContent=rushing?'⚠ 돌격병 전열 돌진 · '+Math.ceil(intent.windup)+'초':disrupting?'⚠ 교란 사수 원거리 조준 · '+Math.ceil(intent.windup)+'초':'⚠ 적 측면 조준 · '+Math.ceil(intent.windup)+'초';
+ if(aiming)enemyIntent.textContent=rushing?(commanderSurge?'⚠ 지휘급 전열 압박 · ':'⚠ 돌격병 전열 돌진 · ')+Math.ceil(intent.windup)+'초':disrupting?'⚠ 교란 사수 원거리 조준 · '+Math.ceil(intent.windup)+'초':'⚠ 적 측면 조준 · '+Math.ceil(intent.windup)+'초';
  else if(last)enemyIntent.textContent=rushing?
-   (intent.result==='brace'?'🛡 철벽 진형 · 돌진 저지':'↗ 돌격 충격 · 방벽병 밀려남'):
+   (intent.result==='brace'?'🛡 철벽 진형 · 돌진 저지':commanderSurge?'↗ 지휘급 전열 압박 · 방벽병 밀려남':'↗ 돌격 충격 · 방벽병 밀려남'):
    disrupting?(intent.result==='unjam'?'✚ 역통신 반격 · 교란 무효':'◎ 교란 사격 · 사수 공격 지연'):
    (intent.result==='intercept'?'🛡 방벽 호위 · 사수 반격 성공':'⚡ 적 후열 집중 타격');
  else enemyIntent.textContent='';
