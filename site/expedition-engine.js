@@ -983,6 +983,59 @@ function returnChoiceSnapshot(s){
   pendingChests:pending,pendingNewKinds,guaranteedFirstDiscovery,
   retainedChestsOnReturn:pending};
 }
+// The archive's read-only "one more copy" preview uses actual live squad
+// and credit formulas. Conditional effects are labeled rather than reported
+// as unconditional DPS. This must NEVER roll loot or mutate a save.
+function nextRelicCopyPreview(s,id){
+ const info=RELICS.find(r=>r.id===id);
+ if(!info)return null;
+ const copies=relic(s,id);
+ if(copies>=info.cap)return {id,copies,cap:info.cap,capped:true,unique:info.cap===1};
+ const added={...s,relics:{...s.relics,[id]:copies+1}};
+ let label='',context='',from=0,to=0,unit='';
+ switch(id){
+  case 'ember':case 'swift':case 'relay':
+   label='현재 편성 화력/초';from=partyDps(s);to=partyDps(added);break;
+  case 'shield':case 'guard':
+   label='현재 부대 최대 체력';from=maxHp(s);to=maxHp(added);break;
+  case 'income':
+   label='근거리 보급 1회 수익';from=questIncome(s,QUESTS[0]);to=questIncome(added,QUESTS[0]);break;
+  case 'medkit':{
+   label='정비사 1인 회복력/초';context='정비사가 배치된 전투에서 효과';
+   const withMedic={...s,units:{...s.units,medic:1}};
+   const withNewMedic={...added,units:{...added.units,medic:1}};
+   from=healDps(withMedic);to=healDps(withNewMedic);break;
+  }
+  case 'boss':
+   label='지휘급 적 공격 보정';context='정예가 아닌 지휘급 보스 대상';
+   from=14*copies;to=14*(copies+1);unit='%';break;
+  case 'bounty':{
+   label='현재 거리 적 격파 크레딧';context='해당 거리 적 격파 시 적용';
+   const bounty=n=>Math.round((8+s.stage*2.6)*Math.pow(1.105,Math.min(s.stage,110))*(1+.12*n));
+   from=bounty(copies);to=bounty(copies+1);break;
+  }
+  case 'archer':
+   label='사수 3번째 사격 추가 피해';context='척후사수가 공격할 때';
+   from=45*copies;to=45*(copies+1);unit='%';break;
+  case 'scout':
+   label='지휘관 경험치 보정';context='적 격파 경험치에 적용';
+   from=15*copies;to=15*(copies+1);unit='%';break;
+  case 'fortune':
+   label='중복 유물 1개당 추가 크레딧';context='중복 수집한 경우에만';
+   from=75*copies;to=75*(copies+1);break;
+  case 'enlist':
+   label='다음 용병 소집 비용';from=hireCost(s);to=hireCost(added);break;
+  case 'drill':
+   label='다음 부대 훈련 비용';from=trainCost(s);to=trainCost(added);break;
+  case 'chronicle':case 'pursuit':
+   // Unique relics have a first acquisition only; their existing item
+   // descriptions explain the collection bonus or late boss phase.
+   return {id,copies,cap:info.cap,capped:false,unique:true,label:'고유 유물'};
+  default:return null;
+ }
+ return {id,copies,cap:info.cap,capped:false,unique:false,
+  label,from:Math.round(from*100)/100,to:Math.round(to*100)/100,unit,context};
+}
 function rebirthGain(s){return rebirthRewards(s).total;}
 function runOpeningSnapshot(s){
  return {attack:partyDps(s),hp:maxHp(s),income:questIncome(s,QUESTS[0])};
@@ -1021,5 +1074,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,returnChoiceSnapshot,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,pursuitBoost,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,returnChoiceSnapshot,nextRelicCopyPreview,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,pursuitBoost,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
