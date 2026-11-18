@@ -282,3 +282,6 @@ main.game-shell{
 
 /* A copy's next actual value belongs to the collection archive, not the battle HUD. */
 .relic .next-effect{margin-top:7px;padding-top:6px;border-top:1px solid #465167;color:#bde7d8;font-size:10.5px;line-height:1.45;overflow-wrap:anywhere}
+
+/* The conditional result of the actual acquired copy remains legible in a batch. */
+.reward-item small.reward-effect{color:#b8f0dd;border-top:1px solid #416174;padding-top:5px;margin-top:6px;overflow-wrap:anywhere}
