@@ -30,4 +30,7 @@
 ## 안정성 확인
 - `tests/expedition-reward-impact.test.cjs`에 묶음 2개 연속 보스 전용 보정, 1개씩 반복 개봉과 같은 추첨/RNG/최종 저장, 깊이 상한 크레딧 교환, 55 고유 유물, 정보망 보상 출처 검증 추가.
 - `tests/expedition-browser.test.cjs` 실제 Chromium 390px에서 같은 보상 문구, 기존 전투 화면 지속, 정밀사격 +90% 텍스트를 확인하도록 확장.
-- 경과·최종 test PASS 및 검증 HTML 아티팩트는 현재 개발 브랜치 통합 CI 확인 후 기재. 동시 진행 중인 자동 개발의 **65거리 추격 신호기 보정**은 이 35/50/60거리 감사 범위와 별개다.
+- [최종 통합 검증 성공 #44248616455](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44248616455): **엔진 241/241 PASS, 실패 0**. 실제 Chromium 360/390/412px 관전·터치, 390px 보스 전용 2연속 복제 수치, +90% 정밀 사격 신호, 도감/상자/저장·귀환·네트워크 차단 단일 HTML 백업 왕복 모두 통과.
+- [검증된 오프라인 HTML ZIP](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44248616455/artifacts/14403146327) · 2026-12-18까지 보존 예정.
+- [실제 Chromium 화면 캡처·터치 결과 ZIP](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44248616455/artifacts/14402473652) · 2026-11-25까지 보존 예정.
+- 동시 자동 개발에서 추가한 **65거리 이후 추격 신호기 효과**는 위 통합 검증에 포함됐다. 이후 브랜치에 추가된 별도 65+ 테스트 커밋은 실행 코드 변경이 아닌 회귀 검증 확장이다.
