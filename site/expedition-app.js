@@ -131,6 +131,7 @@ function exportPlaytest(){
    automaticSpent:s.autoBuy.spent,chestsOpened:s.runMetrics.chestsOpened,
    autoMode:s.autoBuy.enabled?s.autoBuy.mode:'off',
    pendingReturnProgress:s.coreProgress,carryReturnFraction:s.coreReserve,
+   relicEffects:{volleys:s.relicEffects.volleys,volleyBonusDamage:s.relicEffects.volleyBonusDamage,triages:s.relicEffects.triages},
    milestoneClears:{...s.runMilestones}
   },
   lifetime:{
