@@ -100,6 +100,10 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 .auto-select:focus-visible{outline:3px solid #ffe59a;outline-offset:2px}
 .auto-control{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:11px 0}
 .auto-control button{font-size:12px;padding:10px 13px;min-width:125px}
+/* Collection toggle stays within the archive tray on 360px phones. */
+#archiveScreen .auto-control{flex-wrap:wrap}
+#archiveScreen .auto-control .sub{min-width:0;flex:1 1 150px}
+#autoChestStatus{overflow-wrap:anywhere;line-height:1.5}
 #autoDetails{line-height:1.5;border-top:1px solid #344c63;padding-top:9px}
 
 .relic-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 12px}
