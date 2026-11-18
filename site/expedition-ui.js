@@ -179,6 +179,30 @@ function renderArchive(){
    '개 / 상한 교환 '+fmt(cm.relicExchanges)+'상자'+
    (cm.legacyRelicCounter?' (과거 저장분 집계 제외)':'')+
    (found===E.RELICS.length?' · 공개된 유물 종류 완성 · 남은 중복 강화 슬롯 '+fmt(capped-copies)+'개':'');
+ // The first real three-expedition playtest reached depth40 after finding
+ // all twelve <=30-tier kinds, but never killed the depth40 boss. Explain
+ // why repeat shallow chests only produced copies. Never change loot odds.
+ const clearedDistance=Math.max(0,s.best-1);
+ const earnedTierRelics=E.RELICS.filter(r=>r.unlockStage<=clearedDistance);
+ const undiscoveredEarned=earnedTierRelics.filter(r=>!E.relic(s,r.id));
+ const nextDeep=Math.min(Infinity,...E.RELICS.map(r=>r.unlockStage)
+  .filter(depth=>depth>clearedDistance));
+ const showDiscoveryGoal=earnedTierRelics.length>0&&
+  undiscoveredEarned.length===0&&Number.isFinite(nextDeep);
+ const hint=$('relicNextDiscovery');
+ hint.hidden=!showDiscoveryGoal;
+ if(showDiscoveryGoal){
+  const nextNames=E.RELICS.filter(r=>r.unlockStage===nextDeep).map(r=>r.name);
+  const tierEnemy=E.isBoss(nextDeep)?'보스':E.isElite(nextDeep)?'정예':'적';
+  const snapshot=E.returnChoiceSnapshot(s);
+  const oldChestWarning=snapshot.pendingChests&&snapshot.pendingNewKinds===0?
+   ' 현재 미개봉 상자 '+fmt(snapshot.pendingChests)+'개는 새 종류 후보가 없어.':'';
+  hint.textContent='현재까지 격파한 거리에서 발견 가능한 유물 '+fmt(earnedTierRelics.length)+
+   '종을 모두 발견했어. 다음 첫 발견 목표: '+nextDeep+'거리 '+tierEnemy+
+   ' 격파 후 획득한 상자에서 '+nextNames.join(' 또는 ')+
+   ' 중 새 종류 1종 확정. 기존 상자는 획득한 거리의 보상만 나오며, 나중에 열어도 깊은 거리의 유물로 바뀌지 않아.'+
+   oldChestWarning+' 귀환은 자유롭게 선택할 수 있어.';
+ }
  // The battle HUD remains lean; collectors can confirm that an owned relic
  // changed combat behavior rather than merely inflating base damage.
  const effects=s.relicEffects||{volleys:0,volleyBonusDamage:0,triages:0,intelClears:0,intelFinds:0};
