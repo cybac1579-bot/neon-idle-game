@@ -50,7 +50,10 @@ function firstThirty(seed,mode){
  assert.equal(s.stage,1);
  assert.equal(s.heroLevel,held.heroLevel);
  assert.equal(s.heroXp,held.heroXp);
- assert.deepEqual(s.relics,held.relics);
+ // Loaded/reborn saves normalize the relic catalog into explicit zero slots.
+ // Compare ownership values, not sparse-vs-normalized object key shape.
+ assert.deepEqual(E.RELICS.map(r=>E.relic(s,r.id)),
+  E.RELICS.map(r=>held.relics[r.id]||0),'return cannot erase owned relics');
  assert.equal(s.best,held.best);
  assert.ok(s.cores>=expected);
  const restored=E.normalize(copy(s),2000000);
