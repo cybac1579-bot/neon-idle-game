@@ -18,6 +18,14 @@ const copies=s=>E.RELICS.reduce((sum,r)=>sum+E.relic(s,r.id),0);
 const totalCapacity=E.RELICS.reduce((sum,r)=>sum+r.cap,0);
 const ownedIds=s=>E.RELICS.filter(r=>E.relic(s,r.id)>0).map(r=>r.id);
 const round=n=>Math.round(n*100)/100;
+const COPY_KIND=Object.fromEntries([
+ ...['ember','swift','relay','boss','archer'].map(id=>[id,'damage']),
+ ...['shield','guard','medkit'].map(id=>[id,'survival']),
+ ...['income','bounty','fortune','enlist','drill'].map(id=>[id,'economy']),
+ ['scout','experience'],['chronicle','unique'],['pursuit','unique']
+]);
+assert.equal(Object.keys(COPY_KIND).length,E.RELICS.length);
+const sumCopies=x=>Object.values(x).reduce((a,b)=>a+b,0);
 function scenario(seed,mode,route){
  const s=E.newState(1000);
  s.seed=seed;
@@ -29,12 +37,21 @@ function scenario(seed,mode,route){
   const startKinds=relicKinds(s),startCopies=copies(s);
   const result={number:run+1,goal:target,seconds:null,
    startKinds,startCopies,startRelics:[...previousOwned],
-   newKinds:0,duplicateCopies:0,exchangeBoxes:0,
+   newKinds:0,duplicateCopies:0,intelDuplicates:0,intelExchanges:0,exchangeBoxes:0,
+   duplicateByCategory:{damage:0,survival:0,economy:0,experience:0,unique:0},
+   duplicateById:{},dupeSources:{chest:0,intel:0},
    chestOpens:0,intelFinds:0,intelFirsts:0,
    chestFirsts:0,firstNewSeconds:null,firstNewStage:null,
    newRelicIds:[],earnedCores:0,investedValor:0,
    endKinds:null,endCopies:null,endStage:null,
    complete:false};
+  function noteDuplicate(id,source){
+   const category=COPY_KIND[id];
+   assert.ok(category,'unknown relic '+id);
+   result.duplicateByCategory[category]++;
+   result.duplicateById[id]=(result.duplicateById[id]||0)+1;
+   result.dupeSources[source]++;
+  }
   function noteFirst(id,source,elapsed,stage){
    if(previousOwned.has(id))return false;
    previousOwned.add(id);result.newKinds++;
@@ -49,7 +66,7 @@ function scenario(seed,mode,route){
     result.chestOpens++;
     if(r.id){
      if(noteFirst(r.id,'chest',elapsed,r.depth))result.chestFirsts++;
-     else result.duplicateCopies++;
+     else {result.duplicateCopies++;noteDuplicate(r.id,'chest');}
     }else result.exchangeBoxes++;
    }
   }
@@ -62,7 +79,9 @@ function scenario(seed,mode,route){
     const entry=s.relicHistory.at(-1);
     assert.ok(entry&&entry.source==='intel','network find retains provenance');
     result.intelFinds++;
-    if(entry.id&&noteFirst(entry.id,'intel',sec,entry.depth))result.intelFirsts++;
+    if(!entry.id)result.intelExchanges++;
+    else if(noteFirst(entry.id,'intel',sec,entry.depth))result.intelFirsts++;
+    else {result.intelDuplicates++;noteDuplicate(entry.id,'intel');}
    }
    if(sec%300===0)open(sec);
    if(s.stage>target){open(sec);result.seconds=sec;result.complete=true;break;}
@@ -72,8 +91,11 @@ function scenario(seed,mode,route){
   result.endCopies=copies(s);
   assert.equal(result.endKinds-startKinds,result.newKinds,'every kind change must be tracked');
   assert.equal(result.endCopies-startCopies,
-   result.newKinds+result.duplicateCopies+result.intelFinds-result.intelFirsts,
-   'copies must equal firsts + duplicate chest + every network find');
+   result.newKinds+result.duplicateCopies+result.intelDuplicates,
+   'first and duplicate acquisitions from chests/network must reconcile');
+  assert.equal(result.intelFinds,result.intelFirsts+result.intelDuplicates+result.intelExchanges);
+  assert.equal(sumCopies(result.duplicateByCategory),result.duplicateCopies+result.intelDuplicates);
+  assert.equal(sumCopies(result.duplicateById),result.duplicateCopies+result.intelDuplicates);
   assert.equal(result.intelFirsts+result.chestFirsts,result.newKinds);
   assert.ok(result.endKinds<=E.RELICS.length&&result.endCopies<=totalCapacity);
   result.missingKinds=E.RELICS.length-result.endKinds;
@@ -101,6 +123,10 @@ const summary=ROUTES.map(route=>{
    return {number:idx+1,goal:route[idx],reached:full.length,
     meanNewKinds:rows.length?round(rows.reduce((n,x)=>n+x.newKinds,0)/rows.length):null,
     meanDuplicates:rows.length?round(rows.reduce((n,x)=>n+x.duplicateCopies,0)/rows.length):null,
+    meanTotalDuplicates:rows.length?round(rows.reduce((n,x)=>n+x.duplicateCopies+x.intelDuplicates,0)/rows.length):null,
+    avgDuplicateByCategory:rows.length?Object.fromEntries(
+     Object.keys(COPY_KIND).map(id=>COPY_KIND[id]).filter((v,i,a)=>a.indexOf(v)===i)
+      .map(category=>[category,round(rows.reduce((n,x)=>n+x.duplicateByCategory[category],0)/rows.length)])):null,
     meanFirstNewSeconds:rows.filter(x=>x.firstNewSeconds!==null).length?
      round(rows.filter(x=>x.firstNewSeconds!==null).reduce((n,x)=>n+x.firstNewSeconds,0)/
        rows.filter(x=>x.firstNewSeconds!==null).length):null,
@@ -122,6 +148,7 @@ fs.writeFileSync(target,JSON.stringify(output,null,2)+'\n');
 console.log('RELIC_THREE_RUN_SUMMARY '+JSON.stringify(summary));
 for(const x of samples)console.log('RELIC_THREE_RUN_SAMPLE '+JSON.stringify({seed:x.seed,mode:x.mode,route:x.route,completed:x.completed,
  runs:x.runs.map(r=>({number:r.number,goal:r.goal,seconds:r.seconds,newKinds:r.newKinds,
- duplicates:r.duplicateCopies,firstNewSeconds:r.firstNewSeconds,newRelicIds:r.newRelicIds,
+ duplicates:r.duplicateCopies,intelDuplicates:r.intelDuplicates,duplicateByCategory:r.duplicateByCategory,
+ duplicateById:r.duplicateById,firstNewSeconds:r.firstNewSeconds,newRelicIds:r.newRelicIds,
  endKinds:r.endKinds,endCopies:r.endCopies,chestOpens:r.chestOpens,intelFinds:r.intelFinds}))}));
 console.log('RELIC_THREE_RUN_OUTPUT '+target);
