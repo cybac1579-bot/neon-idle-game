@@ -54,7 +54,7 @@ const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 // Per-run relic action telemetry; old saves default to no past activations.
 const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0});
-const initialEnemyTactic=stage=>({stage,elapsed:0,phase:'idle',windup:0,used:false,flash:0});
+const initialEnemyTactic=stage=>({stage,elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null});
 const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  volleys:integer(raw.volleys,0,1e9),
  volleyBonusDamage:num(raw.volleyBonusDamage,0,1e14),
@@ -164,6 +164,7 @@ function normalize(raw,now=Date.now()){
   s.enemyTactic.windup=num(raw.enemyTactic.windup,0,2);
   s.enemyTactic.used=raw.enemyTactic.used===true;
   s.enemyTactic.flash=num(raw.enemyTactic.flash,0,2);
+  s.enemyTactic.result=['flank','intercept'].includes(raw.enemyTactic.result)?raw.enemyTactic.result:null;
   if(s.enemyTactic.used)s.enemyTactic.phase='fired';
  }
  s.runOpening=validOpening(raw.runOpening);
@@ -357,6 +358,7 @@ function advanceEnemyTactic(s,dt){
   t.phase='windup';t.windup=2;
   battleCue(s,'aim','ranger',2);
   note(s,'적 측면 조준 · 2초 뒤 후열 집중 타격');
+  return false; // Do not consume the first second of telegraph immediately.
  }
  if(t.phase==='windup'){
   t.windup=Math.max(0,t.windup-dt);
@@ -474,6 +476,7 @@ function fight(s,dt){
   s.relicEffects.flankShots++;
   if(intercept){
    s.relicEffects.intercepts++;
+   s.enemyTactic.result='intercept';
    const counterBase=UNITS.find(u=>u.id==='ranger').dps*attackInterval('ranger')*
     (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
     (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*
@@ -484,6 +487,7 @@ function fight(s,dt){
    battleCue(s,'intercept','guard',counter);
    note(s,'호위 사격 연계 · 후열 보호 · 척후사수 자동 반격');
   }else{
+   s.enemyTactic.result='flank';
    battleCue(s,'flank',target.id,rearShot);
    note(s,'적 측면 타격 · '+(UNITS.find(u=>u.id===target.id)?.name||'후열')+' 피격');
   }
