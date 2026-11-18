@@ -577,6 +577,7 @@ async function main(){
      state.runMetrics.firstRelicFinds=4;
      state.runMetrics.duplicateRelics=3;
      state.runMetrics.relicExchanges=2;
+     state.relics.guard=1;state.relics.archer=1;
      localStorage.setItem(key,JSON.stringify(state));
     });
     await engagementPage.reload({waitUntil:'networkidle'});
@@ -593,6 +594,8 @@ async function main(){
     const choiceText=await engagementPage.locator('#returnChoices').textContent();
     assert.match(choiceText,/지금 귀환/);
     assert.match(choiceText,/계속 탐사/);
+    assert.match(choiceText,/호위 계약서 1\/2 · 초점 조준기 1\/2/);
+    assert.match(choiceText,/귀환 후에도 유물 보유 유지/);
     assert.match(choiceText,/귀환 후 다음 1회 강화 선택/);
     assert.match(choiceText,/미개봉 상자 없음/);
     assert.match(choiceText,/50거리 상자에서 새로운 유물군 개방/);
@@ -642,6 +645,7 @@ async function main(){
     const completedChoice=await engagementPage.locator('#returnChoices').textContent();
     assert.match(completedChoice,/현재 원형의 신규 종류 없음/);
     assert.match(completedChoice,/새 종류 후보 없음/);
+    assert.match(completedChoice,/호위 협공 준비 완료/);
     await engagementPage.locator('[data-tab="archive"]').click();
     assert.match(await engagementPage.locator('#relicCollectionProgress').textContent(),/공개된 유물 종류 완성/);
     assert.equal(await engagementPage.locator('#relicList .relic.owned .next-effect').count(),
