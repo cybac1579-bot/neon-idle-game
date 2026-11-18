@@ -255,6 +255,7 @@ main.game-shell{
 .combat-cue.aim{color:#ffbd96;font-weight:900;text-shadow:0 1px 6px #07101c,0 0 12px #df4e30}
 .combat-cue.flank{color:#ffb997;font-weight:900;text-shadow:0 1px 6px #07101c}
 .combat-cue.intercept{color:#9ff2d7;font-weight:900;text-shadow:0 1px 6px #07101c,0 0 12px #41bfa1}
+.combat-cue.intercept-duet{color:#ffe6a4;font-weight:900;text-shadow:0 1px 7px #07101c,0 0 15px #57d9c9}
 @keyframes enemy-aim-pulse{from{opacity:1}to{opacity:.67}}
 @media(max-width:380px){.enemy-intent{font-size:10px;top:36px;max-width:65%;padding:6px 8px}}
 @media(prefers-reduced-motion:reduce){.enemy-intent.aiming{animation:none}}
