@@ -22,12 +22,13 @@ function renderBattle(){
  $('stage').textContent=fmt(s.stage);
  $('credits').textContent=fmt(s.credits);
  $('best').textContent=fmt(s.best);
- const kind=E.enemyKind(s.stage),boss=kind==='boss',elite=kind==='elite',charger=kind==='charger';
- $('battleType').textContent=boss?'⚠ 지휘급 교전':elite?'◆ 정예 전선':charger?'↗ 돌격형 적':'일반 전선';
+ const kind=E.enemyKind(s.stage),boss=kind==='boss',elite=kind==='elite',charger=kind==='charger',disruptor=kind==='disruptor';
+ $('battleType').textContent=boss?'⚠ 지휘급 교전':elite?'◆ 정예 전선':charger?'↗ 돌격형 적':disruptor?'◎ 원거리 교란':'일반 전선';
  $('foe').classList.toggle('boss',boss);
  $('foe').classList.toggle('charger',charger);
- $('foe').querySelector('.silhouette').textContent=boss?'♛':elite?'◆':charger?'♞':'♜';
- $('enemyLabel').textContent=(boss?'지휘급 적':elite?'정예 적':charger?'돌격병':'전선 적')+' · '+fmt(s.stage);
+ $('foe').classList.toggle('disruptor',disruptor);
+ $('foe').querySelector('.silhouette').textContent=boss?'♛':elite?'◆':charger?'♞':disruptor?'◎':'♜';
+ $('enemyLabel').textContent=(boss?'지휘급 적':elite?'정예 적':charger?'돌격병':disruptor?'교란 사수':'전선 적')+' · '+fmt(s.stage);
  // Keep DOM nodes stable between renders so march/hit animations are not restarted.
  if(window.ExpeditionField)window.ExpeditionField.sync(s);
  $('partyBar').style.width=ratio(s.squadHp,E.maxHp(s));
@@ -145,7 +146,7 @@ function returnReportHtml(r){
   row('이번 귀환 코어',fmt(r.cores)+'개 (격파 적립 '+fmt(r.earned)+' · 첫 기록 '+fmt(r.firstClear)+')')+
   row('영구 유물 수집',fmt(r.relicKinds)+'종 · 총 '+fmt(r.relicCopies)+'개')+
   (Number.isFinite(r.autoChestOpened)?row('지난 탐사 자동 개봉',fmt(r.autoChestOpened)+'개'):'')+
-  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 '+fmt(r.relicEffects.intelFinds||0)+'회 · 측면 공격 '+fmt(r.relicEffects.flankShots||0)+'회 · 호위 반격 '+fmt(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+fmt(r.relicEffects.braces||0)+'회'):'')+
+  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 '+fmt(r.relicEffects.intelFinds||0)+'회 · 측면 공격 '+fmt(r.relicEffects.flankShots||0)+'회 · 호위 반격 '+fmt(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+fmt(r.relicEffects.braces||0)+'회 · 원거리 교란 '+fmt(r.relicEffects.jams||0)+'회 · 역통신 반격 '+fmt(r.relicEffects.cleanses||0)+'회'):'')+
   comparison;
 }
 function renderArchive(){
@@ -166,6 +167,8 @@ function renderArchive(){
  const shieldOwned=E.relic(s,'shield')>0,swiftOwned=E.relic(s,'swift')>0;
  const bracePieces=Number(shieldOwned)+Number(swiftOwned);
  const braceActive=shieldOwned&&swiftOwned;
+ const medkitOwned=E.relic(s,'medkit')>0;
+ const signalPieces=Number(medkitOwned)+Number(relayOwned),signalActive=medkitOwned&&relayOwned;
  const hasTactics=archerOwned||E.relic(s,'medkit')>0||intelPieces>0||escortPieces>0||bracePieces>0;
  $('relicEffectSummary').hidden=!hasTactics;
  $('relicEffectSummary').textContent=hasTactics?
@@ -180,6 +183,8 @@ function renderArchive(){
   (braceActive?' · 철벽 진형 · 돌격 저지 '+fmt(effects.braces||0)+'/'+fmt(effects.rushes||0)+'회'+
     ' · 반격 유효 피해 '+fmt(effects.braceDamage||0):
     bracePieces===1?' · 조합 목표 · 철벽 진형 1/2 (미발견: '+(shieldOwned?'진군 북':'합금 배지')+')':'')+
+  (signalActive?' · 역통신 반격 · 교란 저지 '+fmt(effects.cleanses||0)+'/'+fmt(effects.jams||0)+'회 · 유효 반격 피해 '+fmt(effects.cleanseDamage||0):
+   signalPieces===1?' · 조합 목표 · 역통신 반격 1/2 (미발견: '+(medkitOwned?'작전 통신기':'재생 결속선')+')':'')+
   ' · 추가 조작 없이 자동 발동':'';
 
  $('relicList').innerHTML=E.RELICS.map(r=>{
@@ -276,7 +281,7 @@ function renderArchive(){
    '<div class="statline"><span>'+safe('거리 '+r.best+' · '+duration(r.duration))+'</span><b>'+
    safe('수동 '+r.manualPurchases+' / 자동 '+r.autoPurchases+' · 코어 '+r.cores+
     (Number.isFinite(r.autoChestOpened)?' · 상자 자동 '+r.autoChestOpened+'개':'')+
-    (r.relicEffects?' · 정밀 '+r.relicEffects.volleys+'회 · 긴급 '+r.relicEffects.triages+'회 · 정보망 '+(r.relicEffects.intelFinds||0)+'회 · 호위 반격 '+(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+(r.relicEffects.braces||0)+'회':''))+'</b></div>').join(''):'')+
+    (r.relicEffects?' · 정밀 '+r.relicEffects.volleys+'회 · 긴급 '+r.relicEffects.triages+'회 · 정보망 '+(r.relicEffects.intelFinds||0)+'회 · 호위 반격 '+(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+(r.relicEffects.braces||0)+'회 · 역통신 '+(r.relicEffects.cleanses||0)+'회':''))+'</b></div>').join(''):'')+
   s.events.slice().reverse().map(m=>'<div class="sub" style="padding:5px 0;border-bottom:1px solid #304359">'+safe(m)+'</div>').join('');
  const samples=s.playtest.snapshots.length;
  $('playtestSummary').innerHTML=row('기록한 1분 단위 상태',fmt(samples)+'개')+
