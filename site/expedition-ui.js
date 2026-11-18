@@ -185,20 +185,20 @@ function renderArchive(){
  const clearedDistance=Math.max(0,s.best-1);
  const earnedTierRelics=E.RELICS.filter(r=>r.unlockStage<=clearedDistance);
  const undiscoveredEarned=earnedTierRelics.filter(r=>!E.relic(s,r.id));
- const nextDeep=Math.min(Infinity,...E.RELICS.map(r=>r.unlockStage)
+ const nextDiscoveryDepth=Math.min(Infinity,...E.RELICS.map(r=>r.unlockStage)
   .filter(depth=>depth>clearedDistance));
  const showDiscoveryGoal=earnedTierRelics.length>0&&
-  undiscoveredEarned.length===0&&Number.isFinite(nextDeep);
+  undiscoveredEarned.length===0&&Number.isFinite(nextDiscoveryDepth);
  const hint=$('relicNextDiscovery');
  hint.hidden=!showDiscoveryGoal;
  if(showDiscoveryGoal){
-  const nextNames=E.RELICS.filter(r=>r.unlockStage===nextDeep).map(r=>r.name);
-  const tierEnemy=E.isBoss(nextDeep)?'보스':E.isElite(nextDeep)?'정예':'적';
+  const nextNames=E.RELICS.filter(r=>r.unlockStage===nextDiscoveryDepth).map(r=>r.name);
+  const tierEnemy=E.isBoss(nextDiscoveryDepth)?'보스':E.isElite(nextDiscoveryDepth)?'정예':'적';
   const snapshot=E.returnChoiceSnapshot(s);
   const oldChestWarning=snapshot.pendingChests&&snapshot.pendingNewKinds===0?
    ' 현재 미개봉 상자 '+fmt(snapshot.pendingChests)+'개는 새 종류 후보가 없어.':'';
   hint.textContent='현재까지 격파한 거리에서 발견 가능한 유물 '+fmt(earnedTierRelics.length)+
-   '종을 모두 발견했어. 다음 첫 발견 목표: '+nextDeep+'거리 '+tierEnemy+
+   '종을 모두 발견했어. 다음 첫 발견 목표: '+nextDiscoveryDepth+'거리 '+tierEnemy+
    ' 격파 후 획득한 상자에서 '+nextNames.join(' 또는 ')+
    ' 중 새 종류 1종 확정. 기존 상자는 획득한 거리의 보상만 나오며, 나중에 열어도 깊은 거리의 유물로 바뀌지 않아.'+
    oldChestWarning+' 귀환은 자유롭게 선택할 수 있어.';
