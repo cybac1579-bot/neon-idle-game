@@ -239,10 +239,11 @@ async function main(){
    hidden=false;
    document.dispatchEvent(new Event('visibilitychange'));
    const resumed=read();
-   // BFCache: pagehide may occur without a hidden visibilitychange.
-   now+=90000;
+   // BFCache: pagehide can occur while visible; freeze FIRST, then time
+   // advances while the page is suspended, then pageshow restores it.
    window.dispatchEvent(new Event('pagehide'));
    const cached=read();
+   now+=90000;
    window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
    const bfcache=read();
    window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
