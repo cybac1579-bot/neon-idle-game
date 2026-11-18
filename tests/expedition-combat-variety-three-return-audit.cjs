@@ -13,12 +13,12 @@ const ROUTES=[[25,45,50],[45,50,55]];
 const LIMIT_PER_RUN=15000;
 const COUNT_KEYS=[
  'volleys','triages','flankShots','intercepts','escortDuets',
- 'rushes','braces','jams','cleanses','commandMoves','commandSurges','guardPlateBlocks'
+ 'rushes','braces','partialBraces','jams','cleanses','commandMoves','commandSurges','guardPlateBlocks'
 ];
-const FRIENDLY=['volleys','triages','intercepts','escortDuets','braces','cleanses'];
+const FRIENDLY=['volleys','triages','intercepts','escortDuets','braces','partialBraces','cleanses'];
 const ENEMY=['flankShots','rushes','jams','commandSurges'];
 const CUE_TYPES=new Set([
- 'volley','triage','intercept','intercept-duet','brace','unjam'
+ 'volley','triage','intercept','intercept-duet','brace','brace-step','unjam'
 ]);
 const avg=xs=>xs.length?Math.round(xs.reduce((a,b)=>a+b,0)*100/xs.length)/100:null;
 function scenario(seed,mode,route){
@@ -87,6 +87,8 @@ function scenario(seed,mode,route){
    'all duet shots must be a subset of real interception');
   assert.ok(record.counts.intercepts<=record.counts.flankShots,
    'an intercept requires a real enemy flank');
+  assert.ok(record.counts.partialBraces+record.counts.braces<=record.counts.rushes,
+   'full and partial brace can only answer real rushes');
   assert.ok(record.counts.braces<=record.counts.rushes,
    'brace can only stop an actual rush');
   assert.ok(record.counts.cleanses<=record.counts.jams,
