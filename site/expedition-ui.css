@@ -286,3 +286,147 @@ main.game-shell{
 
 /* The conditional result of the actual acquired copy remains legible in a batch. */
 .reward-item small.reward-effect{color:#b8f0dd;border-top:1px solid #416174;padding-top:5px;margin-top:6px;overflow-wrap:anywhere}
+
+/* ================================================================
+   BATTLE READABILITY V1 — CSS-only miniatures and event-linked FX.
+   Field motion is driven exclusively by ExpeditionField.sync battleEvent.
+   No game ticks, rewards, stats or new network assets are introduced.
+   ================================================================ */
+.fighter-symbol{
+  position:relative;isolation:isolate;overflow:visible;
+  border-radius:18px 18px 11px 11px;
+  background:radial-gradient(ellipse at 50% 14%,#a6dbef30,transparent 57%),
+             linear-gradient(160deg,#284861ee,#102c40ee);
+}
+.actor-head,.actor-body,.actor-tool,.actor-emblem{position:absolute;display:block;pointer-events:none}
+.actor-head{
+  width:38%;height:24%;left:31%;top:12%;border-radius:45% 45% 35% 35%;
+  border:2px solid #a5e3e4;z-index:4;
+  background:linear-gradient(175deg,#c5dce2 0 28%,#547f91 29% 61%,#243b55 62%);
+  box-shadow:0 2px 0 #152539,0 -3px 7px #9acbd438;
+}
+.actor-body{
+  width:54%;height:42%;left:23%;top:35%;z-index:3;
+  clip-path:polygon(19% 0,81% 0,100% 20%,90% 100%,10% 100%,0 20%);
+  background:linear-gradient(100deg,#183b52 0%,#7babb4 35%,#244961 72%,#102437 100%);
+  border-bottom:3px solid #8bafb5;
+  box-shadow:0 0 9px #8ca5bc77;
+}
+.actor-tool{z-index:5;right:2%;top:40%;width:26%;height:43%;
+  background:linear-gradient(90deg,#e4c57c,#667d8a);
+  border:1px solid #d7b980;transform:rotate(-18deg);
+  border-radius:2px 2px 5px 5px;
+  box-shadow:1px 2px 2px #0b2438aa;
+}
+.actor-emblem{
+  right:-5px;bottom:-4px;z-index:6;font-size:13px;line-height:1;
+  width:20px;height:20px;display:grid;place-items:center;
+  background:#152a3ce8;color:#ffdf9b;border:1px solid #8c9cb0;
+  border-radius:50%;text-shadow:0 1px 2px #000;
+}
+.fighter.guard .actor-tool{
+  width:39%;height:41%;right:-6%;top:39%;border-radius:45% 45% 18% 18%;
+  transform:rotate(9deg);border:2px solid #c2dce0;
+  background:linear-gradient(125deg,#a7d4d2,#355c7e 48%,#1a384f 52%,#91b1bf);
+  box-shadow:inset 0 0 0 2px #e3c58066,0 2px 7px #0008;
+}
+.fighter.guard .actor-head{border-color:#b7e1ed}
+.fighter.ranger .fighter-symbol{
+  border-color:#7bbec8;background:linear-gradient(145deg,#1d4d55,#112e3d);
+}
+.fighter.ranger .actor-body{background:linear-gradient(110deg,#174b50,#6eaab4,#183b46)}
+.fighter.ranger .actor-head{border-color:#8fd0b4;background:linear-gradient(#b1d5c6 0 35%,#34696c 36%)}
+.fighter.ranger .actor-tool{
+  width:48%;height:7px;top:52%;right:-21%;border-radius:3px;
+  transform:rotate(-9deg);background:linear-gradient(#e5d49a,#3d6670);
+  box-shadow:4px 3px 0 -1px #a7bbbc;
+}
+.fighter.medic .fighter-symbol{
+  border-color:#b9a2e8;background:linear-gradient(145deg,#423b65,#24364f);
+}
+.fighter.medic .actor-head{border-color:#d0bded;background:linear-gradient(#d8d1ef 0 34%,#7979a5 35%)}
+.fighter.medic .actor-body{background:linear-gradient(115deg,#403b68,#aaa1d4,#3f486f)}
+.fighter.medic .actor-tool{
+  width:31%;height:29%;top:50%;right:0;border-color:#c8e3d1;
+  transform:rotate(8deg);border-radius:4px;
+  background:linear-gradient(145deg,#75dcb7,#286878);
+}
+.fighter.medic .actor-tool:after{content:'+';position:absolute;inset:0;
+  display:grid;place-items:center;color:#f7fff5;font-weight:900;font-size:13px}
+.arena[data-training-tier="1"] .fighter-symbol{box-shadow:0 4px 0 #081a26,0 0 10px #81c4b640}
+.arena[data-training-tier="2"] .fighter-symbol{box-shadow:0 4px 0 #081a26,0 0 15px #a2dfcd75;border-color:#c0e1c9}
+.arena[data-training-tier="3"] .fighter-symbol{box-shadow:0 4px 0 #081a26,0 0 20px #ebca817d;border-color:#f0d29a}
+.arena .foe .silhouette{
+ position:relative;isolation:isolate;overflow:hidden;
+ background:radial-gradient(ellipse at 52% 20%,#f0aa9d26,transparent 55%),
+            linear-gradient(170deg,#67415b,#292b46 70%,#171c32);
+}
+.arena .foe .silhouette:before{
+ content:'';position:absolute;z-index:-1;top:9%;left:31%;height:32%;width:38%;
+ background:linear-gradient(140deg,#e8b6ad,#954e6c 43%,#4d365b);
+ border:2px solid #d99787;border-radius:50% 50% 25% 25%;
+ box-shadow:0 0 22px #f0b8a733;
+}
+.arena .foe .silhouette:after{
+ content:'';position:absolute;z-index:-2;bottom:-5%;left:13%;width:74%;height:60%;
+ clip-path:polygon(50% 0,92% 14%,100% 100%,0 100%,8% 14%);
+ background:linear-gradient(135deg,#ae7988,#563759 50%,#322f48);
+}
+.arena-boss .foe .silhouette:before{border-color:#ffce89;box-shadow:0 0 20px #ffd38b91}
+.arena-boss .foe .silhouette:after{background:linear-gradient(145deg,#cb9c79,#77425a,#382638)}
+#battleMotion{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.battle-trail{position:absolute;height:4px;border-radius:12px;transform-origin:0 50%;
+  background:linear-gradient(90deg,transparent,#e1d3a9 20%,#f3e7cb 75%,transparent);
+  filter:drop-shadow(0 0 5px #eed79b);
+  animation:expedition-trail .66s ease-out both}
+.battle-trail:after{content:'';display:block;position:absolute;left:0;top:-6px;
+  height:16px;width:16px;border-radius:50%;background:#fff1c5;
+  box-shadow:0 0 12px 4px #ffe39b9c;animation:expedition-shot .6s ease-out both}
+.battle-trail.volley,.battle-trail.counter,.battle-trail.diagram{
+  height:6px;background:linear-gradient(90deg,transparent,#6ef0e5,#f9f3c9);
+  filter:drop-shadow(0 0 10px #85f1e0)}
+.battle-trail.volley:after,.battle-trail.counter:after,.battle-trail.diagram:after{
+  background:#d5fffa;box-shadow:0 0 16px 7px #7de4d0b8}
+.battle-trail.danger,.battle-trail.rush,.battle-trail.jam{
+ background:linear-gradient(90deg,transparent,#faad8e,#ffdeae);
+ filter:drop-shadow(0 0 7px #f8a48b)}
+.battle-trail.danger:after,.battle-trail.rush:after,.battle-trail.jam:after{
+ background:#ffd9b8;box-shadow:0 0 12px 5px #ed886cba}
+.battle-trail.telegraph{height:2px;border-top:2px dashed #ffe2b1;background:none;opacity:.78}
+.battle-trail.telegraph:after{display:none}
+.battle-trail.heal{
+ background:linear-gradient(90deg,transparent,#8aefc5,#d1ffeb);
+ filter:drop-shadow(0 0 9px #6ee6b6)}
+.battle-trail.heal:after{background:#bbffda;box-shadow:0 0 12px #6cfbd7}
+.battle-burst{position:absolute;pointer-events:none;width:24px;height:24px;
+ border:3px solid #ebdfb6;border-radius:50%;
+ box-shadow:0 0 12px #f3e7c299,inset 0 0 9px #fff4cb78;
+ animation:expedition-burst .8s ease-out both}
+.battle-burst.volley,.battle-burst.counter,.battle-burst.diagram{
+ border-color:#80f5e5;box-shadow:0 0 22px #71e1d5,inset 0 0 9px #d6fff2}
+.battle-burst.heal{border-color:#9ef7b4;box-shadow:0 0 18px #6ff3b5}
+.battle-burst.shield{border:5px double #b7edff;width:45px;height:45px;
+  box-shadow:0 0 24px #8cd4e1}
+.battle-burst.danger,.battle-burst.rush,.battle-burst.jam{border-color:#ffad94;box-shadow:0 0 22px #ff8b6a}
+.battle-burst.reward,.battle-burst.breakthrough{
+ width:72px;height:72px;border:3px double #ffdf8a;
+ box-shadow:0 0 35px #ffdc78bb,inset 0 0 16px #ffdf88ab;
+ animation:expedition-victory .95s ease-out both}
+.fighter.battle-acting .fighter-symbol{animation:expedition-action .3s ease-out both}
+@keyframes expedition-shot{0%{left:0;opacity:0;transform:scale(.7)}
+  18%{opacity:1}75%{opacity:1}100%{left:calc(100% - 10px);opacity:0;transform:scale(.5)}}
+@keyframes expedition-trail{0%{opacity:0}12%{opacity:.9}65%{opacity:.8}100%{opacity:0}}
+@keyframes expedition-burst{0%{opacity:0;transform:translate(-50%,-50%) scale(.25)}
+  28%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(2.3)}}
+@keyframes expedition-victory{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(0)}
+  25%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(2) rotate(25deg)}}
+@keyframes expedition-action{0%,100%{transform:translateX(0) scale(1)}
+  45%{transform:translateX(5px) scale(1.08)}}
+@media(prefers-reduced-motion:reduce){
+ .battle-trail,.battle-trail:after,.battle-burst{display:none!important}
+ .fighter.battle-acting .fighter-symbol{animation:none!important}
+}
+@media(max-width:380px){
+ .actor-emblem{width:16px;height:16px;font-size:11px;right:-3px;bottom:-3px}
+ .actor-tool{right:0}
+}
