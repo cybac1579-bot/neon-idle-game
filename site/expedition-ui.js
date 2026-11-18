@@ -148,7 +148,7 @@ function returnReportHtml(r){
   (Number.isFinite(r.autoChestOpened)?row('지난 탐사 자동 개봉',fmt(r.autoChestOpened)+'개'):'')+
   (r.longestEncounter?.stage?row('최장 적 격파 교전',fmt(r.longestEncounter.stage)+'거리 · '+Math.floor(r.longestEncounter.seconds/60)+'분 '+Math.floor(r.longestEncounter.seconds%60)+'초'):'')+
   (Number.isFinite(r.longEngagements)?row('1분 이상 걸린 격파',fmt(r.longEngagements)+'회'):'')+
-  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 '+fmt(r.relicEffects.intelFinds||0)+'회 · 측면 공격 '+fmt(r.relicEffects.flankShots||0)+'회 · 호위 반격 '+fmt(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+fmt(r.relicEffects.braces||0)+'회 · 원거리 교란 '+fmt(r.relicEffects.jams||0)+'회 · 역통신 반격 '+fmt(r.relicEffects.cleanses||0)+'회 · 지휘 전술 전환 '+fmt(r.relicEffects.commandMoves||0)+'회'):'')+
+  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 '+fmt(r.relicEffects.intelFinds||0)+'회 · 측면 공격 '+fmt(r.relicEffects.flankShots||0)+'회 · 호위 반격 '+fmt(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+fmt(r.relicEffects.braces||0)+'회 · 원거리 교란 '+fmt(r.relicEffects.jams||0)+'회 · 역통신 반격 '+fmt(r.relicEffects.cleanses||0)+'회 · 지휘 전술 전환 '+fmt(r.relicEffects.commandMoves||0)+'회 · 방벽 일격 방어 '+fmt(r.relicEffects.guardPlateBlocks||0)+'회'):'')+
   comparison;
 }
 function renderArchive(){
@@ -171,7 +171,8 @@ function renderArchive(){
  const braceActive=shieldOwned&&swiftOwned;
  const medkitOwned=E.relic(s,'medkit')>0;
  const signalPieces=Number(medkitOwned)+Number(relayOwned),signalActive=medkitOwned&&relayOwned;
- const hasTactics=archerOwned||E.relic(s,'medkit')>0||intelPieces>0||escortPieces>0||bracePieces>0;
+ const platePieces=Number(shieldOwned)+Number(guardOwned),plateActive=shieldOwned&&guardOwned;
+ const hasTactics=archerOwned||E.relic(s,'medkit')>0||intelPieces>0||escortPieces>0||bracePieces>0||platePieces>0;
  $('relicEffectSummary').hidden=!hasTactics;
  $('relicEffectSummary').textContent=hasTactics?
   '이번 탐사 전술 발동 · 지휘 전술 전환 '+fmt(effects.commandMoves||0)+'회 (전열 압박 '+fmt(effects.commandSurges||0)+'회) · 정밀 일제사격 '+fmt(effects.volleys)+'회 (추가 유효 피해 '+fmt(effects.volleyBonusDamage)+
@@ -185,6 +186,8 @@ function renderArchive(){
   (braceActive?' · 철벽 진형 · 돌격 저지 '+fmt(effects.braces||0)+'/'+fmt(effects.rushes||0)+'회'+
     ' · 반격 유효 피해 '+fmt(effects.braceDamage||0):
     bracePieces===1?' · 조합 목표 · 철벽 진형 1/2 (미발견: '+(shieldOwned?'진군 북':'합금 배지')+')':'')+
+  (plateActive?' · 심층 방벽 진형 · 55거리 이상 일격 방어 '+fmt(effects.guardPlateBlocks||0)+'회':
+   platePieces===1?' · 조합 목표 · 심층 방벽 진형 1/2 (미발견: '+(shieldOwned?'호위 계약서':'합금 배지')+')':'')+
   (signalActive?' · 역통신 반격 · 교란 저지 '+fmt(effects.cleanses||0)+'/'+fmt(effects.jams||0)+'회 · 유효 반격 피해 '+fmt(effects.cleanseDamage||0):
    signalPieces===1?' · 조합 목표 · 역통신 반격 1/2 (미발견: '+(medkitOwned?'작전 통신기':'재생 결속선')+')':'')+
   ' · 추가 조작 없이 자동 발동':'';
