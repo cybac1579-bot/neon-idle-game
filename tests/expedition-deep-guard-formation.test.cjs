@@ -24,7 +24,7 @@ test('two heavy hits still defeat a protected guard, no invulnerability',()=>{
  const s=front(60);E.tick(s,2);
  assert.ok(s.contribution.falls.guard>=1);
  assert.ok(s.actors.some(a=>a.revive>0));
- assert.ok(s.relicEffects.guardPlateBlocks>=2);
+ assert.ok(s.relicEffects.guardPlateBlocks>=1,'only actual HP-saving blocks are counted, not discarded overkill');
 });
 test('only BOTH shield and escort activate formation cap',()=>{
  for(const [shield,guard] of [[0,0],[0,1],[1,0]]){
