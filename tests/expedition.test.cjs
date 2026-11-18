@@ -1229,3 +1229,6 @@ require('./expedition-disruptor.test.cjs');
 
 // A five-core first return must not instantly yield a +24% attack spike.
 require('./expedition-valor-first-return-balance.test.cjs');
+
+// Deep post-50 relic and boss second phase must not disturb early returns.
+require('./expedition-stage55-pursuit.test.cjs');
