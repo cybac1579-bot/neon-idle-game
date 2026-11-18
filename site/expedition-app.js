@@ -55,13 +55,19 @@ function openChestWithCount(count,source){
   const countLabel=data?' · '+r.stack+'/'+data.cap+'개 보유':'';
   const depthLabel=r.depth?' · 획득 '+r.depth+'거리 상자':' · 기존 저장 상자';
   const tag=isNew?'첫 발견':data?'중복 강화':'크레딧 교환';
+  const change=r.copyGain;
+  const measured=change&&(change.unique?
+   '고유 유물 효과 해금 · '+data.desc:
+   '이번 1개 효과 · '+change.label+' '+change.from+change.unit+' → '+change.to+change.unit+
+    (change.context?' · '+change.context:''));
   return '<div class="reward-item'+(isNew?' first':'')+'"><div class="reward-glyph" aria-hidden="true">'+(isNew?'✦':'◇')+
    '</div><div><strong>'+safe(tag+' · '+title)+'</strong><small>'+safe(detail+countLabel+depthLabel+
-   (r.credits?' · +'+fmt(r.credits)+' 크레딧':''))+'</small></div></div>';
+   (r.credits?' · +'+fmt(r.credits)+' 크레딧':''))+'</small>'+
+   (measured?'<small class="reward-effect">'+safe(measured)+'</small>':'')+'</div></div>';
  }).join('');
  const pct=n=>Math.max(0,(n-1)*100).toFixed(1);
  const delta=(before,after)=>Math.max(0,(after-before)*100).toFixed(1);
- $('popupImpact').textContent='이번 개봉의 영구 효과 변화 · 화력 +'+
+ $('popupImpact').textContent='이번 개봉의 주요 상시 효과 변화 (조건부 효과는 유물별 표시) · 화력 +'+
   delta(opened.before.attack,opened.after.attack)+'%p · 체력 +'+
   delta(opened.before.hp,opened.after.hp)+'%p · 보급 +'+
   delta(opened.before.income,opened.after.income)+'%p · 소집 비용 절약 +'+
