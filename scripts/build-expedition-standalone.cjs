@@ -20,9 +20,10 @@ for(const name of files){
 compiled=compiled.replace('</head>',
  '<meta name="neon-expedition-build" content="'+sha+'"><meta name="neon-expedition-package" content="offline-standalone-v1"></head>');
 compiled=compiled.replace(
- '비공개 개발용 독립 원형 · 기존 게임과 저장/배포 분리 · 최종 그래픽 아님',
+ '독립 플레이 테스트 · 기존 게임 및 저장 분리',
  '비공개 독립 테스트 파일 · 오프라인 단일 HTML · 빌드 '+sha+' · 최종 그래픽 아님'
 );
+assert.ok(compiled.includes('오프라인 단일 HTML · 빌드 '+sha),'stamp must match the UI's footer');
 assert.ok(!/<script[^>]+\bsrc=/i.test(compiled),'all scripts should be inline');
 assert.ok(!/<link[^>]+\bhref=\s*["']https?:/i.test(compiled),'no external stylesheets');
 assert.ok(compiled.includes('neon_expedition_prototype_v1'),'isolated save key must be retained');
