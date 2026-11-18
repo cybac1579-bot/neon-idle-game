@@ -258,3 +258,12 @@ main.game-shell{
 @keyframes enemy-aim-pulse{from{opacity:1}to{opacity:.67}}
 @media(max-width:380px){.enemy-intent{font-size:10px;top:36px;max-width:65%;padding:6px 8px}}
 @media(prefers-reduced-motion:reduce){.enemy-intent.aiming{animation:none}}
+
+/* Temporary charger enemy presentation. The battle mode and tactics are
+   engine-owned so a later full UI redesign may replace these selectors. */
+.combat-stage .foe.charger .silhouette{color:#e4bb8b;filter:drop-shadow(0 0 10px #de89466e)}
+.enemy-intent.charging{border-color:#e5a768;background:#402d25f0;color:#ffe2bb}
+.enemy-intent.charging.intercepted{border-color:#9bddaa;background:#204635f0;color:#c4f9dc}
+.combat-cue.rush-aim{color:#ffcb91;text-shadow:0 0 11px #e78d48b0;font-weight:900}
+.combat-cue.rush{color:#ffba7c;text-shadow:0 0 13px #d46438a8;font-weight:900}
+.combat-cue.brace{color:#a7ffd3;text-shadow:0 0 13px #3eca949c;font-weight:900}
