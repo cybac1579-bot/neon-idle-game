@@ -43,11 +43,13 @@ jobs:
           node --check tests/expedition.test.cjs
           node --check tests/expedition-stage65-diagram.test.cjs
           node --check tests/expedition-elite65-hp-migration.test.cjs
+          node --check tests/expedition-boss50-pacing.test.cjs
+          node --check tests/expedition-stage40-boss-balance.test.cjs
           node --check tests/expedition-first-playable-gate.cjs
           node --check tests/expedition-first-playable-stall-audit.cjs
           node --check tests/expedition-first-playable-stage40-options-audit.cjs
       - name: Run expedition engine regression before browser installation
-        run: node --test tests/expedition.test.cjs tests/expedition-stage65-diagram.test.cjs tests/expedition-elite65-hp-migration.test.cjs
+        run: node --test tests/expedition.test.cjs tests/expedition-stage65-diagram.test.cjs tests/expedition-elite65-hp-migration.test.cjs tests/expedition-boss50-pacing.test.cjs tests/expedition-stage40-boss-balance.test.cjs
       - name: Verify first playable 30-minute loop and two-hour resume
         run: node tests/expedition-first-playable-gate.cjs
       - name: Observe first-run 15-to-30-minute stall and reward intervals
