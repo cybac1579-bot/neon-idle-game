@@ -298,3 +298,13 @@ Current next development intent: enable a mobile-accessible **separate shared-br
 - **배포 정책:** 추가 공개 URL을 만들거나 `main`/GitHub Pages/Vercel 기존 프로젝트 production alias를 바꾸지 않음. GitHub Actions artifact에 묶어서 파일 앱에서 테스트. file:// 자동 저장은 브라우저 정책마다 다를 수 있어 사용자 파일 백업을 권장. 실제 사용자 기기 검증 미완.
 - **독립 원형 저장 키** `neon_expedition_prototype_v1`, 기존 게임 `neon_rework_07` 미변경. 이 전용 배포 파일의 SHA 이후 공동 브랜치 커밋 2개는 문서 파일 변경뿐임(2026-11-18 현재 확인).
 - 구체적인 실행방법, 데이터 이동/주의점은 `docs/EXPEDITION_OFFLINE_PLAYTEST_20261118.md` 참고. 향후 새 플레이 파일을 만들 때엔 이 CI에서 별도 산출물 버전과 아티팩트 SHA를 고정해 전달해야 함.
+
+
+## 실제 생성·검증 완료 (2026-11-18 09:29 KST)
+- 기준 코드 SHA: `3b5eb47da51111689a06ac63ef196e61e2f6f75a`. [GitHub Actions Push #44207997749](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44207997749) **SUCCESS**.
+- Chromium 360·390·412px 화면에서 `#battleScreen`이 성장·보급·유물·귀환 및 하단 개별 스크롤 동안 viewport 내부에 유지됨을 확인. 전장 위치/탭 겹침/가로 넘침 등 검사 통과.
+- 기존 전투 엔진·환생·유물·복원/JSON 내보내기 회귀 테스트 및 `file://` 네트워크 차단 단일 HTML 백업·복원·재로드 검사 모두 PASS.
+- 실제 Chromium 캡처 `artifacts/expedition/expedition-390.png`에서 위쪽 전장 고정과 하단 유물·백업 메뉴를 확인. 두 방벽병의 병종표시/체력바가 겹치는 문제를 `site/expedition-field.js`의 lane 간격 조정으로 해결하고 별도 브라우저 회귀 단언 추가.
+- 비공개 테스트 아티팩트 [neon-expedition-offline-playable](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44207997749/artifacts/14383724044), `neon-expedition-offline.html` (HTML 자체 메타빌드 `3b5eb47da511`)와 `README-KO.txt`. 다운로드 버전은 기존 저장과 코드 스키마 호환되며 **기존 사용자 기기에서 HTML 파일 자동 갱신은 되지 않음**.
+- 이전 파일에서 `도감 → 전체 저장 백업`을 내려받고, 새 파일 `유물 → 저장 파일 복원`으로 가져와야 함. 분석 전용 `neon-expedition-playtest` JSON은 전체 저장 복원 파일이 아니다.
+- 다음 UI·재미 검증: 실제 Galaxy S25+에서 화면 높이/가독성, 성장 버튼 조작 중 관전 지속, 2회 환생 저장의 복원 여부, 귀환 바로가기 발견 가능성 확인. **유물이 단순 수치 성장만 하는 문제는 별도 콘텐츠 재설계가 필요한 미완 과제**이며 이 UI 변경으로 해결했다고 주장하지 않는다.
