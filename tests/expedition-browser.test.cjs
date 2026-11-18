@@ -519,6 +519,30 @@ async function main(){
     });
     assert.match(stackedVolleyCue,/정밀 사격 \+90% · -123/,
      'real third-shot feedback shows the extra damage of a second copy');
+    // A mastered deep escort uses the real engine and retains its distinct
+    // battle cue through a save round-trip. No additional field HUD is created.
+    const duetField=await gainPage.evaluate(()=>{
+     const E=window.ExpeditionEngine,s=E.newState(1000);
+     s.stage=s.best=s.runBest=50;s.enemyHp=1e12;
+     s.relics.guard=2;s.relics.archer=2;
+     s.units.ranger=2;
+     s.actors.push(...Array.from({length:2},()=>({
+      id:'ranger',hp:1e8,revive:0,progress:1,cooldown:1e9,shots:0
+     })));
+     for(const a of s.actors){a.hp=1e8;a.progress=1;a.cooldown=1e9;}
+     E.tick(s,5);
+     window.ExpeditionField.sync(s);
+     const restored=E.normalize(JSON.parse(JSON.stringify(s)),2000);
+     return {duets:s.relicEffects.escortDuets,event:s.battleEvent?.type,
+      cue:document.querySelector('.combat-cue')?.textContent,
+      savedEvent:restored.battleEvent?.type};
+    });
+    assert.equal(duetField.duets,1);
+    assert.equal(duetField.event,'intercept-duet');
+    assert.equal(duetField.savedEvent,'intercept-duet');
+    assert.match(duetField.cue,/호위 협공! 2인 연계/);
+    assert.match(await gainPage.locator('#relicEffectSummary').textContent(),
+     /호위 협공 0회.*준비 완료/);
     await gainContext.close();
    }
    // Actual 10-minute combat evidence is visible only in the detail tray.
