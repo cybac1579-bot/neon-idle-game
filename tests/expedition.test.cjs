@@ -602,6 +602,13 @@ test('offline time is marked separately and 2-hour cap remains in place',()=>{
  const elapsed=E.offline(s,now+3*3600*1000);
  assert.equal(elapsed,7200);
  assert.equal(s.playtest.offlineSeconds,7200);
+ assert.equal(s.playtest.offlineEvents.length,1);
+ assert.deepEqual(s.playtest.offlineEvents[0],{
+  run:1,runSecBefore:0,stageBefore:1,stageAfter:s.stage,
+  requestedSeconds:10800,settledSeconds:7200,source:'resume'
+ });
+ assert.equal(E.offline(s,now+3*3600*1000),0,'same resume cannot be recorded twice');
+ assert.equal(s.playtest.offlineEvents.length,1);
  assert.equal(s.playtest.snapshots.length,120);
  assert.ok(s.playtest.snapshots.every(x=>x.source==='offline'));
  assert.equal(s.clock,7200);
@@ -621,6 +628,38 @@ test('minute snapshots persist across rebirth while the new run receives a new r
  assert.deepEqual(s.playtest.snapshots.map(x=>x.run),[1,1,2]);
  assert.deepEqual(s.playtest.snapshots.map(x=>x.sec),[60,120,60]);
  assert.equal(s.playtest.offlineSeconds,0);
+ assert.deepEqual(s.playtest.offlineEvents,[],'no prior offline settlements were made');
+});
+
+test('offline resume history is bounded, sanitized, idempotent and survives return',()=>{
+ const start=100000,raw=E.newState(start);
+ let now=start;
+ for(let i=0;i<30;i++){
+  now+=1000;
+  assert.equal(E.offline(raw,now,i===0?'startup':'resume'),1);
+ }
+ assert.equal(raw.playtest.offlineEvents.length,E.MAX_OFFLINE_EVENTS);
+ assert.equal(raw.playtest.offlineEvents[0].runSecBefore,6);
+ assert.equal(raw.playtest.offlineEvents.at(-1).runSecBefore,29);
+ assert.equal(raw.playtest.offlineEvents.at(-1).source,'resume');
+ assert.equal(E.offline(raw,now),0);
+ assert.equal(raw.playtest.offlineEvents.length,E.MAX_OFFLINE_EVENTS);
+ raw.playtest.offlineEvents[0].injected='private-data';
+ raw.playtest.offlineEvents[0].source='not-a-source';
+ raw.playtest.offlineEvents[0].settledSeconds=Infinity;
+ const cleaned=E.normalize(JSON.parse(JSON.stringify(raw)),now);
+ assert.equal(cleaned.playtest.offlineEvents[0].source,'resume');
+ assert.equal(cleaned.playtest.offlineEvents[0].settledSeconds,0);
+ assert.ok(cleaned.playtest.offlineEvents.every(x=>!Object.hasOwn(x,'injected')));
+ cleaned.stage=cleaned.best=cleaned.runBest=15;
+ const earned=E.rebirth(cleaned);assert.ok(earned>0);
+ assert.equal(cleaned.playtest.offlineEvents.length,E.MAX_OFFLINE_EVENTS);
+ assert.equal(cleaned.playtest.offlineEvents.at(-1).run,1);
+ E.offline(cleaned,now+5000,'startup');
+ assert.equal(cleaned.playtest.offlineEvents.at(-1).run,2);
+ assert.equal(cleaned.playtest.offlineEvents.at(-1).source,'startup');
+ const roundtrip=E.normalize(JSON.parse(JSON.stringify(cleaned)),now+5000);
+ assert.deepEqual(roundtrip.playtest.offlineEvents,cleaned.playtest.offlineEvents);
 });
 
 test('playtest snapshots are save-bounded and corrupted records normalized safely',()=>{
@@ -637,7 +676,7 @@ test('playtest snapshots are save-bounded and corrupted records normalized safel
  assert.ok(s.playtest.snapshots.every(x=>!Object.hasOwn(x,'injected')));
  assert.ok(s.playtest.snapshots.some(x=>x.source==='foreground'));
  const old=E.newState();delete old.playtest;
- assert.deepEqual(E.normalize(old).playtest,{snapshots:[],offlineSeconds:0});
+ assert.deepEqual(E.normalize(old).playtest,{snapshots:[],offlineSeconds:0,offlineEvents:[]});
 });
 
 // Run depth-bound treasure, legacy-save and batch parity checks in the existing CI workflow.
