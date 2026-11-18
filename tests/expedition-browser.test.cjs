@@ -267,6 +267,16 @@ async function main(){
    const adviceBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(adviceBounds.scroll<=adviceBounds.width+1,
     'reserve advice horizontal overflow: '+JSON.stringify(adviceBounds));
+   // The player gets an arithmetic milestone comparison, not a suggested
+   // rebirth deadline or an invented time estimate. Remain in voluntary control.
+   await page.locator('[data-tab="return"]').click();
+   const returnView=await page.locator('#rebirthSummary').textContent();
+   assert.match(returnView,/계속 탐사 시 귀환 예상/);
+   assert.match(returnView,/거리 격파 가정 · 총 [0-9,]+코어/);
+   assert.match(returnView,/처치 수당 기준, 소요 시간 미반영/);
+   const returnBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
+   assert.ok(returnBounds.scroll<=returnBounds.width+1,
+    'return forecast horizontal overflow: '+JSON.stringify(returnBounds));
    await context.close();
    console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison/chronicle');
   }
