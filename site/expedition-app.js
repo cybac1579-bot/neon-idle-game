@@ -190,6 +190,7 @@ function renderArchive(){
  if(last)$('returnReportContent').innerHTML=returnReportHtml(last);
  const rewards=E.rebirthRewards(s),gain=rewards.total;
  const nextRecord=E.BREAKTHROUGHS.find(b=>b.stage>Math.max(s.claimedBreakthroughDistance,s.runBest-1));
+ const nextReturnForecast=nextRecord?E.projectedRebirthRewards(s,nextRecord.stage):null;
  const nextDeep=[...new Set(E.RELICS.map(r=>r.unlockStage))].filter(distance=>distance>5).sort((a,b)=>a-b).find(distance=>distance>=s.stage);
  $('rebirthSummary').innerHTML=row('이번 탐사 최고 거리',fmt(s.runBest))+
   row('다음 새 유물 등급',nextDeep?nextDeep+'거리 목표 격파 시 상자':'현재 공개된 모든 깊이 개방')+
@@ -198,6 +199,9 @@ function renderArchive(){
   row('이번 첫 기록 보너스',fmt(rewards.recordBonus)+'개')+
   row('귀환 시 총 코어',fmt(gain)+'개')+
   row('다음 최초 돌파 보너스',nextRecord?nextRecord.stage+'거리 보스 격파 · +'+nextRecord.cores+'코어':'공개된 돌파 보너스 모두 획득')+
+  (nextReturnForecast?row('계속 탐사 시 귀환 예상',nextRecord.stage+'거리 격파 가정 · 총 '+
+   fmt(nextReturnForecast.total)+'코어 (현재보다 +'+fmt(nextReturnForecast.additional)+
+   '개) · 처치 수당 기준, 소요 시간 미반영'):'')+
   row('누적 귀환 횟수',fmt(s.rebirths)+'회')+
   row('보유 영구 코어',fmt(s.cores)+'개');
  $('rebirth').disabled=gain<1;
