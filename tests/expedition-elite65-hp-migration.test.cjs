@@ -5,8 +5,8 @@ const maxOld=stage=>{
  const tier=E.isBoss(stage)?(stage>=60?1.9:stage>=50?2.2:3.8):E.isElite(stage)?2:1;
  return Math.min(1e13,Math.round(tier*13*Math.pow(1.235,early)*Math.pow(1.18,late)));
 };
-test('up to 64 and boss 70+ HP remain unchanged',()=>{
- for(let stage=1;stage<=64;stage++)assert.equal(E.enemyMax(stage),maxOld(stage),'stage'+stage);
+test('all fights up to 64 except deliberately trimmed boss40 remain unchanged',()=>{
+ for(let stage=1;stage<=64;stage++)if(stage!==40)assert.equal(E.enemyMax(stage),maxOld(stage),'stage'+stage);
  for(const stage of [70,80,90,100])assert.equal(E.enemyMax(stage),maxOld(stage),'boss'+stage);
 });
 test('late elite health decreases 40% from the original tier but remains elite',()=>{
