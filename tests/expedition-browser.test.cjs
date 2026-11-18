@@ -459,16 +459,18 @@ async function main(){
     const gainContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
     const gainPage=await gainContext.newPage();
     await gainPage.goto(url,{waitUntil:'networkidle'});
-    await gainPage.addInitScript(()=>{
-     const E=window.ExpeditionEngine,key='neon_expedition_prototype_v1';
+    const gainCatalog=require('../site/expedition-engine.js').RELICS
+     .map(r=>({id:r.id,unlockStage:r.unlockStage,cap:r.cap}));
+    await gainPage.addInitScript((catalog)=>{
+     const key='neon_expedition_prototype_v1';
      const raw=localStorage.getItem(key);if(!raw)return;
      const s=JSON.parse(raw);
-     // Use only a depth-25 eligible boss relic, already owned once.
-     for(const r of E.RELICS)if(r.unlockStage<=25)s.relics[r.id]=r.cap;
+     // Init scripts execute before the engine script; pass the real catalog.
+     for(const r of catalog)if(r.unlockStage<=25)s.relics[r.id]=r.cap;
      s.relics.boss=1;s.chests=2;s.chestDepths=[25,25];
      s.autoChest.enabled=false;s.lastSaved=Date.now();
      localStorage.setItem(key,JSON.stringify(s));
-    });
+    },gainCatalog);
     await gainPage.reload({waitUntil:'networkidle'});
     await gainPage.locator('[data-tab="archive"]').click();
     assert.equal(await gainPage.locator('#openArchiveBatch').isVisible(),true);
