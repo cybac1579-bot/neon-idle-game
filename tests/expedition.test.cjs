@@ -803,3 +803,6 @@ require('./expedition-late-pacing-fix.test.cjs');
 
 // In-progress legacy boss saves must survive the 50-distance HP pacing fix.
 require('./expedition-boss50-pacing.test.cjs');
+
+// Early vs deep returns: do not fabricate future cores or gate voluntary returns.
+require('./expedition-return-forecast.test.cjs');
