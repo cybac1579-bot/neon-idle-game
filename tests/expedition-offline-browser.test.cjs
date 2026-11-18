@@ -131,7 +131,17 @@ async function main(){
   await tierPage.reload({waitUntil:'load'});
   await tierPage.locator('[data-tab="archive"]').click();
   const depth40Hint=tierPage.locator('#relicNextDiscovery');
-  assert.equal(await depth40Hint.isVisible(),true);
+  const archiveEvidence=await tierPage.evaluate(()=>{
+   const E=window.ExpeditionEngine,s=JSON.parse(localStorage.getItem(E.SAVE_KEY)||'null');
+   const note=document.querySelector('#relicNextDiscovery');
+   return {stage:s?.stage,best:s?.best,visibleTab:document.querySelector('#archiveScreen')?.hidden,
+    discovered:E.RELICS.filter(r=>(s?.relics||{})[r.id]>0).map(r=>r.id),
+    currentUnlocked:E.RELICS.filter(r=>r.unlockStage<=(s?.best||1)-1).map(r=>r.id),
+    noteHidden:note?.hidden,noteText:note?.textContent,
+    generatedByEngine:E.returnChoiceSnapshot(s)};
+  });
+  assert.equal(await depth40Hint.isVisible(),true,
+   'depth40 user should see next discovery hint: '+JSON.stringify({archiveEvidence,tierErrors}));
   const depth40Text=await depth40Hint.textContent();
   assert.match(depth40Text,/유물 12종을 모두 발견했어/);
   assert.match(depth40Text,/40거리 보스 격파 후 획득한 상자에서 선발권 묶음/);
