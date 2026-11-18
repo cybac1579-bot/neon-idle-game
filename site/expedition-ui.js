@@ -258,13 +258,23 @@ function renderArchive(){
   (choice.guaranteedFirstDiscovery?' · 아직 미발견인 깊이 전용 유물 확정 상자 포함':
    choice.pendingNewKinds?' · 발견 여부는 확률로 결정':' · 새 종류 후보 없음, 중복 강화 또는 상한 교환'):
   '미개봉 상자 없음 · 5거리 단위 정예/보스 격파로 새 상자 확보';
+ // Reveal the named two-copy goal only once BOTH relics have been found;
+ // this is a multi-run option, not a guaranteed future random chest result.
+ const escortGuard=E.relic(s,'guard'),escortArcher=E.relic(s,'archer');
+ const duetGoal=escortGuard>0&&escortArcher>0?
+  (escortGuard>=2&&escortArcher>=2?
+   '호위 협공 준비 완료 · 40거리 이상 정예/보스 측면 공격 때 살아 있는 사수 2명으로 자동 발동':
+   '장기 수집 목표 · 호위 협공: 호위 계약서 '+Math.min(2,escortGuard)+'/2 · 초점 조준기 '+
+   Math.min(2,escortArcher)+'/2 (상자 획득은 확률)')+
+  ' · 귀환 후에도 유물 보유 유지':'';
  $('returnChoices').innerHTML=
   '<div class="return-choice"><strong>↻ 지금 귀환</strong><p>'+safe(returnText)+'</p>'+
   '<p>'+safe(choice.canReturn?'귀환 후 다음 1회 강화 선택: '+investLabel:
    '이미 보유한 코어는 귀환하지 않아도 영구 강화에 사용 가능')+'</p></div>'+
   '<div class="return-choice"><strong>↗ 계속 탐사</strong><p>'+safe(chestText)+'</p>'+
   '<p>'+safe('현재 깊이까지 해금됐지만 미발견 유물 '+fmt(choice.uncollectedUnlockedKinds)+
-   '종 · '+unlockGoal)+'</p></div>';
+   '종 · '+unlockGoal)+'</p>'+
+  (duetGoal?'<p>'+safe(duetGoal)+'</p>':'')+'</div>';
  const rewards=E.rebirthRewards(s),gain=rewards.total;
  const nextRecord=E.BREAKTHROUGHS.find(b=>b.stage>Math.max(s.claimedBreakthroughDistance,s.runBest-1));
  const nextReturnForecast=nextRecord?E.projectedRebirthRewards(s,nextRecord.stage):null;
