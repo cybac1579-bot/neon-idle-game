@@ -29,3 +29,11 @@
 
 ## CI 검증
 - 최신 통합 브랜치 GitHub Actions가 성공해야 테스트판 확정·다운로드 링크를 제공한다. 파일과 run SHA는 확인 후 추가로 기록한다.
+
+
+## 최종 확인한 CI 및 테스트 빌드
+- 실제 코드/테스트 기준 커밋: `09fc3d6b8696365351fc03c8c2c83d38b92180e0`.
+- [GitHub Actions 성공 #44228661255](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44228661255): **169 tests / 169 pass / 0 fail**, 임시 UI 교체 계약, 기존 모바일 세로 360/390/412px 통합·플레이·반격 연출 검사, 네트워크 차단 `file://` 단일 HTML 백업/복원/재로드 검사 PASS.
+- 아티팩트: [`neon-expedition-offline-playable`](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44228661255/artifacts/14394736364), 만료 2026-12-18 UTC. 실제 단일 HTML 원본 크기 128,805 bytes, `neon-expedition-build=09fc3d6b8696`. 테스트 파일 이름을 바꾸더라도 빌드 SHA를 유지해야 한다.
+- 이후 기준 브랜치 head `89cbc5d27e53aebc2e5210e3aeb51dffeff65320`까지의 변경은 **문서 3개만**이며, 위 성공 빌드 이후 엔진/UI/테스트 스크립트의 수정은 없음을 compare 확인.
+- 실제 Galaxy S25+ 사용자 플레이의 돌진 예고 인지 가능성/즐거움, 2회 귀환 후 저장 승계 성공 여부는 **아직 사용자 확인 전**.
