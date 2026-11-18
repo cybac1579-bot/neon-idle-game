@@ -54,6 +54,16 @@ const emptyContribution=()=>({damage:{guard:0,ranger:0,medic:0},healing:{guard:0
 const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purchases:0,spent:0});
 const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
+// Duration is observed from the current build only; prior active fights
+// cannot be reconstructed from a legacy save.
+const initialEngagement=(stage=1,autoPurchases=0,legacyResume=false)=>({
+ stage,seconds:0,autoBuyStart:autoPurchases,legacyResume
+});
+const initialLongestEncounter=()=>({stage:0,seconds:0});
+const normalizedLongestEncounter=raw=>raw&&typeof raw==='object'&&
+ Number.isFinite(raw.stage)&&Number.isFinite(raw.seconds)?{
+ stage:integer(raw.stage,0,100000),seconds:num(raw.seconds,0,1e9)
+}:initialLongestEncounter();
 // Per-run relic action telemetry; old saves default to no past activations.
 const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0});
 // New standard-enemy role is deterministic per stage and independent of drop RNG.
@@ -116,7 +126,7 @@ const newState=(now=Date.now())=>({
  enemyTactic:initialEnemyTactic(1),
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestDepths:[],chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),relicEffects:initialRelicEffects(),autoBuy:initialAutoBuy(),autoChest:initialAutoChest(),runMetrics:initialRunMetrics(),runMilestones:{},runHistory:[],relicHistory:[],playtest:initialPlaytest(),runOpening:initialRunOpening(),latestReturn:null,events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),relicEffects:initialRelicEffects(),autoBuy:initialAutoBuy(),autoChest:initialAutoChest(),runMetrics:initialRunMetrics(),engagement:initialEngagement(),longestEncounter:initialLongestEncounter(),longEngagements:0,runMilestones:{},runHistory:[],relicHistory:[],playtest:initialPlaytest(),runOpening:initialRunOpening(),latestReturn:null,events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -162,6 +172,14 @@ function normalize(raw,now=Date.now()){
  s.runMetrics=initialRunMetrics();
  for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
  s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
+ s.engagement=initialEngagement(s.stage,s.autoBuy.purchases,!raw.engagement&&s.stage>1);
+ if(raw.engagement&&raw.engagement.stage===s.stage){
+  s.engagement.seconds=num(raw.engagement.seconds,0,1e9);
+  s.engagement.autoBuyStart=integer(raw.engagement.autoBuyStart,0,s.autoBuy.purchases);
+  s.engagement.legacyResume=raw.engagement.legacyResume===true;
+ }
+ s.longestEncounter=normalizedLongestEncounter(raw.longestEncounter);
+ s.longEngagements=integer(raw.longEngagements,0,1e9);
  s.relicEffects=initialRelicEffects();
  for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','jams','cleanses','commandMoves','commandSurges'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
  s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
@@ -201,7 +219,9 @@ function normalize(raw,now=Date.now()){
   chests:integer(report.chests,0,1e9),
   autoChestOpened:Number.isFinite(report.autoChestOpened)?integer(report.autoChestOpened,0,1e9):null,
   before:validOpening(report.before),after:validOpening(report.after),
-  relicEffects:combatEffectReport(report.relicEffects)
+  relicEffects:combatEffectReport(report.relicEffects),
+  longestEncounter:report.longestEncounter?normalizedLongestEncounter(report.longestEncounter):null,
+  longEngagements:Number.isFinite(report.longEngagements)?integer(report.longEngagements,0,1e9):null
  }:null;
  s.runMilestones=normalizedMilestones(raw.runMilestones);
  s.runHistory=Array.isArray(raw.runHistory)?raw.runHistory.slice(-5).filter(x=>x&&typeof x==='object').map(x=>({
@@ -212,7 +232,9 @@ function normalize(raw,now=Date.now()){
   chestsOpened:integer(x.chestsOpened,0,1e9),
   autoChestOpened:Number.isFinite(x.autoChestOpened)?integer(x.autoChestOpened,0,1e9):null,
   milestones:normalizedMilestones(x.milestones),
-  relicEffects:combatEffectReport(x.relicEffects)
+  relicEffects:combatEffectReport(x.relicEffects),
+  longestEncounter:x.longestEncounter?normalizedLongestEncounter(x.longestEncounter):null,
+  longEngagements:Number.isFinite(x.longEngagements)?integer(x.longEngagements,0,1e9):null
  })):[];
  // Bound the lifetime discovery journal. No historical reroll or reward is granted
  // when migrating a save made before this field existed.
@@ -351,6 +373,14 @@ function heroXp(s,amount){
 }
 function victory(s){
  const cleared=s.stage;
+ // Only a defeated enemy becomes a completed engagement record;
+ // fighting longer grants no free credits, loot, damage or return cores.
+ if(s.engagement?.stage===cleared){
+  const seconds=num(s.engagement.seconds,0,1e9);
+  if(seconds>num(s.longestEncounter?.seconds,0,1e9))
+   s.longestEncounter={stage:cleared,seconds};
+  if(seconds>=60)s.longEngagements=Math.min(1e9,s.longEngagements+1);
+ }
  if(MILESTONE_STAGES.includes(cleared)&&!Object.prototype.hasOwnProperty.call(s.runMilestones,cleared))
   s.runMilestones[cleared]=Math.round(s.clock*10)/10;
  const reward=Math.round((8+cleared*2.6)*Math.pow(1.105,Math.min(cleared,110))*(1+.12*relic(s,'bounty')));
@@ -660,6 +690,9 @@ function tick(s,seconds,source='foreground'){
  while(remaining>0){
   const dt=Math.min(1,remaining);remaining-=dt;
   const previousMinute=Math.floor((s.clock+1e-8)/60);s.clock+=dt;
+  if(s.engagement?.stage!==s.stage)
+   s.engagement=initialEngagement(s.stage,s.autoBuy.purchases);
+  s.engagement.seconds=Math.min(1e9,s.engagement.seconds+dt);
   for(const q of QUESTS){if(s.stage<q.unlock)continue;s.questClocks[q.id]+=dt;const cycles=Math.floor((s.questClocks[q.id]+1e-9)/q.interval);if(cycles){s.questClocks[q.id]-=cycles*q.interval;s.credits=Math.min(1e14,s.credits+cycles*questIncome(s,q));}}
   fight(s,dt);
   if(s.autoChest.enabled){
@@ -899,12 +932,14 @@ function rebirth(s){
   duration:Math.floor(s.clock),cores:gain,earned:reward.base,firstClear:reward.recordBonus,
   relicKinds:RELICS.filter(r=>relic(s,r.id)>0).length,
   relicCopies:RELICS.reduce((sum,r)=>sum+relic(s,r.id),0),
-  chests:s.chests,before,autoChestOpened:s.autoChest.opened,relicEffects:combatEffectReport(s.relicEffects)};
+  chests:s.chests,before,autoChestOpened:s.autoChest.opened,relicEffects:combatEffectReport(s.relicEffects),
+  longestEncounter:{...s.longestEncounter},longEngagements:s.longEngagements};
  const summary={duration:Math.floor(s.clock),best:s.runBest,kills:s.runKills,cores:gain,
   manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
   chestsOpened:s.runMetrics.chestsOpened,
   autoChestOpened:s.autoChest.opened,milestones:{...s.runMilestones},
-  relicEffects:combatEffectReport(s.relicEffects)};
+  relicEffects:combatEffectReport(s.relicEffects),
+  longestEncounter:{...s.longestEncounter},longEngagements:s.longEngagements};
  const history=[...(s.runHistory||[]),summary].slice(-5);
  const keep={claimedBreakthroughDistance:Math.max(s.claimedBreakthroughDistance,s.runBest-1),
   coreReserve:Math.min(1,Math.max(0,reward.fraction)),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode},autoChest:{...initialAutoChest(),enabled:s.autoChest.enabled}};
