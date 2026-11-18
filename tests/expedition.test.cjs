@@ -1256,3 +1256,6 @@ require('./expedition-battle-event-save-contract.test.cjs');
 
 // Manual hero trait reallocation must retain permanent XP, cores, and loot.
 require('./expedition-trait-respec.test.cjs');
+
+// Late elite HP tiers must never reset in-progress saved battles.
+require('./expedition-elite65-hp-migration.test.cjs');
