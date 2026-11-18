@@ -146,7 +146,7 @@ function returnReportHtml(r){
   row('이번 귀환 코어',fmt(r.cores)+'개 (격파 적립 '+fmt(r.earned)+' · 첫 기록 '+fmt(r.firstClear)+')')+
   row('영구 유물 수집',fmt(r.relicKinds)+'종 · 총 '+fmt(r.relicCopies)+'개')+
   (Number.isFinite(r.autoChestOpened)?row('지난 탐사 자동 개봉',fmt(r.autoChestOpened)+'개'):'')+
-  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 '+fmt(r.relicEffects.intelFinds||0)+'회 · 측면 공격 '+fmt(r.relicEffects.flankShots||0)+'회 · 호위 반격 '+fmt(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+fmt(r.relicEffects.braces||0)+'회 · 원거리 교란 '+fmt(r.relicEffects.jams||0)+'회 · 역통신 반격 '+fmt(r.relicEffects.cleanses||0)+'회'):'')+
+  (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 '+fmt(r.relicEffects.intelFinds||0)+'회 · 측면 공격 '+fmt(r.relicEffects.flankShots||0)+'회 · 호위 반격 '+fmt(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+fmt(r.relicEffects.braces||0)+'회 · 원거리 교란 '+fmt(r.relicEffects.jams||0)+'회 · 역통신 반격 '+fmt(r.relicEffects.cleanses||0)+'회 · 지휘 전술 전환 '+fmt(r.relicEffects.commandMoves||0)+'회'):'')+
   comparison;
 }
 function renderArchive(){
@@ -172,7 +172,7 @@ function renderArchive(){
  const hasTactics=archerOwned||E.relic(s,'medkit')>0||intelPieces>0||escortPieces>0||bracePieces>0;
  $('relicEffectSummary').hidden=!hasTactics;
  $('relicEffectSummary').textContent=hasTactics?
-  '이번 탐사 전술 발동 · 정밀 일제사격 '+fmt(effects.volleys)+'회 (추가 유효 피해 '+fmt(effects.volleyBonusDamage)+
+  '이번 탐사 전술 발동 · 지휘 전술 전환 '+fmt(effects.commandMoves||0)+'회 (전열 압박 '+fmt(effects.commandSurges||0)+'회) · 정밀 일제사격 '+fmt(effects.volleys)+'회 (추가 유효 피해 '+fmt(effects.volleyBonusDamage)+
   ') · 긴급 재합류 '+fmt(effects.triages)+'회'+
   (intelActive?' · 탐사 정보망 '+fmt(effects.intelFinds)+'/2회 자동 발견'+
     ((effects.intelFinds||0)<2?' · 30거리 이후 정예 조사 '+fmt(effects.intelClears||0)+'/2':' · 이번 귀환 보상 완료'):
@@ -282,7 +282,7 @@ function renderArchive(){
    '<div class="statline"><span>'+safe('거리 '+r.best+' · '+duration(r.duration))+'</span><b>'+
    safe('수동 '+r.manualPurchases+' / 자동 '+r.autoPurchases+' · 코어 '+r.cores+
     (Number.isFinite(r.autoChestOpened)?' · 상자 자동 '+r.autoChestOpened+'개':'')+
-    (r.relicEffects?' · 정밀 '+r.relicEffects.volleys+'회 · 긴급 '+r.relicEffects.triages+'회 · 정보망 '+(r.relicEffects.intelFinds||0)+'회 · 호위 반격 '+(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+(r.relicEffects.braces||0)+'회 · 역통신 '+(r.relicEffects.cleanses||0)+'회':''))+'</b></div>').join(''):'')+
+    (r.relicEffects?' · 정밀 '+r.relicEffects.volleys+'회 · 긴급 '+r.relicEffects.triages+'회 · 정보망 '+(r.relicEffects.intelFinds||0)+'회 · 호위 반격 '+(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+(r.relicEffects.braces||0)+'회 · 역통신 '+(r.relicEffects.cleanses||0)+'회 · 지휘 전술 '+(r.relicEffects.commandMoves||0)+'회':''))+'</b></div>').join(''):'')+
   s.events.slice().reverse().map(m=>'<div class="sub" style="padding:5px 0;border-bottom:1px solid #304359">'+safe(m)+'</div>').join('');
  const samples=s.playtest.snapshots.length;
  $('playtestSummary').innerHTML=row('기록한 1분 단위 상태',fmt(samples)+'개')+
