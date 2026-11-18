@@ -68,12 +68,14 @@ async function main(){
      const replayed=effects.firstElementChild!==first;
      sample.training=8;view.sync(sample);
      const trainingTier=document.querySelector('.arena').dataset.trainingTier;
+     const growthTraining=document.querySelector('#battleGrowth')?.textContent||'';
      sample.units.ranger=1;
      sample.actors.push({id:'ranger',hp:17,revive:0,progress:1,cooldown:0,shots:0});
      sample.battleCueSeq++;
      sample.battleEvent={seq:sample.battleCueSeq,type:'volley',id:'ranger',value:20};
      view.sync(sample);
      const volley=!!effects.querySelector('.battle-trail.volley');
+     const growthReinforcement=document.querySelector('#battleGrowth')?.textContent||'';
      sample.units.medic=1;
      sample.actors.push({id:'medic',hp:25,revive:0,progress:1,cooldown:0,shots:0});
      sample.battleCueSeq++;
@@ -95,12 +97,14 @@ async function main(){
      const fabricated=effects.firstElementChild!==previousEffect;
      return {engineEvent,hasHitTrail:!!trail&&!replayed,visibleMiniatures:
       document.querySelectorAll('.actor-head').length>=2,
-      volley,heal,shield,trainingTier,milestone,chestNotice,replayed,fabricated};
+      volley,heal,shield,trainingTier,growthTraining,growthReinforcement,milestone,chestNotice,replayed,fabricated};
     });
     assert.equal(combatVisual.engineEvent,'hit','visual probe must start from a real engine attack');
     assert.equal(combatVisual.hasHitTrail,true,'attack should be an origin-target motion');
     assert.equal(combatVisual.visibleMiniatures,true,'role miniatures render instead of lone glyphs');
     assert.equal(combatVisual.trainingTier,'2','real training value changes visual tier');
+    assert.match(combatVisual.growthTraining,/부대 훈련/);
+    assert.match(combatVisual.growthReinforcement,/증원 · \+1명/);
     assert.equal(combatVisual.replayed,false,'same battle cue must not replay the visual effect');
     assert.equal(combatVisual.volley,true,'precision volley gets a distinct projectile');
     assert.equal(combatVisual.heal,true,'field healing gets a distinct support effect');
