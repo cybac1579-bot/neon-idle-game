@@ -918,6 +918,15 @@ function openChestBatch(s,count=20){
   before,after};
 }
 function buyTrait(s,id){if(!['command','supply'].includes(id)||traitRemaining(s)<1||s.traits[id]>=10)return false;s.traits[id]++;return true;}
+// Player choice: reallocate earned permanent-level trait points without
+// losing XP, hero level, collectibles or cores. Never auto-invest points.
+function respecTraits(s){
+ const spent=s.traits.command+s.traits.supply;
+ if(spent<=0)return false;
+ s.traits.command=0;s.traits.supply=0;
+ note(s,'지휘관 특성 '+spent+'포인트 재분배 가능 · 영구 성장 유지');
+ return spent;
+}
 function buyCore(s,id){if(!['valor','trade'].includes(id)||s.cores<coreCost(s,id)||s.coreUpgrades[id]>=30)return false;const cost=coreCost(s,id);s.cores-=cost;s.coreSpent+=cost;s.coreUpgrades[id]++;return true;}
 function rebirthRewards(s){
  const stage=integer(s.runBest,1,100000);
@@ -1074,5 +1083,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,returnChoiceSnapshot,nextRelicCopyPreview,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,pursuitBoost,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,respecTraits,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,returnChoiceSnapshot,nextRelicCopyPreview,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,pursuitBoost,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
