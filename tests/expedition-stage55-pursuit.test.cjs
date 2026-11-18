@@ -51,6 +51,9 @@ test('crossing half health announces the finishing tactic once across reload',()
  assert.equal(s.events.filter(e=>e.includes('추격 신호기')).length,1);
  const loaded=E.normalize(JSON.parse(JSON.stringify(s)),2000);
  assert.equal(loaded.enemyTactic.pursuitTriggered,true);
+ // a saved pursuit cue must keep its semantic type, not degrade to '-60'.
+ assert.equal(loaded.battleEvent.type,'pursuit');
+ assert.equal(loaded.battleEvent.seq,s.battleEvent.seq);
  E.tick(loaded,1);
  assert.ok(loaded.events.filter(e=>e.includes('추격 신호기')).length<=1);
 });
