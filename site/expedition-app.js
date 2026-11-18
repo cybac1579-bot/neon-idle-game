@@ -68,9 +68,24 @@ function renderAutoBuy(){
  $('autoToggle').setAttribute('aria-pressed',a.enabled?'true':'false');
  const label=target?(target.kind==='train'?'부대 훈련':target.kind==='recruit'?'용병 소집':
     (E.QUESTS.find(q=>q.id===target.id)?.name||'보급 의뢰')):'구매 가능한 종류 없음';
+ // The strict old saving mode is intentionally allowed to wait. Explain the
+ // cost to the player in the squad detail panel; never silently change their
+ // selected upgrade or clutter the battle HUD. This is a passive-only estimate
+ // (kills/chests can reduce it), not a promised completion time.
+ let reserveWait='';
+ if(a.enabled&&a.mode==='reserve'&&target&&target.cost>s.credits){
+  const passiveRate=E.QUESTS.filter(q=>s.stage>=q.unlock)
+   .reduce((sum,q)=>sum+E.questIncome(s,q)/q.interval,0);
+  if(passiveRate>0){
+   const passiveMinutes=Math.ceil((target.cost-s.credits)/passiveRate/60);
+   if(passiveMinutes>=10)reserveWait=' · 보급 수익만 가정하면 약 '+fmt(passiveMinutes)+
+    '분 대기(전투 보상 제외) · 성장이 멈춘 것 같다면 균형/유동형 전환 가능';
+  }
+ }
  $('autoStatus').textContent=a.enabled?'작동 중 · '+E.AUTO_BUY_INTERVAL+'초마다 구매 판단':'자동 구매 꺼짐';
  $('autoDetails').textContent=(a.mode==='adaptive'?'유동형 균형 · 현재 구매 가능 항목 확인 / ':a.mode==='reserve'?'장기 저축 · 현재 항목 완료까지 구매 대기 / ':a.mode==='balanced'?'균형 · 장기 대기 시 부담 적은 성장으로 전환 / ':'')+
    '다음 대상: '+label+(target?' · '+fmt(target.cost)+' 크레딧'+(s.credits>=target.cost?' · 구매 가능':' · 크레딧 축적 중'):'')+
+   reserveWait+
    ' / 이번 탐사 자동 구매 '+fmt(a.purchases)+'회 · '+fmt(a.spent)+' 크레딧 사용';
 }
 function renderSquad(){
