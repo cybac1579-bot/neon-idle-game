@@ -895,8 +895,8 @@ test('relic mechanics persist through rebirth but activation counters do not',()
  assert.ok(E.rebirth(s)>0);
  assert.equal(E.relic(s,'archer'),2);
  assert.equal(E.relic(s,'medkit'),3);
- assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0});
- assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0},
+ assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0});
+ assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0},
   'completed return keeps evidence of tactical relic activation');
  assert.deepEqual(s.latestReturn.relicEffects,s.runHistory.at(-1).relicEffects);
  const normalized=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
@@ -1086,7 +1086,7 @@ test('countering requires both relics and living frontline guard and active rang
  }
 });
 test('regular distance and short enemy encounters do not gain extra flank damage',()=>{
- const normal=setFlankFixture(E.newState(1000),14,{combo:true});
+ const normal=setFlankFixture(E.newState(1000),13,{combo:true});
  E.tick(normal,9);
  assert.equal(normal.relicEffects.flankShots,0);
  assert.equal(normal.relicEffects.intercepts,0);
@@ -1121,3 +1121,105 @@ require('./expedition-auto-chest.test.cjs');
 
 // Auto chest collection is optional, observable, and not a forced strategy.
 require('./expedition-auto-chest-telemetry.test.cjs');
+
+
+
+function chargeFixture({brace=false,guard=true}={}){
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=14;s.enemyHp=1e9;
+ s.actors.forEach(a=>{a.hp=1e7;a.revive=0;a.progress=guard?1:0;a.cooldown=100;});
+ if(brace){s.relics.shield=1;s.relics.swift=1;}
+ return s;
+}
+test('regular enemy archetype alternates deterministic chargers without replacing boss or elite tiers',()=>{
+ for(const [stage,kind] of [[1,'regular'],[7,'regular'],[8,'charger'],[10,'boss'],
+  [13,'regular'],[14,'charger'],[15,'elite'],[16,'regular'],[20,'boss'],
+  [26,'charger'],[32,'charger'],[40,'boss'],[44,'charger']]){
+  assert.equal(E.enemyKind(stage),kind,'enemy role by progression stage '+stage);
+ }
+});
+test('ordinary charger telegraphs, knocks a guard back exactly once, and persists through save/reload',()=>{
+ const s=chargeFixture();
+ E.tick(s,3);
+ assert.equal(s.enemyTactic.kind,'charger');
+ assert.equal(s.enemyTactic.phase,'windup');
+ assert.equal(s.enemyTactic.windup,1.5);
+ assert.equal(s.battleEvent.type,'rush-aim');
+ E.tick(s,1);
+ assert.equal(s.enemyTactic.windup,.5,'windup persists as an actual half-second');
+ const restored=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.equal(restored.enemyTactic.phase,'windup');
+ assert.equal(restored.enemyTactic.windup,.5);
+ E.tick(restored,1);
+ assert.equal(restored.enemyTactic.phase,'fired');
+ assert.equal(restored.enemyTactic.result,'rush');
+ assert.equal(restored.relicEffects.rushes,1);
+ assert.equal(restored.relicEffects.braces,0);
+ assert.equal(restored.battleEvent.type,'rush');
+ assert.ok(restored.actors[0].progress<=.22);
+ assert.ok(restored.actors[0].cooldown>=.6);
+ assert.equal(restored.chests,0,'no bonus chest, core or action expense for the new enemy type');
+ E.tick(restored,15);
+ assert.equal(restored.relicEffects.rushes,1,'one rush per ordinary enemy even during a long fight');
+});
+test('shield and march drum combination keeps formation and auto-counters the same regular rush',()=>{
+ const plain=chargeFixture(),prepared=chargeFixture({brace:true});
+ for(let sec=0;sec<5;sec++){E.tick(plain,1);E.tick(prepared,1);}
+ assert.equal(plain.relicEffects.rushes,1);
+ assert.equal(prepared.relicEffects.rushes,1);
+ assert.equal(plain.relicEffects.braces,0);
+ assert.equal(prepared.relicEffects.braces,1);
+ assert.equal(prepared.enemyTactic.result,'brace');
+ assert.equal(prepared.battleEvent.type,'brace');
+ assert.ok(plain.actors[0].progress<=.22);
+ assert.equal(prepared.actors[0].progress,1,'active shield plus drum prevents guard displacement');
+ assert.ok(prepared.relicEffects.braceDamage>0);
+ assert.ok(Math.abs(prepared.enemyHp-(plain.enemyHp-prepared.relicEffects.braceDamage))<1e-6,
+  'brace actually damages the enemy; not only a combat visual effect');
+ assert.ok(prepared.contribution.damage.guard>plain.contribution.damage.guard);
+ assert.equal(prepared.contribution.taken.guard,plain.contribution.taken.guard,
+  'guard position counter adds no enemy HP damage');
+ const loaded=E.normalize(JSON.parse(JSON.stringify(prepared)),Date.now());
+ assert.equal(loaded.relicEffects.braces,1);
+ assert.equal(loaded.relicEffects.braceDamage,prepared.relicEffects.braceDamage);
+ assert.equal(loaded.enemyTactic.result,'brace');
+});
+test('charger defense needs both relics and a living deployed guard',()=>{
+ for(const cond of ['none','shieldOnly','swiftOnly','guardDown']){
+  const s=chargeFixture({brace:true});
+  if(cond==='none'){s.relics.shield=0;s.relics.swift=0;}
+  if(cond==='shieldOnly')s.relics.swift=0;
+  if(cond==='swiftOnly')s.relics.shield=0;
+  if(cond==='guardDown')for(const a of s.actors){a.revive=100;a.hp=0;a.progress=0;}
+  E.tick(s,5);
+  assert.equal(s.relicEffects.braces,0,cond);
+  assert.equal(s.relicEffects.braceDamage,0,cond);
+  if(cond==='guardDown'){
+   assert.equal(s.enemyTactic.phase,'idle','no guard means no fake charge');
+   assert.equal(s.relicEffects.rushes,0);
+  }else{
+   assert.equal(s.relicEffects.rushes,1);
+   assert.equal(s.enemyTactic.result,'rush');
+  }
+ }
+});
+test('charger run counters reset on rebirth but prior report keeps observed tactics',()=>{
+ const s=chargeFixture({brace:true});
+ E.tick(s,5);
+ assert.equal(s.relicEffects.rushes,1);
+ assert.equal(s.relicEffects.braces,1);
+ assert.ok(E.rebirth(s)>0);
+ assert.equal(s.relicEffects.rushes,0);
+ assert.equal(s.relicEffects.braces,0);
+ assert.equal(s.relicEffects.braceDamage,0);
+ assert.equal(s.enemyTactic.stage,1);
+ assert.equal(s.runHistory.at(-1).relicEffects.rushes,1);
+ assert.equal(s.latestReturn.relicEffects.braces,1);
+ const loaded=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.equal(loaded.latestReturn.relicEffects.braces,1);
+ assert.equal(loaded.enemyTactic.kind,'regular');
+ const older=E.newState(1000);delete older.enemyTactic;delete older.relicEffects;
+ const migrated=E.normalize(older,Date.now());
+ assert.equal(migrated.relicEffects.rushes,0);
+ assert.equal(migrated.enemyTactic.kind,'regular');
+});
