@@ -226,13 +226,13 @@ function renderArchive(){
  const nextDeep=Math.min(Infinity,...E.RELICS.map(r=>r.unlockStage).filter(depth=>depth>lifetimeCleared));
  const nextDepthRelics=Number.isFinite(nextDeep)?E.RELICS.filter(r=>r.unlockStage===nextDeep):[];
  const lockedKinds=E.RELICS.filter(r=>r.unlockStage>lifetimeCleared).length;
- const fight=s.engagement?.stage===s.stage?s.engagement:null;
- const elapsed=Math.floor(fight?.seconds||0);
+ const currentEngagement=s.engagement?.stage===s.stage?s.engagement:null;
+ const elapsed=Math.floor(currentEngagement?.seconds||0);
  const fighting=elapsed>=1;
  const fightClock=Math.floor(elapsed/60)+'분 '+elapsed%60+'초';
  const enemyRemaining=Math.max(0,Math.min(100,100*s.enemyHp/E.enemyMax(s.stage)));
- const sinceLoad=fight?.legacyResume?' · 이전 저장 데이터의 과거 교전 시간은 미포함':'';
- const growthDuringFight=Math.max(0,s.autoBuy.purchases-(fight?.autoBuyStart||0));
+ const sinceLoad=currentEngagement?.legacyResume?' · 이전 저장 데이터의 과거 교전 시간은 미포함':'';
+ const growthDuringFight=Math.max(0,s.autoBuy.purchases-(currentEngagement?.autoBuyStart||0));
  $('rebirthSummary').innerHTML=row('이번 탐사 최고 거리',fmt(s.runBest))+
   (fighting?row('현재 적과 교전',fmt(s.stage)+'거리 · '+fightClock+sinceLoad):'')+
   (fighting?row('현재 적 체력 / 교전 중 자동 강화',enemyRemaining.toFixed(1)+'% 남음 · 자동 구매 '+fmt(growthDuringFight)+'회'):'')+
