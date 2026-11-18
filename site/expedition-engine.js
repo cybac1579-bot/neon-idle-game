@@ -893,6 +893,10 @@ function rollRelic(s,depth,forceNew=false){
  let bonus=0;
  if(duplicate){bonus=75*relic(s,'fortune');s.credits=Math.min(1e14,s.credits+bonus);}
  const result={id:found.id,duplicate,credits:bonus,stack:s.relics[found.id],depth,source:forceNew?'intel':'chest'};
+ // Keep the true pre-copy state available for the reward message. The
+ // read-only preview runs after the real roll and never draws RNG.
+ const beforeCopy={...s,relics:{...s.relics,[found.id]:result.stack-1}};
+ result.copyGain=nextRelicCopyPreview(beforeCopy,found.id);
  rememberRelic(s,result);
  note(s,(duplicate?'유물 중복 수집: ':'새 유물 발견! ')+found.name+(bonus?' · +'+bonus+' 크레딧':''));
  return result;
