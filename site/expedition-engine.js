@@ -45,7 +45,7 @@ const RELICS=[
  // A unique depth-50 collection reward, not a hidden bonus per rebirth.
  {id:'chronicle',name:'원정 연대기',desc:'서로 다른 유물 1종마다 용병단 피해량 2% 증가 (최대 30%)',cap:1,unlockStage:50},
  // The first post-50 discovery: changes a boss's second phase, not every fight.
- {id:'pursuit',name:'추격 신호기',desc:'55거리 이상 지휘급 적 체력이 절반 이하가 되면 용병단 피해량 +60%',cap:1,unlockStage:55}
+ {id:'pursuit',name:'추격 신호기',desc:'55거리 이상 지휘급 또는 65거리 이상 정예 적 체력이 절반 이하가 되면 용병단 피해량 +60%',cap:1,unlockStage:55}
 ];
 const num=(n,min=0,max=1e14)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):min;
 const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
@@ -88,7 +88,7 @@ const combatEffectReport=raw=>raw&&typeof raw==='object'?{
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
 // Bounded in-run boss/elite clear timestamps: 60-second snapshots miss the opening.
-const MILESTONE_STAGES=[5,10,15,20,25,30,35,40,45,50,55,60,75,100];
+const MILESTONE_STAGES=[5,10,15,20,25,30,35,40,45,50,55,60,65,75,100];
 function normalizedMilestones(raw){
  const out={};if(!raw||typeof raw!=='object')return out;
  for(const stage of MILESTONE_STAGES){
@@ -355,8 +355,14 @@ function valorMultiplier(s){
 }
 // New late-depth relic is a second-phase boss tactic, not a flat all-stage
 // attack upgrade. Use the same multiplier in displayed and actual damage.
+// A unique late-run discovery works as a second-phase finishing signal:
+ // boss fights from 60, or deep elite defenses from 65. Earlier fights
+ // are intentionally unchanged, including the 55-distance elite.
+function pursuitTarget(stage){
+ return isBoss(stage)&&stage>=60||isElite(stage)&&stage>=65;
+}
 function pursuitBoost(s){
- return relic(s,'pursuit')>0&&isBoss(s.stage)&&s.stage>=55&&
+ return relic(s,'pursuit')>0&&pursuitTarget(s.stage)&&
   s.enemyHp>0&&s.enemyHp<=enemyMax(s.stage)*.5?1.6:1;
 }
 function partyDps(s){return UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.dps*(u.id==='ranger'?1+.15*relic(s,'archer'):1),0)*(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*(1+.06*s.traits.command)*valorMultiplier(s)*pursuitBoost(s)*collectionBoost(s);}
@@ -540,11 +546,11 @@ function fight(s,dt){
  // Ordinary hits must not overwrite this special cue in the same tick.
  if(precisionCue!==null)battleCue(s,'volley','ranger',precisionCue);
  s.enemyHp-=damage;
- if(boss&&s.stage>=60&&relic(s,'pursuit')>0&&s.enemyHp>0&&
+ if(pursuitTarget(s.stage)&&relic(s,'pursuit')>0&&s.enemyHp>0&&
   s.enemyHp<=enemyMax(s.stage)*.5&&!s.enemyTactic.pursuitTriggered){
   s.enemyTactic.pursuitTriggered=true;
   battleCue(s,'pursuit','guard',60);
-  note(s,'추격 신호기 · 지휘급 적의 빈틈 발견! 후반전 용병단 화력 +60%');
+  note(s,'추격 신호기 · 정예/지휘급 적의 빈틈 발견! 후반전 용병단 화력 +60%');
  }
  if(s.enemyHp<=0){victory(s);return;}
  const tactic=advanceEnemyTactic(s,dt,
