@@ -362,18 +362,26 @@ main.game-shell{
             linear-gradient(170deg,#67415b,#292b46 70%,#171c32);
 }
 .arena .foe .silhouette:before{
- content:'';position:absolute;z-index:-1;top:9%;left:31%;height:32%;width:38%;
+ content:'';position:absolute;z-index:0;top:9%;left:31%;height:32%;width:38%;
  background:linear-gradient(140deg,#e8b6ad,#954e6c 43%,#4d365b);
  border:2px solid #d99787;border-radius:50% 50% 25% 25%;
  box-shadow:0 0 22px #f0b8a733;
 }
 .arena .foe .silhouette:after{
- content:'';position:absolute;z-index:-2;bottom:-5%;left:13%;width:74%;height:60%;
+ content:'';position:absolute;z-index:0;bottom:-5%;left:13%;width:74%;height:60%;
  clip-path:polygon(50% 0,92% 14%,100% 100%,0 100%,8% 14%);
  background:linear-gradient(135deg,#ae7988,#563759 50%,#322f48);
 }
 .arena-boss .foe .silhouette:before{border-color:#ffce89;box-shadow:0 0 20px #ffd38b91}
 .arena-boss .foe .silhouette:after{background:linear-gradient(145deg,#cb9c79,#77425a,#382638)}
+#battleGrowth{position:absolute;left:11px;top:43px;z-index:5;pointer-events:none;
+ color:#f8e6ae;font-size:12px;font-weight:800;letter-spacing:.015em;
+ background:#102837e8;border:1px solid #c9b7789c;border-radius:9px;
+ padding:7px 10px;max-width:calc(100% - 22px);opacity:0;
+ box-shadow:0 6px 20px #0008}
+#battleGrowth.playing{animation:expedition-growth 1.55s ease-out both}
+@keyframes expedition-growth{0%{opacity:0;transform:translateY(7px)}
+  16%,65%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-8px)}}
 #battleMotion{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
 .battle-trail{position:absolute;height:4px;border-radius:12px;transform-origin:0 50%;
   background:linear-gradient(90deg,transparent,#e1d3a9 20%,#f3e7cb 75%,transparent);
@@ -424,6 +432,7 @@ main.game-shell{
   45%{transform:translateX(5px) scale(1.08)}}
 @media(prefers-reduced-motion:reduce){
  .battle-trail,.battle-trail:after,.battle-burst{display:none!important}
+ #battleGrowth.playing{animation:none;opacity:1;transform:none}
  .fighter.battle-acting .fighter-symbol{animation:none!important}
 }
 @media(max-width:380px){
