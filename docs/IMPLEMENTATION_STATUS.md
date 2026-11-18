@@ -405,3 +405,14 @@ Previous ~67% is historical estimate only; no current evidence-based revised per
 - 회귀 `tests/expedition.test.cjs`, 모바일 `tests/expedition-browser.test.cjs`, 분석 `docs/EXPEDITION_COMBAT_TACTICS_PHASE1_20261118.md`.
 - 이전 버전 대비 30·120분 × 3시드 × 조합 미보유/인위 보유 **12쌍** 균형 자동 구매/상자 개봉 엔진 비교 결과: 모든 쌍의 최종 거리와 코어 동일, 조합 보유에서는 30분 후열 타격 6회·호위 반격 6회, 120분 각 8회. 실제 기기에서 보이는 재미와 연출 품질은 미검증.
 - 현재 사용자 HTML은 자동 업데이트되지 않음. 교체하려면 구파일 **유물 → 전체 저장 백업**으로 JSON 다운로드 후 신파일 **유물 → 저장 파일 복원**.
+
+
+## 2026-11-18 — 일반 적 돌격병 + 합금 배지/진군 북 철벽 진형
+- 사용자 실제 플레이에서 수집해도 숫자만 변하는 문제 → 정예 외 일반 적에 행동 분화 추가. 기본 적 전부를 바꾼 것이 아니라 **8거리 이후 stage%6==2의 일반 적만 돌격병(♞)**. 정예/보스/기존 코어·크레딧·드롭 계산 불변.
+- 적이 3초 이상 살아 있고 방벽병이 전장에 있으면 **1.5초 경고 후 한 명 방벽병의 전진 위치와 공격 타이밍을 뒤로 밀어냄**(한 적당 최대 1회). 추가 HP 피해/공격 난수 없음. 전투 상시 표시, 다른 성장 메뉴 중에도 예고·충격 관전 가능.
+- 영구 유물 **합금 배지(shield)+진군 북(swift)**를 모두 보유하면 자동으로 **철벽 진형**: 기존 HP/화력 수치 강화도 유지하면서 밀치기 방어 + 방벽병 실제 자동 반격. 단독 보유/방벽병 전장 이탈 시 발동하지 않음. 새로운 반복 조작 없음.
+- 적 종류는 `ExpeditionEngine.enemyKind(stage)`로 공개, 적의 단계별 예고·행동은 `enemyTactic` 저장/복원, 전투 통계 `relicEffects.rushes/braces/braceDamage`는 기존 저장키의 선택 필드로 추가. 이전 저장 복원/귀환 기록 스냅샷 유지. 구 게임 main 및 저장 `neon_rework_07` 미수정.
+- `site/expedition-ui.js` 적 라벨 및 유물 조합 목표, `site/expedition-field.js` 예고/저지 연출, `site/expedition-ui.css` 교체 가능한 임시 스킨. **UI 디자인 최종 확정 아님**.
+- `tests/expedition.test.cjs`, `tests/expedition-browser.test.cjs`에 1회 발동, 조합 선행 조건, 적의 종류, 1.5초 경고, 저장/환생, 모바일 360/390/412 장면 검증 추가. 세부 근거 `docs/EXPEDITION_CHARGER_FORMATION_PHASE1_20261118.md`.
+- 균형형 자동 구매·자동 상자 개봉 `30분/120분 × 3 시드 × 자연 획득/유물 강제 소지` 총 12쌍 엔진 비교에서 기존 대비 **도달 거리·귀환 코어·발견 종류 수 전부 동일**. 실제 체감 및 다른 성장 전략까지 입증한 것은 아님.
+- 실행 HTML 교체 시 기존 파일 유물 탭의 **전체 저장 백업 JSON 다운로드 → 신규 파일 저장 파일 복원** 절차로 이전 귀환/유물 유지. 테스트 빌드/CI run의 정확한 SHA는 성공한 빌드 확인 후 기록.
