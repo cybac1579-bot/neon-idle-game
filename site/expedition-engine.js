@@ -5,6 +5,7 @@
 const VERSION=1;
 const MAX_ACTORS=120; // protect save size and two-hour offline ticks
 const AUTO_BUY_INTERVAL=4; // seconds between optional single-step purchases
+const AUTO_CHEST_INTERVAL=60; // opt-in automatic batch opening, also in offline settlement
 const BALANCED_SAVING_HORIZON_SECONDS=240;
 const BALANCED_FALLBACK_BUDGET_RATIO=.35;
 // Earn fractional return progress by defeating enemies, not by pushing
@@ -49,6 +50,7 @@ const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
 const total=s=>UNITS.reduce((n,u)=>n+s.units[u.id],0);
 const emptyContribution=()=>({damage:{guard:0,ranger:0,medic:0},healing:{guard:0,ranger:0,medic:0},taken:{guard:0,ranger:0,medic:0},falls:{guard:0,ranger:0,medic:0},attacks:{guard:0,ranger:0,medic:0}});
 const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purchases:0,spent:0});
+const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
@@ -89,7 +91,7 @@ const newState=(now=Date.now())=>({
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestDepths:[],chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),runMetrics:initialRunMetrics(),runMilestones:{},runHistory:[],relicHistory:[],playtest:initialPlaytest(),runOpening:initialRunOpening(),latestReturn:null,events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),autoChest:initialAutoChest(),runMetrics:initialRunMetrics(),runMilestones:{},runHistory:[],relicHistory:[],playtest:initialPlaytest(),runOpening:initialRunOpening(),latestReturn:null,events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -124,6 +126,13 @@ function normalize(raw,now=Date.now()){
   s.autoBuy.cursor=integer(raw.autoBuy.cursor,0,2);
   s.autoBuy.purchases=integer(raw.autoBuy.purchases,0,1e9);
   s.autoBuy.spent=num(raw.autoBuy.spent,0,1e14);
+ }
+ // Collection automation is strictly opt-in. Older saves default OFF.
+ s.autoChest=initialAutoChest();
+ if(raw.autoChest&&typeof raw.autoChest==='object'){
+  s.autoChest.enabled=raw.autoChest.enabled===true;
+  s.autoChest.elapsed=num(raw.autoChest.elapsed,0,AUTO_CHEST_INTERVAL);
+  s.autoChest.opened=integer(raw.autoChest.opened,0,1e9);
  }
  s.runMetrics=initialRunMetrics();
  for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
@@ -368,6 +377,16 @@ function tick(s,seconds,source='foreground'){
   const previousMinute=Math.floor((s.clock+1e-8)/60);s.clock+=dt;
   for(const q of QUESTS){if(s.stage<q.unlock)continue;s.questClocks[q.id]+=dt;const cycles=Math.floor((s.questClocks[q.id]+1e-9)/q.interval);if(cycles){s.questClocks[q.id]-=cycles*q.interval;s.credits=Math.min(1e14,s.credits+cycles*questIncome(s,q));}}
   fight(s,dt);
+  if(s.autoChest.enabled){
+   s.autoChest.elapsed+=dt;
+   if(s.autoChest.elapsed>=AUTO_CHEST_INTERVAL-1e-8){
+    s.autoChest.elapsed=Math.max(0,s.autoChest.elapsed-AUTO_CHEST_INTERVAL);
+    // Open earned boxes only, in the original FIFO depth order using
+    // exactly the same drop rules and RNG as manual opening.
+    const batch=openChestBatch(s,20);
+    s.autoChest.opened+=batch.results.length;
+   }
+  }
   if(s.autoBuy.enabled){
    s.autoBuy.elapsed+=dt;
    if(s.autoBuy.elapsed>=AUTO_BUY_INTERVAL-1e-8){
@@ -457,6 +476,13 @@ function autoTarget(s){
  }
  // If nothing is affordable, save towards the original category.
  return preferred;
+}
+function setAutoChest(s,enabled){
+ if(typeof enabled!=='boolean')return false;
+ s.autoChest.enabled=enabled;
+ s.autoChest.elapsed=0;
+ note(s,'유물 상자 자동 개봉 '+(enabled?'작동':'중단')+' · 60초마다 최대 20개');
+ return true;
 }
 function setAutoBuy(s,mode,enabled){
  if(!AUTO_MODES.includes(mode)||typeof enabled!=='boolean')return false;
@@ -590,7 +616,7 @@ function rebirth(s){
   chestsOpened:s.runMetrics.chestsOpened,milestones:{...s.runMilestones}};
  const history=[...(s.runHistory||[]),summary].slice(-5);
  const keep={claimedBreakthroughDistance:Math.max(s.claimedBreakthroughDistance,s.runBest-1),
-  coreReserve:Math.min(1,Math.max(0,reward.fraction)),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode}};
+  coreReserve:Math.min(1,Math.max(0,reward.fraction)),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode},autoChest:{...initialAutoChest(),enabled:s.autoChest.enabled}};
  Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  s.runOpening=runOpeningSnapshot(s);
@@ -603,5 +629,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
