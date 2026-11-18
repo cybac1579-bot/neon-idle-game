@@ -21,3 +21,13 @@
 ## 다음 판단 기준
 - 원거리 교란이 실제로 수집/배치 선택을 유도하는지, 경고와 반격이 화면에서 충분히 읽히는지 우선 평가.
 - 30/120분 동일 시드 비교에서 탐사 거리·코어 및 중반 체류 시간 차이를 수치로 평가. 새 전술이 원작 방치 진행 리듬을 과도하게 느리게 만들면 지연량부터 조정.
+
+## 최종 검증 증거 (2026-11-18)
+- 전투 코드 검증 커밋: `5992504e80f4b5f4de9e2bd9ae2cb16d52d69c5c`.
+- GitHub Actions: https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44230997578 — SUCCESS. Node 통합 엔진 테스트 **174/174 pass, 0 fail**.
+- 기존 저장 회귀: https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44230997639 — SUCCESS.
+- 3회 귀환 루트: https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44230997570 — SUCCESS.
+- 첫 귀환 밸런스: https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44230997579 — SUCCESS.
+- Chromium 360/390/412px 독립 탐사 관전·교란 예고·역통신 반격·저장/복원 PASS. `file://` 단일 HTML 오프라인/네트워크 차단/JSON 백업 복원 3화면 PASS.
+- 독립 HTML 플레이 테스트판 GitHub artifact: https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44230997578/artifacts/14395655192 (30일 보존).
+- 중요: 위 통과는 정해진 테스트에 한정한다. 이전 버전과의 30/120분 자동 탐사 12쌍 *동일성 비교*는 이 단계에서 별도로 수행하지 않았다. 원거리 교란이 실제로 사격을 지연하므로 동일 거리/코어 결과를 보장하지 않는다. Galaxy S25+ 실기 사용자 관전 체감 역시 미확인이다.
