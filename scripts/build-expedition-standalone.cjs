@@ -14,7 +14,7 @@ const cssTag='<link rel="stylesheet" href="./expedition-ui.css" data-expedition-
 assert.equal(compiled.split(cssTag).length,2,'expected exactly one replaceable prototype stylesheet');
 const css=fs.readFileSync(path.join(site,'expedition-ui.css'),'utf8');
 assert.ok(!css.includes('</style'),'CSS must not close the inline HTML style tag');
-compiled=compiled.replace(cssTag,'<style data-inline-skin="prototype-v1">\\n'+css+'\\n</style>');
+compiled=compiled.replace(cssTag,'<style data-inline-skin="prototype-v1">'+css+'</style>');
 for(const name of files){
  const tag='<script src="./'+name+'"></script>';
  assert.equal(compiled.split(tag).length,2,'exactly one expected script include '+name);
