@@ -23,7 +23,7 @@ compiled=compiled.replace(
  '독립 플레이 테스트 · 기존 게임 및 저장 분리',
  '비공개 독립 테스트 파일 · 오프라인 단일 HTML · 빌드 '+sha+' · 최종 그래픽 아님'
 );
-assert.ok(compiled.includes('오프라인 단일 HTML · 빌드 '+sha),'stamp must match the UI's footer');
+assert.ok(compiled.includes('오프라인 단일 HTML · 빌드 '+sha),'stamp must match the footer label');
 assert.ok(!/<script[^>]+\bsrc=/i.test(compiled),'all scripts should be inline');
 assert.ok(!/<link[^>]+\bhref=\s*["']https?:/i.test(compiled),'no external stylesheets');
 assert.ok(compiled.includes('neon_expedition_prototype_v1'),'isolated save key must be retained');
