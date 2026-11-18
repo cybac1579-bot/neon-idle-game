@@ -176,7 +176,9 @@ function sync(s){
    a.id==='ranger'?23+progress*9+lane*2:
    3+progress*6+lane*3;
   el.style.left=x+'%';
-  const room=Math.max(0,field.clientHeight-el.offsetHeight-3);
+  // Reserve extra headroom for subpixel field scaling in the fixed-height
+  // command deck (360px Chromium: clientHeight can exceed visual bounds).
+  const room=Math.max(0,field.clientHeight-el.offsetHeight-14);
   el.style.bottom=(room*lane/Math.max(1,rowLimits[a.id]-1))+'px';
   const down=a.revive>0||a.hp<=0;
   const hpMax=E.actorMaxHp(s,a.id),hpRatio=down?0:a.hp/Math.max(1,hpMax);
