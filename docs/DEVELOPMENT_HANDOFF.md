@@ -308,3 +308,12 @@ Current next development intent: enable a mobile-accessible **separate shared-br
 - 비공개 테스트 아티팩트 [neon-expedition-offline-playable](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44207997749/artifacts/14383724044), `neon-expedition-offline.html` (HTML 자체 메타빌드 `3b5eb47da511`)와 `README-KO.txt`. 다운로드 버전은 기존 저장과 코드 스키마 호환되며 **기존 사용자 기기에서 HTML 파일 자동 갱신은 되지 않음**.
 - 이전 파일에서 `도감 → 전체 저장 백업`을 내려받고, 새 파일 `유물 → 저장 파일 복원`으로 가져와야 함. 분석 전용 `neon-expedition-playtest` JSON은 전체 저장 복원 파일이 아니다.
 - 다음 UI·재미 검증: 실제 Galaxy S25+에서 화면 높이/가독성, 성장 버튼 조작 중 관전 지속, 2회 환생 저장의 복원 여부, 귀환 바로가기 발견 가능성 확인. **유물이 단순 수치 성장만 하는 문제는 별도 콘텐츠 재설계가 필요한 미완 과제**이며 이 UI 변경으로 해결했다고 주장하지 않는다.
+
+
+## 2026-11-18 · 현재 UI는 임시이며 추후 통째 교체할 것 (사용자 확정)
+- 기존 상시 전투 + 성장/보급/유물/귀환 하단 UI는 **승인된 최종 디자인이 아니다.** 이후 기능·아트·조작 개편 시 자유롭게 전면 재설계한다. 현재 색상/전장 레이아웃/심볼/버튼 디자인을 고정 규칙으로 오인하지 않는다.
+- 기능적 제약: 성장을 조작하는 동안도 전투를 지속 관전할 수 있어야 한다. 메인 화면 과밀 금지, 상세 통계는 선택적 조회, 탭 액티브 연타 불필요.
+- UI 교체 편의를 위해 CSS를 `site/expedition-ui.css`, DOM 렌더/메뉴 네비게이션을 `site/expedition-ui.js` (`window.ExpeditionUI.create(ctx)`)로 분리했다. `site/expedition.html`은 교체형 HTML 셸, `site/expedition-field.js`는 전장 표시 어댑터, `site/expedition-app.js`는 저장/엔진 호출 및 사용자 액션만 담당한다. `site/expedition-engine.js`는 UI 교체 작업 중 **수정하지 않는다**.
+- `scripts/build-expedition-standalone.cjs`가 새 스타일/어댑터도 단일 HTML에 인라인하는 구조로 갱신됨. `tests/expedition-ui-contract.test.cjs`를 CI에 넣어 UI 누락/엔진 결합을 검증하며 기존 모바일 브라우저/오프라인 회귀도 유지한다.
+- 교체 방법, 최소 메서드/DOM 계약, 미해결 항목은 `docs/EXPEDITION_UI_REPLACEABLE_ARCHITECTURE_20261118.md`. 현재 어댑터는 기존 DOM ID 계약을 이용하므로 HTML 구조·ID를 통째로 바꾸는 경우 새 어댑터+필요한 이벤트 연결을 함께 업데이트해야 한다. **모든 미래 UI가 자동 호환되는 것은 아님.**
+- 기존 저장키 `neon_expedition_prototype_v1`과 기존판 `neon_rework_07`은 변경하지 않음. 사용자에게 **최종 UI 완성**이라고 보고하지 않는다.
