@@ -63,6 +63,8 @@ function sync(s){
  const cue=document.createElement('span');
  cue.className='combat-cue '+evt.type;
  if(evt.type==='hit')cue.textContent='-'+Math.max(1,Math.round(evt.value));
+ else if(evt.type==='volley')cue.textContent='정밀 사격! -'+Math.max(1,Math.round(evt.value));
+ else if(evt.type==='triage')cue.textContent='긴급 회수! · 복귀 '+evt.value.toFixed(1)+'초 단축';
  else if(evt.type==='heal')cue.textContent='+'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='fallen')cue.textContent=(unit?.name||'용병')+' 후퇴';
  else if(evt.type==='returned')cue.textContent=(unit?.name||'용병')+' 재합류';
