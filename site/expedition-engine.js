@@ -179,7 +179,7 @@ function normalize(raw,now=Date.now()){
  // Bound the lifetime discovery journal. No historical reroll or reward is granted
  // when migrating a save made before this field existed.
  s.relicHistory=Array.isArray(raw.relicHistory)?raw.relicHistory.slice(-24).filter(x=>x&&typeof x==='object'&&(x.id===null||RELICS.some(r=>r.id===x.id))).map(x=>({
-  id:x.id===null?null:x.id,duplicate:x.duplicate===true,
+  id:x.id===null?null:x.id,duplicate:x.duplicate===true,source:x.source==='intel'?'intel':'chest',
   stack:integer(x.stack,0,5),credits:num(x.credits,0,1e14),
   stage:integer(x.stage,1,100000),depth:integer(x.depth,0,100000),run:integer(x.run,1,1e9)
  })):[];
@@ -592,7 +592,7 @@ function permanentBonuses(s){
  };
 }
 function rememberRelic(s,result){
- s.relicHistory.push({id:result.id,duplicate:result.duplicate===true,
+ s.relicHistory.push({id:result.id,duplicate:result.duplicate===true,source:result.source==='intel'?'intel':'chest',
   stack:result.stack||0,credits:result.credits||0,stage:s.stage,depth:result.depth||0,run:s.rebirths+1});
  if(s.relicHistory.length>24)s.relicHistory.shift();
 }
@@ -604,7 +604,7 @@ function rollRelic(s,depth,forceNew=false){
   (depth===0?r.unlockStage<=30:r.unlockStage<=depth));
  if(!eligible.length){
   const credits=300+50*s.best;s.credits=Math.min(1e14,s.credits+credits);
-  const result={id:null,duplicate:true,credits,stack:0,depth};
+  const result={id:null,duplicate:true,credits,stack:0,depth,source:forceNew?'intel':'chest'};
   rememberRelic(s,result);note(s,(RELICS.every(r=>relic(s,r.id)>=r.cap)?'모든 유물 수집 상한':'이 상자 깊이의 유물 수집 상한')+' · '+credits+' 크레딧으로 교환');return result;
  }
  const missing=eligible.filter(r=>relic(s,r.id)===0);
@@ -619,7 +619,7 @@ function rollRelic(s,depth,forceNew=false){
  s.relics[found.id]=(s.relics[found.id]||0)+1;
  let bonus=0;
  if(duplicate){bonus=75*relic(s,'fortune');s.credits=Math.min(1e14,s.credits+bonus);}
- const result={id:found.id,duplicate,credits:bonus,stack:s.relics[found.id],depth};
+ const result={id:found.id,duplicate,credits:bonus,stack:s.relics[found.id],depth,source:forceNew?'intel':'chest'};
  rememberRelic(s,result);
  note(s,(duplicate?'유물 중복 수집: ':'새 유물 발견! ')+found.name+(bonus?' · +'+bonus+' 크레딧':''));
  return result;
