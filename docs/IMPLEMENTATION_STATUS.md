@@ -364,3 +364,12 @@ Previous ~67% is historical estimate only; no current evidence-based revised per
 - **배포 정책:** 추가 공개 URL을 만들거나 `main`/GitHub Pages/Vercel 기존 프로젝트 production alias를 바꾸지 않음. GitHub Actions artifact에 묶어서 파일 앱에서 테스트. file:// 자동 저장은 브라우저 정책마다 다를 수 있어 사용자 파일 백업을 권장. 실제 사용자 기기 검증 미완.
 - **독립 원형 저장 키** `neon_expedition_prototype_v1`, 기존 게임 `neon_rework_07` 미변경. 이 전용 배포 파일의 SHA 이후 공동 브랜치 커밋 2개는 문서 파일 변경뿐임(2026-11-18 현재 확인).
 - 구체적인 실행방법, 데이터 이동/주의점은 `docs/EXPEDITION_OFFLINE_PLAYTEST_20261118.md` 참고. 향후 새 플레이 파일을 만들 때엔 이 CI에서 별도 산출물 버전과 아티팩트 SHA를 고정해 전달해야 함.
+
+
+## 2026-11-18 · 현재 UI는 임시이며 추후 통째 교체할 것 (사용자 확정)
+- 기존 상시 전투 + 성장/보급/유물/귀환 하단 UI는 **승인된 최종 디자인이 아니다.** 이후 기능·아트·조작 개편 시 자유롭게 전면 재설계한다. 현재 색상/전장 레이아웃/심볼/버튼 디자인을 고정 규칙으로 오인하지 않는다.
+- 기능적 제약: 성장을 조작하는 동안도 전투를 지속 관전할 수 있어야 한다. 메인 화면 과밀 금지, 상세 통계는 선택적 조회, 탭 액티브 연타 불필요.
+- UI 교체 편의를 위해 CSS를 `site/expedition-ui.css`, DOM 렌더/메뉴 네비게이션을 `site/expedition-ui.js` (`window.ExpeditionUI.create(ctx)`)로 분리했다. `site/expedition.html`은 교체형 HTML 셸, `site/expedition-field.js`는 전장 표시 어댑터, `site/expedition-app.js`는 저장/엔진 호출 및 사용자 액션만 담당한다. `site/expedition-engine.js`는 UI 교체 작업 중 **수정하지 않는다**.
+- `scripts/build-expedition-standalone.cjs`가 새 스타일/어댑터도 단일 HTML에 인라인하는 구조로 갱신됨. `tests/expedition-ui-contract.test.cjs`를 CI에 넣어 UI 누락/엔진 결합을 검증하며 기존 모바일 브라우저/오프라인 회귀도 유지한다.
+- 교체 방법, 최소 메서드/DOM 계약, 미해결 항목은 `docs/EXPEDITION_UI_REPLACEABLE_ARCHITECTURE_20261118.md`. 현재 어댑터는 기존 DOM ID 계약을 이용하므로 HTML 구조·ID를 통째로 바꾸는 경우 새 어댑터+필요한 이벤트 연결을 함께 업데이트해야 한다. **모든 미래 UI가 자동 호환되는 것은 아님.**
+- 기존 저장키 `neon_expedition_prototype_v1`과 기존판 `neon_rework_07`은 변경하지 않음. 사용자에게 **최종 UI 완성**이라고 보고하지 않는다.
