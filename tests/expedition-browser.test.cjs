@@ -118,7 +118,7 @@ async function main(){
    assert.equal(await page.locator('#openArchiveChest').isVisible(),true);
    assert.equal(await page.locator('#openArchiveBatch').isVisible(),true);
    assert.match(await page.locator('#relicCollectionProgress').textContent(),/미개봉 4상자/);
-   assert.equal(await page.locator('#relicList .relic').count(),15,'new tier relics appear in the collection archive');
+   assert.equal(await page.locator('#relicList .relic').count(),16,'stage55 pursuit appears alongside existing permanent relics in archive');
    assert.match(await page.locator('#milestoneSummary').textContent(),/10거리 보스/);
    const awaiting=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')));
    assert.equal(awaiting.chests,4,'chests remain unopened until explicitly clicked');
