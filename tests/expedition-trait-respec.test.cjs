@@ -70,3 +70,16 @@ test('respec has no combat tapping or passive activation: it only runs on explic
  E.tick(s,60);
  assert.deepEqual(s.traits,{command:6,supply:3});
 });
+
+test('different trait allocations change real combat and passive-income results',()=>{
+ const s=hero();const q=E.QUESTS[0];
+ const attackBefore=E.partyDps(s),incomeBefore=E.questIncome(s,q);
+ assert.equal(E.respecTraits(s),9);
+ const attackAfter=E.partyDps(s),incomeAfter=E.questIncome(s,q);
+ assert.ok(attackAfter<attackBefore&&incomeAfter<incomeBefore);
+ for(let i=0;i<10;i++)assert.equal(E.buyTrait(s,'supply'),true);
+ assert.equal(E.traitRemaining(s),0);
+ assert.equal(E.partyDps(s),attackAfter,'economy trait cannot secretly increase combat');
+ assert.ok(E.questIncome(s,q)>incomeBefore,'economy investment changes actual quest reward');
+ assert.equal(s.cores,17);
+});
