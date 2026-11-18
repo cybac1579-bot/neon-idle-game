@@ -66,6 +66,11 @@
   <button id="openArchiveChest" class="primary" hidden>상자 1개 열기</button>
   <button id="openArchiveBatch" class="soft" hidden>모은 상자 한번에 열기</button>
  </div>
+ <div class="auto-control">
+  <span class="sub">원정 중 상자 개봉 자동화 · 직접 수령도 가능</span>
+  <button id="autoChestToggle" type="button" class="soft" aria-pressed="false" aria-describedby="autoChestStatus">상자 자동 개봉 켜기</button>
+ </div>
+ <p id="autoChestStatus" class="sub">기본 꺼짐 · 60초마다 모은 상자를 최대 20개 자동 개봉 (오프라인 정산 포함). 귀환과 코어 투자는 직접 선택해.</p>
  <div id="relicList" class="relics"></div>
  <div class="collection-journal"><h3>최근 발견 기록</h3><div id="relicRecent" class="sub">아직 발견한 유물이 없어.</div></div></div>
  <div class="panel"><h2>탐사 기록</h2><div id="milestoneSummary" class="stack"></div><div id="history" class="stack"></div><p class="sub">2시간까지 오프라인 시간을 정산해. 이전 게임과 다른 저장 공간을 사용해.</p><button id="saveNow" class="soft">지금 저장</button></div>
