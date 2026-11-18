@@ -1368,3 +1368,15 @@ require('./expedition-trait-respec.test.cjs');
 require('./expedition-elite65-hp-migration.test.cjs');
 // A depth65 earned relic adds one late-boss tactic without changing early runs.
 require('./expedition-stage65-diagram.test.cjs');
+
+// Nonvisual metadata must not prematurely erase a genuine battle motion.
+test('spectator motion survives nonvisual combat events',()=>{
+ const fs=require('node:fs');
+ const source=fs.readFileSync(require.resolve('../site/expedition-field.js'),'utf8');
+ const start=source.indexOf('function showMotion(evt){');
+ const end=source.indexOf('const fighter=id=>',start);
+ assert.ok(start>=0&&end>start,'battle motion renderer exists');
+ const body=source.slice(start,end);
+ assert.ok(body.indexOf('motion.replaceChildren();')>body.indexOf("includes(kind))return;"),
+  'only drawable combat events may replace active motion');
+});
