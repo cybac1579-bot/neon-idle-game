@@ -45,7 +45,8 @@ const RELICS=[
  // A unique depth-50 collection reward, not a hidden bonus per rebirth.
  {id:'chronicle',name:'원정 연대기',desc:'서로 다른 유물 1종마다 용병단 피해량 2% 증가 (최대 30%)',cap:1,unlockStage:50},
  // The first post-50 discovery: changes a boss's second phase, not every fight.
- {id:'pursuit',name:'추격 신호기',desc:'55거리 이상 지휘급 또는 65거리 이상 정예 적 체력이 절반 이하가 되면 용병단 피해량 +60%',cap:1,unlockStage:55}
+ {id:'pursuit',name:'추격 신호기',desc:'55거리 이상 지휘급 또는 65거리 이상 정예 적 체력이 절반 이하가 되면 용병단 피해량 +60%',cap:1,unlockStage:55},
+ {id:'diagram',name:'전장 도해',desc:'70거리 이상 지휘급 또는 75거리 이상 정예 체력 75% 이하에서 전투당 한 번 최대 체력 6% 균열 타격',cap:1,unlockStage:65}
 ];
 const num=(n,min=0,max=1e14)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):min;
 const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
@@ -65,7 +66,7 @@ const normalizedLongestEncounter=raw=>raw&&typeof raw==='object'&&
  stage:integer(raw.stage,0,100000),seconds:num(raw.seconds,0,1e9)
 }:initialLongestEncounter();
 // Per-run relic action telemetry; old saves default to no past activations.
-const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,partialBraces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0});
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,partialBraces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0,diagrams:0,diagramDamage:0});
 // New standard-enemy role is deterministic per stage and independent of drop RNG.
 function enemyKind(stage){
  if(isBoss(stage))return 'boss';
@@ -73,7 +74,7 @@ function enemyKind(stage){
  if(stage>=8&&stage%6===2)return 'charger';
   return stage>=16&&stage%6===4?'disruptor':'regular';
 }
-const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null,turns:0,nextAt:0,move:'flank',pursuitTriggered:false});
+const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null,turns:0,nextAt:0,move:'flank',pursuitTriggered:false,diagramTriggered:false});
 const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  volleys:integer(raw.volleys,0,1e9),
  volleyBonusDamage:num(raw.volleyBonusDamage,0,1e14),
@@ -83,7 +84,7 @@ const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  counterDamage:num(raw.counterDamage,0,1e14),rushes:integer(raw.rushes,0,1e9),
  braces:integer(raw.braces,0,1e9),partialBraces:integer(raw.partialBraces,0,1e9),braceDamage:num(raw.braceDamage,0,1e14),
   jams:integer(raw.jams,0,1e9),cleanses:integer(raw.cleanses,0,1e9),cleanseDamage:num(raw.cleanseDamage,0,1e14),
-  commandMoves:integer(raw.commandMoves,0,1e9),commandSurges:integer(raw.commandSurges,0,1e9),guardPlateBlocks:integer(raw.guardPlateBlocks,0,1e9),escortDuets:integer(raw.escortDuets,0,1e9)
+  commandMoves:integer(raw.commandMoves,0,1e9),commandSurges:integer(raw.commandSurges,0,1e9),guardPlateBlocks:integer(raw.guardPlateBlocks,0,1e9),escortDuets:integer(raw.escortDuets,0,1e9),diagrams:integer(raw.diagrams,0,1e9),diagramDamage:num(raw.diagramDamage,0,1e14)
 }:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
@@ -184,11 +185,12 @@ function normalize(raw,now=Date.now()){
  s.longestEncounter=normalizedLongestEncounter(raw.longestEncounter);
  s.longEngagements=integer(raw.longEngagements,0,1e9);
  s.relicEffects=initialRelicEffects();
- for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','partialBraces','jams','cleanses','commandMoves','commandSurges','guardPlateBlocks','escortDuets'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','partialBraces','jams','cleanses','commandMoves','commandSurges','guardPlateBlocks','escortDuets','diagrams'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
  s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
  s.relicEffects.intelFinds=integer(raw.relicEffects?.intelFinds,0,2);
  s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
  s.relicEffects.counterDamage=num(raw.relicEffects?.counterDamage,0,1e14);
+ s.relicEffects.diagramDamage=num(raw.relicEffects?.diagramDamage,0,1e14);
  s.relicEffects.braceDamage=num(raw.relicEffects?.braceDamage,0,1e14);
   s.relicEffects.cleanseDamage=num(raw.relicEffects?.cleanseDamage,0,1e14);
  s.relicEffects.triageCooldown=num(raw.relicEffects?.triageCooldown,0,18);
@@ -206,6 +208,7 @@ function normalize(raw,now=Date.now()){
   if(s.stage>=40&&s.enemyTactic.used&&!s.enemyTactic.turns)s.enemyTactic.turns=1;
   s.enemyTactic.move=raw.enemyTactic.move==='rush'?'rush':'flank';
   s.enemyTactic.pursuitTriggered=raw.enemyTactic.pursuitTriggered===true;
+  s.enemyTactic.diagramTriggered=raw.enemyTactic.diagramTriggered===true;
   s.enemyTactic.nextAt=Number.isFinite(raw.enemyTactic.nextAt)?
    num(raw.enemyTactic.nextAt,0,7200):
    (s.stage>=40&&s.enemyTactic.used?s.enemyTactic.elapsed+36:0);
@@ -301,7 +304,7 @@ function normalize(raw,now=Date.now()){
    shots:a?integer(a.shots,0,2):0};
  });
  s.battleEvent=raw.battleEvent&&typeof raw.battleEvent==='object'
-  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','pursuit','triage','intel','aim','flank','intercept','intercept-duet','rush-aim','rush','brace','brace-step','jam-aim','jam','unjam'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
+  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','pursuit','triage','intel','aim','flank','intercept','intercept-duet','diagram','rush-aim','rush','brace','brace-step','jam-aim','jam','unjam'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
@@ -558,6 +561,19 @@ function fight(s,dt){
  // Ordinary hits must not overwrite this special cue in the same tick.
  if(precisionCue!==null)battleCue(s,'volley','ranger',precisionCue);
  s.enemyHp-=damage;
+ // A depth65 discovery creates one new tactical moment in the NEXT deep
+ // boss/elite encounter. It never fires before stage70 or auto-returns.
+ if(relic(s,'diagram')>0&&s.enemyHp>0&&
+    ((boss&&s.stage>=70)||(isElite(s.stage)&&!boss&&s.stage>=75))&&
+    s.enemyHp<=enemyMax(s.stage)*.75&&!s.enemyTactic.diagramTriggered){
+  s.enemyTactic.diagramTriggered=true;
+  const strike=Math.min(s.enemyHp,enemyMax(s.stage)*.06);
+  s.enemyHp-=strike;
+  s.relicEffects.diagrams=Math.min(1e9,s.relicEffects.diagrams+1);
+  s.relicEffects.diagramDamage=Math.min(1e14,s.relicEffects.diagramDamage+strike);
+  battleCue(s,'diagram','ranger',strike);
+  note(s,'전장 도해 · 심층 적 약점 발견! 균열 타격 '+Math.round(strike)+' 피해');
+ }
  if(pursuitTarget(s.stage)&&relic(s,'pursuit')>0&&s.enemyHp>0&&
   s.enemyHp<=enemyMax(s.stage)*.5&&!s.enemyTactic.pursuitTriggered){
   s.enemyTactic.pursuitTriggered=true;
@@ -917,7 +933,7 @@ function rollRelic(s,depth,forceNew=false){
  const missing=eligible.filter(r=>relic(s,r.id)===0);
  // First chest at a new depth guarantees a first discovery in that newly
  // reached tier, if there are still undiscovered relics from the milestone.
- const milestoneMissing=[15,25,30,40,45,50,55].includes(depth)?
+ const milestoneMissing=[15,25,30,40,45,50,55,65].includes(depth)?
   missing.filter(r=>r.unlockStage===depth):[];
  const pool=milestoneMissing.length?milestoneMissing:
   forceNew&&missing.length?missing:missing.length&&rand(s)<.7?missing:eligible;
@@ -1012,7 +1028,7 @@ function returnChoiceSnapshot(s){
  const chestEligible=(r,depth)=>depth===0?r.unlockStage<=30:r.unlockStage<=depth;
  const pendingNewKinds=RELICS.filter(r=>relic(s,r.id)===0&&
   allDepths.some(depth=>chestEligible(r,depth))).length;
- const specialDepths=[15,25,30,40,45,50,55];
+ const specialDepths=[15,25,30,40,45,50,55,65];
  const guaranteedFirstDiscovery=allDepths.some(depth=>specialDepths.includes(depth)&&
   RELICS.some(r=>r.unlockStage===depth&&relic(s,r.id)===0));
  const balanceAfterReturn=Math.min(1e9,integer(s.cores,0,1e9)+reward.total);
@@ -1074,7 +1090,7 @@ function nextRelicCopyPreview(s,id){
    label='다음 용병 소집 비용';from=hireCost(s);to=hireCost(added);break;
   case 'drill':
    label='다음 부대 훈련 비용';from=trainCost(s);to=trainCost(added);break;
-  case 'chronicle':case 'pursuit':
+  case 'chronicle':case 'pursuit':case 'diagram':
    // Unique relics have a first acquisition only; their existing item
    // descriptions explain the collection bonus or late boss phase.
    return {id,copies,cap:info.cap,capped:false,unique:true,label:'고유 유물'};
