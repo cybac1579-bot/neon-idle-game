@@ -35,10 +35,13 @@ const s=E.normalize(loaded||E.newState(),Date.now());
 const startup=loaded?E.offline(s,Date.now(),'startup'):0;
 let buyCount=5;
 let saveAt=Date.now(),lastFrame=performance.now(),toast=startup?'오프라인 '+Math.floor(startup/60)+'분 '+(startup%60)+'초 정산 완료':'',toastUntil=Date.now()+5000;
+// A hidden tab does not simulate foreground ticks. Its saved wall-clock
+// anchor must not move after visibilitychange/pagehide or catch-up is lost.
+let backgroundFrozen=false;
 function notify(message){toast=message;toastUntil=Date.now()+4000;}
 function save(){
  try{
-  s.lastSaved=Date.now();
+  if(!backgroundFrozen)s.lastSaved=Date.now();
   const payload=JSON.stringify(s);
   localStorage.setItem(E.SAVE_KEY,payload);
   if(localStorage.getItem(E.SAVE_KEY)!==payload)throw Error('storage-readback');
@@ -298,11 +301,33 @@ $('importSaveFile').addEventListener('change',async e=>{
  const file=e.target.files?.[0];e.target.value='';
  await importFullSave(file);
 });
+function freezeBackground(){
+ if(!backgroundFrozen){
+  // Both pagehide and visibilitychange may fire for one departure.
+  // Capture this timestamp exactly once before the next simulated tick.
+  s.lastSaved=Date.now();
+  backgroundFrozen=true;
+ }
+ save();
+}
+function resumeBackground(){
+ if(!backgroundFrozen)return;
+ const elapsed=E.offline(s,Date.now());
+ backgroundFrozen=false;
+ if(elapsed>1)notify('복귀 정산: '+fmt(elapsed)+'초 탐사');
+ lastFrame=performance.now();
+ save();render();
+}
 document.addEventListener('visibilitychange',()=>{
- if(document.hidden){save();}
- else{const elapsed=E.offline(s,Date.now());if(elapsed>1)notify('복귀 정산: '+fmt(elapsed)+'초 탐사');lastFrame=performance.now();save();render();}
+ if(document.hidden)freezeBackground();
+ else resumeBackground();
 });
-window.addEventListener('pagehide',save);
+window.addEventListener('pagehide',freezeBackground);
+// Back-forward cache restores can deliver pageshow without a visible
+// transition. The shared guard prevents a second offline settlement.
+window.addEventListener('pageshow',e=>{
+ if(e.persisted&&!document.hidden)resumeBackground();
+});
 let lastPassiveRender=0;
 setInterval(()=>{
  if(document.hidden)return;
