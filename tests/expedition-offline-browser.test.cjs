@@ -214,6 +214,70 @@ async function main(){
   assert.equal(await recoveredPage.locator('#squadScreen [data-storage-warning]').isVisible(),false);
   await recovered.close();
   console.log('PASS standalone file:// silent save failure detection and durable recovery');
+  // The mobile browser may emit visibilitychange(hidden), then pagehide
+  // minutes later. The second event must NOT move the offline time anchor.
+  // BFCache can restore via pageshow(persisted) without visibilitychange.
+  const transitions=await browser.newContext({viewport:{width:390,height:800},acceptDownloads:true});
+  await transitions.setOffline(true);
+  const lifecyclePage=await transitions.newPage(),lifecycleErrors=[];
+  lifecyclePage.on('pageerror',e=>lifecycleErrors.push(e.message));
+  await lifecyclePage.goto(pathToFileURL(packaged).href,{waitUntil:'load'});
+  const life=await lifecyclePage.evaluate(()=>{
+   const originalNow=Date.now;
+   let now=originalNow(),hidden=false;
+   Date.now=()=>now;
+   Object.defineProperty(document,'hidden',{configurable:true,get:()=>hidden});
+   const key='neon_expedition_prototype_v1';
+   const read=()=>JSON.parse(localStorage.getItem(key));
+   // App was playing until departure. Simulate actual visibilitychange.
+   hidden=true;
+   document.dispatchEvent(new Event('visibilitychange'));
+   const departed=read();
+   now+=190000;
+   window.dispatchEvent(new Event('pagehide'));
+   const lateHide=read();
+   hidden=false;
+   document.dispatchEvent(new Event('visibilitychange'));
+   const resumed=read();
+   // BFCache: pagehide may occur without a hidden visibilitychange.
+   now+=90000;
+   window.dispatchEvent(new Event('pagehide'));
+   const cached=read();
+   window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
+   const bfcache=read();
+   window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
+   const duplicate=read();
+   Date.now=originalNow;
+   return {
+    hiddenAnchor:departed.lastSaved,
+    latePageHideAnchor:lateHide.lastSaved,
+    resumedClock:resumed.clock,
+    resumedOffline:resumed.playtest.offlineSeconds,
+    resumedEvents:resumed.playtest.offlineEvents,
+    bfcacheAnchor:cached.lastSaved,
+    bfcacheClock:bfcache.clock,
+    bfcacheOffline:bfcache.playtest.offlineSeconds,
+    bfcacheEvents:bfcache.playtest.offlineEvents,
+    duplicateClock:duplicate.clock,
+    duplicateEvents:duplicate.playtest.offlineEvents
+   };
+  });
+  assert.equal(life.latePageHideAnchor,life.hiddenAnchor,
+   'a delayed pagehide must not erase 190 seconds of offline time');
+  assert.equal(life.resumedOffline,190);
+  assert.equal(life.resumedEvents.length,1);
+  assert.equal(life.resumedEvents[0].settledSeconds,190);
+  assert.equal(life.resumedEvents[0].source,'resume');
+  assert.equal(life.bfcacheOffline,280);
+  assert.equal(life.bfcacheClock,life.resumedClock+90);
+  assert.equal(life.bfcacheEvents.length,2);
+  assert.equal(life.bfcacheEvents[1].settledSeconds,90);
+  assert.equal(life.duplicateClock,life.bfcacheClock,
+   'duplicate BFCache pageshow cannot double-count an offline return');
+  assert.equal(life.duplicateEvents.length,2);
+  assert.deepEqual(lifecycleErrors,[]);
+  await transitions.close();
+  console.log('PASS offline file:// delayed pagehide and BFCache resume exactly once');
  }finally{await browser.close();}
 }
 main().catch(err=>{console.error(err);process.exitCode=1;});
