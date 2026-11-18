@@ -412,6 +412,29 @@ async function main(){
    assert.equal(chargeView.result.guardProgress,1);
    assert.match(chargeView.result.event,/철벽 진형/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
+   // First shield copy yields a smaller visible defense, not full auto-counter.
+   const partialView=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,field=window.ExpeditionField;
+    const s=E.newState(Date.now());
+    s.stage=s.best=s.runBest=14;s.enemyHp=1e10;s.battleCueSeq=1000;
+    s.relics.shield=1;
+    for(const a of s.actors){a.hp=E.actorMaxHp(s,a.id);a.progress=1;a.cooldown=100;}
+    E.tick(s,5);field.sync(s);
+    const intent=document.querySelector('.enemy-intent');
+    const restored=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+    return {result:s.enemyTactic.result,partialBraces:s.relicEffects.partialBraces,
+     fullBraces:s.relicEffects.braces,progress:s.actors[0].progress,
+     text:intent.textContent,cue:document.querySelector('.combat-cue')?.textContent,
+     savedEvent:restored.battleEvent?.type,savedCount:restored.relicEffects.partialBraces};
+   });
+   assert.equal(partialView.result,'brace-step');
+   assert.equal(partialView.partialBraces,1);
+   assert.equal(partialView.fullBraces,0);
+   assert.equal(partialView.progress,.45);
+   assert.match(partialView.text,/부분 버팀/);
+   assert.match(partialView.cue,/합금 배지.*부분 버팀/);
+   assert.equal(partialView.savedEvent,'brace-step');
+   assert.equal(partialView.savedCount,1);
    // Live tactical warning and response, with the archive panel left open.
    const signalView=await page.evaluate(()=>{
     const E=window.ExpeditionEngine,field=window.ExpeditionField;
