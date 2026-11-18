@@ -583,7 +583,18 @@ async function main(){
     field.sync(s);
     const cue=document.querySelector('.combat-cue')?.textContent;
     const saved=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
-    return {proc:s.relicEffects.diagrams,cue,
+    // A simultaneous guard retreat can replace the one-shot impact cue.
+    // Its short-lived state must still be visible on the battlefield.
+    s.battleEvent={seq:++s.battleCueSeq,type:'fallen',id:'guard',value:0};
+    field.sync(s);
+    const strip=document.querySelector('.enemy-intent');
+    const retained={visible:!strip.hidden,text:strip.textContent};
+    // A following enemy attack windup always overrides the retained notice.
+    s.enemyTactic.phase='windup';s.enemyTactic.move='rush';s.enemyTactic.windup=1.5;
+    field.sync(s);
+    const warning={visible:!strip.hidden,text:strip.textContent};
+    return {proc:s.relicEffects.diagrams,cue,retained,warning,
+     flash:s.enemyTactic.diagramFlash,restoredFlash:saved.enemyTactic.diagramFlash,
      triggered:s.enemyTactic.diagramTriggered,
      persisted:saved.enemyTactic.diagramTriggered,
      savedCount:saved.relicEffects.diagrams,savedCue:saved.battleEvent?.type,
@@ -596,6 +607,13 @@ async function main(){
    assert.equal(diagramView.savedCue,'diagram');
    assert.ok(diagramView.damage>0);
    assert.match(diagramView.cue,/전장 도해.*균열 타격/);
+   assert.equal(diagramView.flash,4);
+   assert.equal(diagramView.restoredFlash,4);
+   assert.equal(diagramView.retained.visible,true);
+   assert.match(diagramView.retained.text,/전장 도해.*균열 타격/);
+   assert.equal(diagramView.warning.visible,true);
+   assert.match(diagramView.warning.text,/지휘급 전열 압박/);
+   assert.doesNotMatch(diagramView.warning.text,/전장 도해/);
    await assertBattleFrame('earned diagram cue at 70 boss');
    // At a real boss-only duplicate reward, generic DPS can remain 0%,
    // but each individual chest must explain the permanent conditional gain.
