@@ -895,8 +895,8 @@ test('relic mechanics persist through rebirth but activation counters do not',()
  assert.ok(E.rebirth(s)>0);
  assert.equal(E.relic(s,'archer'),2);
  assert.equal(E.relic(s,'medkit'),3);
- assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,partialBraces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0,diagrams:0,diagramDamage:0});
- assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,partialBraces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0,diagrams:0,diagramDamage:0},
+ assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,partialCovers:0,counterDamage:0,rushes:0,braces:0,partialBraces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0,diagrams:0,diagramDamage:0});
+ assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0,flankShots:0,intercepts:0,partialCovers:0,counterDamage:0,rushes:0,braces:0,partialBraces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0,diagrams:0,diagramDamage:0},
   'completed return keeps evidence of tactical relic activation');
  assert.deepEqual(s.latestReturn.relicEffects,s.runHistory.at(-1).relicEffects);
  const normalized=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
@@ -1046,6 +1046,46 @@ test('elite telegraphs a focused rear-line attack for two full seconds',()=>{
  assert.ok(old.contribution.taken.ranger+old.contribution.taken.medic>0);
  E.tick(old,8);
  assert.equal(old.relicEffects.flankShots,1,'only one focus strike per enemy');
+});
+
+test('one escort contract redirects half an actual focused rear attack; sight upgrades to full counter',()=>{
+ const ordinary=setFlankFixture(E.newState(1000));
+ const partial=setFlankFixture(E.newState(1000));partial.relics.guard=1;
+ const full=setFlankFixture(E.newState(1000),15,{combo:true});
+ const rearDamage=x=>x.contribution.taken.ranger+x.contribution.taken.medic;
+ for(let i=0;i<4;i++){E.tick(ordinary,1);E.tick(partial,1);E.tick(full,1);}
+ const rearBefore=rearDamage(ordinary),guardBefore=ordinary.contribution.taken.guard;
+ assert.equal(rearDamage(partial),rearBefore,'no coverage before the actual focus shot');
+ E.tick(ordinary,1);E.tick(partial,1);E.tick(full,1);
+ const fullRear=rearDamage(ordinary)-rearBefore;
+ const guardedRear=rearDamage(partial)-rearBefore;
+ assert.ok(fullRear>0,'an elite focus shot must truly target a living rear unit');
+ assert.ok(Math.abs(guardedRear-fullRear/2)<1e-7,'single contract splits the real rear shot evenly');
+ assert.ok(Math.abs((partial.contribution.taken.guard-guardBefore)-
+  ((ordinary.contribution.taken.guard-guardBefore)+fullRear/2))<1e-7,
+  'the guard receives the diverted shot instead of deleting enemy damage');
+ assert.equal(partial.relicEffects.partialCovers,1);
+ assert.equal(partial.relicEffects.intercepts,0);
+ assert.equal(partial.relicEffects.counterDamage,0,'partial cover never grants a free counterattack');
+ assert.equal(partial.enemyTactic.result,'cover-step');
+ assert.equal(partial.battleEvent.type,'cover-step');
+ assert.equal(full.relicEffects.partialCovers,0,'two-relic full escort takes precedence');
+ assert.equal(full.relicEffects.intercepts,1);
+ E.tick(partial,7);
+ assert.equal(partial.relicEffects.partialCovers,1,'elite focus must not repeat for free');
+ const saved=E.normalize(JSON.parse(JSON.stringify(partial)),Date.now());
+ assert.equal(saved.relicEffects.partialCovers,1);
+ assert.equal(saved.enemyTactic.result,'cover-step');
+ assert.equal(saved.battleEvent.type,'cover-step');
+ saved.coreProgress=4;
+ assert.ok(E.rebirth(saved)>0);
+ assert.equal(saved.relics.guard,1,'the original relic remains after return');
+ assert.equal(saved.relicEffects.partialCovers,0);
+ assert.equal(saved.runHistory.at(-1).relicEffects.partialCovers,1);
+ assert.equal(saved.latestReturn.relicEffects.partialCovers,1);
+ const legacy=E.newState(1000);delete legacy.relicEffects.partialCovers;
+ assert.equal(E.normalize(legacy,Date.now()).relicEffects.partialCovers,0,
+  'old saves never invent a historical cover');
 });
 
 test('guard plus focus sight cancels rear-targeted strike and creates real ranger counterattack',()=>{
