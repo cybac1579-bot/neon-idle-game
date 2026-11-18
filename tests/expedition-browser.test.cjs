@@ -143,6 +143,10 @@ async function main(){
    assert.equal(Object.values(savedBefore.relics).reduce((a,b)=>a+b,0),4);
    assert.equal(savedBefore.relicHistory.length,4);
    assert.equal(savedBefore.runMetrics.chestsOpened,4);
+   assert.equal(savedBefore.runMetrics.firstRelicFinds+
+    savedBefore.runMetrics.duplicateRelics+savedBefore.runMetrics.relicExchanges,4,
+    'every opened box has an observed discovery, duplicate or exchange');
+   assert.match(await page.locator('#relicCollectionProgress').textContent(),/이번 탐사 첫 발견/);
    page.on('dialog',d=>d.accept());
    assert.equal(await page.locator('#returnQuick').isVisible(),true,'visible return cue must appear when available');
    assert.match(await page.locator('#returnBadge').textContent(),/\+/,'return tab signals available cores');
@@ -457,6 +461,9 @@ async function main(){
      state.autoBuy.purchases=12;
      state.longestEncounter={stage:40,seconds:550};
      state.longEngagements=3;
+     state.runMetrics.firstRelicFinds=4;
+     state.runMetrics.duplicateRelics=3;
+     state.runMetrics.relicExchanges=2;
      localStorage.setItem(key,JSON.stringify(state));
     });
     await engagementPage.reload({waitUntil:'networkidle'});
@@ -492,6 +499,8 @@ async function main(){
     await engagementPage.locator('[data-tab="archive"]').click();
     assert.match(await engagementPage.locator('#milestoneSummary').textContent(),/55거리 정예/);
     assert.match(await engagementPage.locator('#milestoneSummary').textContent(),/60거리 보스/);
+    const discoveryProgress=await engagementPage.locator('#relicCollectionProgress').textContent();
+    assert.match(discoveryProgress,/이번 탐사 첫 발견 4종 \/ 중복 강화 3개 \/ 상한 교환 2상자/);
     const downloadEvent=engagementPage.waitForEvent('download');
     await engagementPage.locator('#exportPlaytest').click();
     const engagementExport=JSON.parse(fs.readFileSync(await (await downloadEvent).path(),'utf8'));
@@ -500,6 +509,23 @@ async function main(){
     assert.equal(engagementExport.currentRun.currentEngagement.automaticPurchasesDuringFight,5);
     assert.deepEqual(engagementExport.currentRun.longestCompletedEngagement,{stage:40,seconds:550});
     assert.equal(engagementExport.currentRun.completedFightsOverOneMinute,3);
+    assert.deepEqual(engagementExport.currentRun.relicDiscoveryThisRun,
+     {first:4,duplicates:3,exchanges:2,partial:false});
+    // 16/16: no false promises of future new kinds or a new depth.
+    await engagementPage.evaluate(()=>{
+     const key='neon_expedition_prototype_v1',state=JSON.parse(localStorage.getItem(key));
+     for(const r of window.ExpeditionEngine.RELICS)state.relics[r.id]=1;
+     state.best=state.runBest=state.stage=56;
+     state.chests=2;state.chestDepths=[55,55];state.lastSaved=Date.now();
+     localStorage.setItem(key,JSON.stringify(state));
+    });
+    await engagementPage.reload({waitUntil:'networkidle'});
+    await engagementPage.locator('[data-tab="return"]').click();
+    const completedChoice=await engagementPage.locator('#returnChoices').textContent();
+    assert.match(completedChoice,/현재 원형의 신규 종류 없음/);
+    assert.match(completedChoice,/새 종류 후보 없음/);
+    await engagementPage.locator('[data-tab="archive"]').click();
+    assert.match(await engagementPage.locator('#relicCollectionProgress').textContent(),/공개된 유물 종류 완성/);
     await engagementContext.close();
    }
 
