@@ -237,6 +237,10 @@ function sync(s){
  if(s.battleCueSeq===lastCue||!s.battleEvent)return;
  lastCue=s.battleCueSeq;
  const evt=s.battleEvent,unit=E.UNITS.find(u=>u.id===evt.id);
+ // Ignore unknown/metadata-only cues without clearing a visible combat label.
+ // The engine sequence is still consumed so the same event is not retried.
+ const visibleKinds=new Set(['hit','volley','pursuit','diagram','triage','intel','aim','flank','cover-step','intercept','intercept-duet','rush-aim','rush','brace','brace-step','jam-aim','jam','unjam','heal','fallen','returned','clear','rally']);
+ if(!visibleKinds.has(evt.type))return;
  // Distinct event-linked motion is a presentation of the combat engine only.
  showMotion(evt);
  fx.replaceChildren();
