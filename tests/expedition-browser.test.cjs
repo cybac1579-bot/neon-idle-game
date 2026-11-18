@@ -726,6 +726,12 @@ async function main(){
     const choiceText=await engagementPage.locator('#returnChoices').textContent();
     assert.match(choiceText,/지금 귀환/);
     assert.match(choiceText,/계속 탐사/);
+    assert.match(choiceText,/지금 귀환하면 이 적과의 교전 진행.*초기화돼/,
+     'a long boss fight must explain the cost of returning now');
+    assert.match(choiceText,/현재 50거리 교전 10분 이상 · 적 체력.*남음/,
+     'engagement duration and remaining HP support the decision');
+    assert.match(choiceText,/계속하면 이 적의 남은 체력과 성장 진행을 유지해/,
+     'continuing must describe the preserved active-fight progress');
     assert.match(choiceText,/호위 계약서 1\/2 · 초점 조준기 1\/2/);
     assert.match(choiceText,/귀환 후에도 유물 보유 유지/);
     assert.match(choiceText,/귀환 후 다음 1회 강화 선택/);
