@@ -91,6 +91,7 @@ function sync(s){
  else if(evt.type==='aim')cue.textContent='적 측면 조준 · 후열 경계!';
  else if(evt.type==='flank')cue.textContent='측면 타격! 후열 -'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='intercept')cue.textContent='호위 반격! -'+Math.max(1,Math.round(evt.value));
+ else if(evt.type==='intercept-duet')cue.textContent='호위 협공! 2인 연계 -'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='rush-aim')cue.textContent='돌격 예고! 전열 경계';
  else if(evt.type==='rush')cue.textContent='돌격 충격! 방벽병 밀려남';
  else if(evt.type==='brace')cue.textContent='철벽 진형! 자동 반격 -'+Math.max(1,Math.round(evt.value));
@@ -104,7 +105,7 @@ function sync(s){
  else if(evt.type==='rally')cue.textContent='부대 재정비';
  fx.appendChild(cue);
  arena.classList.remove('combat-impact');void arena.offsetWidth;
- if(evt.type==='hit'||evt.type==='clear'||evt.type==='flank'||evt.type==='intercept'||evt.type==='rush'||evt.type==='brace'||evt.type==='jam'||evt.type==='unjam')arena.classList.add('combat-impact');
+ if(evt.type==='hit'||evt.type==='clear'||evt.type==='flank'||evt.type==='intercept'||evt.type==='intercept-duet'||evt.type==='rush'||evt.type==='brace'||evt.type==='jam'||evt.type==='unjam')arena.classList.add('combat-impact');
 }
 root.ExpeditionField={sync};
 })(window);
