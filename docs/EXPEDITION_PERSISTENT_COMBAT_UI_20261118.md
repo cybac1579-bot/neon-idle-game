@@ -34,3 +34,13 @@
 - 유물이 숫자 강화 이상으로 전투·경제·탐사 방식을 바꾸도록 역할을 확대하는 별도 콘텐츠 설계.
 - 기존 한 장면에 동시 표시 가능한 캐릭터는 8명 내외의 유닛 심볼 placeholder라서 용병 규모가 커지면 뒷줄 요약 표시가 남는다. 실제 일러스트/이펙트 품질은 이번 UI의 목표가 아니다.
 - 다양한 모바일 브라우저/화면 높이/키보드와 전환 시 실제 사용자 체감은 실기기 피드백을 받아야 한다.
+
+
+## 실제 생성·검증 완료 (2026-11-18 09:29 KST)
+- 기준 코드 SHA: `3b5eb47da51111689a06ac63ef196e61e2f6f75a`. [GitHub Actions Push #44207997749](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44207997749) **SUCCESS**.
+- Chromium 360·390·412px 화면에서 `#battleScreen`이 성장·보급·유물·귀환 및 하단 개별 스크롤 동안 viewport 내부에 유지됨을 확인. 전장 위치/탭 겹침/가로 넘침 등 검사 통과.
+- 기존 전투 엔진·환생·유물·복원/JSON 내보내기 회귀 테스트 및 `file://` 네트워크 차단 단일 HTML 백업·복원·재로드 검사 모두 PASS.
+- 실제 Chromium 캡처 `artifacts/expedition/expedition-390.png`에서 위쪽 전장 고정과 하단 유물·백업 메뉴를 확인. 두 방벽병의 병종표시/체력바가 겹치는 문제를 `site/expedition-field.js`의 lane 간격 조정으로 해결하고 별도 브라우저 회귀 단언 추가.
+- 비공개 테스트 아티팩트 [neon-expedition-offline-playable](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44207997749/artifacts/14383724044), `neon-expedition-offline.html` (HTML 자체 메타빌드 `3b5eb47da511`)와 `README-KO.txt`. 다운로드 버전은 기존 저장과 코드 스키마 호환되며 **기존 사용자 기기에서 HTML 파일 자동 갱신은 되지 않음**.
+- 이전 파일에서 `도감 → 전체 저장 백업`을 내려받고, 새 파일 `유물 → 저장 파일 복원`으로 가져와야 함. 분석 전용 `neon-expedition-playtest` JSON은 전체 저장 복원 파일이 아니다.
+- 다음 UI·재미 검증: 실제 Galaxy S25+에서 화면 높이/가독성, 성장 버튼 조작 중 관전 지속, 2회 환생 저장의 복원 여부, 귀환 바로가기 발견 가능성 확인. **유물이 단순 수치 성장만 하는 문제는 별도 콘텐츠 재설계가 필요한 미완 과제**이며 이 UI 변경으로 해결했다고 주장하지 않는다.
