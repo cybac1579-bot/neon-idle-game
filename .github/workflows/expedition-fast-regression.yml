@@ -1,0 +1,39 @@
+name: Expedition fast regression
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'site/expedition-engine.js'
+      - 'tests/expedition*.test.cjs'
+      - 'tests/expedition.test.cjs'
+      - '.github/workflows/expedition-fast-regression.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'site/expedition-engine.js'
+      - 'tests/expedition*.test.cjs'
+      - 'tests/expedition.test.cjs'
+      - '.github/workflows/expedition-fast-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: expedition-fast-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  engine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check expedition engine and test syntax
+        run: |
+          node --check site/expedition-engine.js
+          node --check tests/expedition.test.cjs
+      - name: Run expedition engine regression before browser installation
+        run: node --test tests/expedition.test.cjs
