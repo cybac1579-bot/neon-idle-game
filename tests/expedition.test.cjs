@@ -1249,3 +1249,6 @@ require('./expedition-deep-guard-formation.test.cjs');
 
 // New tactical events must retain their identity through persisted saves.
 require('./expedition-battle-event-save-contract.test.cjs');
+
+// Manual hero trait reallocation must retain permanent XP, cores, and loot.
+require('./expedition-trait-respec.test.cjs');
