@@ -806,3 +806,94 @@ require('./expedition-boss50-pacing.test.cjs');
 
 // Early vs deep returns: do not fabricate future cores or gate voluntary returns.
 require('./expedition-return-forecast.test.cjs');
+
+
+test('focus-sight relic changes ranger from steady damage to deterministic every-third-shot volley',()=>{
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=25;s.enemyHp=1e10;s.relics.archer=2;
+ s.units.ranger=1;s.actors.push({id:'ranger',hp:17,revive:0,progress:1,cooldown:0,shots:0});
+ s.actors.forEach(a=>{a.progress=1;a.cooldown=a.id==='ranger'?0:100;});
+ const ranger=s.actors.find(a=>a.id==='ranger'),shots=[];
+ const baseline=E.partyDps(s);
+ const before=s.contribution.damage.ranger;
+ for(let n=0;n<3;n++){
+  ranger.cooldown=0;
+  const prev=s.contribution.damage.ranger;
+  E.tick(s,.01);
+  shots.push(s.contribution.damage.ranger-prev);
+ }
+ assert.equal(s.relicEffects.volleys,1,'one real volley per three ranger attacks');
+ assert.ok(shots[0]>0);
+ assert.ok(Math.abs(shots[0]-shots[1])<1e-9,'first two shots remain ordinary');
+ assert.ok(Math.abs(shots[2]/shots[0]-(1+.45*2))<1e-9,'third hit is an actual burst');
+ assert.ok(Math.abs((shots[0]+shots[1]+shots[2])/3-shots[0]*(1+.15*2))<1e-9,
+  'three-shot mean retains prior +15% per copy');
+ assert.ok(s.relicEffects.volleyBonusDamage>0);
+ assert.equal(s.battleEvent.type,'volley','visible effect is not overwritten by ordinary guards');
+ assert.ok(E.partyDps(s)===baseline,'average DPS shown to the player remains stable');
+ assert.equal(ranger.shots,0);
+ const saved=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.deepEqual(saved.relicEffects,s.relicEffects,'current run effect counters persist after reload');
+ assert.equal(saved.actors.find(a=>a.id==='ranger').shots,0);
+ assert.ok(s.contribution.damage.ranger-before>0);
+});
+
+test('volley cadence survives save mid-cycle, and no relic means no invented volleys',()=>{
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=25;s.enemyHp=1e10;s.relics.archer=1;
+ s.units.ranger=1;s.actors.push({id:'ranger',hp:17,revive:0,progress:1,cooldown:0,shots:0});
+ s.actors.forEach(a=>{a.progress=1;a.cooldown=a.id==='ranger'?0:100;});
+ const ranger=s.actors.at(-1);
+ for(let i=0;i<2;i++){ranger.cooldown=0;E.tick(s,.01);}
+ assert.equal(ranger.shots,2);
+ const restored=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.equal(restored.actors.at(-1).shots,2);
+ restored.actors.at(-1).cooldown=0;E.tick(restored,.01);
+ assert.equal(restored.relicEffects.volleys,1,'third attack after reload remains enhanced');
+ const noRelic=E.newState(1000);
+ noRelic.stage=noRelic.best=noRelic.runBest=25;noRelic.enemyHp=1e10;
+ noRelic.units.ranger=1;noRelic.actors.push({id:'ranger',hp:17,revive:0,progress:1,cooldown:0});
+ noRelic.actors.forEach(a=>{a.progress=1;a.cooldown=a.id==='ranger'?0:100;});
+ for(let i=0;i<4;i++){noRelic.actors.at(-1).cooldown=0;E.tick(noRelic,.01);}
+ assert.equal(noRelic.relicEffects.volleys,0,'no proc is granted before collecting the relic');
+ assert.equal(noRelic.relicEffects.volleyBonusDamage,0);
+});
+
+test('medkit relic enables rare, medically assisted guard return without instant revival',()=>{
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=25;s.enemyHp=1e10;s.relics.medkit=2;
+ s.units.medic=1;
+ s.actors.push({id:'medic',hp:E.actorMaxHp(s,'medic'),revive:0,progress:1,cooldown:100});
+ s.actors.forEach(a=>{a.progress=1;a.cooldown=100;});
+ s.actors[0].hp=.01;
+ E.tick(s,.5);
+ assert.equal(s.relicEffects.triages,1);
+ assert.ok(Math.abs(s.actors[0].revive-3.6)<1e-9,'two medkits shorten this guard return timer from 6 to 3.6 seconds');
+ assert.equal(s.actors[0].hp,0,'field triage never prevents the guard from falling');
+ assert.equal(s.battleEvent.type,'triage','the medical action has a visible battle cue');
+ assert.ok(s.relicEffects.triageCooldown>17);
+ // A second casualty before the shared 18-second cooldown expires gets the
+ // ordinary six seconds, avoiding unlimited rescue loops.
+ s.actors[1].hp=.01;
+ E.tick(s,.5);
+ assert.equal(s.relicEffects.triages,1);
+ assert.equal(s.actors[1].revive,6);
+ const old=E.newState(1000);delete old.relicEffects;
+ for(const actor of old.actors)delete actor.shots;
+ const normalized=E.normalize(old,Date.now());
+ assert.equal(normalized.relicEffects.triages,0);
+ assert.equal(normalized.relicEffects.triageCooldown,0);
+ assert.ok(normalized.actors.every(a=>a.shots===0));
+});
+
+test('relic mechanics persist through rebirth but activation counters do not',()=>{
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=15;s.relics.archer=2;s.relics.medkit=3;
+ s.relicEffects.volleys=14;s.relicEffects.volleyBonusDamage=300;
+ s.relicEffects.triages=2;s.relicEffects.triageCooldown=10;
+ assert.ok(E.rebirth(s)>0);
+ assert.equal(E.relic(s,'archer'),2);
+ assert.equal(E.relic(s,'medkit'),3);
+ assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0});
+ assert.ok(s.actors.every(a=>a.shots===0));
+});
