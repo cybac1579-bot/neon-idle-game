@@ -484,6 +484,16 @@ async function main(){
     });
     assert.deepEqual(gainState,{chests:0,boss:3,coreSpent:0});
     assert.equal(await gainPage.locator('#battleScreen').isVisible(),true);
+    const stackedVolleyCue=await gainPage.evaluate(()=>{
+     const E=window.ExpeditionEngine,s=E.newState(1000);
+     s.relics.archer=2;
+     s.battleCueSeq=10001;
+     s.battleEvent={seq:10001,type:'volley',id:'ranger',value:123};
+     window.ExpeditionField.sync(s);
+     return document.querySelector('.combat-cue')?.textContent;
+    });
+    assert.match(stackedVolleyCue,/정밀 사격 \+90% · -123/,
+     'real third-shot feedback shows the extra damage of a second copy');
     await gainContext.close();
    }
    // Actual 10-minute combat evidence is visible only in the detail tray.
