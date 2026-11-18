@@ -58,7 +58,8 @@ function firstThirty(seed,mode){
  assert.ok(s.cores>=expected);
  const restored=E.normalize(copy(s),2000000);
  assert.equal(restored.rebirths,1);
- assert.deepEqual(restored.relics,s.relics);
+ assert.deepEqual(E.RELICS.map(r=>E.relic(restored,r.id)),
+  E.RELICS.map(r=>E.relic(s,r.id)),'reload cannot alter permanent relic ownership');
  assert.equal(restored.heroLevel,held.heroLevel);
  assert.equal(restored.latestReturn.cores,expected);
  return {seed,mode,checkIns:playerCheckins,manualGrowthClicks:0,
