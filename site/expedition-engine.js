@@ -921,6 +921,40 @@ function projectedRebirthRewards(s,targetCleared){
  return {targetCleared,clearsRemaining:targetCleared-current,base,
   recordBonus,total:base+recordBonus,additional:base+recordBonus-currentReturn};
 }
+// Read-only return/continue evidence. This intentionally does not simulate
+// future loot rolls, predict kill time, spend cores, or perform a rebirth.
+// Archive UI and test probes must use the same real inventory/loot rules.
+function returnChoiceSnapshot(s){
+ const reward=rebirthRewards(s);
+ const lifetimeCleared=Math.max(0,integer(s.best,1,100000)-1);
+ const uncollectedUnlocked=RELICS.filter(r=>relic(s,r.id)===0&&r.unlockStage<=lifetimeCleared);
+ const nextUnopenedTier=Math.min(Infinity,...RELICS.map(r=>r.unlockStage).filter(depth=>depth>lifetimeCleared));
+ const pending=integer(s.chests,0,1e9);
+ // Older saves with unknown chest provenance are equivalent to depth 0;
+ // their legacy loot pool includes only depths <=30.
+ const depths=Array.isArray(s.chestDepths)?s.chestDepths.slice(0,pending):[];
+ const allDepths=Array(Math.max(0,pending-depths.length)).fill(0).concat(depths);
+ const chestEligible=(r,depth)=>depth===0?r.unlockStage<=30:r.unlockStage<=depth;
+ const pendingNewKinds=RELICS.filter(r=>relic(s,r.id)===0&&
+  allDepths.some(depth=>chestEligible(r,depth))).length;
+ const specialDepths=[15,25,30,40,45,50,55];
+ const guaranteedFirstDiscovery=allDepths.some(depth=>specialDepths.includes(depth)&&
+  RELICS.some(r=>r.unlockStage===depth&&relic(s,r.id)===0));
+ const balanceAfterReturn=Math.min(1e9,integer(s.cores,0,1e9)+reward.total);
+ const offers=['valor','trade'].map(id=>{
+  const level=integer(s.coreUpgrades[id],0,30);
+  const cost=coreCost(s,id);
+  return {id,level,cost,availableNow:level<30&&s.cores>=cost,
+   affordableAfterReturn:reward.total>0&&level<30&&balanceAfterReturn>=cost};
+ });
+ return {canReturn:reward.total>0,returnCores:reward.total,
+  coresAfterReturn:balanceAfterReturn,offers,
+  ownedRelicKinds:RELICS.filter(r=>relic(s,r.id)>0).length,
+  uncollectedUnlockedKinds:uncollectedUnlocked.length,
+  nextUnopenedTier:Number.isFinite(nextUnopenedTier)?nextUnopenedTier:null,
+  pendingChests:pending,pendingNewKinds,guaranteedFirstDiscovery,
+  retainedChestsOnReturn:pending};
+}
 function rebirthGain(s){return rebirthRewards(s).total;}
 function runOpeningSnapshot(s){
  return {attack:partyDps(s),hp:maxHp(s),income:questIncome(s,QUESTS[0])};
@@ -955,5 +989,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,pursuitBoost,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,returnChoiceSnapshot,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,pursuitBoost,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
