@@ -571,7 +571,9 @@ function fight(s,dt){
   const guardedImpactCap=actor.id==='guard'&&s.stage>=55&&
    relic(s,'shield')>0&&relic(s,'guard')>0?
    actorMaxHp(s,'guard')*.65*dt:Infinity;
-  if(amount>guardedImpactCap)
+  // Count only materially prevented HP loss. The engine already discards
+  // overkill when an actor is dead, which is not a defensive block.
+  if(amount>guardedImpactCap&&actor.hp>guardedImpactCap)
    s.relicEffects.guardPlateBlocks=Math.min(1e9,s.relicEffects.guardPlateBlocks+1);
   const taken=Math.min(actor.hp,amount,guardedImpactCap);
   s.contribution.taken[actor.id]+=taken;
