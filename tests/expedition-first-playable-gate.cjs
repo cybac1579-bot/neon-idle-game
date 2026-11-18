@@ -24,6 +24,20 @@ function firstThirty(seed,mode){
     manualChestOpens++;
    }
   }
+  // Mid-session save/reload must preserve earned progress before the player
+  // commits to a voluntary return. This is a synthetic save contract, not
+  // proof that a particular Android browser persists file:// localStorage.
+  if(sec===900){
+   const resumed=E.normalize(copy(s),s.lastSaved||1000000);
+   assert.equal(resumed.stage,s.stage,'15-minute reload cannot reset distance');
+   assert.equal(resumed.credits,s.credits,'15-minute reload cannot erase credits');
+   assert.equal(resumed.chests,s.chests,'15-minute reload cannot erase unopened chests');
+   assert.equal(resumed.heroLevel,s.heroLevel,'15-minute reload cannot erase player level');
+   assert.deepEqual(E.RELICS.map(r=>E.relic(resumed,r.id)),
+    E.RELICS.map(r=>E.relic(s,r.id)),'15-minute reload cannot erase relics');
+   assert.equal(resumed.autoBuy.enabled,s.autoBuy.enabled,'reload preserves automation opt-in');
+   assert.equal(resumed.autoBuy.mode,s.autoBuy.mode,'reload preserves chosen automation mode');
+  }
   if(CHECKPOINTS.has(sec))moments.push({
    elapsedSeconds:sec,stage:s.stage,credits:Math.round(s.credits),
    squad:s.actors.length,training:s.training,
