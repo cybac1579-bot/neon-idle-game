@@ -477,3 +477,31 @@ main.game-shell{
  0%{opacity:0;transform:translate(-50%,-50%) scale(1.6)}
  18%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}
 }
+
+/* BATTLE READABILITY V3 — real formation phases and HP-linked unit wear.
+   A deployed unit stops endless marching; cosmetic poses never fire attacks. */
+.fighter.engaged.guard .actor-tool{
+ transform:rotate(0deg);
+ box-shadow:inset 0 0 0 2px #e3c58066,0 4px 10px #051525b2;
+}
+.fighter.engaged.ranger .actor-tool{transform:rotate(-2deg)}
+.fighter.engaged.medic .actor-tool{transform:rotate(0)}
+.fighter.wounded:not(.down) .fighter-symbol{
+ filter:saturate(.68) brightness(.85);
+ border-color:#b98d80;
+}
+.fighter.wounded:not(.down) .fighter-health>div{background:#e8ac82}
+.fighter.engaged:not(.down) .fighter-symbol{
+ animation:expedition-ready 2.7s ease-in-out infinite;
+}
+.fighter.battle-acting .fighter-symbol{
+ animation:expedition-action .3s ease-out both!important;
+}
+@keyframes expedition-ready{
+ 0%,100%{transform:translateY(0)}
+ 50%{transform:translateY(-1.5px)}
+}
+@media(prefers-reduced-motion:reduce){
+ .fighter.engaged:not(.down) .fighter-symbol,
+ .fighter.battle-acting .fighter-symbol{animation:none!important}
+}
