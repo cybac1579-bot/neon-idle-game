@@ -161,6 +161,12 @@ function renderArchive(){
  $('openArchiveChest').textContent='상자 1개 열기';
  $('openArchiveBatch').hidden=s.chests<2;
  $('openArchiveBatch').textContent='상자 '+fmt(Math.min(20,s.chests))+'개 함께 열기'+(s.chests>20?' (나머지 보관)':'');
+ $('autoChestToggle').textContent=s.autoChest.enabled?'상자 자동 개봉 끄기':'상자 자동 개봉 켜기';
+ $('autoChestToggle').setAttribute('aria-pressed',s.autoChest.enabled?'true':'false');
+ $('autoChestToggle').classList.toggle('active',s.autoChest.enabled);
+ $('autoChestStatus').textContent=(s.autoChest.enabled?'자동 개봉 작동 중':'자동 개봉 꺼짐')+
+  ' · 60초마다 최대 20개 (오프라인 정산 포함) · 이번 탐사 자동 개봉 '+
+  fmt(s.autoChest.opened)+'개 · 귀환/코어 투자는 수동';
  $('relicRecent').innerHTML=s.relicHistory.length?s.relicHistory.slice(-8).reverse().map(r=>{
   const data=E.RELICS.find(x=>x.id===r.id);
   const label=(data?(r.duplicate?'중복 · ':'첫 발견 · ')+data.name:'해당 상자 등급 수집 완료 · 크레딧 보상')+(r.depth?' · '+r.depth+'거리 상자':'');
