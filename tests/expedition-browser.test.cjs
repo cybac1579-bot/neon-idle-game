@@ -125,14 +125,18 @@ async function main(){
    await page.locator('#openArchiveChest').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),true);
    assert.equal(await page.locator('#popupResults .reward-item').count(),1);
+   assert.equal(await page.locator('#popupResults .reward-effect').count(),1,
+    'new item explains its actual measured improvement');
    await page.locator('#popupClose').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),false);
    assert.match(await page.locator('#openArchiveBatch').textContent(),/3개 함께 열기/);
    await page.locator('#openArchiveBatch').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),true);
    assert.equal(await page.locator('#popupResults .reward-item').count(),3);
+   assert.equal(await page.locator('#popupResults .reward-effect').count(),3,
+    'batch opening preserves separate improvements per awarded item');
    assert.match(await page.locator('#popupTitle').textContent(),/3개 상자 개봉/);
-   assert.match(await page.locator('#popupImpact').textContent(),/영구 효과 변화/);
+   assert.match(await page.locator('#popupImpact').textContent(),/주요 상시 효과 변화.*조건부 효과는 유물별 표시/);
    await page.locator('#popupClose').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),false);
    assert.equal(await page.locator('#relicRecent .collection-log').count(),4);
@@ -449,6 +453,39 @@ async function main(){
    assert.equal(pursuitView.persistentIntent.visible,true);
    assert.match(pursuitView.persistentIntent.text,/추격 신호기 · 후반전 화력/);
    assert.deepEqual(pursuitView.restoredIntent,pursuitView.persistentIntent);
+   // At a real boss-only duplicate reward, generic DPS can remain 0%,
+   // but each individual chest must explain the permanent conditional gain.
+   if(width===390){
+    const gainContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
+    const gainPage=await gainContext.newPage();
+    await gainPage.goto(url,{waitUntil:'networkidle'});
+    await gainPage.addInitScript(()=>{
+     const E=window.ExpeditionEngine,key='neon_expedition_prototype_v1';
+     const raw=localStorage.getItem(key);if(!raw)return;
+     const s=JSON.parse(raw);
+     // Use only a depth-25 eligible boss relic, already owned once.
+     for(const r of E.RELICS)if(r.unlockStage<=25)s.relics[r.id]=r.cap;
+     s.relics.boss=1;s.chests=2;s.chestDepths=[25,25];
+     s.autoChest.enabled=false;s.lastSaved=Date.now();
+     localStorage.setItem(key,JSON.stringify(s));
+    });
+    await gainPage.reload({waitUntil:'networkidle'});
+    await gainPage.locator('[data-tab="archive"]').click();
+    assert.equal(await gainPage.locator('#openArchiveBatch').isVisible(),true);
+    await gainPage.locator('#openArchiveBatch').click();
+    assert.equal(await gainPage.locator('#popupResults .reward-effect').count(),2);
+    const gainResults=await gainPage.locator('#popupResults .reward-effect').allTextContents();
+    assert.match(gainResults[0],/지휘급 적 공격 보정 14% → 28%/);
+    assert.match(gainResults[1],/지휘급 적 공격 보정 28% → 42%/);
+    assert.match(await gainPage.locator('#popupImpact').textContent(),/조건부 효과는 유물별 표시/);
+    const gainState=await gainPage.evaluate(()=>{
+     const s=JSON.parse(localStorage.getItem('neon_expedition_prototype_v1'));
+     return {chests:s.chests,boss:s.relics.boss,coreSpent:s.coreSpent};
+    });
+    assert.deepEqual(gainState,{chests:0,boss:3,coreSpent:0});
+    assert.equal(await gainPage.locator('#battleScreen').isVisible(),true);
+    await gainContext.close();
+   }
    // Actual 10-minute combat evidence is visible only in the detail tray.
    // Check reloaded state and user-triggered JSON export, without a fake HUD.
    if(width===390){
