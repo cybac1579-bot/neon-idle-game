@@ -72,7 +72,7 @@ function sync(s){
  enemyIntent.classList.toggle('intercepted',!!last&&(intent?.result==='intercept'||intent?.result==='brace'||intent?.result==='unjam'));
  if(aiming)enemyIntent.textContent=rushing?(commanderSurge?'⚠ 지휘급 전열 압박 · ':'⚠ 돌격병 전열 돌진 · ')+Math.ceil(intent.windup)+'초':disrupting?'⚠ 교란 사수 원거리 조준 · '+Math.ceil(intent.windup)+'초':'⚠ 적 측면 조준 · '+Math.ceil(intent.windup)+'초';
  else if(last)enemyIntent.textContent=rushing?
-   (intent.result==='brace'?'🛡 철벽 진형 · 돌진 저지':commanderSurge?'↗ 지휘급 전열 압박 · 방벽병 밀려남':'↗ 돌격 충격 · 방벽병 밀려남'):
+   (intent.result==='brace'?'🛡 철벽 진형 · 돌진 저지':intent.result==='brace-step'?'🛡 합금 배지 · 돌진 부분 버팀':commanderSurge?'↗ 지휘급 전열 압박 · 방벽병 밀려남':'↗ 돌격 충격 · 방벽병 밀려남'):
    disrupting?(intent.result==='unjam'?'✚ 역통신 반격 · 교란 무효':'◎ 교란 사격 · 사수 공격 지연'):
    (intent.result==='intercept'?'🛡 방벽 호위 · 사수 반격 성공':'⚡ 적 후열 집중 타격');
  else if(chasing)enemyIntent.textContent='⚡ 추격 신호기 · 후반전 화력 +60%';
@@ -95,6 +95,7 @@ function sync(s){
  else if(evt.type==='rush-aim')cue.textContent='돌격 예고! 전열 경계';
  else if(evt.type==='rush')cue.textContent='돌격 충격! 방벽병 밀려남';
  else if(evt.type==='brace')cue.textContent='철벽 진형! 자동 반격 -'+Math.max(1,Math.round(evt.value));
+ else if(evt.type==='brace-step')cue.textContent='합금 배지! 돌진 부분 버팀';
  else if(evt.type==='jam-aim')cue.textContent='원거리 교란 조준! 사수 경계';
  else if(evt.type==='jam')cue.textContent='교란 사격! 다음 사격 +'+evt.value.toFixed(2)+'초';
  else if(evt.type==='unjam')cue.textContent='역통신 반격! -'+Math.max(1,Math.round(evt.value));
@@ -105,7 +106,7 @@ function sync(s){
  else if(evt.type==='rally')cue.textContent='부대 재정비';
  fx.appendChild(cue);
  arena.classList.remove('combat-impact');void arena.offsetWidth;
- if(evt.type==='hit'||evt.type==='clear'||evt.type==='flank'||evt.type==='intercept'||evt.type==='intercept-duet'||evt.type==='rush'||evt.type==='brace'||evt.type==='jam'||evt.type==='unjam')arena.classList.add('combat-impact');
+ if(evt.type==='hit'||evt.type==='clear'||evt.type==='flank'||evt.type==='intercept'||evt.type==='intercept-duet'||evt.type==='rush'||evt.type==='brace'||evt.type==='brace-step'||evt.type==='jam'||evt.type==='unjam')arena.classList.add('combat-impact');
 }
 root.ExpeditionField={sync};
 })(window);
