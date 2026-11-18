@@ -43,7 +43,9 @@ const RELICS=[
  {id:'enlist',name:'선발권 묶음',desc:'용병 소집 비용이 수집 수마다 6% 감소',cap:3,unlockStage:40},
  {id:'drill',name:'훈련 규정집',desc:'부대 훈련 비용이 수집 수마다 6% 감소',cap:3,unlockStage:45},
  // A unique depth-50 collection reward, not a hidden bonus per rebirth.
- {id:'chronicle',name:'원정 연대기',desc:'서로 다른 유물 1종마다 용병단 피해량 2% 증가 (최대 30%)',cap:1,unlockStage:50}
+ {id:'chronicle',name:'원정 연대기',desc:'서로 다른 유물 1종마다 용병단 피해량 2% 증가 (최대 30%)',cap:1,unlockStage:50},
+ // The first post-50 discovery: changes a boss's second phase, not every fight.
+ {id:'pursuit',name:'추격 신호기',desc:'55거리 이상 지휘급 적 체력이 절반 이하가 되면 용병단 피해량 +60%',cap:1,unlockStage:55}
 ];
 const num=(n,min=0,max=1e14)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):min;
 const integer=(n,min=0,max=100000)=>Math.floor(num(n,min,max));
@@ -61,7 +63,7 @@ function enemyKind(stage){
  if(stage>=8&&stage%6===2)return 'charger';
   return stage>=16&&stage%6===4?'disruptor':'regular';
 }
-const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null,turns:0,nextAt:0,move:'flank'});
+const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null,turns:0,nextAt:0,move:'flank',pursuitTriggered:false});
 const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  volleys:integer(raw.volleys,0,1e9),
  volleyBonusDamage:num(raw.volleyBonusDamage,0,1e14),
@@ -76,7 +78,7 @@ const combatEffectReport=raw=>raw&&typeof raw==='object'?{
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
 // Bounded in-run boss/elite clear timestamps: 60-second snapshots miss the opening.
-const MILESTONE_STAGES=[5,10,15,20,25,30,35,40,45,50,75,100];
+const MILESTONE_STAGES=[5,10,15,20,25,30,35,40,45,50,55,60,75,100];
 function normalizedMilestones(raw){
  const out={};if(!raw||typeof raw!=='object')return out;
  for(const stage of MILESTONE_STAGES){
@@ -109,7 +111,7 @@ const collectionBoost=s=>relic(s,'chronicle')?
 const newState=(now=Date.now())=>({
  version:VERSION,lastSaved:now,seed:123456789,clock:0,credits:65,stage:1,best:1,runBest:1,
  units:{guard:2,ranger:0,medic:0},training:0,questLevels:{dispatch:0,salvage:0,contract:0},
- questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,bossHpBalanceVersion:2,squadHp:96,respawn:0,
+ questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,bossHpBalanceVersion:3,squadHp:96,respawn:0,
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6,shots:0},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2,shots:0}],battleEvent:null,battleCueSeq:0,
  enemyTactic:initialEnemyTactic(1),
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
@@ -182,6 +184,7 @@ function normalize(raw,now=Date.now()){
   // Old save already fired at 40+: preserve elapsed and schedule a later phase.
   if(s.stage>=40&&s.enemyTactic.used&&!s.enemyTactic.turns)s.enemyTactic.turns=1;
   s.enemyTactic.move=raw.enemyTactic.move==='rush'?'rush':'flank';
+  s.enemyTactic.pursuitTriggered=raw.enemyTactic.pursuitTriggered===true;
   s.enemyTactic.nextAt=Number.isFinite(raw.enemyTactic.nextAt)?
    num(raw.enemyTactic.nextAt,0,7200):
    (s.stage>=40&&s.enemyTactic.used?s.enemyTactic.elapsed+36:0);
@@ -269,14 +272,17 @@ function normalize(raw,now=Date.now()){
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
- // Legacy saves may be in the middle of a 50+ boss fight. Preserve the
- // fraction of boss health left after the HP reduction, once only. Earlier
- // stages and already-migrated saves retain their exact saved HP.
- if(raw.bossHpBalanceVersion!==2&&isBoss(s.stage)&&s.stage>=50&&s.enemyHp>0){
-  const early=Math.min(s.stage-1,39),late=Math.max(0,Math.min(s.stage-40,60));
-  const oldBossMax=Math.min(1e13,Math.round(3.8*13*Math.pow(1.235,early)*Math.pow(1.18,late)));
-  const newBossMax=enemyMax(s.stage);
-  s.enemyHp=Math.max(1,Math.min(newBossMax,Math.round(s.enemyHp/oldBossMax*newBossMax)));
+ // Phase 2 scaled 50+ bosses from 3.8x to 2.2x (marker 2). Phase 3
+ // trims 60+ to 1.9x. Migrate exactly once, preserving the remaining HP
+ // fraction of an active boss; 50-boss saved progress is not changed again.
+ if(raw.bossHpBalanceVersion!==3&&isBoss(s.stage)&&s.stage>=50&&s.enemyHp>0){
+  const oldRank=raw.bossHpBalanceVersion===2?2.2:3.8;
+  if(raw.bossHpBalanceVersion!==2||s.stage>=60){
+   const early=Math.min(s.stage-1,39),late=Math.max(0,Math.min(s.stage-40,60));
+   const oldBossMax=Math.min(1e13,Math.round(oldRank*13*Math.pow(1.235,early)*Math.pow(1.18,late)));
+   const newBossMax=enemyMax(s.stage);
+   s.enemyHp=Math.max(1,Math.min(newBossMax,Math.round(s.enemyHp/oldBossMax*newBossMax)));
+  }
  }
  s.enemyHp=s.enemyHp||enemyMax(s.stage);
  return s;
@@ -287,10 +293,9 @@ function enemyMax(stage){
  // Keep stages 1..40 exactly as before. After 40, slow exponential HP
  // growth without hiding a boss or eliminating progressive combat difficulty.
  const early=Math.min(stage-1,39),late=Math.max(0,Math.min(stage-40,60));
- // From distance 50 onward, boss HP previously ran for 15-17 minutes
- // with essentially linear health-bar drain. Keep a distinct boss tier
- // (2.2x versus the regular enemy), but avoid a prolonged stationary wall.
- const rankMultiplier=isBoss(stage)?(stage>=50?2.2:3.8):isElite(stage)?2:1;
+ // Retain 50 boss (2.2x) unchanged. From 60+ soften a late-game HP sponge
+ // (1.9x still >2 times the immediately previous standard enemy).
+ const rankMultiplier=isBoss(stage)?(stage>=60?1.9:stage>=50?2.2:3.8):isElite(stage)?2:1;
  return Math.min(1e13,Math.round(rankMultiplier*
   13*Math.pow(1.235,early)*Math.pow(1.18,late)));
 }
@@ -315,7 +320,13 @@ function valorMultiplier(s){
  const level=s.coreUpgrades.valor;
  return level<=3?1+.03*level:level<9?1+.09+.105*(level-3):1+.08*level;
 }
-function partyDps(s){return UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.dps*(u.id==='ranger'?1+.15*relic(s,'archer'):1),0)*(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*(1+.06*s.traits.command)*valorMultiplier(s)*collectionBoost(s);}
+// New late-depth relic is a second-phase boss tactic, not a flat all-stage
+// attack upgrade. Use the same multiplier in displayed and actual damage.
+function pursuitBoost(s){
+ return relic(s,'pursuit')>0&&isBoss(s.stage)&&s.stage>=55&&
+  s.enemyHp>0&&s.enemyHp<=enemyMax(s.stage)*.5?1.6:1;
+}
+function partyDps(s){return UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.dps*(u.id==='ranger'?1+.15*relic(s,'archer'):1),0)*(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*(1+.06*s.traits.command)*valorMultiplier(s)*pursuitBoost(s)*collectionBoost(s);}
 function healDps(s){return s.units.medic*2.7*(1+.18*relic(s,'medkit'))*(1+.08*s.training);}
 function questIncome(s,q){return q.income*(1+1.1*s.questLevels[q.id])*(1+.12*relic(s,'income'))*(1+.08*s.traits.supply)*(1+.09*s.coreUpgrades.trade);}
 function hireCost(s){return Math.max(1,Math.round(25*Math.pow(1.22,Math.max(0,total(s)-2))*(1-.06*relic(s,'enlist'))));}
@@ -463,7 +474,7 @@ function fight(s,dt){
   if(a.progress<attackRange(a.id)||a.cooldown>0)continue;
   const u=UNITS.find(u=>u.id===a.id);
   const multiplier=(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
-   (1+.06*s.traits.command)*valorMultiplier(s)*
+   (1+.06*s.traits.command)*valorMultiplier(s)*pursuitBoost(s)*
    (boss?1+.14*relic(s,'boss'):1)*collection;
   // Previous +15%/copy to every shot is now a +45%/copy volley on
   // every third shot: same nominal average DPS, a different battle rhythm.
@@ -488,6 +499,12 @@ function fight(s,dt){
  // Ordinary hits must not overwrite this special cue in the same tick.
  if(precisionCue!==null)battleCue(s,'volley','ranger',precisionCue);
  s.enemyHp-=damage;
+ if(boss&&s.stage>=60&&relic(s,'pursuit')>0&&s.enemyHp>0&&
+  s.enemyHp<=enemyMax(s.stage)*.5&&!s.enemyTactic.pursuitTriggered){
+  s.enemyTactic.pursuitTriggered=true;
+  battleCue(s,'pursuit','guard',60);
+  note(s,'추격 신호기 · 지휘급 적의 빈틈 발견! 후반전 용병단 화력 +60%');
+ }
  if(s.enemyHp<=0){victory(s);return;}
  const tactic=advanceEnemyTactic(s,dt,
   living.some(a=>a.id!=='guard'&&a.progress>.25),
@@ -555,7 +572,7 @@ function fight(s,dt){
    s.enemyTactic.result='intercept';
    const counterBase=UNITS.find(u=>u.id==='ranger').dps*attackInterval('ranger')*
     (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
-    (1+.06*s.traits.command)*valorMultiplier(s)*
+    (1+.06*s.traits.command)*valorMultiplier(s)*pursuitBoost(s)*
     (boss?1+.14*relic(s,'boss'):1)*collection;
    const counter=Math.min(s.enemyHp,.5*counterBase);
    s.enemyHp-=counter;s.contribution.damage.ranger+=counter;
@@ -579,7 +596,7 @@ function fight(s,dt){
     s.relicEffects.braces++;
     const guardPower=UNITS[0].dps*attackInterval('guard')*
      (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
-     (1+.06*s.traits.command)*valorMultiplier(s)*collection;
+     (1+.06*s.traits.command)*valorMultiplier(s)*pursuitBoost(s)*collection;
     const answer=Math.min(s.enemyHp,guardPower*.4);
     s.enemyHp-=answer;s.contribution.damage.guard+=answer;
     s.relicEffects.braceDamage=Math.min(1e14,s.relicEffects.braceDamage+answer);
@@ -604,7 +621,7 @@ function fight(s,dt){
    if(support){
     const power=UNITS[1].dps*attackInterval('ranger')*
      (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
-     (1+.06*s.traits.command)*valorMultiplier(s)*collection;
+     (1+.06*s.traits.command)*valorMultiplier(s)*pursuitBoost(s)*collection;
     const answer=Math.min(s.enemyHp,power*.35);
     s.enemyHp-=answer;s.contribution.damage.ranger+=answer;
     s.relicEffects.cleanses++;
@@ -805,7 +822,7 @@ function rollRelic(s,depth,forceNew=false){
  const missing=eligible.filter(r=>relic(s,r.id)===0);
  // First chest at a new depth guarantees a first discovery in that newly
  // reached tier, if there are still undiscovered relics from the milestone.
- const milestoneMissing=[15,25,30,40,45,50].includes(depth)?
+ const milestoneMissing=[15,25,30,40,45,50,55].includes(depth)?
   missing.filter(r=>r.unlockStage===depth):[];
  const pool=milestoneMissing.length?milestoneMissing:
   forceNew&&missing.length?missing:missing.length&&rand(s)<.7?missing:eligible;
@@ -903,5 +920,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,pursuitBoost,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
