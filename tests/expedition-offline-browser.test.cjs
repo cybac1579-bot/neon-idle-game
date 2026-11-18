@@ -82,6 +82,7 @@ async function main(){
        revive:0,progress:.5,cooldown:0,shots:0});
      sample.units.guard=3;view.sync(sample);
      const compactThreeGuards=document.querySelector('.arena').classList.contains('formation-dense');
+     const shouldCompactThreeGuards=document.querySelector('#squad').clientHeight<210;
      const trainingTier=document.querySelector('.arena').dataset.trainingTier;
      const growthTraining=document.querySelector('#battleGrowth')?.textContent||'';
      sample.units.ranger=1;
@@ -146,7 +147,7 @@ async function main(){
      sample.battleEvent=null;view.sync(sample);
      const fabricated=effects.firstElementChild!==previousEffect;
      return {engineEvent,guardMeleeHasTrail,guardImpact,rangerShot,shieldOnGuard,
-      duetTrails,duetShield,duetBurst,worn,critical,healedBoss,marching,deployed,injured,healed,compactThreeGuards,visibleMiniatures:
+      duetTrails,duetShield,duetBurst,worn,critical,healedBoss,marching,deployed,injured,healed,compactThreeGuards,shouldCompactThreeGuards,visibleMiniatures:
       document.querySelectorAll('.actor-head').length>=2,
       volley,heal,shield,trainingTier,growthTraining,growthReinforcement,milestone,chestNotice,replayed,fabricated};
     });
@@ -160,7 +161,8 @@ async function main(){
     assert.equal(combatVisual.deployed,true,'deployed actor stops marching animation');
     assert.equal(combatVisual.injured,true,'real low HP marks a unit injured');
     assert.equal(combatVisual.healed,true,'restored HP removes the injury appearance');
-    assert.equal(combatVisual.compactThreeGuards,true,'three guards on a short field use compact rows');
+    assert.equal(combatVisual.compactThreeGuards,combatVisual.shouldCompactThreeGuards,
+      'three guards compact only when actual battlefield height requires it');
     assert.match(combatVisual.growthTraining,/부대 훈련/);
     assert.match(combatVisual.growthReinforcement,/증원 · \+1명/);
     assert.equal(combatVisual.replayed,false,'same battle cue must not replay the visual effect');
