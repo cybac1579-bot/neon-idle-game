@@ -117,3 +117,6 @@ require('./expedition-first-return-low-touch-audit.cjs');
 
 // Auto chest collection is optional, observable, and not a forced strategy.
 require('./expedition-auto-chest-impact-audit.cjs');
+
+// First 25 clear farming vs a deep 45 expedition through the full 50 boss.
+require('./expedition-stage50-two-routes-audit.cjs');
