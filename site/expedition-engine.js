@@ -87,7 +87,8 @@ const combatEffectReport=raw=>raw&&typeof raw==='object'?{
   commandMoves:integer(raw.commandMoves,0,1e9),commandSurges:integer(raw.commandSurges,0,1e9),guardPlateBlocks:integer(raw.guardPlateBlocks,0,1e9),escortDuets:integer(raw.escortDuets,0,1e9),diagrams:integer(raw.diagrams,0,1e9),diagramDamage:num(raw.diagramDamage,0,1e14)
 }:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
-const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
+const MAX_OFFLINE_EVENTS=24;
+const initialPlaytest=()=>({snapshots:[],offlineSeconds:0,offlineEvents:[]});
 // Bounded in-run boss/elite clear timestamps: 60-second snapshots miss the opening.
 const MILESTONE_STAGES=[5,10,15,20,25,30,35,40,45,50,55,60,65,75,100];
 function normalizedMilestones(raw){
@@ -264,6 +265,18 @@ function normalize(raw,now=Date.now()){
  s.coreReserve=num(raw.coreReserve,0,1);
  s.playtest=initialPlaytest();
  s.playtest.offlineSeconds=num(raw.playtest?.offlineSeconds,0,1e9);
+ // Keep a small, privacy-minimal timeline of *actual* returns to the app.
+ // Older saves have no timeline. Malformed records cannot inject fields.
+ if(Array.isArray(raw.playtest?.offlineEvents)){
+  s.playtest.offlineEvents=raw.playtest.offlineEvents.slice(-MAX_OFFLINE_EVENTS)
+   .filter(x=>x&&typeof x==='object').map(x=>({
+    run:integer(x.run,1,1e9),runSecBefore:integer(x.runSecBefore,0,1e9),
+    stageBefore:integer(x.stageBefore,1,100000),stageAfter:integer(x.stageAfter,1,100000),
+    requestedSeconds:integer(x.requestedSeconds,0,1e9),
+    settledSeconds:integer(x.settledSeconds,0,7200),
+    source:x.source==='startup'?'startup':'resume'
+   }));
+ }
  if(Array.isArray(raw.playtest?.snapshots)){
   s.playtest.snapshots=raw.playtest.snapshots.slice(-MAX_PLAYTEST_SNAPSHOTS)
    .filter(x=>x&&typeof x==='object').map(x=>({
@@ -1155,7 +1168,7 @@ function rebirth(s){
     exchanges:s.runMetrics.relicExchanges,partial:s.runMetrics.legacyRelicCounter}};
  const history=[...(s.runHistory||[]),summary].slice(-5);
  const keep={claimedBreakthroughDistance:Math.max(s.claimedBreakthroughDistance,s.runBest-1),
-  coreReserve:Math.min(1,Math.max(0,reward.fraction)),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode},autoChest:{...initialAutoChest(),enabled:s.autoChest.enabled}};
+  coreReserve:Math.min(1,Math.max(0,reward.fraction)),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds,offlineEvents:s.playtest.offlineEvents.map(x=>({...x}))},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode},autoChest:{...initialAutoChest(),enabled:s.autoChest.enabled}};
  Object.assign(s,newState(s.lastSaved),keep);s.enemyHp=enemyMax(1);
  s.actors.forEach(a=>a.hp=actorMaxHp(s,a.id));updateSquadHealth(s);
  s.runOpening=runOpeningSnapshot(s);
@@ -1163,10 +1176,20 @@ function rebirth(s){
  note(s,'탐사 귀환 · 코어 '+gain+'개 획득'+(reward.recordBonus?' (최초 기록 +'+reward.recordBonus+')':'')+'. 영구 유물/레벨 유지');
  return gain;
 }
-function offline(s,now=Date.now()){
- const elapsed=Math.min(7200,Math.max(0,(now-num(s.lastSaved,0,now))/1000));
- if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
+function offline(s,now=Date.now(),source='resume'){
+ const requested=Math.max(0,(now-num(s.lastSaved,0,now))/1000);
+ const elapsed=Math.min(7200,requested);
+ if(elapsed>=1){
+  const record={run:s.rebirths+1,runSecBefore:Math.floor(s.clock),
+   stageBefore:s.stage,requestedSeconds:Math.floor(requested),
+   settledSeconds:Math.floor(elapsed),source:source==='startup'?'startup':'resume'};
+  tick(s,Math.floor(elapsed),'offline');
+  s.playtest.offlineSeconds+=Math.floor(elapsed);
+  record.stageAfter=s.stage;
+  s.playtest.offlineEvents.push(record);
+  if(s.playtest.offlineEvents.length>MAX_OFFLINE_EVENTS)s.playtest.offlineEvents.shift();
+ }
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,respecTraits,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,returnChoiceSnapshot,nextRelicCopyPreview,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,pursuitBoost,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MAX_OFFLINE_EVENTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,respecTraits,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,returnChoiceSnapshot,nextRelicCopyPreview,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,valorMultiplier,pursuitBoost,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
