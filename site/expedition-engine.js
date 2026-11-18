@@ -53,7 +53,7 @@ const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purc
 const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 // Per-run relic action telemetry; old saves default to no past activations.
-const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0});
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0});
 // New standard-enemy role is deterministic per stage and independent of drop RNG.
 function enemyKind(stage){
  if(isBoss(stage))return 'boss';
@@ -61,7 +61,7 @@ function enemyKind(stage){
  if(stage>=8&&stage%6===2)return 'charger';
   return stage>=16&&stage%6===4?'disruptor':'regular';
 }
-const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null});
+const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null,turns:0,nextAt:0,move:'flank'});
 const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  volleys:integer(raw.volleys,0,1e9),
  volleyBonusDamage:num(raw.volleyBonusDamage,0,1e14),
@@ -70,7 +70,8 @@ const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  flankShots:integer(raw.flankShots,0,1e9),intercepts:integer(raw.intercepts,0,1e9),
  counterDamage:num(raw.counterDamage,0,1e14),rushes:integer(raw.rushes,0,1e9),
  braces:integer(raw.braces,0,1e9),braceDamage:num(raw.braceDamage,0,1e14),
-  jams:integer(raw.jams,0,1e9),cleanses:integer(raw.cleanses,0,1e9),cleanseDamage:num(raw.cleanseDamage,0,1e14)
+  jams:integer(raw.jams,0,1e9),cleanses:integer(raw.cleanses,0,1e9),cleanseDamage:num(raw.cleanseDamage,0,1e14),
+  commandMoves:integer(raw.commandMoves,0,1e9),commandSurges:integer(raw.commandSurges,0,1e9)
 }:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
@@ -160,7 +161,7 @@ function normalize(raw,now=Date.now()){
  for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
  s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
  s.relicEffects=initialRelicEffects();
- for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','jams','cleanses'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','jams','cleanses','commandMoves','commandSurges'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
  s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
  s.relicEffects.intelFinds=integer(raw.relicEffects?.intelFinds,0,2);
  s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
@@ -176,7 +177,14 @@ function normalize(raw,now=Date.now()){
   s.enemyTactic.windup=num(raw.enemyTactic.windup,0,2);
   s.enemyTactic.used=raw.enemyTactic.used===true;
   s.enemyTactic.flash=num(raw.enemyTactic.flash,0,2);
-  s.enemyTactic.result=['flank','intercept','rush','brace','jam','unjam'].includes(raw.enemyTactic.result)?raw.enemyTactic.result:null;
+   s.enemyTactic.result=['flank','intercept','rush','brace','jam','unjam'].includes(raw.enemyTactic.result)?raw.enemyTactic.result:null;
+  s.enemyTactic.turns=integer(raw.enemyTactic.turns,0,10000);
+  // Old save already fired at 40+: preserve elapsed and schedule a later phase.
+  if(s.stage>=40&&s.enemyTactic.used&&!s.enemyTactic.turns)s.enemyTactic.turns=1;
+  s.enemyTactic.move=raw.enemyTactic.move==='rush'?'rush':'flank';
+  s.enemyTactic.nextAt=Number.isFinite(raw.enemyTactic.nextAt)?
+   num(raw.enemyTactic.nextAt,0,7200):
+   (s.stage>=40&&s.enemyTactic.used?s.enemyTactic.elapsed+36:0);
   if(s.enemyTactic.used)s.enemyTactic.phase='fired';
  }
  s.runOpening=validOpening(raw.runOpening);
@@ -364,9 +372,9 @@ function victory(s){
  for(const a of s.actors){a.progress=Math.max(0,a.progress-.75);if(a.revive===0)a.hp=Math.min(actorMaxHp(s,a.id),a.hp+actorMaxHp(s,a.id)*.15);}
  updateSquadHealth(s);battleCue(s,networkFind?'intel':'clear','guard',cleared);
 }
-// A visible single-use enemy pattern: only elites and bosses at depth 15+
-// prepare a rear-line focus attack. Existing enemy DPS is redistributed, not
-// added. Time and phase persist across save/reload and offline settlement.
+// Elite/boss opening remains a focus strike. At 40+ long survivors
+// alternate focused rear fire with front pressure every 36s.
+// Both reuse existing relic combos, with no added enemy DPS.
 function advanceEnemyTactic(s,dt,canTargetRear,canChargeGuard,canDisruptRanger){
  if(!s.enemyTactic||s.enemyTactic.stage!==s.stage)s.enemyTactic=initialEnemyTactic(s.stage);
  const t=s.enemyTactic;
@@ -404,19 +412,31 @@ function advanceEnemyTactic(s,dt,canTargetRear,canChargeGuard,canDisruptRanger){
   }
   return false;
  }
- if(s.stage<15||!isElite(s.stage)||t.used)return false;
+ if(s.stage<15||!isElite(s.stage))return false;
  t.elapsed+=dt;
- if(t.phase==='idle'&&canTargetRear&&t.elapsed>=3){
-  t.phase='windup';t.windup=2;
-  battleCue(s,'aim','ranger',2);
-  note(s,'적 측면 조준 · 2초 뒤 후열 집중 타격');
-  return false; // Do not consume the first second of telegraph immediately.
+ const commander=s.stage>=40;
+ if(t.used){
+  if(!commander||t.elapsed<t.nextAt)return false;
+  t.used=false;t.phase='idle';t.result=null;t.flash=0;
+ }
+ const surge=commander&&t.turns%2===1;
+ if(t.phase==='idle'&&t.elapsed>=3&&(surge?canChargeGuard:canTargetRear)){
+  t.move=surge?'rush':'flank';
+  t.phase='windup';t.windup=surge?1.5:2;
+  battleCue(s,surge?'rush-aim':'aim',surge?'guard':'ranger',t.windup);
+  note(s,surge?'지휘급 전열 압박 · 방벽병 돌진 주의':'적 측면 조준 · 2초 뒤 후열 집중 타격');
+  return false;
  }
  if(t.phase==='windup'){
   t.windup=Math.max(0,t.windup-dt);
   if(t.windup<=0){
-   t.used=true;t.phase='fired';t.flash=1.8;
-   return 'flank';
+   t.used=true;t.phase='fired';t.flash=1.8;t.turns++;
+   if(commander){
+    t.nextAt=t.elapsed+36;
+    if(t.turns>1)s.relicEffects.commandMoves++;
+    if(t.move==='rush')s.relicEffects.commandSurges++;
+   }
+   return t.move==='rush'?'rush':'flank';
   }
  }
  return false;
