@@ -110,6 +110,58 @@ async function main(){
    console.log('PASS standalone file:// offline',width,'export/import/reload/network=0');
    await ctx.close();
   }
+  // Actual 2026-11-18 play history: 12/17 kinds owned, depth40 reached
+  // but boss not defeated. A new kind requires a newly earned deep chest;
+  // old shallow chests cannot mysteriously upgrade when opened later.
+  const tierContext=await browser.newContext({viewport:{width:390,height:800}});
+  await tierContext.setOffline(true);
+  const tierPage=await tierContext.newPage(),tierErrors=[];
+  tierPage.on('pageerror',e=>tierErrors.push(e.message));
+  await tierPage.goto(pathToFileURL(packaged).href,{waitUntil:'load'});
+  await tierPage.locator('[data-tab="archive"]').click();
+  assert.equal(await tierPage.locator('#relicNextDiscovery').isVisible(),false,
+   'a new player should not receive an irrelevant locked-tier message');
+  await tierPage.evaluate(()=>{
+   const E=window.ExpeditionEngine,s=E.newState(Date.now());
+   s.stage=s.best=s.runBest=40;s.enemyHp=E.enemyMax(40);
+   for(const r of E.RELICS)if(r.unlockStage<=30)s.relics[r.id]=1;
+   s.chests=2;s.chestDepths=[5,35];
+   localStorage.setItem(E.SAVE_KEY,JSON.stringify(s));
+  });
+  await tierPage.reload({waitUntil:'load'});
+  await tierPage.locator('[data-tab="archive"]').click();
+  const depth40Hint=tierPage.locator('#relicNextDiscovery');
+  assert.equal(await depth40Hint.isVisible(),true);
+  const depth40Text=await depth40Hint.textContent();
+  assert.match(depth40Text,/유물 12종을 모두 발견했어/);
+  assert.match(depth40Text,/40거리 보스 격파 후 획득한 상자에서 선발권 묶음/);
+  assert.match(depth40Text,/기존 상자는 획득한 거리의 보상만/);
+  assert.match(depth40Text,/미개봉 상자 2개는 새 종류 후보가 없어/);
+  // Clearing the boss without opening the new-depth chest leaves a real
+  // discoverable kind, so the all-discovered banner must disappear.
+  await tierPage.evaluate(()=>{
+   const key=window.ExpeditionEngine.SAVE_KEY,s=JSON.parse(localStorage.getItem(key));
+   s.stage=s.best=s.runBest=41;s.chests=3;s.chestDepths=[5,35,40];
+   s.enemyHp=window.ExpeditionEngine.enemyMax(41);s.lastSaved=Date.now();
+   localStorage.setItem(key,JSON.stringify(s));
+  });
+  await tierPage.reload({waitUntil:'load'});
+  await tierPage.locator('[data-tab="archive"]').click();
+  assert.equal(await tierPage.locator('#relicNextDiscovery').isVisible(),false,
+   'a newly earned depth40 chest can discover enlist before a deeper gate');
+  await tierPage.evaluate(()=>{
+   const key=window.ExpeditionEngine.SAVE_KEY,s=JSON.parse(localStorage.getItem(key));
+   s.relics.enlist=1;s.chests=0;s.chestDepths=[];s.lastSaved=Date.now();
+   localStorage.setItem(key,JSON.stringify(s));
+  });
+  await tierPage.reload({waitUntil:'load'});
+  await tierPage.locator('[data-tab="archive"]').click();
+  assert.match(await tierPage.locator('#relicNextDiscovery').textContent(),
+   /45거리 정예 격파 후 획득한 상자에서 훈련 규정집/,
+   'discovering the 40-tier moves the truthful next goal to 45');
+  assert.deepEqual(tierErrors,[]);
+  await tierContext.close();
+  console.log('PASS real playtest 12/17 collectible tier and next earned depth 40/45 chest guidance');
   // Android file:// browsers may block localStorage or exhaust its quota.
   // The game must warn persistently and still permit a complete local JSON
   // backup containing the *current in-memory* progress (not a stale save).
