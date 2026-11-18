@@ -28,9 +28,9 @@ const QUESTS=[
 ];
 const RELICS=[
  {id:'ember',name:'용광로 문장',desc:'용병단 피해량이 수집 수마다 8% 증가',cap:5,unlockStage:5},
- {id:'shield',name:'합금 배지',desc:'용병단 체력이 수집 수마다 10% 증가',cap:5,unlockStage:5},
+ {id:'shield',name:'합금 배지',desc:'용병단 체력 +10%/개 · 진군 북과 함께 돌격병의 밀치기를 막고 자동 반격',cap:5,unlockStage:5},
  {id:'income',name:'교역 인장',desc:'자동 보급 수익이 수집 수마다 12% 증가',cap:5,unlockStage:5},
- {id:'swift',name:'진군 북',desc:'용병단 피해량이 수집 수마다 5% 증가',cap:5,unlockStage:15},
+ {id:'swift',name:'진군 북',desc:'용병단 피해량 +5%/개 · 합금 배지와 함께 돌격병의 밀치기 방어',cap:5,unlockStage:15},
  {id:'medkit',name:'재생 결속선',desc:'정비사 회복력 +18%/개 · 살아 있는 정비사가 방벽병 긴급 재합류를 지원 (18초마다 최대 1회)',cap:4,unlockStage:15},
  {id:'boss',name:'균열 렌즈',desc:'지휘급 적에게 주는 피해가 수집 수마다 14% 증가',cap:5,unlockStage:25},
  {id:'bounty',name:'현상금 표식',desc:'전투 크레딧 보상이 수집 수마다 12% 증가',cap:5,unlockStage:5},
@@ -53,15 +53,22 @@ const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purc
 const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 // Per-run relic action telemetry; old saves default to no past activations.
-const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0});
-const initialEnemyTactic=stage=>({stage,elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null});
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0});
+// New standard-enemy role is deterministic per stage and independent of drop RNG.
+function enemyKind(stage){
+ if(isBoss(stage))return 'boss';
+ if(isElite(stage))return 'elite';
+ return stage>=8&&stage%6===2?'charger':'regular';
+}
+const initialEnemyTactic=stage=>({stage,kind:enemyKind(stage),elapsed:0,phase:'idle',windup:0,used:false,flash:0,result:null});
 const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  volleys:integer(raw.volleys,0,1e9),
  volleyBonusDamage:num(raw.volleyBonusDamage,0,1e14),
  triages:integer(raw.triages,0,1e9),
  intelFinds:integer(raw.intelFinds,0,2),
  flankShots:integer(raw.flankShots,0,1e9),intercepts:integer(raw.intercepts,0,1e9),
- counterDamage:num(raw.counterDamage,0,1e14)
+ counterDamage:num(raw.counterDamage,0,1e14),rushes:integer(raw.rushes,0,1e9),
+ braces:integer(raw.braces,0,1e9),braceDamage:num(raw.braceDamage,0,1e14)
 }:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
@@ -151,20 +158,22 @@ function normalize(raw,now=Date.now()){
  for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
  s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
  s.relicEffects=initialRelicEffects();
- for(const k of ['volleys','triages','flankShots','intercepts'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
  s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
  s.relicEffects.intelFinds=integer(raw.relicEffects?.intelFinds,0,2);
  s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
  s.relicEffects.counterDamage=num(raw.relicEffects?.counterDamage,0,1e14);
+ s.relicEffects.braceDamage=num(raw.relicEffects?.braceDamage,0,1e14);
  s.relicEffects.triageCooldown=num(raw.relicEffects?.triageCooldown,0,18);
  s.enemyTactic=initialEnemyTactic(s.stage);
- if(raw.enemyTactic?.stage===s.stage&&isElite(s.stage)&&s.stage>=15){
+ if(raw.enemyTactic?.stage===s.stage&&(isElite(s.stage)||enemyKind(s.stage)==='charger')){
   s.enemyTactic.elapsed=num(raw.enemyTactic.elapsed,0,7200);
   s.enemyTactic.phase=['idle','windup','fired'].includes(raw.enemyTactic.phase)?raw.enemyTactic.phase:'idle';
+  s.enemyTactic.kind=enemyKind(s.stage);
   s.enemyTactic.windup=num(raw.enemyTactic.windup,0,2);
   s.enemyTactic.used=raw.enemyTactic.used===true;
   s.enemyTactic.flash=num(raw.enemyTactic.flash,0,2);
-  s.enemyTactic.result=['flank','intercept'].includes(raw.enemyTactic.result)?raw.enemyTactic.result:null;
+  s.enemyTactic.result=['flank','intercept','rush','brace'].includes(raw.enemyTactic.result)?raw.enemyTactic.result:null;
   if(s.enemyTactic.used)s.enemyTactic.phase='fired';
  }
  s.runOpening=validOpening(raw.runOpening);
@@ -245,7 +254,7 @@ function normalize(raw,now=Date.now()){
    shots:a?integer(a.shots,0,2):0};
  });
  s.battleEvent=raw.battleEvent&&typeof raw.battleEvent==='object'
-  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','triage','intel','aim','flank','intercept'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
+  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','triage','intel','aim','flank','intercept','rush-aim','rush','brace'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
@@ -348,10 +357,28 @@ function victory(s){
 // A visible single-use enemy pattern: only elites and bosses at depth 15+
 // prepare a rear-line focus attack. Existing enemy DPS is redistributed, not
 // added. Time and phase persist across save/reload and offline settlement.
-function advanceEnemyTactic(s,dt,canTargetRear){
+function advanceEnemyTactic(s,dt,canTargetRear,canChargeGuard){
  if(!s.enemyTactic||s.enemyTactic.stage!==s.stage)s.enemyTactic=initialEnemyTactic(s.stage);
  const t=s.enemyTactic;
  t.flash=Math.max(0,t.flash-dt);
+ // The regular charging fighter threatens formation, not additional HP.
+ // It waits for a deployed guard and announces its move before knocking
+ // that fighter back. One action maximum per enemy; no combat RNG.
+ if(t.kind==='charger'){
+  if(t.used)return false;
+  t.elapsed+=dt;
+  if(t.phase==='idle'&&canChargeGuard&&t.elapsed>=3){
+   t.phase='windup';t.windup=1.5;
+   battleCue(s,'rush-aim','guard',1.5);
+   note(s,'돌격병 돌진 준비 · 전열 방벽병을 밀어내려 해');
+   return false;
+  }
+  if(t.phase==='windup'){
+   t.windup=Math.max(0,t.windup-dt);
+   if(t.windup<=0){t.used=true;t.phase='fired';t.flash=1.8;return 'rush';}
+  }
+  return false;
+ }
  if(s.stage<15||!isElite(s.stage)||t.used)return false;
  t.elapsed+=dt;
  if(t.phase==='idle'&&canTargetRear&&t.elapsed>=3){
@@ -364,7 +391,7 @@ function advanceEnemyTactic(s,dt,canTargetRear){
   t.windup=Math.max(0,t.windup-dt);
   if(t.windup<=0){
    t.used=true;t.phase='fired';t.flash=1.8;
-   return true;
+   return 'flank';
   }
  }
  return false;
@@ -417,7 +444,10 @@ function fight(s,dt){
  if(precisionCue!==null)battleCue(s,'volley','ranger',precisionCue);
  s.enemyHp-=damage;
  if(s.enemyHp<=0){victory(s);return;}
- const flankFire=advanceEnemyTactic(s,dt,living.some(a=>a.id!=='guard'&&a.progress>.25));
+ const tactic=advanceEnemyTactic(s,dt,
+  living.some(a=>a.id!=='guard'&&a.progress>.25),
+  living.some(a=>a.id==='guard'&&a.progress>.25));
+ const flankFire=tactic==='flank';
  // Medics work only while alive; injury persists on individual actors.
  for(const medic of living.filter(a=>a.id==='medic'&&a.progress>=.25)){
   const patient=living.filter(a=>a.hp<actorMaxHp(s,a.id)-.001)
@@ -490,6 +520,33 @@ function fight(s,dt){
    s.enemyTactic.result='flank';
    battleCue(s,'flank',target.id,rearShot);
    note(s,'적 측면 타격 · '+(UNITS.find(u=>u.id===target.id)?.name||'후열')+' 피격');
+  }
+ }
+ if(tactic==='rush'){
+  const guard=living.find(a=>a.id==='guard'&&a.hp>0&&a.revive===0&&a.progress>.25);
+  if(guard){
+   s.relicEffects.rushes++;
+   const braced=relic(s,'shield')>0&&relic(s,'swift')>0;
+   if(braced){
+    // A real formation defense: no displacement, and a bounded automatic
+    // melee answer. Existing shield/swift bonuses remain unchanged.
+    s.relicEffects.braces++;
+    const guardPower=UNITS[0].dps*attackInterval('guard')*
+     (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
+     (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*collection;
+    const answer=Math.min(s.enemyHp,guardPower*.4);
+    s.enemyHp-=answer;s.contribution.damage.guard+=answer;
+    s.relicEffects.braceDamage=Math.min(1e14,s.relicEffects.braceDamage+answer);
+    s.enemyTactic.result='brace';
+    battleCue(s,'brace','guard',answer);
+    note(s,'철벽 진형 · 돌격을 저지하고 자동 반격');
+   }else{
+    guard.progress=Math.min(.22,guard.progress);
+    guard.cooldown=Math.max(guard.cooldown,.6);
+    s.enemyTactic.result='rush';
+    battleCue(s,'rush','guard',1);
+    note(s,'적 돌격 · 방벽병 후퇴 위치로 밀림');
+   }
   }
  }
  updateSquadHealth(s);
@@ -775,5 +832,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,enemyKind,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,AUTO_CHEST_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,setAutoChest,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
