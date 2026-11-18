@@ -27,8 +27,33 @@ async function main(){
    const movedActor=await page.locator('#squad .fighter').first().getAttribute('style');
    assert.notEqual(firstActor,movedActor,'fighter must advance visibly with engine state');
    assert.ok(await page.locator('#squad .fighter-health').count()>=2);
+   assert.equal(await page.locator('[data-tab="squad"]').getAttribute('aria-current'),'page','growth is default and battle remains on top');
+   const assertBattleFrame=async label=>{
+    const boxes=await page.evaluate(()=>{
+     const battle=document.querySelector('#battleScreen').getBoundingClientRect();
+     const stage=document.querySelector('.arena').getBoundingClientRect();
+     const navigation=document.querySelector('.tabs').getBoundingClientRect();
+     const tray=document.querySelector('#workbench').getBoundingClientRect();
+     return {battle:{top:battle.top,bottom:battle.bottom,height:battle.height},
+      arena:{top:stage.top,bottom:stage.bottom,height:stage.height},
+      nav:{top:navigation.top,bottom:navigation.bottom},
+      tray:{top:tray.top,bottom:tray.bottom},screen:{width:innerWidth,height:innerHeight},
+      scrollWidth:document.documentElement.scrollWidth};
+    });
+    assert.ok(boxes.arena.height>=110,'actual combat arena visible: '+label+' '+JSON.stringify(boxes));
+    assert.ok(boxes.arena.top>=0&&boxes.arena.bottom<boxes.screen.height,'arena remains in viewport: '+label);
+    assert.ok(boxes.battle.bottom<=boxes.nav.top+2,'command menu must not cover battlefield: '+label);
+    assert.ok(boxes.nav.bottom<=boxes.tray.top+2,'scrolling tray begins below tabs: '+label);
+    assert.ok(boxes.tray.bottom<=boxes.screen.height+1,'command tray fits portrait: '+label);
+    assert.ok(boxes.scrollWidth<=boxes.screen.width+1,'no horizontal overflow: '+label);
+   };
+   await assertBattleFrame('fresh first run');
    await page.locator('[data-tab="squad"]').click();
    assert.equal(await page.locator('#squadScreen').isVisible(),true);
+   await page.locator('#workbench').evaluate(el=>{el.scrollTop=el.scrollHeight;});
+   assert.equal(await page.locator('#battleScreen').isVisible(),true,'battlefield must stay visible during long growth menu scroll');
+   await assertBattleFrame('scrolled growth menu');
+   await page.locator('#workbench').evaluate(el=>{el.scrollTop=0;});
    assert.match(await page.locator('#buyCountSquad').textContent(),/최대 5회/);
    await page.locator('#hire').click();
    assert.equal(await page.locator('#hire').isVisible(),true);
@@ -56,6 +81,8 @@ async function main(){
    assert.equal((await page.locator('#buyCountSquad').textContent()).trim(),'1회');
    await page.locator('[data-tab="supply"]').click();
    assert.equal(await page.locator('#supplyScreen').isVisible(),true);
+   assert.equal(await page.locator('#battleScreen').isVisible(),true,'supply menu never hides combat');
+   await assertBattleFrame('supply menu');
    assert.equal((await page.locator('#buyCountSupply').textContent()).trim(),'1회');
    await page.locator('#buyCountSupply').click();
    assert.match(await page.locator('#buyCountSupply').textContent(),/최대 5회/);
@@ -82,6 +109,8 @@ async function main(){
    assert.equal(await page.locator('#squad .fighter').count(),8,'mobile preview caps drawn actors');
    assert.equal(await page.locator('.roster-note').isVisible(),true,'hidden reserve members must be signaled');
    await page.locator('[data-tab="archive"]').click();
+   assert.equal(await page.locator('#battleScreen').isVisible(),true,'relic collection must not hide combat');
+   await assertBattleFrame('relic archive');
    assert.equal(await page.locator('#openArchiveChest').isVisible(),true);
    assert.equal(await page.locator('#openArchiveBatch').isVisible(),true);
    assert.match(await page.locator('#relicCollectionProgress').textContent(),/미개봉 4상자/);
@@ -111,6 +140,11 @@ async function main(){
    assert.equal(savedBefore.relicHistory.length,4);
    assert.equal(savedBefore.runMetrics.chestsOpened,4);
    page.on('dialog',d=>d.accept());
+   assert.equal(await page.locator('#returnQuick').isVisible(),true,'visible return cue must appear when available');
+   assert.match(await page.locator('#returnBadge').textContent(),/\+/,'return tab signals available cores');
+   await page.locator('#returnQuick').click();
+   assert.equal(await page.locator('#returnScreen').isVisible(),true,'return is a dedicated discoverable tab');
+   await assertBattleFrame('return menu');
    await page.locator('#rebirth').click();
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
    assert.equal(await page.locator('#returnPopup').isVisible(),true,'return summary should appear without adding permanent HUD clutter');
@@ -123,7 +157,7 @@ async function main(){
    assert.ok(savedAfter.latestReturn.after.attack>=savedAfter.latestReturn.before.attack);
    await page.locator('#returnPopupArchive').click();
    assert.equal(await page.locator('#returnPopup').isVisible(),false);
-   assert.equal(await page.locator('#archiveScreen').isVisible(),true);
+   assert.equal(await page.locator('#returnScreen').isVisible(),true);
    assert.equal(await page.locator('#returnReportPanel').isVisible(),true);
    assert.match(await page.locator('#returnReportContent').textContent(),/기본 부대 화력/);
    assert.equal(savedAfter.stage,1);
@@ -136,8 +170,9 @@ async function main(){
    assert.equal(savedAfter.autoBuy.purchases,0);
    assert.equal(await page.evaluate(()=>localStorage.getItem('neon_rework_07')),null);
    await page.reload({waitUntil:'networkidle'});
-   await page.locator('[data-tab="archive"]').click();
+   await page.locator('[data-tab="return"]').click();
    assert.equal(await page.locator('#returnReportPanel').isVisible(),true,'return report survives an actual browser reload');
+   await assertBattleFrame('return report');
    const restoredReport=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')).latestReturn);
    assert.deepEqual(restoredReport,savedAfter.latestReturn,'saved results must stay unchanged after reload');
    assert.match(await page.locator('#returnReportContent').textContent(),/기본 부대 화력/);
@@ -197,7 +232,7 @@ async function main(){
     }
    });
    await page.reload({waitUntil:'networkidle'});
-   await page.locator('[data-tab="archive"]').click();
+   await page.locator('[data-tab="return"]').click();
    assert.match(await page.locator('#permanentBonusSummary').textContent(),/원정 연대기 수집 효과/);
    assert.match(await page.locator('#permanentBonusSummary').textContent(),/피해량 \+\d+%/);
    const chronicleBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
