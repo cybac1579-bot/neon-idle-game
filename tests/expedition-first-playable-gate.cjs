@@ -48,6 +48,15 @@ function firstThirty(seed,mode){
    assert.ok(continued.stage>=previousStage,'restored run cannot lose distance while advancing');
    assert.equal(continued.autoBuy.enabled,true,'restored run keeps opt-in automation active');
    assert.equal(continued.autoBuy.mode,s.autoBuy.mode,'restored run keeps its purchase strategy');
+   // The continued session must survive a second save/reload, too. This
+   // detects state fields that work in memory but disappear on re-serialize.
+   const savedAgain=E.normalize(copy(continued),s.lastSaved||1000000);
+   assert.equal(savedAgain.clock,continued.clock,'second save preserves resumed clock');
+   assert.equal(savedAgain.stage,continued.stage,'second save preserves resumed distance');
+   assert.equal(savedAgain.credits,continued.credits,'second save preserves resumed credits');
+   assert.equal(savedAgain.autoBuy.mode,continued.autoBuy.mode,'second save preserves resumed automation');
+   assert.deepEqual(E.RELICS.map(r=>E.relic(savedAgain,r.id)),
+    E.RELICS.map(r=>E.relic(continued,r.id)),'second save preserves resumed relics');
   }
   if(CHECKPOINTS.has(sec))moments.push({
    elapsedSeconds:sec,stage:s.stage,credits:Math.round(s.credits),
