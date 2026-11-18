@@ -4,6 +4,14 @@
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),assert=require('node:assert/strict');
 const {pathToFileURL}=require('node:url'),{chromium}=require('playwright');
 const packaged=path.resolve(__dirname,'../artifacts/expedition-standalone/neon-expedition-offline.html');
+// Battlefield intentionally renders only three guards; extras are counted
+// in the rear-line summary. Test full roster, not DOM fighter count alone.
+const renderedRosterCount=page=>page.evaluate(()=>{
+ const visible=document.querySelectorAll('#squad .fighter').length;
+ const rearLabel=document.querySelector('.roster-note')?.textContent||'';
+ const rear=Number(rearLabel.match(/후방\s+(\d+)명/)?.[1]||0);
+ return visible+rear;
+});
 async function main(){
  assert.ok(fs.existsSync(packaged),'build the offline HTML first');
  const file=fs.readFileSync(packaged,'utf8');
@@ -112,8 +120,8 @@ async function main(){
   const backupActorCount=Object.values(blockedBackup.state.units).reduce((a,b)=>a+b,0);
   assert.ok(backupActorCount>2&&backupActorCount<=7,
    'failed local save must export the actual batch recruitment, not the original roster');
-  assert.equal(backupActorCount,await blockedPage.locator('#squad .fighter').count(),
-   'backup must match the live roster after a potentially multi-unit purchase');
+  assert.equal(backupActorCount,await renderedRosterCount(blockedPage),
+   'backup must include visible fighters AND rear-line reserves after a batch purchase');
   assert.equal(blockedBackup.state.credits<65,true);
   assert.equal(await blockedPage.locator('#archiveScreen [data-storage-warning]').isVisible(),true);
   assert.equal(await blockedPage.evaluate(()=>localStorage.getItem('neon_expedition_prototype_v1')),null,
@@ -137,7 +145,7 @@ async function main(){
    };
   });
   await recoveredPage.locator('#hire').click();
-  const recruitedActorCount=await recoveredPage.locator('#squad .fighter').count();
+  const recruitedActorCount=await renderedRosterCount(recoveredPage);
   assert.ok(recruitedActorCount>2&&recruitedActorCount<=7,
    'batch recruitment must happen during the simulated write failure');
   assert.equal(await recoveredPage.locator('#squadScreen [data-storage-warning]').isVisible(),true,
