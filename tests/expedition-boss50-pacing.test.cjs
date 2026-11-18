@@ -13,8 +13,8 @@ function ongoingBoss(stage,remainingRatio){
  delete s.bossHpBalanceVersion;
  return s;
 }
-test('early bosses and every ordinary/elite enemy are unchanged',()=>{
- for(const stage of [1,4,5,10,15,20,25,30,35,39,40,41,45,46,49,51,55,59,61])
+test('early bosses except stage40 and ordinary/elite fights are unchanged',()=>{
+ for(const stage of [1,4,5,10,15,20,25,30,35,39,41,45,46,49,51,55,59,61])
   assert.equal(E.enemyMax(stage),oldHp(stage),'stage '+stage);
 });
 test('50+ boss wall is trimmed without dropping below ordinary/elite challenge',()=>{
