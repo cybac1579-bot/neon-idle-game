@@ -176,6 +176,8 @@ async function main(){
    const restoredReport=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')).latestReturn);
    assert.deepEqual(restoredReport,savedAfter.latestReturn,'saved results must stay unchanged after reload');
    assert.match(await page.locator('#returnReportContent').textContent(),/기본 부대 화력/);
+   await page.locator('[data-tab="archive"]').click();
+   assert.equal(await page.locator('#battleScreen').isVisible(),true,'export while the battle remains in view');
    assert.match(await page.locator('#playtestSummary').textContent(),/기록한 1분 단위 상태/);
    const [download]=await Promise.all([
     page.waitForEvent('download'),
