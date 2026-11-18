@@ -7,9 +7,63 @@ const $=id=>document.getElementById(id);
 const field=$('squad'),arena=document.querySelector('.arena');
 if(!field||!arena)return;
 const fx=document.createElement('div');fx.id='battleFx';fx.setAttribute('aria-hidden','true');arena.appendChild(fx);
+// This layer mirrors real battleEvent cues. It neither ticks the game nor
+// invents combat attacks, rewards or relic activations for decoration.
+const motion=document.createElement('div');motion.id='battleMotion';motion.setAttribute('aria-hidden','true');arena.appendChild(motion);
 const rosterNote=document.createElement('div');rosterNote.className='roster-note';rosterNote.hidden=true;arena.appendChild(rosterNote);
 const enemyIntent=document.createElement('div');enemyIntent.className='enemy-intent';enemyIntent.hidden=true;enemyIntent.setAttribute('aria-live','off');arena.appendChild(enemyIntent);
 let visibleKey='',lastCue=-1;
+const offensive=new Set(['hit','volley','intercept','intercept-duet','diagram','brace','unjam']);
+const incoming=new Set(['flank','rush','jam']);
+const warning=new Set(['aim','rush-aim','jam-aim']);
+const defense=new Set(['cover-step','brace-step']);
+const support=new Set(['heal','triage','returned']);
+const centerOf=node=>{
+ if(!node)return null;
+ const base=arena.getBoundingClientRect(),rect=node.getBoundingClientRect();
+ return {x:rect.left-base.left+rect.width/2,y:rect.top-base.top+rect.height/2};
+};
+function showMotion(evt){
+ motion.replaceChildren();
+ const kind=evt.type;
+ // Every effect must come from a committed battle cue. A repeated UI render
+ // never replays the animation, and unknown events leave the layer empty.
+ if(!offensive.has(kind)&&!incoming.has(kind)&&!warning.has(kind)&&
+    !defense.has(kind)&&!support.has(kind)&&
+    !['clear','intel','pursuit','fallen','rally'].includes(kind))return;
+ const fighter=id=>field.querySelector('.fighter.'+id+':not(.down)')||
+   field.querySelector('.fighter.'+id);
+ const foe=arena.querySelector('.foe .silhouette');
+ const guard=fighter('guard'),ranger=fighter('ranger'),medic=fighter('medic');
+ const from=offensive.has(kind)?(kind==='intercept'||kind==='intercept-duet'?ranger||guard:fighter(evt.id)):
+    incoming.has(kind)||warning.has(kind)?foe:support.has(kind)?medic:null;
+ const target=offensive.has(kind)?foe:
+   (incoming.has(kind)||warning.has(kind))?fighter(evt.id):
+   support.has(kind)?fighter(evt.id):defense.has(kind)?guard:null;
+ const p1=centerOf(from),p2=centerOf(target);
+ const emphasis=kind==='volley'?'volley':
+  kind==='diagram'?'diagram':
+  kind==='intercept'||kind==='intercept-duet'?'counter':
+  kind==='brace'||kind==='cover-step'||kind==='brace-step'?'shield':
+  kind==='heal'||kind==='triage'||kind==='returned'?'heal':
+  kind==='rush'||kind==='rush-aim'?'rush':
+  kind==='jam'||kind==='jam-aim'?'jam':
+  kind==='aim'||kind==='flank'?'danger':kind==='clear'||kind==='intel'?'reward':'normal';
+ if(p1&&p2&&p1.x!==p2.x){
+  const trail=document.createElement('span'),dx=p2.x-p1.x,dy=p2.y-p1.y;
+  trail.className='battle-trail '+emphasis+(warning.has(kind)?' telegraph':'');
+  trail.style.left=p1.x+'px';trail.style.top=p1.y+'px';
+  trail.style.width=Math.hypot(dx,dy)+'px';
+  trail.style.transform='rotate('+Math.atan2(dy,dx)+'rad)';
+  motion.appendChild(trail);
+ }
+ const focus=p2||centerOf(foe)||{x:arena.clientWidth/2,y:arena.clientHeight/2};
+ const burst=document.createElement('span');
+ burst.className='battle-burst '+emphasis+
+  (kind==='clear'&&E.isElite(evt.value)?' breakthrough':'');
+ burst.style.left=focus.x+'px';burst.style.top=focus.y+'px';
+ motion.appendChild(burst);
+}
 const safe=n=>Math.max(0,Math.min(100,Number(n)||0));
 const selected=s=>{
  const pick=[],counts={guard:0,ranger:0,medic:0},limits={guard:3,ranger:3,medic:2};
@@ -28,7 +82,7 @@ function sync(s){
    const node=document.createElement('div');
    node.className='fighter '+a.id;
    node.dataset.actorIndex=String(index);
-   node.innerHTML='<div class="fighter-symbol" aria-hidden="true">'+u.symbol+'</div><div class="fighter-health"><div></div></div><span class="fighter-name">'+u.name+'</span>';
+   node.innerHTML='<div class="fighter-symbol" aria-hidden="true"><span class="actor-head"></span><span class="actor-body"></span><span class="actor-tool"></span><span class="actor-emblem">'+u.symbol+'</span></div><div class="fighter-health"><div></div></div><span class="fighter-name">'+u.name+'</span>';
    field.appendChild(node);
   }
   visibleKey=key;
@@ -84,6 +138,8 @@ function sync(s){
  if(s.battleCueSeq===lastCue||!s.battleEvent)return;
  lastCue=s.battleCueSeq;
  const evt=s.battleEvent,unit=E.UNITS.find(u=>u.id===evt.id);
+ // Distinct event-linked motion is a presentation of the combat engine only.
+ showMotion(evt);
  fx.replaceChildren();
  const cue=document.createElement('span');
  cue.className='combat-cue '+evt.type;
@@ -108,11 +164,12 @@ function sync(s){
  else if(evt.type==='heal')cue.textContent='+'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='fallen')cue.textContent=(unit?.name||'용병')+' 후퇴';
  else if(evt.type==='returned')cue.textContent=(unit?.name||'용병')+' 재합류';
- else if(evt.type==='clear')cue.textContent='전선 돌파!';
+ else if(evt.type==='clear')cue.textContent=E.isElite(evt.value)?
+  (E.isBoss(evt.value)?'지휘급 격파 · 보급 상자 획득!':'정예 격파 · 보급 상자 획득!'):'전선 돌파!';
  else if(evt.type==='rally')cue.textContent='부대 재정비';
  fx.appendChild(cue);
  arena.classList.remove('combat-impact');void arena.offsetWidth;
- if(evt.type==='hit'||evt.type==='clear'||evt.type==='flank'||evt.type==='intercept'||evt.type==='cover-step'||evt.type==='intercept-duet'||evt.type==='diagram'||evt.type==='rush'||evt.type==='brace'||evt.type==='brace-step'||evt.type==='jam'||evt.type==='unjam')arena.classList.add('combat-impact');
+ if(evt.type==='hit'||evt.type==='volley'||evt.type==='clear'||evt.type==='flank'||evt.type==='intercept'||evt.type==='cover-step'||evt.type==='intercept-duet'||evt.type==='diagram'||evt.type==='rush'||evt.type==='brace'||evt.type==='brace-step'||evt.type==='jam'||evt.type==='unjam')arena.classList.add('combat-impact');
 }
 root.ExpeditionField={sync};
 })(window);
