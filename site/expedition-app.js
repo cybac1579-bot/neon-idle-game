@@ -186,6 +186,7 @@ $('coreTrade').addEventListener('click',()=>act(()=>E.buyCore(s,'trade'),'코어
 $('openChest').addEventListener('click',e=>openChestWithCount(1,e.currentTarget));
 $('openArchiveChest').addEventListener('click',e=>openChestWithCount(1,e.currentTarget));
 $('openArchiveBatch').addEventListener('click',e=>openChestWithCount(20,e.currentTarget));
+$('autoChestToggle').addEventListener('click',()=>act(()=>E.setAutoChest(s,!s.autoChest.enabled)));
 $('popupClose').addEventListener('click',closeRelicPopup);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('relicPopup').hidden)closeRelicPopup();});
 function showReturnPopup(){
