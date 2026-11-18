@@ -897,3 +897,6 @@ test('relic mechanics persist through rebirth but activation counters do not',()
  assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0});
  assert.ok(s.actors.every(a=>a.shots===0));
 });
+
+// Optional automated collection must preserve manual loot and existing saved preferences.
+require('./expedition-auto-chest.test.cjs');
