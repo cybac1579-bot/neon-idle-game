@@ -390,6 +390,36 @@ async function main(){
    assert.match(tacticView.result.text,/호위.*반격/);
    assert.equal(tacticView.result.intercepts,1);
    assert.match(tacticView.result.event,/호위 반격/);
+   // The first escort contract redirects a real focused rear shot before
+   // the player discovers a focus sight for the full escort-counter.
+   const coverView=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,field=window.ExpeditionField;
+    const s=E.newState(Date.now());
+    s.stage=s.best=s.runBest=15;s.enemyHp=1e10;s.battleCueSeq=2100;
+    s.relics.guard=1;s.units.ranger=1;
+    s.actors.push({id:'ranger',hp:20000,revive:0,progress:1,cooldown:100,shots:0});
+    for(const a of s.actors){a.hp=20000;a.progress=1;a.cooldown=100;}
+    E.tick(s,3);field.sync(s);
+    const intent=document.querySelector('.enemy-intent');
+    const warning={visible:!intent.hidden,text:intent.textContent};
+    E.tick(s,2);field.sync(s);
+    const saved=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+    return {warning,result:s.enemyTactic.result,partialCovers:s.relicEffects.partialCovers,
+     fullInterceptions:s.relicEffects.intercepts,intent:intent.textContent,
+     cue:document.querySelector('.combat-cue')?.textContent,
+     savedResult:saved.enemyTactic.result,savedCue:saved.battleEvent?.type,
+     savedCovers:saved.relicEffects.partialCovers};
+   });
+   assert.equal(coverView.warning.visible,true);
+   assert.match(coverView.warning.text,/측면 조준/);
+   assert.equal(coverView.result,'cover-step');
+   assert.equal(coverView.partialCovers,1);
+   assert.equal(coverView.fullInterceptions,0);
+   assert.match(coverView.intent,/후열 절반 엄호/);
+   assert.match(coverView.cue,/호위 계약서.*후열 공격 절반 엄호/);
+   assert.equal(coverView.savedResult,'cover-step');
+   assert.equal(coverView.savedCue,'cover-step');
+   assert.equal(coverView.savedCovers,1);
    // New regular charging enemy must use the same always-visible field
    // renderer as elite telegraphs, even when the player has Archive open.
    const chargeView=await page.evaluate(()=>{
