@@ -1239,5 +1239,8 @@ require('./expedition-engagement-evidence.test.cjs');
 // Core purchase choices and held-chest discovery must be grounded, read-only.
 require('./expedition-return-choice.test.cjs');
 
+// Report actual per-expedition collection progress instead of inventing new drops.
+require('./expedition-relic-run-count.test.cjs');
+
 // Deep shield+escort combination must allow melee participation, no free rewards.
 require('./expedition-deep-guard-formation.test.cjs');
