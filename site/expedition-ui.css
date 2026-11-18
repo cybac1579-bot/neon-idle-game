@@ -267,3 +267,9 @@ main.game-shell{
 .combat-cue.rush-aim{color:#ffcb91;text-shadow:0 0 11px #e78d48b0;font-weight:900}
 .combat-cue.rush{color:#ffba7c;text-shadow:0 0 13px #d46438a8;font-weight:900}
 .combat-cue.brace{color:#a7ffd3;text-shadow:0 0 13px #3eca949c;font-weight:900}
+/* Replaceable temporary ranged-disruption visuals. */
+.combat-stage .foe.disruptor .silhouette{color:#b3c8ff;filter:drop-shadow(0 0 11px #7e9ef788)}
+.enemy-intent.disrupting{border-color:#90afff;background:#27304df0;color:#e0eaff}
+.enemy-intent.disrupting.intercepted{border-color:#a0ebd3;background:#1e4a44ef;color:#d0fff0}
+.combat-cue.jam-aim,.combat-cue.jam{color:#bacbff;text-shadow:0 0 11px #7f99ffb8;font-weight:900}
+.combat-cue.unjam{color:#9ff3da;text-shadow:0 0 13px #51e2b09e;font-weight:900}
