@@ -153,6 +153,37 @@ async function main(){
    });
    await page.reload({waitUntil:'networkidle'});
    assert.equal(await page.locator('#squad .fighter').count(),8,'mobile preview caps drawn actors');
+   // Dense 12-member roster: eight preview fighters must remain entirely
+   // inside the portrait field, and same-role lanes may not stack together.
+   // This protects real formation readability without changing engine size.
+   const geometry=await page.evaluate(()=>{
+    const field=document.querySelector('#squad').getBoundingClientRect();
+    const groups={guard:[],ranger:[],medic:[]};
+    for(const el of document.querySelectorAll('#squad .fighter')){
+     const box=el.getBoundingClientRect();
+     const role=[...el.classList].find(k=>k in groups);
+     groups[role].push(box);
+    }
+    const clipped=Object.values(groups).flat().some(b=>
+      b.top<field.top-2||b.bottom>field.bottom+2||
+      b.left<field.left-2||b.right>field.right+2);
+    const overlaps=[];
+    for(const [role,boxes] of Object.entries(groups))
+     for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){
+      const a=boxes[i],b=boxes[j];
+      const area=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*
+        Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+      if(area>18)overlaps.push({role,i,j,area});
+     }
+    return {sizes:Object.fromEntries(Object.entries(groups).map(([k,v])=>[k,v.length])),
+      clipped,overlaps,width:field.width,height:field.height};
+   });
+   assert.deepEqual(geometry.sizes,{guard:3,ranger:3,medic:2},
+    'dense field keeps three guards, three rangers, two medics');
+   assert.equal(geometry.clipped,false,
+    'fighters must fit fully within portrait arena: '+JSON.stringify(geometry));
+   assert.equal(geometry.overlaps.length,0,
+    'same-role actors must not occlude each other: '+JSON.stringify(geometry));
    assert.equal(await page.locator('.roster-note').isVisible(),true,'hidden reserve members must be signaled');
    await page.locator('[data-tab="archive"]').click();
    assert.equal(await page.locator('#battleScreen').isVisible(),true,'relic collection must not hide combat');
