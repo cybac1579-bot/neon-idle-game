@@ -121,7 +121,7 @@ const collectionBoost=s=>relic(s,'chronicle')?
 const newState=(now=Date.now())=>({
  version:VERSION,lastSaved:now,seed:123456789,clock:0,credits:65,stage:1,best:1,runBest:1,
  units:{guard:2,ranger:0,medic:0},training:0,questLevels:{dispatch:0,salvage:0,contract:0},
- questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,bossHpBalanceVersion:3,squadHp:96,respawn:0,
+ questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,bossHpBalanceVersion:3,eliteHpBalanceVersion:1,squadHp:96,respawn:0,
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6,shots:0},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2,shots:0}],battleEvent:null,battleCueSeq:0,
  enemyTactic:initialEnemyTactic(1),
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
@@ -317,6 +317,15 @@ function normalize(raw,now=Date.now()){
    s.enemyHp=Math.max(1,Math.min(newBossMax,Math.round(s.enemyHp/oldBossMax*newBossMax)));
   }
  }
+ // Late elite defense v1: preserve the current battle's remaining fraction
+ // rather than granting a fresh full-health enemy or silently wiping progress.
+ // The saved marker makes this migration idempotent on repeated reload.
+ if(raw.eliteHpBalanceVersion!==1&&isElite(s.stage)&&!isBoss(s.stage)&&s.stage>=65&&s.enemyHp>0){
+  const early=Math.min(s.stage-1,39),late=Math.max(0,Math.min(s.stage-40,60));
+  const oldEliteMax=Math.min(1e13,Math.round(2*13*Math.pow(1.235,early)*Math.pow(1.18,late)));
+  const newEliteMax=enemyMax(s.stage);
+  s.enemyHp=Math.max(1,Math.min(newEliteMax,Math.round(s.enemyHp/oldEliteMax*newEliteMax)));
+ }
  s.enemyHp=s.enemyHp||enemyMax(s.stage);
  return s;
 }
@@ -326,9 +335,11 @@ function enemyMax(stage){
  // Keep stages 1..40 exactly as before. After 40, slow exponential HP
  // growth without hiding a boss or eliminating progressive combat difficulty.
  const early=Math.min(stage-1,39),late=Math.max(0,Math.min(stage-40,60));
- // Retain 50 boss (2.2x) unchanged. From 60+ soften a late-game HP sponge
- // (1.9x still >2 times the immediately previous standard enemy).
- const rankMultiplier=isBoss(stage)?(stage>=60?1.9:stage>=50?2.2:3.8):isElite(stage)?2:1;
+ // Boss tiers and all fights through 64 stay unchanged. Later elite fights
+ // used to be 20+ minute stationary HP walls, often longer than a boss.
+ // A 1.6x tier keeps 65+ elite stronger than its ordinary predecessor.
+ const rankMultiplier=isBoss(stage)?(stage>=60?1.9:stage>=50?2.2:3.8):
+  isElite(stage)?(stage>=65?1.6:2):1;
  return Math.min(1e13,Math.round(rankMultiplier*
   13*Math.pow(1.235,early)*Math.pow(1.18,late)));
 }
