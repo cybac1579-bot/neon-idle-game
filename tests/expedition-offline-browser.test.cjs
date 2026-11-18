@@ -49,6 +49,71 @@ async function main(){
    await page.goto(pathToFileURL(packaged).href,{waitUntil:'load'});
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
    assert.ok(await page.locator('#squad .fighter').count()>=2);
+   // Spectator feedback must reflect the *engine's* battle cue, never generate
+   // extra hits or rewards. Probe a separate engine state without touching
+   // the live autosave and check cue replay protection in the real file:// page.
+   if(width===390){
+    const combatVisual=await page.evaluate(()=>{
+     const E=window.ExpeditionEngine,view=window.ExpeditionField;
+     const sample=E.newState();
+     sample.enemyHp=1e7; // prevent a victory while probing a real guard strike
+     sample.actors.forEach(a=>{a.progress=1;a.cooldown=0;});
+     E.tick(sample,.25);
+     const engineEvent=sample.battleEvent?.type;
+     view.sync(sample);
+     const effects=document.querySelector('#battleMotion');
+     const trail=effects.querySelector('.battle-trail');
+     const first=effects.firstElementChild;
+     view.sync(sample);
+     const replayed=effects.firstElementChild!==first;
+     sample.training=8;view.sync(sample);
+     const trainingTier=document.querySelector('.arena').dataset.trainingTier;
+     sample.units.ranger=1;
+     sample.actors.push({id:'ranger',hp:17,revive:0,progress:1,cooldown:0,shots:0});
+     sample.battleCueSeq++;
+     sample.battleEvent={seq:sample.battleCueSeq,type:'volley',id:'ranger',value:20};
+     view.sync(sample);
+     const volley=!!effects.querySelector('.battle-trail.volley');
+     sample.units.medic=1;
+     sample.actors.push({id:'medic',hp:25,revive:0,progress:1,cooldown:0,shots:0});
+     sample.battleCueSeq++;
+     sample.battleEvent={seq:sample.battleCueSeq,type:'heal',id:'guard',value:2};
+     view.sync(sample);
+     const heal=!!effects.querySelector('.battle-trail.heal');
+     sample.battleCueSeq++;
+     sample.battleEvent={seq:sample.battleCueSeq,type:'brace',id:'guard',value:3};
+     view.sync(sample);
+     const shield=!!effects.querySelector('.battle-burst.shield');
+     sample.battleCueSeq++;
+     sample.battleEvent={seq:sample.battleCueSeq,type:'clear',id:'guard',value:5};
+     view.sync(sample);
+     const milestone=!!effects.querySelector('.battle-burst.reward.breakthrough');
+     const chestNotice=document.querySelector('#battleFx')?.textContent||'';
+     const previousEffect=effects.firstElementChild;
+     sample.battleCueSeq++;
+     sample.battleEvent=null;view.sync(sample);
+     const fabricated=effects.firstElementChild!==previousEffect;
+     return {engineEvent,hasHitTrail:!!trail&&!replayed,visibleMiniatures:
+      document.querySelectorAll('.actor-head').length>=2,
+      volley,heal,shield,trainingTier,milestone,chestNotice,replayed,fabricated};
+    });
+    assert.equal(combatVisual.engineEvent,'hit','visual probe must start from a real engine attack');
+    assert.equal(combatVisual.hasHitTrail,true,'attack should be an origin-target motion');
+    assert.equal(combatVisual.visibleMiniatures,true,'role miniatures render instead of lone glyphs');
+    assert.equal(combatVisual.trainingTier,'2','real training value changes visual tier');
+    assert.equal(combatVisual.replayed,false,'same battle cue must not replay the visual effect');
+    assert.equal(combatVisual.volley,true,'precision volley gets a distinct projectile');
+    assert.equal(combatVisual.heal,true,'field healing gets a distinct support effect');
+    assert.equal(combatVisual.shield,true,'brace gets a visible shield effect');
+    assert.equal(combatVisual.milestone,true,'only real 5-distance clear gets milestone burst');
+    assert.match(combatVisual.chestNotice,/보급 상자 획득/);
+    assert.equal(combatVisual.fabricated,false);
+    await page.emulateMedia({reducedMotion:'reduce'});
+    assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.battle-burst')).display),'none',
+      'reduced motion disables bright combat animations without hiding the combat HUD');
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    console.log('PASS visual combat cues: engine attack, volley, heal, brace, tier and reduced motion');
+   }
    assert.equal(await page.locator('#squadScreen [data-storage-warning]').isVisible(),false,
     'ordinary file:// play must never display a false persistence warning');
    assert.match(await page.locator('footer').textContent(),/오프라인 단일 HTML/);
