@@ -1232,6 +1232,8 @@ require('./expedition-valor-first-return-balance.test.cjs');
 
 // Late enemy tactics and pursuit are real combat/collection features, not orphaned tests.
 require('./expedition-commander-cycles.test.cjs');
+// Duplicate collection creates a genuinely different 40+ escort response, but no early buff.
+require('./expedition-escort-duet.test.cjs');
 require('./expedition-stage55-pursuit.test.cjs');
 
 // Long-fight observation reports evidence only; no extra damage or free rewards.
