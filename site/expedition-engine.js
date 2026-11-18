@@ -31,11 +31,11 @@ const RELICS=[
  {id:'shield',name:'합금 배지',desc:'용병단 체력이 수집 수마다 10% 증가',cap:5,unlockStage:5},
  {id:'income',name:'교역 인장',desc:'자동 보급 수익이 수집 수마다 12% 증가',cap:5,unlockStage:5},
  {id:'swift',name:'진군 북',desc:'용병단 피해량이 수집 수마다 5% 증가',cap:5,unlockStage:15},
- {id:'medkit',name:'재생 결속선',desc:'정비사의 회복력이 수집 수마다 18% 증가',cap:4,unlockStage:15},
+ {id:'medkit',name:'재생 결속선',desc:'정비사 회복력 +18%/개 · 살아 있는 정비사가 방벽병 긴급 재합류를 지원 (18초마다 최대 1회)',cap:4,unlockStage:15},
  {id:'boss',name:'균열 렌즈',desc:'지휘급 적에게 주는 피해가 수집 수마다 14% 증가',cap:5,unlockStage:25},
  {id:'bounty',name:'현상금 표식',desc:'전투 크레딧 보상이 수집 수마다 12% 증가',cap:5,unlockStage:5},
  {id:'guard',name:'호위 계약서',desc:'방벽병 체력이 수집 수마다 20% 증가',cap:4,unlockStage:5},
- {id:'archer',name:'초점 조준기',desc:'척후사수의 피해량이 수집 수마다 15% 증가',cap:4,unlockStage:15},
+ {id:'archer',name:'초점 조준기',desc:'사수 3번째 사격마다 정밀 일제사격 발동 (수집 수마다 강화 · 평균 화력 +15%/개)',cap:4,unlockStage:15},
  {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치가 수집 수마다 15% 증가',cap:4,unlockStage:25},
  {id:'fortune',name:'중복 해체권',desc:'중복 유물 발견 시 수집 수마다 추가 크레딧 획득',cap:3,unlockStage:30},
  {id:'relay',name:'작전 통신기',desc:'전체 병종의 피해량이 수집 수마다 5% 증가',cap:5,unlockStage:30},
@@ -52,6 +52,8 @@ const emptyContribution=()=>({damage:{guard:0,ranger:0,medic:0},healing:{guard:0
 const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purchases:0,spent:0});
 const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
+// Per-run relic action telemetry; old saves default to no past activations.
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0});
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
 // Bounded in-run boss/elite clear timestamps: 60-second snapshots miss the opening.
@@ -88,10 +90,10 @@ const newState=(now=Date.now())=>({
  version:VERSION,lastSaved:now,seed:123456789,clock:0,credits:65,stage:1,best:1,runBest:1,
  units:{guard:2,ranger:0,medic:0},training:0,questLevels:{dispatch:0,salvage:0,contract:0},
  questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,bossHpBalanceVersion:2,squadHp:96,respawn:0,
- actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2}],battleEvent:null,battleCueSeq:0,
+ actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6,shots:0},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2,shots:0}],battleEvent:null,battleCueSeq:0,
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
  relics:{},chests:0,chestDepths:[],chestsOpened:0,cores:0,coreSpent:0,coreUpgrades:{valor:0,trade:0},
- rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),autoBuy:initialAutoBuy(),autoChest:initialAutoChest(),runMetrics:initialRunMetrics(),runMilestones:{},runHistory:[],relicHistory:[],playtest:initialPlaytest(),runOpening:initialRunOpening(),latestReturn:null,events:['첫 번째 탐사를 시작했어.']
+ rebirths:0,claimedBreakthroughDistance:0,coreProgress:0,coreReserve:0,contribution:emptyContribution(),relicEffects:initialRelicEffects(),autoBuy:initialAutoBuy(),autoChest:initialAutoChest(),runMetrics:initialRunMetrics(),runMilestones:{},runHistory:[],relicHistory:[],playtest:initialPlaytest(),runOpening:initialRunOpening(),latestReturn:null,events:['첫 번째 탐사를 시작했어.']
 });
 function normalize(raw,now=Date.now()){
  const base=newState(now);if(!raw||raw.version!==VERSION||typeof raw!=='object')return base;
@@ -137,6 +139,10 @@ function normalize(raw,now=Date.now()){
  s.runMetrics=initialRunMetrics();
  for(const k of ['manualPurchases','chestsOpened'])s.runMetrics[k]=integer(raw.runMetrics?.[k],0,1e9);
  s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
+ s.relicEffects=initialRelicEffects();
+ for(const k of ['volleys','triages'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
+ s.relicEffects.triageCooldown=num(raw.relicEffects?.triageCooldown,0,18);
  s.runOpening=validOpening(raw.runOpening);
  const report=raw.latestReturn;
  s.latestReturn=report&&typeof report==='object'&&Number.isFinite(report.cleared)&&Number.isFinite(report.cores)?{
@@ -203,10 +209,11 @@ function normalize(raw,now=Date.now()){
   return {id,hp,
    revive:hp===0&&revive===0?4:revive,
    progress:a?num(a.progress,0,1):0,
-   cooldown:a?num(a.cooldown,0,3):attackInterval(id)*(.55+(i%3)*.2)};
+   cooldown:a?num(a.cooldown,0,3):attackInterval(id)*(.55+(i%3)*.2),
+   shots:a?integer(a.shots,0,2):0};
  });
  s.battleEvent=raw.battleEvent&&typeof raw.battleEvent==='object'
-  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
+  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','triage'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
@@ -301,16 +308,29 @@ function fight(s,dt){
  const living=s.actors.filter(a=>a.revive===0&&a.hp>0);
  if(!living.length){updateSquadHealth(s);return;}
  const boss=isBoss(s.stage),collection=collectionBoost(s);
+ s.relicEffects.triageCooldown=Math.max(0,s.relicEffects.triageCooldown-dt);
  const cueBeforeAttacks=s.battleCueSeq;
- let damage=0;
+ let damage=0,precisionCue=null;
  for(const a of living){
   a.cooldown-=dt;
   if(a.progress<attackRange(a.id)||a.cooldown>0)continue;
   const u=UNITS.find(u=>u.id===a.id);
   const multiplier=(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
    (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*
-   (a.id==='ranger'?1+.15*relic(s,'archer'):1)*(boss?1+.14*relic(s,'boss'):1)*collection;
-  const amount=u.dps*attackInterval(a.id)*multiplier;
+   (boss?1+.14*relic(s,'boss'):1)*collection;
+  // Previous +15%/copy to every shot is now a +45%/copy volley on
+  // every third shot: same nominal average DPS, a different battle rhythm.
+  const baseAmount=u.dps*attackInterval(a.id)*multiplier;
+  if(a.id==='ranger')a.shots=((a.shots||0)+1)%3;
+  const volley=a.id==='ranger'&&a.shots===0&&relic(s,'archer')>0;
+  const amount=baseAmount*(volley?1+.45*relic(s,'archer'):1);
+  if(volley){
+   s.relicEffects.volleys++;
+   const remaining=Math.max(0,s.enemyHp-damage);
+   s.relicEffects.volleyBonusDamage=Math.min(1e14,s.relicEffects.volleyBonusDamage+
+    Math.max(0,Math.min(remaining,amount)-Math.min(remaining,baseAmount)));
+   precisionCue=amount;
+  }
   // Exclude overkill from useful damage statistics; retain original combat damage.
   const dealt=Math.min(Math.max(0,s.enemyHp-damage),amount);
   s.contribution.damage[a.id]+=dealt;
@@ -318,6 +338,8 @@ function fight(s,dt){
   damage+=amount;
   a.cooldown+=attackInterval(a.id);battleCue(s,'hit',a.id,amount);
  }
+ // Ordinary hits must not overwrite this special cue in the same tick.
+ if(precisionCue!==null)battleCue(s,'volley','ranger',precisionCue);
  s.enemyHp-=damage;
  if(s.enemyHp<=0){victory(s);return;}
  // Medics work only while alive; injury persists on individual actors.
@@ -343,8 +365,23 @@ function fight(s,dt){
   const taken=Math.min(actor.hp,amount);
   s.contribution.taken[actor.id]+=taken;
   actor.hp=Math.max(0,actor.hp-taken);
-  if(actor.hp<=0){s.contribution.falls[actor.id]++;actor.revive=6;actor.progress=0;actor.cooldown=.5;
-   battleCue(s,'fallen',actor.id);note(s,(UNITS.find(u=>u.id===actor.id)||UNITS[0]).name+' 후퇴 · 재합류 대기');}
+  if(actor.hp<=0){
+   s.contribution.falls[actor.id]++;actor.revive=6;actor.progress=0;actor.cooldown=.5;
+   // Field triage never prevents defeat or revives the guard instantly.
+   // It only reduces one existing return timer per 18-second interval.
+   const kits=relic(s,'medkit');
+   const triage=actor.id==='guard'&&kits>0&&s.relicEffects.triageCooldown<=0&&
+    living.some(a=>a.id==='medic'&&a.hp>0&&a.revive===0&&a.progress>=.25);
+   if(triage){
+    actor.revive=Math.max(1.2,6-1.2*kits);
+    s.relicEffects.triageCooldown=18;s.relicEffects.triages++;
+    battleCue(s,'triage',actor.id,6-actor.revive);
+    note(s,'재생 결속선 · 방벽병 긴급 회수 · '+actor.revive.toFixed(1)+'초 후 복귀');
+   }else{
+    battleCue(s,'fallen',actor.id);
+    note(s,(UNITS.find(u=>u.id===actor.id)||UNITS[0]).name+' 후퇴 · 재합류 대기');
+   }
+  }
  }
  // The rear can be clipped, but must not be shredded by the exponential
  // enemy damage curve past stage 40. Cap rear pressure per fighter HP per
@@ -405,7 +442,7 @@ function recruit(s){
  const weights=options.map(u=>1/(1+s.units[u.id]*.45));const sum=weights.reduce((a,b)=>a+b,0);let roll=rand(s)*sum;
  let chosen=options[options.length-1];for(let i=0;i<options.length;i++){roll-=weights[i];if(roll<=0){chosen=options[i];break;}}
  if(total(s)>=MAX_ACTORS)return false;
- s.units[chosen.id]++;s.actors.push({id:chosen.id,hp:actorMaxHp(s,chosen.id),revive:0,progress:0,cooldown:.6});
+ s.units[chosen.id]++;s.actors.push({id:chosen.id,hp:actorMaxHp(s,chosen.id),revive:0,progress:0,cooldown:.6,shots:0});
  updateSquadHealth(s);note(s,chosen.name+' 소집');return chosen.id;
 }
 function train(s){const cost=trainCost(s);if(s.credits<cost)return false;
