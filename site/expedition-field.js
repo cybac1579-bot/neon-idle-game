@@ -60,11 +60,15 @@ function sync(s){
  const intent=s.enemyTactic;
  const aiming=intent?.stage===s.stage&&intent.phase==='windup';
  const last=intent?.stage===s.stage&&intent.phase==='fired'&&intent.flash>0;
+ const rushing=intent?.kind==='charger';
  enemyIntent.hidden=!(aiming||last);
  enemyIntent.classList.toggle('aiming',!!aiming);
- enemyIntent.classList.toggle('intercepted',!!last&&intent?.result==='intercept');
- if(aiming)enemyIntent.textContent='⚠ 적 측면 조준 · '+Math.ceil(intent.windup)+'초';
- else if(last)enemyIntent.textContent=intent.result==='intercept'?'🛡 방벽 호위 · 사수 반격 성공':'⚡ 적 후열 집중 타격';
+ enemyIntent.classList.toggle('charging',!!rushing);
+ enemyIntent.classList.toggle('intercepted',!!last&&(intent?.result==='intercept'||intent?.result==='brace'));
+ if(aiming)enemyIntent.textContent=rushing?'⚠ 돌격병 전열 돌진 · '+Math.ceil(intent.windup)+'초':'⚠ 적 측면 조준 · '+Math.ceil(intent.windup)+'초';
+ else if(last)enemyIntent.textContent=rushing?
+   (intent.result==='brace'?'🛡 철벽 진형 · 돌진 저지':'↗ 돌격 충격 · 방벽병 밀려남'):
+   (intent.result==='intercept'?'🛡 방벽 호위 · 사수 반격 성공':'⚡ 적 후열 집중 타격');
  else enemyIntent.textContent='';
  if(s.battleCueSeq===lastCue||!s.battleEvent)return;
  lastCue=s.battleCueSeq;
@@ -79,6 +83,9 @@ function sync(s){
  else if(evt.type==='aim')cue.textContent='적 측면 조준 · 후열 경계!';
  else if(evt.type==='flank')cue.textContent='측면 타격! 후열 -'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='intercept')cue.textContent='호위 반격! -'+Math.max(1,Math.round(evt.value));
+ else if(evt.type==='rush-aim')cue.textContent='돌격 예고! 전열 경계';
+ else if(evt.type==='rush')cue.textContent='돌격 충격! 방벽병 밀려남';
+ else if(evt.type==='brace')cue.textContent='철벽 진형! 자동 반격 -'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='heal')cue.textContent='+'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='fallen')cue.textContent=(unit?.name||'용병')+' 후퇴';
  else if(evt.type==='returned')cue.textContent=(unit?.name||'용병')+' 재합류';
@@ -86,7 +93,7 @@ function sync(s){
  else if(evt.type==='rally')cue.textContent='부대 재정비';
  fx.appendChild(cue);
  arena.classList.remove('combat-impact');void arena.offsetWidth;
- if(evt.type==='hit'||evt.type==='clear'||evt.type==='flank'||evt.type==='intercept')arena.classList.add('combat-impact');
+ if(evt.type==='hit'||evt.type==='clear'||evt.type==='flank'||evt.type==='intercept'||evt.type==='rush'||evt.type==='brace')arena.classList.add('combat-impact');
 }
 root.ExpeditionField={sync};
 })(window);
