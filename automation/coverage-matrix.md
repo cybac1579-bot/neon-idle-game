@@ -404,3 +404,11 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 - **Deep relics / stage50:** source inspected `tests/expedition-deep-relic-economy.test.cjs` and `tests/expedition-stage50-chronicle.test.cjs`; stage40/45/50 unlock gating, cap, legacy chests, persistence and boss-clear milestones have assertions, not independent execution in this run. **P1:** confirm in CI at new HEAD.
 - **Concurrency:** manual developer changed `tests/expedition-stage45-growth-fix-audit.cjs` during this run; no gameplay files overwritten. **P0:** rerun affected tests once HEAD settles.
 - **Production:** main untouched, PR #2 draft; Android file:// save/restore and actual 30-minute play still unverified. Provisional old 60% unchanged, new prototype not scored.
+
+
+## 2026-11-18 09:58 KST — exact-HEAD verification refresh
+- **P0 CI:** at `1d7e1c38` save 44210191363, portrait 44210191320, first-rebirth 44210191247, three-rebirth 44210191106 all completed/success. Prior transient portrait failure at `0b89cc66` 44210174269 superseded by successful newer SHA, not erased.
+- **P0 offline:** same-HEAD portrait run 44210191320 published `neon-expedition-offline-playable` artifact 14385477136 (not expired); download/Android launch and save persistence not independently verified. P1 inspect artifact and exact embedded build SHA.
+- **P0 progression:** first-return control test covers 3 seeds × 2 modes × 5 routes and milestone chest fairness; source reviewed, latest CI success covers its workflow but no separate manual numeric trace read. P1 compare 30-minute low-input event/reward cadence and first/second expedition payoff.
+- **P1 UI:** exact-HEAD Chromium portrait workflow success, not proof of Galaxy S25+ visual clarity or touch fatigue. P1 inspect real screenshot and test Android lock/resume.
+- **Release:** main unchanged; PR #2 draft; no public deployment. Historic provisional readiness 60% (+0pp), new expedition readiness unscored.
