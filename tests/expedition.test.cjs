@@ -6,7 +6,7 @@ const E=require('../site/expedition-engine.js');
 test('original game has an isolated save key and exactly three prototype roles',()=>{
  assert.notEqual(E.SAVE_KEY,'neon_rework_07');
  assert.equal(E.UNITS.length,3);
- assert.equal(E.RELICS.length,15);
+ assert.equal(E.RELICS.length,16);
  assert.equal(E.QUESTS.length,3);
 });
 
@@ -895,8 +895,8 @@ test('relic mechanics persist through rebirth but activation counters do not',()
  assert.ok(E.rebirth(s)>0);
  assert.equal(E.relic(s,'archer'),2);
  assert.equal(E.relic(s,'medkit'),3);
- assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0});
- assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0},
+ assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0});
+ assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0},
   'completed return keeps evidence of tactical relic activation');
  assert.deepEqual(s.latestReturn.relicEffects,s.runHistory.at(-1).relicEffects);
  const normalized=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
