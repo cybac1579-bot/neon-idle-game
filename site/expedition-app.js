@@ -11,15 +11,21 @@ try{loaded=JSON.parse(localStorage.getItem(E.SAVE_KEY)||'null');}catch(err){load
 const s=E.normalize(loaded||E.newState(),Date.now());
 const startup=loaded?E.offline(s,Date.now()):0;
 let buyCount=5;
-let tab='battle',saveAt=Date.now(),lastFrame=performance.now(),toast=startup?'오프라인 '+Math.floor(startup/60)+'분 '+(startup%60)+'초 정산 완료':'',toastUntil=Date.now()+5000;
+let tab='squad',saveAt=Date.now(),lastFrame=performance.now(),toast=startup?'오프라인 '+Math.floor(startup/60)+'분 '+(startup%60)+'초 정산 완료':'',toastUntil=Date.now()+5000;
 function notify(message){toast=message;toastUntil=Date.now()+4000;}
 function save(){try{s.lastSaved=Date.now();localStorage.setItem(E.SAVE_KEY,JSON.stringify(s));saveAt=Date.now();return true;}catch(err){notify('저장 오류: 브라우저 저장 공간을 확인해 줘');return false;}}
 function row(label,value){return '<div class="statline"><span>'+safe(label)+'</span><b>'+safe(value)+'</b></div>';}
 function ratio(x,max){return Math.max(0,Math.min(100,100*x/Math.max(1,max)))+'%';}
 function screen(name){
+ if(!['squad','supply','archive','return'].includes(name))name='squad';
+ const changed=tab!==name;
  tab=name;
- for(const n of ['battle','squad','supply','archive'])$(n+'Screen').hidden=n!==name;
+ // Combat is never tabbed out: only the independently scrolling command tray
+ // changes panels. Preserve live formation, enemy HP and motion continuously.
+ $('battleScreen').hidden=false;
+ for(const n of ['squad','supply','archive','return'])$(n+'Screen').hidden=n!==name;
  document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===name);b.setAttribute('aria-current',b.dataset.tab===name?'page':'false');});
+ if(changed)$('workbench').scrollTop=0;
  render();
 }
 function renderBattle(){
@@ -41,6 +47,12 @@ function renderBattle(){
  $('openChest').hidden=s.chests<1;
  $('openChest').textContent='✦ 보급 상자 '+fmt(s.chests)+'개 열기';
  $('goal').textContent=fmt(s.stage+((5-s.stage%5)%5))+'거리';
+ const availableCores=E.rebirthGain(s),ready=availableCores>0;
+ $('returnQuick').hidden=!ready;
+ $('returnQuick').textContent='↻ 귀환 가능 · +'+fmt(availableCores)+'코어';
+ $('returnTab').classList.toggle('available',ready);
+ $('returnBadge').hidden=!ready;
+ $('returnBadge').textContent='+'+fmt(availableCores);
  $('frontSummary').innerHTML=row('지휘관 레벨','LV.'+fmt(s.heroLevel))+
    row('용병 총원',fmt(E.UNITS.reduce((sum,u)=>sum+s.units[u.id],0))+'명')+
    row('이번 탐사 격파',fmt(s.runKills)+'회')+
@@ -234,13 +246,14 @@ function renderArchive(){
   row('기록된 귀환',fmt(s.runHistory.length)+'회')+
   row('현재 자동 성장',s.autoBuy.enabled?'켜짐 · '+s.autoBuy.mode:'꺼짐');
 }
-function render(){
- // Simulate regardless of tab, but do not rebuild an off-screen battlefield
- // or recreate the archive's dozens of DOM nodes three times per second.
- if(tab==='battle')renderBattle();
- else if(tab==='squad')renderSquad();
+function renderPanel(){
+ if(tab==='squad')renderSquad();
  else if(tab==='supply')renderSupply();
- else if(tab==='archive')renderArchive();
+ else if(tab==='archive'||tab==='return')renderArchive();
+}
+function render(){
+ renderBattle();
+ renderPanel();
 }
 function act(fn,fail){const result=fn();if(result===false||result===null){notify(fail||'아직 실행할 수 없어.');}else save();render();return result;}
 let chestOpener=null;
@@ -319,7 +332,7 @@ async function importFullSave(file){
  // export time. Prevent credit/reward duplication on stale backups.
  Object.assign(s,decoded);s.lastSaved=Date.now();
  const persistent=save();
- screen('battle');
+ screen('squad');
  notify(persistent?'백업을 복원했어.':'임시 복원했어. 이 브라우저는 자동 저장이 불가능하므로 전체 저장 백업을 다시 내려받아 줘.');
  render();
 }
@@ -407,24 +420,26 @@ function showReturnPopup(){
 }
 function closeReturnPopup(destination){
  $('returnPopup').hidden=true;
- if(destination==='archive'){
-  screen('archive');
+ if(destination==='return'){
+  screen('return');
   $('returnReportPanel').focus();
  }else{
-  document.querySelector('[data-tab="battle"]').focus();
+  screen('squad');
+  document.querySelector('[data-tab="squad"]').focus();
  }
 }
 $('returnPopupClose').addEventListener('click',()=>closeReturnPopup('battle'));
-$('returnPopupArchive').addEventListener('click',()=>closeReturnPopup('archive'));
+$('returnPopupArchive').addEventListener('click',()=>closeReturnPopup('return'));
 document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&!$('returnPopup').hidden)closeReturnPopup('battle');
 });
+$('returnQuick').addEventListener('click',()=>screen('return'));
 $('rebirth').addEventListener('click',()=>{
  const gain=E.rebirthGain(s);
  if(!gain)return;
  if(!confirm('이번 탐사 병력·훈련·의뢰 레벨이 초기화돼. 유물과 지휘관 레벨은 남아. 기본 '+E.rebirthRewards(s).base+'코어 + 최초 기록 '+E.rebirthRewards(s).recordBonus+'코어 = 총 '+gain+'코어를 얻고 귀환할까?'))return;
  const returned=act(()=>E.rebirth(s));if(!returned)return;
- screen('battle');showReturnPopup();
+ screen('squad');showReturnPopup();
 });
 $('saveNow').addEventListener('click',()=>{if(save())notify('탐사 기록 저장 완료');render();});
 $('exportPlaytest').addEventListener('click',exportPlaytest);
@@ -445,10 +460,10 @@ setInterval(()=>{
  const now=performance.now(),elapsed=Math.min(2,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
  E.tick(s,elapsed);
  if(Date.now()-saveAt>5000)save();
- // Combat positioning stays smooth, while list-heavy inactive tabs refresh
- // at ~1.2-second cadence. Every explicit player action still renders now.
- if(tab==='battle')render();
- else if(now-lastPassiveRender>=1200){lastPassiveRender=now;render();}
+ // Always draw the live battlefield at 350ms even while the player scrolls
+ // growth, supply, relics or return. Only the scrollable menu is throttled.
+ renderBattle();
+ if(now-lastPassiveRender>=1200){lastPassiveRender=now;renderPanel();}
 },350);
 render();
 })();
