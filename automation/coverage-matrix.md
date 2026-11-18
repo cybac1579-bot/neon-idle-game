@@ -395,3 +395,12 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 - Confirmed prior `e1ba33bf` CI: save 44185372854, portrait 44185372841, first-rebirth 44185372969, three-rebirth 44185372902 — all successful. **Does not cover later 15 commits.**
 - Latest changed surface: stage40/45 chest-earned relic pool, enlist/train cost discounts, save/rebirth persistence; source-level tests in `tests/expedition-deep-relic-economy.test.cjs` reviewed, execution pending. Next high priority: run this suite and verify newer HEAD CI, then 30-minute low-input growth and real-device portrait/save lifecycle.
 - Release: main and Pages untouched; new prototype readiness unverified; old provisional 60% unchanged.
+
+
+## 2026-11-18 08:59 KST — current expedition risk rotation
+- **Save and 3-rebirth:** latest observed `b8bcd85d` Actions 44204054711 and 44204054733 success; next validate after concurrent stage45 audit modification.
+- **Mobile portrait / offline HTML:** `b8bcd85d` Actions 44204054729 and 44204044300 still in progress at observation. No exact-HEAD offline artifact verified. **P0:** inspect jobs and artifact after completion; distinguish desktop Chromium from Galaxy S25+.
+- **First-rebirth pacing:** `b8bcd85d` run 44204054816 in progress. **P0:** obtain result and measure 20–30m low-input run 1/run 2 with reward and interaction traces.
+- **Deep relics / stage50:** source inspected `tests/expedition-deep-relic-economy.test.cjs` and `tests/expedition-stage50-chronicle.test.cjs`; stage40/45/50 unlock gating, cap, legacy chests, persistence and boss-clear milestones have assertions, not independent execution in this run. **P1:** confirm in CI at new HEAD.
+- **Concurrency:** manual developer changed `tests/expedition-stage45-growth-fix-audit.cjs` during this run; no gameplay files overwritten. **P0:** rerun affected tests once HEAD settles.
+- **Production:** main untouched, PR #2 draft; Android file:// save/restore and actual 30-minute play still unverified. Provisional old 60% unchanged, new prototype not scored.
