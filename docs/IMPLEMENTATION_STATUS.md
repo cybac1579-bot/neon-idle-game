@@ -373,3 +373,14 @@ Previous ~67% is historical estimate only; no current evidence-based revised per
 - `scripts/build-expedition-standalone.cjs`가 새 스타일/어댑터도 단일 HTML에 인라인하는 구조로 갱신됨. `tests/expedition-ui-contract.test.cjs`를 CI에 넣어 UI 누락/엔진 결합을 검증하며 기존 모바일 브라우저/오프라인 회귀도 유지한다.
 - 교체 방법, 최소 메서드/DOM 계약, 미해결 항목은 `docs/EXPEDITION_UI_REPLACEABLE_ARCHITECTURE_20261118.md`. 현재 어댑터는 기존 DOM ID 계약을 이용하므로 HTML 구조·ID를 통째로 바꾸는 경우 새 어댑터+필요한 이벤트 연결을 함께 업데이트해야 한다. **모든 미래 UI가 자동 호환되는 것은 아님.**
 - 기존 저장키 `neon_expedition_prototype_v1`과 기존판 `neon_rework_07`은 변경하지 않음. 사용자에게 **최종 UI 완성**이라고 보고하지 않는다.
+
+
+## 2026-11-18 — 실제 플레이 반영: 두 행동 변화형 유물, 전투 발동 통계 (검증 완료)
+- 사용자 실제 플레이 피드백의 우선순위: 단순 공격력·보급 수치만 올라가는 유물로는 진행·전투 체감이 변하지 않음. 모든 유물을 무작정 추가하기보다 **소수의 기계적 동작 변화**를 먼저 검증.
+- `초점 조준기(archer)`: 기존 +15%/개 평탄한 사수 피해 보너스를 3번째 사격 시 +45%/개 추가 피해로 변환. 명목 3타 평균 DPS 유지, 개별 사수 shots(0..2) 저장 복원, 전장 `정밀 사격!` 연출.
+- `재생 결속선(medkit)`: 기존 정비사 회복 +18%/개 유지하며 생존 정비사가 전열에 있으면 방벽병 후퇴 18초마다 1회 재합류 시간 1.2초/개 단축 (최저 1.2초). 즉시 부활/후퇴 무효화 아님. `긴급 회수!` 연출.
+- 새 발동 횟수/추가 유효 피해를 유물 탭에 선택 조회하고 로컬 플레이 분석 JSON `currentRun.relicEffects`에 포함. `runHistory[].relicEffects`, `latestReturn.relicEffects`에 **귀환 전 발동 실적 저장**. 예전 저장은 새 필드 없이도 복원하며 과거 실행 횟수를 추정하지 않는다.
+- 코드: `site/expedition-engine.js`, `site/expedition-field.js`, `site/expedition-ui.js`, `site/expedition-ui.css`, `site/expedition.html`, `site/expedition-app.js`; UI 교체형 아키텍처 유지. 근거/세부 수치는 `docs/EXPEDITION_RELIC_BEHAVIOR_PHASE1_20261118.md`.
+- **PASS:** GitHub Actions [44222910914](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44222910914), 기준 SHA `d39d2258384b1f88f11215174bf2b4f559e83b7e`, **Node 147/147 PASS**, 세로 브라우저 360/390/412 및 독립 HTML `file://` 무네트워크 백업/복원/재로드 PASS. 실행 파일은 GitHub Actions 비공개 `neon-expedition-offline-playable` 아티팩트에 있음.
+- **범위 제한:** 이것은 유물 콘텐츠 전면 완성이 아니라 2종의 수직 실험이다. 연사도 단일 적에게 추가 피해를 몰아넣는 변화라 실제 관전 재미 차이는 기기 플레이 검증이 필요. 이후 전투 적 조합/탐사 보상/유물 빌드 분기를 설계할 필요가 있음. 아직 임시 UI/기호 전장만 존재하며 UI 최종 확정 금지.
+- 기존 사용자 HTML은 자동 교체되지 않음. 반드시 이전 파일의 **유물 → 전체 저장 백업**으로 별도 JSON을 만들고 새 파일에서 **유물 → 저장 파일 복원**을 수행. 오직 `integration/reconcile-main-redesign-20261114` 수정; 공개 main 미변경.
