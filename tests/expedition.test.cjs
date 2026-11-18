@@ -1234,5 +1234,5 @@ require('./expedition-valor-first-return-balance.test.cjs');
 require('./expedition-commander-cycles.test.cjs');
 require('./expedition-stage55-pursuit.test.cjs');
 
-// Deep post-50 relic and boss second phase must not disturb early returns.
-require('./expedition-stage55-pursuit.test.cjs');
+// Long-fight observation reports evidence only; no extra damage or free rewards.
+require('./expedition-engagement-evidence.test.cjs');
