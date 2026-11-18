@@ -28,7 +28,7 @@ const QUESTS=[
 ];
 const RELICS=[
  {id:'ember',name:'용광로 문장',desc:'용병단 피해량이 수집 수마다 8% 증가',cap:5,unlockStage:5},
- {id:'shield',name:'합금 배지',desc:'용병단 체력 +10%/개 · 진군 북과 돌격 방어 · 55거리 이상 호위 계약서와 함께 방벽병 단타 피해 경감',cap:5,unlockStage:5},
+ {id:'shield',name:'합금 배지',desc:'용병단 체력 +10%/개 · 단독 돌진 부분 버팀 · 진군 북과 완전 돌격 방어 · 55거리 이상 호위 계약서와 함께 방벽병 단타 피해 경감',cap:5,unlockStage:5},
  {id:'income',name:'교역 인장',desc:'자동 보급 수익이 수집 수마다 12% 증가',cap:5,unlockStage:5},
  {id:'swift',name:'진군 북',desc:'용병단 피해량 +5%/개 · 합금 배지와 함께 돌격병의 밀치기 방어',cap:5,unlockStage:15},
  {id:'medkit',name:'재생 결속선',desc:'정비사 회복력 +18%/개 · 방벽병 긴급 재합류 지원 (18초마다 최대 1회) · 작전 통신기와 함께 교란 사격 대응',cap:4,unlockStage:15},
@@ -65,7 +65,7 @@ const normalizedLongestEncounter=raw=>raw&&typeof raw==='object'&&
  stage:integer(raw.stage,0,100000),seconds:num(raw.seconds,0,1e9)
 }:initialLongestEncounter();
 // Per-run relic action telemetry; old saves default to no past activations.
-const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0});
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,partialBraces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0});
 // New standard-enemy role is deterministic per stage and independent of drop RNG.
 function enemyKind(stage){
  if(isBoss(stage))return 'boss';
@@ -81,7 +81,7 @@ const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  intelFinds:integer(raw.intelFinds,0,2),
  flankShots:integer(raw.flankShots,0,1e9),intercepts:integer(raw.intercepts,0,1e9),
  counterDamage:num(raw.counterDamage,0,1e14),rushes:integer(raw.rushes,0,1e9),
- braces:integer(raw.braces,0,1e9),braceDamage:num(raw.braceDamage,0,1e14),
+ braces:integer(raw.braces,0,1e9),partialBraces:integer(raw.partialBraces,0,1e9),braceDamage:num(raw.braceDamage,0,1e14),
   jams:integer(raw.jams,0,1e9),cleanses:integer(raw.cleanses,0,1e9),cleanseDamage:num(raw.cleanseDamage,0,1e14),
   commandMoves:integer(raw.commandMoves,0,1e9),commandSurges:integer(raw.commandSurges,0,1e9),guardPlateBlocks:integer(raw.guardPlateBlocks,0,1e9),escortDuets:integer(raw.escortDuets,0,1e9)
 }:null;
@@ -184,7 +184,7 @@ function normalize(raw,now=Date.now()){
  s.longestEncounter=normalizedLongestEncounter(raw.longestEncounter);
  s.longEngagements=integer(raw.longEngagements,0,1e9);
  s.relicEffects=initialRelicEffects();
- for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','jams','cleanses','commandMoves','commandSurges','guardPlateBlocks','escortDuets'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','partialBraces','jams','cleanses','commandMoves','commandSurges','guardPlateBlocks','escortDuets'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
  s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
  s.relicEffects.intelFinds=integer(raw.relicEffects?.intelFinds,0,2);
  s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
@@ -200,7 +200,7 @@ function normalize(raw,now=Date.now()){
   s.enemyTactic.windup=num(raw.enemyTactic.windup,0,2);
   s.enemyTactic.used=raw.enemyTactic.used===true;
   s.enemyTactic.flash=num(raw.enemyTactic.flash,0,2);
-   s.enemyTactic.result=['flank','intercept','rush','brace','jam','unjam'].includes(raw.enemyTactic.result)?raw.enemyTactic.result:null;
+   s.enemyTactic.result=['flank','intercept','rush','brace','brace-step','jam','unjam'].includes(raw.enemyTactic.result)?raw.enemyTactic.result:null;
   s.enemyTactic.turns=integer(raw.enemyTactic.turns,0,10000);
   // Old save already fired at 40+: preserve elapsed and schedule a later phase.
   if(s.stage>=40&&s.enemyTactic.used&&!s.enemyTactic.turns)s.enemyTactic.turns=1;
@@ -301,7 +301,7 @@ function normalize(raw,now=Date.now()){
    shots:a?integer(a.shots,0,2):0};
  });
  s.battleEvent=raw.battleEvent&&typeof raw.battleEvent==='object'
-  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','pursuit','triage','intel','aim','flank','intercept','intercept-duet','rush-aim','rush','brace','jam-aim','jam','unjam'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
+  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','pursuit','triage','intel','aim','flank','intercept','intercept-duet','rush-aim','rush','brace','brace-step','jam-aim','jam','unjam'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
@@ -682,6 +682,15 @@ function fight(s,dt){
     s.enemyTactic.result='brace';
     battleCue(s,'brace','guard',answer);
     note(s,'철벽 진형 · 돌격을 저지하고 자동 반격');
+   }else if(relic(s,'shield')>0){
+    // First shield copy gives a modest visible charge defense before the drum.
+    // The guard remains out of melee range (.83); there is no free damage.
+    guard.progress=Math.min(.45,guard.progress);
+    guard.cooldown=Math.max(guard.cooldown,.6);
+    s.relicEffects.partialBraces=Math.min(1e9,s.relicEffects.partialBraces+1);
+    s.enemyTactic.result='brace-step';
+    battleCue(s,'brace-step','guard',.45);
+    note(s,'합금 배지 · 부분 버팀 · 돌진 후퇴 거리를 줄였어');
    }else{
     guard.progress=Math.min(.22,guard.progress);
     guard.cooldown=Math.max(guard.cooldown,.6);
