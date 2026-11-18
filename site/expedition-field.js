@@ -144,6 +144,9 @@ function sync(s){
  }
  previousRoster=roster;previousTraining=training;
  const shown=selected(s);
+ // In a 360px portrait screen 3 full-height fighters cannot occupy three
+ // distinct rows. Compact only the preview geometry, never actor counts.
+ arena.classList.toggle('formation-dense',shown.length>=6);
  const key=shown.map(x=>x.index+':'+x.a.id).join('|');
  if(key!==visibleKey){
   field.replaceChildren();
