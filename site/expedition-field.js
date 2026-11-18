@@ -166,7 +166,7 @@ function sync(s){
  shown.forEach(({a,index})=>{
   const el=field.querySelector('[data-actor-index="'+index+'"]');if(!el)return;
   const lane=slots[a.id]++;
-  const progress=safe(a.progress)/100;
+  const progress=Math.max(0,Math.min(1,Number(a.progress)||0));
   // Three separated deployment zones: rear support, rear shooters, front.
   // In all zones horizontal progress remains driven by the *real* actor.
   const x=a.id==='guard'?50+progress*12+lane*2:
