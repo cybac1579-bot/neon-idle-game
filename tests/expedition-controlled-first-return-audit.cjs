@@ -70,6 +70,25 @@ for(const mode of MODES)for(const seed of SEEDS){
    'spending combat cores must not mint extra reward cores');
  }
 }
+// The optimum is not forced. Report the magnitude and source of the
+// advantage before choosing whether to rebalance core prices or relic odds.
+const routeComparison=MODES.flatMap(mode=>SEEDS.map(seed=>{
+ const r=label=>rows.find(x=>x.mode===mode&&x.seed===seed&&x.route===label);
+ const base=r('no-return'),noCore=r('return25-no-core'),invest=r('return25-invest');
+ const shortcutPercent=+(100*(base.cleared45AtSeconds-invest.cleared45AtSeconds)/
+  base.cleared45AtSeconds).toFixed(1);
+ // This is a regression ceiling, not a promise that earliest return should
+ // be optimal. Earlier experiments found a 25-26% shortcut in some seeds.
+ assert.ok(shortcutPercent<=35,
+  'early return 25 has become a >35% mandatory shortcut: '+mode+'/'+seed);
+ return {mode,seed,firstReturnSeconds:invest.firstReturnSeconds,
+  direct45Seconds:base.cleared45AtSeconds,
+  return25NoCoreSeconds:noCore.cleared45AtSeconds,
+  return25InvestedSeconds:invest.cleared45AtSeconds,
+  extraChestOpens:invest.openedChests-base.openedChests,
+  incrementalCoreInvestmentSavedSeconds:noCore.cleared45AtSeconds-invest.cleared45AtSeconds,
+  measuredShortcutPercent:shortcutPercent};
+}));
 console.log(JSON.stringify({experiment:'controlled-first-return-vs-extra-relic-chests',synthetic:true,
  note:'First clear45 elapsed time. 5-min manual checkins PLUS every five-clear milestone chest opening in *both* direct and returned runs. Early return is manually chosen; core investment is separately controlled. No forced first-rebirth time, no hidden timer.',
- rows}));
+ rows,routeComparison}));
