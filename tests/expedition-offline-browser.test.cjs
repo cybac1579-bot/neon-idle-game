@@ -121,13 +121,31 @@ async function main(){
   await tierPage.locator('[data-tab="archive"]').click();
   assert.equal(await tierPage.locator('#relicNextDiscovery').isVisible(),false,
    'a new player should not receive an irrelevant locked-tier message');
-  await tierPage.evaluate(()=>{
+  // Seed via the real user-visible backup restore flow. Writing directly to
+  // localStorage then reloading is unsafe: pagehide correctly saves the old
+  // in-memory session and overwrites an injected external value.
+  tierPage.on('dialog',dialog=>dialog.accept());
+  const importTierSave=async state=>{
+   const payload={schema:'neon-expedition-full-save-v1',
+    saveKey:'neon_expedition_prototype_v1',state};
+   await tierPage.locator('#importSaveFile').setInputFiles({
+    name:'tier-acceptance-save.json',mimeType:'application/json',
+    buffer:Buffer.from(JSON.stringify(payload))
+   });
+   await tierPage.waitForFunction(expected=>{
+    const saved=JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')||'null');
+    return saved?.stage===expected.stage&&saved?.best===expected.best &&
+     saved?.chests===expected.chests;
+   },state,{timeout:10000});
+  };
+  const firstTierSave=await tierPage.evaluate(()=>{
    const E=window.ExpeditionEngine,s=E.newState(Date.now());
    s.stage=s.best=s.runBest=40;s.enemyHp=E.enemyMax(40);
    for(const r of E.RELICS)if(r.unlockStage<=30)s.relics[r.id]=1;
    s.chests=2;s.chestDepths=[5,35];
-   localStorage.setItem(E.SAVE_KEY,JSON.stringify(s));
+   return s;
   });
+  await importTierSave(firstTierSave);
   await tierPage.reload({waitUntil:'load'});
   await tierPage.locator('[data-tab="archive"]').click();
   const depth40Hint=tierPage.locator('#relicNextDiscovery');
@@ -149,21 +167,23 @@ async function main(){
   assert.match(depth40Text,/미개봉 상자 2개는 새 종류 후보가 없어/);
   // Clearing the boss without opening the new-depth chest leaves a real
   // discoverable kind, so the all-discovered banner must disappear.
-  await tierPage.evaluate(()=>{
+  const secondTierSave=await tierPage.evaluate(()=>{
    const key=window.ExpeditionEngine.SAVE_KEY,s=JSON.parse(localStorage.getItem(key));
    s.stage=s.best=s.runBest=41;s.chests=3;s.chestDepths=[5,35,40];
-   s.enemyHp=window.ExpeditionEngine.enemyMax(41);s.lastSaved=Date.now();
-   localStorage.setItem(key,JSON.stringify(s));
+   s.enemyHp=window.ExpeditionEngine.enemyMax(41);
+   return s;
   });
+  await importTierSave(secondTierSave);
   await tierPage.reload({waitUntil:'load'});
   await tierPage.locator('[data-tab="archive"]').click();
   assert.equal(await tierPage.locator('#relicNextDiscovery').isVisible(),false,
    'a newly earned depth40 chest can discover enlist before a deeper gate');
-  await tierPage.evaluate(()=>{
+  const thirdTierSave=await tierPage.evaluate(()=>{
    const key=window.ExpeditionEngine.SAVE_KEY,s=JSON.parse(localStorage.getItem(key));
-   s.relics.enlist=1;s.chests=0;s.chestDepths=[];s.lastSaved=Date.now();
-   localStorage.setItem(key,JSON.stringify(s));
+   s.relics.enlist=1;s.chests=0;s.chestDepths=[];
+   return s;
   });
+  await importTierSave(thirdTierSave);
   await tierPage.reload({waitUntil:'load'});
   await tierPage.locator('[data-tab="archive"]').click();
   assert.match(await tierPage.locator('#relicNextDiscovery').textContent(),
