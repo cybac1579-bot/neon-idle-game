@@ -83,8 +83,16 @@ function renderAutoBuy(){
     '분 대기(전투 보상 제외) · 성장이 멈춘 것 같다면 균형/유동형 전환 가능';
   }
  }
+ // On a passive first expedition, unspent credits can leave the army at
+ // distance 14 for the whole session. Explain the available voluntary choice
+ // without secretly enabling purchases or adding an always-on battle HUD tip.
+ const hasAffordableGrowth=s.credits>=E.trainCost(s)||
+  (s.actors.length<E.MAX_ACTORS&&s.credits>=E.hireCost(s));
+ const firstRunIdleHelp=!a.enabled&&s.rebirths===0&&s.clock>=180&&
+  s.runMetrics.manualPurchases===0&&hasAffordableGrowth?
+  '첫 탐사 성장 안내 · 크레딧이 모여 있어도 강화는 자동으로 구매되지 않아. 위에서 직접 소집·훈련하거나, 원하면 성장 자동 구매를 켜줘. / ':'';
  $('autoStatus').textContent=a.enabled?'작동 중 · '+E.AUTO_BUY_INTERVAL+'초마다 구매 판단':'자동 구매 꺼짐';
- $('autoDetails').textContent=(a.mode==='adaptive'?'유동형 균형 · 현재 구매 가능 항목 확인 / ':a.mode==='reserve'?'장기 저축 · 현재 항목 완료까지 구매 대기 / ':a.mode==='balanced'?'균형 · 장기 대기 시 부담 적은 성장으로 전환 / ':'')+
+ $('autoDetails').textContent=firstRunIdleHelp+(a.mode==='adaptive'?'유동형 균형 · 현재 구매 가능 항목 확인 / ':a.mode==='reserve'?'장기 저축 · 현재 항목 완료까지 구매 대기 / ':a.mode==='balanced'?'균형 · 장기 대기 시 부담 적은 성장으로 전환 / ':'')+
    '다음 대상: '+label+(target?' · '+fmt(target.cost)+' 크레딧'+(s.credits>=target.cost?' · 구매 가능':' · 크레딧 축적 중'):'')+
    reserveWait+
    ' / 이번 탐사 자동 구매 '+fmt(a.purchases)+'회 · '+fmt(a.spent)+' 크레딧 사용';
