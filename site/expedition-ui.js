@@ -165,7 +165,7 @@ function renderArchive(){
   '이번 탐사 전술 발동 · 정밀 일제사격 '+fmt(effects.volleys)+'회 (추가 유효 피해 '+fmt(effects.volleyBonusDamage)+
   ') · 긴급 재합류 '+fmt(effects.triages)+'회'+
   (intelActive?' · 탐사 정보망 '+fmt(effects.intelFinds)+'/2회 자동 발견'+
-    ((effects.intelFinds||0)<2?' · 정예 조사 '+fmt(effects.intelClears||0)+'/2':' · 이번 귀환 보상 완료'):
+    ((effects.intelFinds||0)<2?' · 30거리 이후 정예 조사 '+fmt(effects.intelClears||0)+'/2':' · 이번 귀환 보상 완료'):
     intelPieces===1?' · 조합 목표 · 탐사 정보망 1/2 (미발견: '+(scoutOwned?'작전 통신기':'탐사 일지')+')':'')+
   ' · 추가 조작 없이 자동 발동':'';
 
