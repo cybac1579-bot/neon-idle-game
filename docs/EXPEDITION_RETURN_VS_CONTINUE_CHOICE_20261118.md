@@ -24,7 +24,9 @@
 - `tests/expedition.test.cjs`의 CI 회귀 스위트에 정식 편입.
 - `tests/expedition-browser.test.cjs`에 실제 390px Chromium에서 귀환/연장 문구, 전투 화면 분리, 가짜 코어 지출 방지, 구세이브 첫 기록/해금 표시 검증.
 - 기존 정적 화면 교체 계약·브라우저 가로 오버플로우·저장 백업·오프라인 파일 실행도 유지.
-- 테스트 현황: 해당 변경의 게임 엔진/정적 UI 계약 및 자동 환생·경제 경로 테스트는 통과를 확인했으며, 최신 전체 Chromium 통합 검증의 최종 성공 여부는 후속 기록으로 갱신한다.
+- [통합 Chromium 검증 #44238952147](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44238952147): **214개 엔진 테스트 전부 PASS, 실패 0**. 360/390/412px 터치 플레이, 귀환 비교/구세이브 표시, 오프라인 단일 HTML 및 백업 왕복까지 성공. 이 실행과 현재 개발 브랜치의 차이는 테스트·문서 파일뿐이며 게임 실행 코드는 동일하다.
+- [검증된 오프라인 플레이용 HTML ZIP](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44238952147/artifacts/14398349042) · 2026-12-18까지 보존 예정.
+- [Chromium 실제 스크린샷](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44238952147/artifacts/14398647793) · 2026-11-25까지 보존 예정.
 
 ## 변경 안전성
 - 대상은 독립 원형 `site/expedition.*`, 테스트, 문서에 한정. 공개 `main`, 기존 게임 저장, 단일 HTML 저장키, 재화/보상/전투 수치, 플레이 입력 정책은 그대로 유지.
