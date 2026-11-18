@@ -105,6 +105,7 @@ function renderSquad(){
  $('traitSupply').textContent='보급 지휘 +8% (LV.'+s.traits.supply+')';
  $('traitCommand').disabled=remaining<1||s.traits.command>=10;
  $('traitSupply').disabled=remaining<1||s.traits.supply>=10;
+ $('traitRespec').disabled=(s.traits.command+s.traits.supply)===0;
  const c=s.contribution;
  $('roleContribution').innerHTML=E.UNITS.map(u=>{
   const id=u.id;
