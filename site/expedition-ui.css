@@ -232,3 +232,9 @@ main.game-shell{
  .combat-stage .foe .silhouette{max-height:95px}
  .battle-readout .battle-ticker{min-height:16px}
 }
+
+/* Owned relic actions are visible without fixing the overall prototype art. */
+.combat-cue.volley{color:#ffe29c;text-shadow:0 2px 5px #07101c,0 0 14px #f6c462bd;font-size:clamp(15px,4.2vw,23px)}
+.combat-cue.triage{color:#9af3d0;text-shadow:0 2px 5px #07101c,0 0 13px #3ddab37a;font-size:clamp(13px,3.5vw,18px)}
+.relic-specials{margin:8px 0 12px;padding:9px 11px;border-radius:9px;border-left:3px solid #a8caa7;background:#1c3241;color:#d8f2e4;line-height:1.6}
+.relic-specials[hidden]{display:none!important}
