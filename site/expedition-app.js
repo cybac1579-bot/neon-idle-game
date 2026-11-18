@@ -6,14 +6,46 @@ if(!E){document.body.textContent='용병단 엔진을 불러오지 못했어.';r
 const $=id=>document.getElementById(id);
 const fmt=n=>{n=Number(n)||0;if(n>=1e12)return (n/1e12).toFixed(1)+'조';if(n>=1e8)return (n/1e8).toFixed(1)+'억';if(n>=1e4)return (n/1e4).toFixed(1)+'만';return Math.floor(n).toLocaleString('ko-KR');};
 const safe=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// file:// origin persistence differs between Android browsers. Probe the
+// exact save storage API instead of assuming a successful in-memory save.
+// The warning exists only when browser persistence is actually unavailable.
+function storageWritable(){
+ const key=E.SAVE_KEY+'__write_probe';
+ try{
+  localStorage.setItem(key,'ok');
+  const works=localStorage.getItem(key)==='ok';
+  localStorage.removeItem(key);
+  return works;
+ }catch(err){return false;}
+}
+let storageAvailable=storageWritable();
+function showStorageStatus(ok){
+ storageAvailable=ok;
+ document.querySelectorAll('[data-storage-warning]').forEach(el=>{el.hidden=ok;});
+}
+showStorageStatus(storageAvailable);
 let loaded=null;
-try{loaded=JSON.parse(localStorage.getItem(E.SAVE_KEY)||'null');}catch(err){loaded=null;}
+try{loaded=JSON.parse(localStorage.getItem(E.SAVE_KEY)||'null');}catch(err){loaded=null;showStorageStatus(false);}
 const s=E.normalize(loaded||E.newState(),Date.now());
 const startup=loaded?E.offline(s,Date.now()):0;
 let buyCount=5;
 let saveAt=Date.now(),lastFrame=performance.now(),toast=startup?'오프라인 '+Math.floor(startup/60)+'분 '+(startup%60)+'초 정산 완료':'',toastUntil=Date.now()+5000;
 function notify(message){toast=message;toastUntil=Date.now()+4000;}
-function save(){try{s.lastSaved=Date.now();localStorage.setItem(E.SAVE_KEY,JSON.stringify(s));saveAt=Date.now();return true;}catch(err){notify('저장 오류: 브라우저 저장 공간을 확인해 줘');return false;}}
+function save(){
+ try{
+  s.lastSaved=Date.now();
+  const payload=JSON.stringify(s);
+  localStorage.setItem(E.SAVE_KEY,payload);
+  if(localStorage.getItem(E.SAVE_KEY)!==payload)throw Error('storage-readback');
+  saveAt=Date.now();
+  if(!storageAvailable)showStorageStatus(true);
+  return true;
+ }catch(err){
+  showStorageStatus(false);
+  notify('자동 저장 실패 · 유물 탭의 전체 저장 백업을 받아 둬');
+  return false;
+ }
+}
 function row(label,value){return '<div class="statline"><span>'+safe(label)+'</span><b>'+safe(value)+'</b></div>';}
 function ratio(x,max){return Math.max(0,Math.min(100,100*x/Math.max(1,max)))+'%';}
 // The controller knows only the UI interface, not its markup or visual skin.
