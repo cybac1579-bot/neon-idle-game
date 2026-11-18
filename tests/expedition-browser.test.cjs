@@ -295,6 +295,25 @@ async function main(){
    await page.locator('#autoChestToggle').click();
    assert.equal(await page.locator('#autoChestToggle').getAttribute('aria-pressed'),'false');
    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')).autoChest.enabled),false);
+   // Existing saves that already own these relics gain their tactical
+   // behavior without any UI schema migration or new purchase button.
+   await page.addInitScript(()=>{
+    const key='neon_expedition_prototype_v1',state=JSON.parse(localStorage.getItem(key));
+    if(state){
+     state.relics.archer=2;state.relics.medkit=2;
+     state.relicEffects={volleys:3,volleyBonusDamage:45,triages:2,triageCooldown:0};
+     state.lastSaved=Date.now();
+     localStorage.setItem(key,JSON.stringify(state));
+    }
+   });
+   await page.reload({waitUntil:'networkidle'});
+   await page.locator('[data-tab="archive"]').click();
+   assert.equal(await page.locator('#relicEffectSummary').isVisible(),true);
+   assert.match(await page.locator('#relicEffectSummary').textContent(),/정밀 일제사격 3회/);
+   assert.match(await page.locator('#relicEffectSummary').textContent(),/긴급 재합류 2회/);
+   assert.match(await page.locator('#relicList').textContent(),/정밀 일제사격/);
+   assert.match(await page.locator('#relicList').textContent(),/긴급 재합류/);
+   assert.equal(await page.locator('#battleScreen').isVisible(),true);
    await context.close();
    console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison/chronicle');
   }
