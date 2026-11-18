@@ -29,8 +29,6 @@ const centerOf=node=>{
 function showMotion(evt){
  motion.replaceChildren();
  const kind=evt.type;
- // Every effect must come from a committed battle cue. A repeated UI render
- // never replays the animation, and unknown events leave the layer empty.
  if(!offensive.has(kind)&&!incoming.has(kind)&&!warning.has(kind)&&
     !defense.has(kind)&&!support.has(kind)&&
     !['clear','intel','pursuit','fallen','rally'].includes(kind))return;
@@ -38,40 +36,90 @@ function showMotion(evt){
    field.querySelector('.fighter.'+id);
  const foe=arena.querySelector('.foe .silhouette');
  const guard=fighter('guard'),ranger=fighter('ranger'),medic=fighter('medic');
- const from=offensive.has(kind)?(kind==='intercept'||kind==='intercept-duet'?ranger||guard:fighter(evt.id)):
-    incoming.has(kind)||warning.has(kind)?foe:support.has(kind)?medic:null;
- const target=offensive.has(kind)?foe:
-   (incoming.has(kind)||warning.has(kind))?fighter(evt.id):
-   support.has(kind)?fighter(evt.id):defense.has(kind)?guard:null;
- // Briefly pose only the unit implicated in this real cue, never the army.
+ const target=fighter(evt.id);
+ const point=node=>centerOf(node);
+ const trail=(origin,destination,style,telegraph=false)=>{
+  const a=point(origin),b=point(destination);
+  if(!a||!b||Math.abs(a.x-b.x)+Math.abs(a.y-b.y)<1)return;
+  const el=document.createElement('span'),dx=b.x-a.x,dy=b.y-a.y;
+  el.className='battle-trail '+style+(telegraph?' telegraph':'');
+  el.style.left=a.x+'px';el.style.top=a.y+'px';
+  el.style.width=Math.hypot(dx,dy)+'px';
+  el.style.transform='rotate('+Math.atan2(dy,dx)+'rad)';
+  motion.appendChild(el);
+ };
+ const burst=(node,style,extra='')=>{
+  const p=point(node)||{x:arena.clientWidth/2,y:arena.clientHeight/2};
+  const el=document.createElement('span');
+  el.className='battle-burst '+style+(extra?' '+extra:'');
+  el.style.left=p.x+'px';el.style.top=p.y+'px';
+  motion.appendChild(el);
+ };
+ // A guard's ordinary strike is a melee contact, never a projectile.
+ // Special interception protects the front guard while two real rear
+ // rangers may counterattack: the animation must reflect both actions.
  field.querySelectorAll('.battle-acting').forEach(el=>el.classList.remove('battle-acting'));
- if(offensive.has(kind)||kind==='heal'||kind==='triage'){
-  const acting=from?.closest('.fighter');
-  if(acting){void acting.offsetWidth;acting.classList.add('battle-acting');}
+ const pose=node=>{
+  const actor=node?.closest('.fighter');
+  if(actor){void actor.offsetWidth;actor.classList.add('battle-acting');}
+ };
+ switch(kind){
+ case 'hit':
+  pose(target);
+  if(evt.id==='ranger')trail(target,foe,'normal');
+  if(evt.id==='medic')trail(target,foe,'normal');
+  burst(foe,'normal');
+  break;
+ case 'volley':
+  pose(ranger);trail(ranger,foe,'volley');burst(foe,'volley');
+  break;
+ case 'intercept':
+ case 'intercept-duet':{
+  burst(guard,'shield');
+  const rangers=Array.from(field.querySelectorAll('.fighter.ranger:not(.down)')).slice(0,kind==='intercept-duet'?2:1);
+  for(const shot of rangers){pose(shot);trail(shot,foe,'counter');}
+  // One displayed ranger can be joined by a non-rendered rear fighter.
+  // Never fabricate the absent model as a second on-screen projectile.
+  burst(foe,'counter',kind==='intercept-duet'?'duet':'');
+  break;
  }
- const p1=centerOf(from),p2=centerOf(target);
- const emphasis=kind==='volley'?'volley':
-  kind==='diagram'?'diagram':
-  kind==='intercept'||kind==='intercept-duet'?'counter':
-  kind==='brace'||kind==='cover-step'||kind==='brace-step'?'shield':
-  kind==='heal'||kind==='triage'||kind==='returned'?'heal':
-  kind==='rush'||kind==='rush-aim'?'rush':
-  kind==='jam'||kind==='jam-aim'?'jam':
-  kind==='aim'||kind==='flank'?'danger':kind==='clear'||kind==='intel'?'reward':'normal';
- if(p1&&p2&&p1.x!==p2.x){
-  const trail=document.createElement('span'),dx=p2.x-p1.x,dy=p2.y-p1.y;
-  trail.className='battle-trail '+emphasis+(warning.has(kind)?' telegraph':'');
-  trail.style.left=p1.x+'px';trail.style.top=p1.y+'px';
-  trail.style.width=Math.hypot(dx,dy)+'px';
-  trail.style.transform='rotate('+Math.atan2(dy,dx)+'rad)';
-  motion.appendChild(trail);
+ case 'brace':
+  pose(guard);burst(guard,'shield');trail(guard,foe,'counter');burst(foe,'counter');
+  break;
+ case 'cover-step':
+ case 'brace-step':
+  burst(guard,'shield');break;
+ case 'diagram':
+  pose(ranger);trail(ranger,foe,'diagram');burst(foe,'diagram');break;
+ case 'unjam':
+  pose(ranger);trail(ranger,foe,'counter');burst(foe,'counter');break;
+ case 'heal':
+ case 'triage':
+  pose(medic);trail(medic,target,'heal');burst(target,'heal');break;
+ case 'returned':
+  burst(target,'heal');break;
+ case 'aim':
+ case 'rush-aim':
+ case 'jam-aim':
+  trail(foe,target,kind==='jam-aim'?'jam':'danger',true);
+  burst(target,'danger','warning');break;
+ case 'flank':
+ case 'rush':
+ case 'jam':
+  trail(foe,target,kind==='jam'?'jam':'danger');
+  burst(target,'danger');break;
+ case 'pursuit':
+  // Reveal a genuine enemy weakness without inventing additional damage.
+  burst(foe,'power');break;
+ case 'clear':
+ case 'intel':
+  burst(foe,'reward',kind==='clear'&&E.isElite(evt.value)?'breakthrough':'');
+  break;
+ case 'fallen':
+  burst(target,'danger');break;
+ case 'rally':
+  burst(guard,'danger');break;
  }
- const focus=p2||centerOf(foe)||{x:arena.clientWidth/2,y:arena.clientHeight/2};
- const burst=document.createElement('span');
- burst.className='battle-burst '+emphasis+
-  (kind==='clear'&&E.isElite(evt.value)?' breakthrough':'');
- burst.style.left=focus.x+'px';burst.style.top=focus.y+'px';
- motion.appendChild(burst);
 }
 const safe=n=>Math.max(0,Math.min(100,Number(n)||0));
 const selected=s=>{
@@ -132,7 +180,13 @@ function sync(s){
  const extra=Math.max(0,(s.actors||[]).length-shown.length);
  rosterNote.hidden=extra===0;
  if(extra)rosterNote.textContent='전투원 '+shown.length+'명 표시 · 후방 '+extra+'명';
- arena.classList.toggle('arena-boss',E.isBoss(s.stage));
+ const bossActive=E.isBoss(s.stage);
+ arena.classList.toggle('arena-boss',bossActive);
+ // Purely cosmetic damage wear: these stages follow the actual boss HP
+ // ratio, not an invented boss phase, attack speed or extra loot.
+ const bossHpFraction=Math.max(0,Math.min(1,s.enemyHp/Math.max(1,E.enemyMax(s.stage))));
+ arena.classList.toggle('boss-worn',bossActive&&bossHpFraction<=.75&&bossHpFraction>0);
+ arena.classList.toggle('boss-critical',bossActive&&bossHpFraction<=.25&&bossHpFraction>0);
  // Training changes only the presentation tier; combat damage stays in the engine.
  arena.dataset.trainingTier=String(Math.min(3,Math.floor(s.training/4)));
  const intent=s.enemyTactic;
