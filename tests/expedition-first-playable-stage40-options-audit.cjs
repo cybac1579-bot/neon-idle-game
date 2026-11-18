@@ -1,8 +1,8 @@
 'use strict';
 /* Controlled, counterfactual phase-40 boss duration experiment.
  * Never alters a real player save, changes live engine or injects loot.
- * A candidate applies a one-time virtual reduction when the actual stage-40
- * encounter starts; only genuine 40 clears can grant the chest/cores. */
+ * A candidate applies an ADDITIONAL virtual reduction relative to the live
+ * 10%-trimmed stage-40 encounter. Only genuine clears grant chest/cores. */
 const assert=require('node:assert/strict'),E=require('../site/expedition-engine.js');
 const SEEDS=[123456789,987654321,20261118];
 const MODES=['balanced','adaptive'],CANDIDATES=[0,.10,.20,.25];
@@ -84,11 +84,12 @@ const summary=CANDIDATES.map(d=>{
   stageAt30:cases.map(x=>x.minute30.stage),
   first30RelicKinds:cases.map(x=>x.minute30.relicKinds)};
 });
-assert.ok(summary[0].boss40ClearedBy30===0,'baseline comparison must reproduce 30min gap');
+assert.ok(summary[0].boss40ClearedBy30>=2,
+ 'the live 10% trim should yield at least two depth40 clears by 30m on the established seeds');
 console.log('STAGE40_CANDIDATE_COMPARISON '+JSON.stringify({
  experiment:'stage40-boss-first-run-counterfactual',synthetic:true,
  changesLiveGameplay:false,stage40BossRemainsBoss:true,
  scenarios:24,minutesPerScenario:40,seedCount:SEEDS.length,modes:MODES,
  noFreeChests:true,noForcedRebirth:true,
- note:'Trial discount changes virtual starting HP for stage 40 only. A release balance change requires an explicit versioned save migration, legacy-fight preservation and wide regression. Values are not user playtimes.',
+ note:'0% is the live, independently migrated stage40 HP (already 10% below the original). Larger candidates apply ADDITIONAL virtual cuts only for comparison. They are not released, and these are not human play times.',
  summary,paired}));
