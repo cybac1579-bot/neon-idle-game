@@ -8,7 +8,6 @@ on:
       - 'tests/expedition*.test.cjs'
       - 'tests/expedition-first-playable-gate.cjs'
       - 'tests/expedition.test.cjs'
-      - 'tests/expedition-first-playable-gate.cjs'
       - '.github/workflows/expedition-fast-regression.yml'
   pull_request:
     branches:
@@ -16,6 +15,7 @@ on:
     paths:
       - 'site/expedition-engine.js'
       - 'tests/expedition*.test.cjs'
+      - 'tests/expedition-first-playable-gate.cjs'
       - 'tests/expedition-first-playable-gate.cjs'
       - 'tests/expedition.test.cjs'
       - 'tests/expedition-first-playable-gate.cjs'
@@ -39,13 +39,11 @@ jobs:
         run: |
           node --check site/expedition-engine.js
           node --check tests/expedition.test.cjs
-          node --check tests/expedition-first-playable-gate.cjs
           node --check tests/expedition-stage65-diagram.test.cjs
           node --check tests/expedition-elite65-hp-migration.test.cjs
           node --check tests/expedition-first-playable-gate.cjs
+          node --check tests/expedition-first-playable-gate.cjs
       - name: Run expedition engine regression before browser installation
         run: node --test tests/expedition.test.cjs tests/expedition-stage65-diagram.test.cjs tests/expedition-elite65-hp-migration.test.cjs
-      - name: Enforce first-playable 30-minute low-touch technical gate
-        run: node tests/expedition-first-playable-gate.cjs
       - name: Verify first playable 30-minute loop and two-hour resume
         run: node tests/expedition-first-playable-gate.cjs
