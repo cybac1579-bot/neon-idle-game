@@ -483,16 +483,25 @@ async function main(){
    const eliteMigration=await page.evaluate(()=>{
     const E=window.ExpeditionEngine;
     const old=E.newState(Date.now());old.stage=old.best=old.runBest=65;
-    old.enemyHp=Math.round(E.enemyMax(65)*.5/.8);
+    old.enemyHp=Math.round(E.enemyMax(65)*.5/.6);
     delete old.eliteHpBalanceVersion;
     const a=E.normalize(JSON.parse(JSON.stringify(old)),Date.now());
     const b=E.normalize(JSON.parse(JSON.stringify(a)),Date.now());
+    const v1=E.newState(Date.now());v1.stage=v1.best=v1.runBest=65;
+    v1.eliteHpBalanceVersion=1;
+    v1.enemyHp=Math.round(E.enemyMax(65)*.5/.75);
+    const c=E.normalize(JSON.parse(JSON.stringify(v1)),Date.now());
+    const d=E.normalize(JSON.parse(JSON.stringify(c)),Date.now());
     return {ratio:a.enemyHp/E.enemyMax(65),stable:a.enemyHp===b.enemyHp,
-     marker:a.eliteHpBalanceVersion};
+     marker:a.eliteHpBalanceVersion,priorRatio:c.enemyHp/E.enemyMax(65),
+     priorStable:c.enemyHp===d.enemyHp,priorMarker:c.eliteHpBalanceVersion};
    });
    assert.ok(Math.abs(eliteMigration.ratio-.5)<.00001);
    assert.equal(eliteMigration.stable,true);
-   assert.equal(eliteMigration.marker,1);
+   assert.equal(eliteMigration.marker,2);
+   assert.ok(Math.abs(eliteMigration.priorRatio-.5)<.00001);
+   assert.equal(eliteMigration.priorStable,true);
+   assert.equal(eliteMigration.priorMarker,2);
    assert.equal(pursuitView.activated,true);
    assert.equal(pursuitView.boost,1.6);
    assert.match(pursuitView.cue,/추격 신호기/);
