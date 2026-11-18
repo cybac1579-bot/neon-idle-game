@@ -415,6 +415,21 @@ async function main(){
    assert.equal(signalView.result.cleanses,1);
    assert.match(signalView.result.event,/역통신 반격/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
+   // First earned 55 collectible activates a visible second-phase boss cue.
+   // The same encounter must keep the battle HUD uncluttered on portrait phones.
+   const pursuitView=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,field=window.ExpeditionField;
+    const s=E.newState(Date.now());s.stage=s.best=s.runBest=60;
+    s.enemyTactic.stage=60;s.relics.pursuit=1;
+    s.enemyHp=E.enemyMax(60)*.5+1;
+    for(const a of s.actors){a.hp=1e8;a.progress=1;a.cooldown=0;}
+    E.tick(s,1);field.sync(s);
+    return {cue:document.querySelector('.combat-cue')?.textContent,
+     activated:s.enemyTactic.pursuitTriggered,boost:E.pursuitBoost(s)};
+   });
+   assert.equal(pursuitView.activated,true);
+   assert.equal(pursuitView.boost,1.6);
+   assert.match(pursuitView.cue,/추격 신호기/);
    // Regression: after a 45-clear voluntary return, the low-level run stage
    // must NOT advertise relic tiers 15/25/40 as "new" a second time.
    const frontierContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
@@ -432,7 +447,7 @@ async function main(){
    await frontierPage.reload({waitUntil:'networkidle'});
    await frontierPage.locator('[data-tab="return"]').click();
    const depthGoals=await frontierPage.locator('#rebirthSummary').textContent();
-   assert.match(depthGoals,/아직 미개방 유물 등급1종 · 누적 최고 45거리 격파/,
+   assert.match(depthGoals,/아직 미개방 유물 등급2종 · 누적 최고 45거리 격파/,
     'legacy return depth 45 must offer chronicle unlock');
    assert.match(depthGoals,/다음 신규 유물 개방50거리 격파 · 원정 연대기/);
    assert.doesNotMatch(depthGoals,/15거리 격파 · 진군 북/,
