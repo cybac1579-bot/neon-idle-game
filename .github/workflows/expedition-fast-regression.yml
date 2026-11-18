@@ -35,5 +35,7 @@ jobs:
         run: |
           node --check site/expedition-engine.js
           node --check tests/expedition.test.cjs
+          node --check tests/expedition-stage65-diagram.test.cjs
+          node --check tests/expedition-elite65-hp-migration.test.cjs
       - name: Run expedition engine regression before browser installation
-        run: node --test tests/expedition.test.cjs
+        run: node --test tests/expedition.test.cjs tests/expedition-stage65-diagram.test.cjs tests/expedition-elite65-hp-migration.test.cjs
