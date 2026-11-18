@@ -72,6 +72,12 @@ const aggregate={
  maxLead:Math.max(...pairs.map(p=>p.earlyLeadPercent)),
  averageExtraCopies:+(pairs.reduce((s,p)=>s+p.extraEarlyRelicCopies,0)/pairs.length).toFixed(2)
 };
+// Measured across all 12 fixed paths, the earlier flat-8%-per-core
+// curve favored a shallow return by ~14%; the first-return correction
+// lowered the mean below 8%. A 12% guard detects accidental regression,
+// without treating this small sample as the universal optimal strategy.
+assert.ok(aggregate.averageLead<=12,
+ 'mean shallow-return shortcut exceeded 12% after valor smoothing: '+aggregate.averageLead);
 console.log(JSON.stringify({experiment:'two-routes-through-distance50',synthetic:true,
  note:'3 seeds × 2 player-selected buy modes × auto chests OFF/ON × explicit manual returns and valor spending; identical earned-loot rules, no forced first return.',
  aggregate,pairs}));
