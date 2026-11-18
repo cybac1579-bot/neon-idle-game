@@ -30,6 +30,13 @@ jobs:
         run: node tests/integration-static.test.cjs
       - name: Validate replaceable expedition UI contract
         run: node tests/expedition-ui-contract.test.cjs
+      - name: Parse all expedition browser scripts before expensive simulations
+        run: |
+          node --check site/expedition-engine.js
+          node --check site/expedition-field.js
+          node --check site/expedition-ui.js
+          node --check site/expedition-app.js
+          node --check tests/expedition-browser.test.cjs
       - name: Run standalone expedition engine regression
         run: node --test tests/expedition.test.cjs
       - name: Probe 30-minute expedition pacing
