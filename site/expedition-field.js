@@ -65,12 +65,16 @@ function sync(s){
  const disrupting=intent?.kind==='disruptor';
  // Second-phase status reuses the existing narrow intent strip.
  const chasing=E.pursuitBoost(s)>1;
- enemyIntent.hidden=!(aiming||last||chasing);
+ // Keep a real, one-shot diagram hit legible when a normal battle event
+ // overwrites its tiny combat cue. Attack windups always take priority.
+ const diagramNotice=intent?.stage===s.stage&&intent.diagramFlash>0&&!aiming;
+ enemyIntent.hidden=!(aiming||last||chasing||diagramNotice);
  enemyIntent.classList.toggle('aiming',!!aiming);
- enemyIntent.classList.toggle('charging',!!rushing);
- enemyIntent.classList.toggle('disrupting',!!disrupting);
- enemyIntent.classList.toggle('intercepted',!!last&&(intent?.result==='intercept'||intent?.result==='cover-step'||intent?.result==='brace'||intent?.result==='unjam'));
+ enemyIntent.classList.toggle('charging',!!rushing&&!diagramNotice);
+ enemyIntent.classList.toggle('disrupting',!!disrupting&&!diagramNotice);
+ enemyIntent.classList.toggle('intercepted',!!last&&!diagramNotice&&(intent?.result==='intercept'||intent?.result==='cover-step'||intent?.result==='brace'||intent?.result==='unjam'));
  if(aiming)enemyIntent.textContent=rushing?(commanderSurge?'⚠ 지휘급 전열 압박 · ':'⚠ 돌격병 전열 돌진 · ')+Math.ceil(intent.windup)+'초':disrupting?'⚠ 교란 사수 원거리 조준 · '+Math.ceil(intent.windup)+'초':'⚠ 적 측면 조준 · '+Math.ceil(intent.windup)+'초';
+ else if(diagramNotice)enemyIntent.textContent='✦ 전장 도해 · 약점 균열 타격 발동';
  else if(last)enemyIntent.textContent=rushing?
    (intent.result==='brace'?'🛡 철벽 진형 · 돌진 저지':intent.result==='brace-step'?'🛡 합금 배지 · 돌진 부분 버팀':commanderSurge?'↗ 지휘급 전열 압박 · 방벽병 밀려남':'↗ 돌격 충격 · 방벽병 밀려남'):
    disrupting?(intent.result==='unjam'?'✚ 역통신 반격 · 교란 무효':'◎ 교란 사격 · 사수 공격 지연'):
