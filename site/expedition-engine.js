@@ -300,7 +300,14 @@ function updateSquadHealth(s){
  s.respawn=s.squadHp<=0&&waits.length?Math.min(...waits):0;
 }
 function battleCue(s,type,id,value=0){s.battleCueSeq++;s.battleEvent={seq:s.battleCueSeq,type,id,value:Math.max(0,value)};}
-function partyDps(s){return UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.dps*(u.id==='ranger'?1+.15*relic(s,'archer'):1),0)*(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*(1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*collectionBoost(s);}
+// The first three core valor upgrades were an unusually cheap +24%
+// combat spike for shallow returns. Reduce that spike to +9%, catch up
+// by level 9, and keep level 9..30 exactly on the old damage curve.
+function valorMultiplier(s){
+ const level=s.coreUpgrades.valor;
+ return level<=3?1+.03*level:level<9?1+.09+.105*(level-3):1+.08*level;
+}
+function partyDps(s){return UNITS.reduce((sum,u)=>sum+s.units[u.id]*u.dps*(u.id==='ranger'?1+.15*relic(s,'archer'):1),0)*(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*(1+.06*s.traits.command)*valorMultiplier(s)*collectionBoost(s);}
 function healDps(s){return s.units.medic*2.7*(1+.18*relic(s,'medkit'))*(1+.08*s.training);}
 function questIncome(s,q){return q.income*(1+1.1*s.questLevels[q.id])*(1+.12*relic(s,'income'))*(1+.08*s.traits.supply)*(1+.09*s.coreUpgrades.trade);}
 function hireCost(s){return Math.max(1,Math.round(25*Math.pow(1.22,Math.max(0,total(s)-2))*(1-.06*relic(s,'enlist'))));}
@@ -436,7 +443,7 @@ function fight(s,dt){
   if(a.progress<attackRange(a.id)||a.cooldown>0)continue;
   const u=UNITS.find(u=>u.id===a.id);
   const multiplier=(1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
-   (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*
+   (1+.06*s.traits.command)*valorMultiplier(s)*
    (boss?1+.14*relic(s,'boss'):1)*collection;
   // Previous +15%/copy to every shot is now a +45%/copy volley on
   // every third shot: same nominal average DPS, a different battle rhythm.
@@ -528,7 +535,7 @@ function fight(s,dt){
    s.enemyTactic.result='intercept';
    const counterBase=UNITS.find(u=>u.id==='ranger').dps*attackInterval('ranger')*
     (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
-    (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*
+    (1+.06*s.traits.command)*valorMultiplier(s)*
     (boss?1+.14*relic(s,'boss'):1)*collection;
    const counter=Math.min(s.enemyHp,.5*counterBase);
    s.enemyHp-=counter;s.contribution.damage.ranger+=counter;
@@ -552,7 +559,7 @@ function fight(s,dt){
     s.relicEffects.braces++;
     const guardPower=UNITS[0].dps*attackInterval('guard')*
      (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
-     (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*collection;
+     (1+.06*s.traits.command)*valorMultiplier(s)*collection;
     const answer=Math.min(s.enemyHp,guardPower*.4);
     s.enemyHp-=answer;s.contribution.damage.guard+=answer;
     s.relicEffects.braceDamage=Math.min(1e14,s.relicEffects.braceDamage+answer);
@@ -577,7 +584,7 @@ function fight(s,dt){
    if(support){
     const power=UNITS[1].dps*attackInterval('ranger')*
      (1+.23*s.training)*(1+.08*relic(s,'ember')+.05*relic(s,'swift')+.05*relic(s,'relay'))*
-     (1+.06*s.traits.command)*(1+.08*s.coreUpgrades.valor)*collection;
+     (1+.06*s.traits.command)*valorMultiplier(s)*collection;
     const answer=Math.min(s.enemyHp,power*.35);
     s.enemyHp-=answer;s.contribution.damage.ranger+=answer;
     s.relicEffects.cleanses++;
