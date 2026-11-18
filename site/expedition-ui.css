@@ -505,3 +505,11 @@ main.game-shell{
  .fighter.engaged:not(.down) .fighter-symbol,
  .fighter.battle-acting .fighter-symbol{animation:none!important}
 }
+
+/* V3 compact preview: eight on-field actors can fit three separate rows on
+   the 360px portrait screen. This does not hide any of the eight previews. */
+.arena.formation-dense .fighter{width:clamp(31px,9vw,42px);gap:1px}
+.arena.formation-dense .fighter-symbol{height:clamp(34px,10vw,43px);border-radius:13px 13px 8px 8px}
+.arena.formation-dense .fighter-health{height:3px}
+.arena.formation-dense .fighter-name{font-size:8px;line-height:9px;letter-spacing:-.02em}
+.arena.formation-dense .actor-emblem{width:14px;height:14px;font-size:10px;right:-3px;bottom:-3px}
