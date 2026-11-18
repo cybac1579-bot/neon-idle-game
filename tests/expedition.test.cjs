@@ -1244,3 +1244,6 @@ require('./expedition-relic-run-count.test.cjs');
 
 // Deep shield+escort combination must allow melee participation, no free rewards.
 require('./expedition-deep-guard-formation.test.cjs');
+
+// New tactical events must retain their identity through persisted saves.
+require('./expedition-battle-event-save-contract.test.cjs');
