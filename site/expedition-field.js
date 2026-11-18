@@ -10,6 +10,9 @@ const fx=document.createElement('div');fx.id='battleFx';fx.setAttribute('aria-hi
 // This layer mirrors real battleEvent cues. It neither ticks the game nor
 // invents combat attacks, rewards or relic activations for decoration.
 const motion=document.createElement('div');motion.id='battleMotion';motion.setAttribute('aria-hidden','true');arena.appendChild(motion);
+const growth=document.createElement('div');growth.id='battleGrowth';growth.className='battle-growth';
+growth.setAttribute('aria-hidden','true');arena.appendChild(growth);
+let previousRoster=null,previousTraining=null;
 const rosterNote=document.createElement('div');rosterNote.className='roster-note';rosterNote.hidden=true;arena.appendChild(rosterNote);
 const enemyIntent=document.createElement('div');enemyIntent.className='enemy-intent';enemyIntent.hidden=true;enemyIntent.setAttribute('aria-live','off');arena.appendChild(enemyIntent);
 let visibleKey='',lastCue=-1;
@@ -79,6 +82,19 @@ const selected=s=>{
  return pick;
 };
 function sync(s){
+ const roster=(s.actors||[]).length;
+ const training=Math.max(0,Number(s.training)||0);
+ let growthText='';
+ if(previousRoster!==null&&roster>previousRoster)
+  growthText='✦ 용병 증원 · +'+(roster-previousRoster)+'명';
+ else if(previousTraining!==null&&training>previousTraining)
+  growthText='▲ 부대 훈련 · LV.'+training;
+ if(growthText){
+  growth.textContent=growthText;
+  growth.classList.remove('playing');void growth.offsetWidth;
+  growth.classList.add('playing');
+ }
+ previousRoster=roster;previousTraining=training;
  const shown=selected(s);
  const key=shown.map(x=>x.index+':'+x.a.id).join('|');
  if(key!==visibleKey){
