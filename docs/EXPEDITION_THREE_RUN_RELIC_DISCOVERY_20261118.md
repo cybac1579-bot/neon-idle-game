@@ -35,4 +35,7 @@
 ## 증빙
 - [36개 탐사 실측 CI 성공 #44239980167](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44239980167)
 - [각 시드·회차별 수집 데이터 JSON](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44239980167/artifacts/14398579591) · 2026-12-18 만료 예정
-- 해당 변경의 엔진/브라우저 테스트는 최종 CI가 성공한 뒤 별도로 기록.
+- [최종 모바일/오프라인 통합 검증 #44241500447](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44241500447): **엔진 220/220 통과, 실패 0**, Galaxy 세로 대응 360/390/412px, 실제 Chromium 도감 16종 완성 문구/다시 불러오기, 터치 조작·귀환·오프라인 standalone 백업 왕복까지 성공. 기존 저장의 과거 수집 이력은 만들어 넣지 않음.
+- [검증된 오프라인 HTML 플레이본 ZIP](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44241500447/artifacts/14400266175) · 2026-12-18 만료 예정.
+- [실제 Chromium 스크린샷/터치 기록 ZIP](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44241500447/artifacts/14399697361) · 2026-11-25 만료 예정.
+- 테스트 픽스처가 페이지 종료 시 저장으로 덮이는 문제는 별도 테스트용 재진입 스크립트에서 수정했고, 게임 내 기존 저장 동작은 변경하지 않음.
