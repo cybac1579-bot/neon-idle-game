@@ -36,9 +36,9 @@ const RELICS=[
  {id:'bounty',name:'현상금 표식',desc:'전투 크레딧 보상이 수집 수마다 12% 증가',cap:5,unlockStage:5},
  {id:'guard',name:'호위 계약서',desc:'방벽병 체력이 수집 수마다 20% 증가',cap:4,unlockStage:5},
  {id:'archer',name:'초점 조준기',desc:'사수 3번째 사격마다 정밀 일제사격 발동 (수집 수마다 강화 · 평균 화력 +15%/개)',cap:4,unlockStage:15},
- {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치가 수집 수마다 15% 증가',cap:4,unlockStage:25},
+ {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치 +15%/개 · 작전 통신기와 함께 탐사 정보망 활성화',cap:4,unlockStage:25},
  {id:'fortune',name:'중복 해체권',desc:'중복 유물 발견 시 수집 수마다 추가 크레딧 획득',cap:3,unlockStage:30},
- {id:'relay',name:'작전 통신기',desc:'전체 병종의 피해량이 수집 수마다 5% 증가',cap:5,unlockStage:30},
+ {id:'relay',name:'작전 통신기',desc:'전체 피해량 +5%/개 · 탐사 일지와 함께 자동 유물 조사 보상 해금',cap:5,unlockStage:30},
  // Only deep-earned chests can reveal these permanent run-economy options.
  {id:'enlist',name:'선발권 묶음',desc:'용병 소집 비용이 수집 수마다 6% 감소',cap:3,unlockStage:40},
  {id:'drill',name:'훈련 규정집',desc:'부대 훈련 비용이 수집 수마다 6% 감소',cap:3,unlockStage:45},
@@ -53,11 +53,12 @@ const initialAutoBuy=()=>({enabled:false,mode:'balanced',elapsed:0,cursor:0,purc
 const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 // Per-run relic action telemetry; old saves default to no past activations.
-const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0});
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0});
 const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  volleys:integer(raw.volleys,0,1e9),
  volleyBonusDamage:num(raw.volleyBonusDamage,0,1e14),
- triages:integer(raw.triages,0,1e9)
+ triages:integer(raw.triages,0,1e9),
+ intelFinds:integer(raw.intelFinds,0,2)
 }:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
@@ -86,6 +87,7 @@ const validOpening=x=>x&&typeof x==='object'&&
 const isBoss=stage=>stage%10===0;
 const isElite=stage=>stage%5===0;
 const relic=(s,id)=>integer(s.relics[id],0,RELICS.find(x=>x.id===id)?.cap||0);
+const intelNetworkActive=s=>relic(s,'scout')>0&&relic(s,'relay')>0;
 // Owning the single stage-50 chronicle makes collecting *different* relics
 // valuable. A hard 15-kind ceiling prevents later catalog expansion from
 // silently scaling combat forever. Copies of existing relics do not count.
@@ -146,6 +148,8 @@ function normalize(raw,now=Date.now()){
  s.runMetrics.manualSpent=num(raw.runMetrics?.manualSpent,0,1e14);
  s.relicEffects=initialRelicEffects();
  for(const k of ['volleys','triages'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
+ s.relicEffects.intelFinds=integer(raw.relicEffects?.intelFinds,0,2);
  s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
  s.relicEffects.triageCooldown=num(raw.relicEffects?.triageCooldown,0,18);
  s.runOpening=validOpening(raw.runOpening);
@@ -226,7 +230,7 @@ function normalize(raw,now=Date.now()){
    shots:a?integer(a.shots,0,2):0};
  });
  s.battleEvent=raw.battleEvent&&typeof raw.battleEvent==='object'
-  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','triage'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
+  ?{seq:integer(raw.battleEvent.seq),type:['hit','heal','fallen','returned','clear','rally','volley','triage','intel'].includes(raw.battleEvent.type)?raw.battleEvent.type:'hit',
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
@@ -300,12 +304,30 @@ function victory(s){
  s.credits=Math.min(1e14,s.credits+reward);s.kills++;s.runKills++;
  s.coreProgress=Math.min(1e9,s.coreProgress+coreProgressForClear(cleared));
  heroXp(s,5+cleared*.7+(isBoss(cleared)?20:0));
- if(isElite(cleared)){s.chests++;s.chestDepths.push(cleared);note(s,(isBoss(cleared)?'지휘급 목표 격파!':'정예 목표 격파!')+' 보급 상자 1개 확보');}
+ let networkFind=false;
+ if(isElite(cleared)){
+  s.chests++;s.chestDepths.push(cleared);
+  note(s,(isBoss(cleared)?'지휘급 목표 격파!':'정예 목표 격파!')+' 보급 상자 1개 확보');
+  // Both permanent relics convert repeated deep elite victories into a
+  // separate automatic discovery. Never drain a queued chest or add taps.
+  // Two finds per expedition; rebirth resets only this run's counters.
+  if(cleared>=30&&intelNetworkActive(s)&&s.relicEffects.intelFinds<2){
+   s.relicEffects.intelClears++;
+   if(s.relicEffects.intelClears>=2){
+    s.relicEffects.intelClears=0;
+    const find=rollRelic(s,cleared,true);
+    s.relicEffects.intelFinds++;
+    networkFind=true;
+    note(s,find.id?'탐사 정보망 자동 발견 · '+RELICS.find(r=>r.id===find.id).name:
+     '탐사 정보망 조사 완료 · 추가 크레딧 회수');
+   }
+  }
+ }
  s.stage++;s.runBest=Math.max(s.runBest,s.stage);s.best=Math.max(s.best,s.stage);
  s.enemyHp=enemyMax(s.stage);
  // New wave: units regroup behind the front line, survivors recover a little.
  for(const a of s.actors){a.progress=Math.max(0,a.progress-.75);if(a.revive===0)a.hp=Math.min(actorMaxHp(s,a.id),a.hp+actorMaxHp(s,a.id)*.15);}
- updateSquadHealth(s);battleCue(s,'clear','guard',cleared);
+ updateSquadHealth(s);battleCue(s,networkFind?'intel':'clear','guard',cleared);
 }
 function fight(s,dt){
  // Individual fighters move to the clash; guards engage up close, rangers attack
@@ -574,14 +596,10 @@ function rememberRelic(s,result){
   stack:result.stack||0,credits:result.credits||0,stage:s.stage,depth:result.depth||0,run:s.rebirths+1});
  if(s.relicHistory.length>24)s.relicHistory.shift();
 }
-function openChest(s){
- if(s.chests<1)return null;
- const depth=s.chestDepths.length?s.chestDepths.shift():0;
- s.chests--;s.chestsOpened++;s.runMetrics.chestsOpened++;
- // A chest's loot pool is fixed by its clear distance, not by a later return or
- // opening. Depth 0 means a pre-upgrade legacy save and keeps its original odds.
- // Depth 0 is a pre-upgrade save. Preserve its original 12-relic pool,
- // not the new 40/45-distance discoveries.
+function rollRelic(s,depth,forceNew=false){
+ // Shared roll for ordinary earned chests and the optional scouting network.
+ // Source depth always determines the loot pool. Only network finds force a
+ // missing kind when any remain; ordinary chest odds remain unchanged.
  const eligible=RELICS.filter(r=>relic(s,r.id)<r.cap&&
   (depth===0?r.unlockStage<=30:r.unlockStage<=depth));
  if(!eligible.length){
@@ -595,7 +613,7 @@ function openChest(s){
  const milestoneMissing=[15,25,30,40,45,50].includes(depth)?
   missing.filter(r=>r.unlockStage===depth):[];
  const pool=milestoneMissing.length?milestoneMissing:
-  missing.length&&rand(s)<.7?missing:eligible;
+  forceNew&&missing.length?missing:missing.length&&rand(s)<.7?missing:eligible;
  const found=pool[Math.floor(rand(s)*pool.length)];
  const duplicate=relic(s,found.id)>0;
  s.relics[found.id]=(s.relics[found.id]||0)+1;
@@ -605,6 +623,12 @@ function openChest(s){
  rememberRelic(s,result);
  note(s,(duplicate?'유물 중복 수집: ':'새 유물 발견! ')+found.name+(bonus?' · +'+bonus+' 크레딧':''));
  return result;
+}
+function openChest(s){
+ if(s.chests<1)return null;
+ const depth=s.chestDepths.length?s.chestDepths.shift():0;
+ s.chests--;s.chestsOpened++;s.runMetrics.chestsOpened++;
+ return rollRelic(s,depth,false);
 }
 // One deliberate collection action can reveal multiple rewards, but the
 // exact sequence and relic odds match one-by-one opening. No auto chest claims.
