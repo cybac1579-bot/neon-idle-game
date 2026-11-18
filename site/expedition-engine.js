@@ -555,6 +555,24 @@ function rebirthRewards(s){
  return {base,recordBonus,total:base+recordBonus,newMilestones,
   pending:progress,fraction:Math.max(0,progress-base)};
 }
+// Deterministic planning estimate, not a prediction of time to reach a boss.
+// Only enemy-clear core progress and first-clear milestones count; no invented
+// future relic/credit/hero gains. Does not mutate the live expedition state.
+function projectedRebirthRewards(s,targetCleared){
+ const current=integer(s.runBest,1,100000)-1;
+ if(!Number.isInteger(targetCleared)||targetCleared<=current||targetCleared>100000)return null;
+ let progress=num(s.coreReserve+s.coreProgress,0,1e9);
+ for(let stage=current+1;stage<=targetCleared;stage++)
+  progress=Math.min(1e9,progress+coreProgressForClear(stage));
+ const base=Math.floor(progress+1e-9);
+ const claimed=integer(s.claimedBreakthroughDistance,0,100000);
+ const recordBonus=BREAKTHROUGHS
+  .filter(b=>b.stage>claimed&&b.stage<=targetCleared)
+  .reduce((total,b)=>total+b.cores,0);
+ const currentReturn=rebirthRewards(s).total;
+ return {targetCleared,clearsRemaining:targetCleared-current,base,
+  recordBonus,total:base+recordBonus,additional:base+recordBonus-currentReturn};
+}
 function rebirthGain(s){return rebirthRewards(s).total;}
 function runOpeningSnapshot(s){
  return {attack:partyDps(s),hp:maxHp(s),income:questIncome(s,QUESTS[0])};
@@ -585,5 +603,5 @@ function offline(s,now=Date.now()){
  if(elapsed>=1){tick(s,Math.floor(elapsed),'offline');s.playtest.offlineSeconds+=Math.floor(elapsed);}
  s.lastSaved=now;return Math.floor(elapsed);
 }
-return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
+return {VERSION,SAVE_KEY,MAX_ACTORS,MAX_PLAYTEST_SNAPSHOTS,MILESTONE_STAGES,AUTO_BUY_INTERVAL,BALANCED_SAVING_HORIZON_SECONDS,BALANCED_FALLBACK_BUDGET_RATIO,AUTO_MODES,BREAKTHROUGHS,CORE_PROGRESS_PER_CLEAR,CORE_PROGRESS_GROWTH,coreProgressForClear,UNITS,QUESTS,RELICS,newState,normalize,tick,offline,recruit,train,upgradeQuest,purchase,setAutoBuy,autoTarget,autoPurchaseOnce,permanentBonuses,openChest,openChestBatch,buyTrait,buyCore,rebirth,rebirthGain,rebirthRewards,projectedRebirthRewards,traitRemaining,enemyMax,maxHp,actorMaxHp,partyDps,healDps,questIncome,hireCost,trainCost,questCost,coreCost,xpNeeded,relic,isBoss,isElite};
 });
