@@ -22,7 +22,7 @@ const COPY_KIND=Object.fromEntries([
  ...['ember','swift','relay','boss','archer'].map(id=>[id,'damage']),
  ...['shield','guard','medkit'].map(id=>[id,'survival']),
  ...['income','bounty','fortune','enlist','drill'].map(id=>[id,'economy']),
- ['scout','experience'],['chronicle','unique'],['pursuit','unique']
+ ['scout','experience'],['chronicle','unique'],['pursuit','unique'],['diagram','unique']
 ]);
 assert.equal(Object.keys(COPY_KIND).length,E.RELICS.length);
 const sumCopies=x=>Object.values(x).reduce((a,b)=>a+b,0);
