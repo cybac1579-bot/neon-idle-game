@@ -72,7 +72,8 @@ function play(E,seed,seconds,condition){
   rebirths:s.rebirths,entries,longEncounters,stalledEncounters,longestEncounter,secondsByKind,checkpoints,
   tactics:{rushes:fx.rushes||0,braces:fx.braces||0,flanks:fx.flankShots||0,
    intercepts:fx.intercepts||0,jams:fx.jams||0,cleanses:fx.cleanses||0,
-   cleanseDamage:ROUND(fx.cleanseDamage||0)}};
+   cleanseDamage:ROUND(fx.cleanseDamage||0),
+   commandMoves:fx.commandMoves||0,commandSurges:fx.commandSurges||0}};
  assert.equal(r.rebirths,0,'audit must not automatically return');
  assert.ok(Number.isFinite(r.coreProgress)&&r.stage>=1&&r.stage<=100000);
  assert.ok(Number.isFinite(r.coresIfReturned)&&r.coresIfReturned>=0);
@@ -90,6 +91,8 @@ for(const condition of CONDITIONS)for(const seconds of DURATIONS)for(const seed 
  assert.equal(previous.entries.disruptor,0,'control cannot contain the new role');
  assert.equal(previous.tactics.jams,0,'control has no jam');
  assert.ok(current.tactics.cleanses<=current.tactics.jams,'no phantom defense');
+ assert.ok(current.tactics.commandSurges<=current.tactics.commandMoves,'commander surge requires a repeated phase');
+ assert.equal(previous.tactics.commandMoves,0,'pinned one-shot engine never repeats commander phases');
  assert.ok(current.tactics.jams<=current.entries.disruptor,'at most one jam per disruptor');
  assert.ok(current.tactics.cleanses===0 || condition==='preowned-signal' ||
   current.relicKinds>=2,'unexpected defense without collecting relics');
@@ -116,6 +119,8 @@ const summary=CONDITIONS.flatMap(condition=>DURATIONS.map(seconds=>{
   meanRelicKindDelta:avg('relicKinds'),
   totalJams:rows.reduce((n,p)=>n+p.current.tactics.jams,0),
   totalCleanses:rows.reduce((n,p)=>n+p.current.tactics.cleanses,0),
+  totalCommanderMoves:rows.reduce((n,p)=>n+p.current.tactics.commandMoves,0),
+  totalCommanderSurges:rows.reduce((n,p)=>n+p.current.tactics.commandSurges,0),
   totalDisruptorsEncountered:rows.reduce((n,p)=>n+p.current.entries.disruptor,0),
   totalDisruptorsSurvivedThreeSeconds:rows.reduce((n,p)=>n+p.current.longEncounters.disruptor,0),
   totalStalledEncounters:rows.reduce((n,p)=>n+Object.values(p.current.stalledEncounters).reduce((a,b)=>a+b,0),0),
