@@ -1,5 +1,5 @@
 'use strict';
-/* Boss-50 HP sponge fix with one-time in-progress save migration. */
+/* Boss-50 and 60+ HP curve regression with one-time legacy save migration. */
 const test=require('node:test'),assert=require('node:assert/strict');
 const E=require('../site/expedition-engine.js');
 function oldHp(stage){
@@ -23,25 +23,41 @@ test('50+ boss wall is trimmed without dropping below ordinary/elite challenge',
  assert.ok(E.enemyMax(50)>E.enemyMax(49)*2.4);
  for(const stage of [50,60,70,80]){
   assert.ok(E.enemyMax(stage)<oldHp(stage));
-  assert.ok(E.enemyMax(stage)>E.enemyMax(stage-1)*2.4);
+  assert.ok(E.enemyMax(stage)>E.enemyMax(stage-1)*(stage>=60?2:2.4),
+   'post-60 boss remains at least twice as strong as preceding enemy: '+stage);
  }
 });
 test('new states and saves carry the post-fix boss curve marker',()=>{
  const s=E.newState(1000);
- assert.equal(s.bossHpBalanceVersion,2);
+ assert.equal(s.bossHpBalanceVersion,3);
  s.stage=s.best=s.runBest=50;s.enemyHp=E.enemyMax(50);
  const loaded=E.normalize(JSON.parse(JSON.stringify(s)),2000);
- assert.equal(loaded.bossHpBalanceVersion,2);
+ assert.equal(loaded.bossHpBalanceVersion,3);
  assert.equal(loaded.enemyHp,E.enemyMax(50));
 });
 test('old in-progress 50-boss saves retain percentage defeated once',()=>{
  for(const ratio of [.1,.4,.85,1]){
   const raw=ongoingBoss(50,ratio);
   const loaded=E.normalize(raw,2000);
-  assert.equal(loaded.bossHpBalanceVersion,2);
+  assert.equal(loaded.bossHpBalanceVersion,3);
   assert.ok(Math.abs(loaded.enemyHp/E.enemyMax(50)-ratio)<.00001);
   const next=E.normalize(JSON.parse(JSON.stringify(loaded)),3000);
   assert.equal(next.enemyHp,loaded.enemyHp,'second load must not apply the nerf again');
+ }
+});
+test('marker-2 boss saves preserve the fought percentage through the new 60+ adjustment',()=>{
+ for(const stage of [50,60,70,80]){
+  const raw=E.newState(1000);
+  raw.stage=raw.best=raw.runBest=stage;
+  raw.bossHpBalanceVersion=2;
+  const early=Math.min(stage-1,39),late=Math.max(0,Math.min(stage-40,60));
+  const oldMax=Math.min(1e13,Math.round(2.2*13*Math.pow(1.235,early)*Math.pow(1.18,late)));
+  raw.enemyHp=Math.round(oldMax*.4);
+  const loaded=E.normalize(raw,2000);
+  assert.equal(loaded.bossHpBalanceVersion,3);
+  assert.ok(Math.abs(loaded.enemyHp/E.enemyMax(stage)-.4)<.00001,'stage '+stage);
+  const again=E.normalize(JSON.parse(JSON.stringify(loaded)),3000);
+  assert.equal(again.enemyHp,loaded.enemyHp,'second load must not reapply conversion at stage '+stage);
  }
 });
 test('old 60-boss saves scale remaining HP, not already defeated percentage',()=>{
