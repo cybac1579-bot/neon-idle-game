@@ -430,6 +430,47 @@ async function main(){
    assert.equal(pursuitView.activated,true);
    assert.equal(pursuitView.boost,1.6);
    assert.match(pursuitView.cue,/추격 신호기/);
+   // Actual 10-minute combat evidence is visible only in the detail tray.
+   // Check reloaded state and user-triggered JSON export, without a fake HUD.
+   if(width===390){
+    const engagementContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1,acceptDownloads:true});
+    const engagementPage=await engagementContext.newPage();
+    await engagementPage.goto(url,{waitUntil:'networkidle'});
+    await engagementPage.addInitScript(()=>{
+     const key='neon_expedition_prototype_v1',raw=localStorage.getItem(key);
+     if(!raw)return;
+     const state=JSON.parse(raw);
+     state.stage=state.best=state.runBest=50;
+     state.enemyHp=213787;state.lastSaved=Date.now();
+     state.engagement={stage:50,seconds:645,autoBuyStart:7,legacyResume:false};
+     state.autoBuy.purchases=12;
+     state.longestEncounter={stage:40,seconds:550};
+     state.longEngagements=3;
+     localStorage.setItem(key,JSON.stringify(state));
+    });
+    await engagementPage.reload({waitUntil:'networkidle'});
+    await engagementPage.locator('[data-tab="return"]').click();
+    const report=await engagementPage.locator('#rebirthSummary').textContent();
+    assert.match(report,/현재 적과 교전50거리 · 10분/);
+    assert.match(report,/남음 · 자동 구매 5회/);
+    assert.match(report,/1분 이상 교전 격파3회/);
+    assert.match(report,/최장 격파 교전40거리 · 9분 10초/);
+    const bounds=await engagementPage.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
+    assert.ok(bounds.scroll<=bounds.width+1,'long-fight detail must not overflow on mobile');
+    await engagementPage.locator('[data-tab="archive"]').click();
+    assert.match(await engagementPage.locator('#milestoneSummary').textContent(),/55거리 정예/);
+    assert.match(await engagementPage.locator('#milestoneSummary').textContent(),/60거리 보스/);
+    const downloadEvent=engagementPage.waitForEvent('download');
+    await engagementPage.locator('#exportPlaytest').click();
+    const engagementExport=JSON.parse(fs.readFileSync(await (await downloadEvent).path(),'utf8'));
+    assert.equal(engagementExport.currentRun.currentEngagement.stage,50);
+    assert.ok(engagementExport.currentRun.currentEngagement.observedSeconds>=645);
+    assert.equal(engagementExport.currentRun.currentEngagement.automaticPurchasesDuringFight,5);
+    assert.deepEqual(engagementExport.currentRun.longestCompletedEngagement,{stage:40,seconds:550});
+    assert.equal(engagementExport.currentRun.completedFightsOverOneMinute,3);
+    await engagementContext.close();
+   }
+
    // Regression: after a 45-clear voluntary return, the low-level run stage
    // must NOT advertise relic tiers 15/25/40 as "new" a second time.
    const frontierContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
