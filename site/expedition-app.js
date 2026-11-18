@@ -143,7 +143,7 @@ function exportPlaytest(){
     duplicates:s.runMetrics.duplicateRelics,exchanges:s.runMetrics.relicExchanges,
     partial:s.runMetrics.legacyRelicCounter===true},
    pendingReturnProgress:s.coreProgress,carryReturnFraction:s.coreReserve,
-   relicEffects:{volleys:s.relicEffects.volleys,volleyBonusDamage:s.relicEffects.volleyBonusDamage,triages:s.relicEffects.triages,intelFinds:s.relicEffects.intelFinds,intelClears:s.relicEffects.intelClears,flankShots:s.relicEffects.flankShots,intercepts:s.relicEffects.intercepts,counterDamage:s.relicEffects.counterDamage,rushes:s.relicEffects.rushes,braces:s.relicEffects.braces,partialBraces:s.relicEffects.partialBraces,braceDamage:s.relicEffects.braceDamage,
+   relicEffects:{volleys:s.relicEffects.volleys,volleyBonusDamage:s.relicEffects.volleyBonusDamage,triages:s.relicEffects.triages,intelFinds:s.relicEffects.intelFinds,intelClears:s.relicEffects.intelClears,flankShots:s.relicEffects.flankShots,intercepts:s.relicEffects.intercepts,partialCovers:s.relicEffects.partialCovers,counterDamage:s.relicEffects.counterDamage,rushes:s.relicEffects.rushes,braces:s.relicEffects.braces,partialBraces:s.relicEffects.partialBraces,braceDamage:s.relicEffects.braceDamage,
     escortDuets:s.relicEffects.escortDuets,commandMoves:s.relicEffects.commandMoves,
     commandSurges:s.relicEffects.commandSurges,guardPlateBlocks:s.relicEffects.guardPlateBlocks,
     jams:s.relicEffects.jams,cleanses:s.relicEffects.cleanses,
