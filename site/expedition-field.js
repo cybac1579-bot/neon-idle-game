@@ -82,6 +82,7 @@ function sync(s){
  cue.className='combat-cue '+evt.type;
  if(evt.type==='hit')cue.textContent='-'+Math.max(1,Math.round(evt.value));
  else if(evt.type==='volley')cue.textContent='정밀 사격! -'+Math.max(1,Math.round(evt.value));
+ else if(evt.type==='pursuit')cue.textContent='추격 신호기! 지휘급 적 후반 화력 +60%';
  else if(evt.type==='triage')cue.textContent='긴급 회수! · 복귀 '+evt.value.toFixed(1)+'초 단축';
  else if(evt.type==='intel')cue.textContent='탐사 정보망 · 새 조사 보상!';
  else if(evt.type==='aim')cue.textContent='적 측면 조준 · 후열 경계!';
