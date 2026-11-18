@@ -1243,6 +1243,8 @@ require('./expedition-return-choice.test.cjs');
 require('./expedition-relic-run-count.test.cjs');
 // Exact first-vs-second copy payoff in the archive must match the real engine.
 require('./expedition-relic-copy-preview.test.cjs');
+// The reward popup uses real per-copy conditional stats, not misleading generic DPS.
+require('./expedition-reward-impact.test.cjs');
 
 // Deep shield+escort combination must allow melee participation, no free rewards.
 require('./expedition-deep-guard-formation.test.cjs');
