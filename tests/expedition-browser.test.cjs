@@ -453,6 +453,29 @@ async function main(){
    assert.equal(pursuitView.persistentIntent.visible,true);
    assert.match(pursuitView.persistentIntent.text,/추격 신호기 · 후반전 화력/);
    assert.deepEqual(pursuitView.restoredIntent,pursuitView.persistentIntent);
+   // A depth65 elite now reuses the SAME earned pursuit clue and compact
+   // tactical strip, with no new battle HUD buttons or forced action.
+   const elite65View=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,field=window.ExpeditionField;
+    const s=E.newState(Date.now());s.stage=s.best=s.runBest=65;
+    s.enemyTactic.stage=65;s.relics.pursuit=1;
+    s.enemyHp=E.enemyMax(65)*.5+1;
+    for(const a of s.actors){a.hp=1e8;a.progress=1;a.cooldown=0;}
+    E.tick(s,1);field.sync(s);
+    const intent=document.querySelector('.enemy-intent');
+    const saved=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+    return {boost:E.pursuitBoost(s),trigger:s.enemyTactic.pursuitTriggered,
+     cue:document.querySelector('.combat-cue')?.textContent,
+     visible:!intent.hidden,details:intent.textContent,
+     savedCue:saved.battleEvent?.type,savedBoost:E.pursuitBoost(saved)};
+   });
+   assert.equal(elite65View.boost,1.6);
+   assert.equal(elite65View.trigger,true);
+   assert.match(elite65View.cue,/추격 신호기/);
+   assert.equal(elite65View.visible,true);
+   assert.match(elite65View.details,/추격 신호기 · 후반전 화력/);
+   assert.equal(elite65View.savedCue,'pursuit');
+   assert.equal(elite65View.savedBoost,1.6);
    // At a real boss-only duplicate reward, generic DPS can remain 0%,
    // but each individual chest must explain the permanent conditional gain.
    if(width===390){
