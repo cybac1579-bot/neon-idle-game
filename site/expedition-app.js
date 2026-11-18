@@ -134,7 +134,7 @@ function exportPlaytest(){
    automaticChestsOpened:s.autoChest.opened,
    manuallyOpenedChests:Math.max(0,s.runMetrics.chestsOpened-s.autoChest.opened),
    pendingReturnProgress:s.coreProgress,carryReturnFraction:s.coreReserve,
-   relicEffects:{volleys:s.relicEffects.volleys,volleyBonusDamage:s.relicEffects.volleyBonusDamage,triages:s.relicEffects.triages,intelFinds:s.relicEffects.intelFinds,intelClears:s.relicEffects.intelClears,flankShots:s.relicEffects.flankShots,intercepts:s.relicEffects.intercepts,counterDamage:s.relicEffects.counterDamage},
+   relicEffects:{volleys:s.relicEffects.volleys,volleyBonusDamage:s.relicEffects.volleyBonusDamage,triages:s.relicEffects.triages,intelFinds:s.relicEffects.intelFinds,intelClears:s.relicEffects.intelClears,flankShots:s.relicEffects.flankShots,intercepts:s.relicEffects.intercepts,counterDamage:s.relicEffects.counterDamage,rushes:s.relicEffects.rushes,braces:s.relicEffects.braces,braceDamage:s.relicEffects.braceDamage},
    milestoneClears:{...s.runMilestones}
   },
   lifetime:{
