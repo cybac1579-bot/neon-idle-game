@@ -28,13 +28,13 @@ const QUESTS=[
 ];
 const RELICS=[
  {id:'ember',name:'용광로 문장',desc:'용병단 피해량이 수집 수마다 8% 증가',cap:5,unlockStage:5},
- {id:'shield',name:'합금 배지',desc:'용병단 체력 +10%/개 · 진군 북과 함께 돌격병의 밀치기를 막고 자동 반격',cap:5,unlockStage:5},
+ {id:'shield',name:'합금 배지',desc:'용병단 체력 +10%/개 · 진군 북과 돌격 방어 · 55거리 이상 호위 계약서와 함께 방벽병 단타 피해 경감',cap:5,unlockStage:5},
  {id:'income',name:'교역 인장',desc:'자동 보급 수익이 수집 수마다 12% 증가',cap:5,unlockStage:5},
  {id:'swift',name:'진군 북',desc:'용병단 피해량 +5%/개 · 합금 배지와 함께 돌격병의 밀치기 방어',cap:5,unlockStage:15},
  {id:'medkit',name:'재생 결속선',desc:'정비사 회복력 +18%/개 · 방벽병 긴급 재합류 지원 (18초마다 최대 1회) · 작전 통신기와 함께 교란 사격 대응',cap:4,unlockStage:15},
  {id:'boss',name:'균열 렌즈',desc:'지휘급 적에게 주는 피해가 수집 수마다 14% 증가',cap:5,unlockStage:25},
  {id:'bounty',name:'현상금 표식',desc:'전투 크레딧 보상이 수집 수마다 12% 증가',cap:5,unlockStage:5},
- {id:'guard',name:'호위 계약서',desc:'방벽병 체력 +20%/개 · 초점 조준기와 함께 적의 측면 조준 공격을 차단하고 사수가 자동 반격',cap:4,unlockStage:5},
+ {id:'guard',name:'호위 계약서',desc:'방벽병 체력 +20%/개 · 초점 조준기와 측면 호위 · 55거리 이상 합금 배지와 함께 방벽병 단타 피해 경감',cap:4,unlockStage:5},
  {id:'archer',name:'초점 조준기',desc:'사수 3번째 사격마다 정밀 일제사격 · 호위 계약서와 조합하면 측면 조준 차단·자동 반격',cap:4,unlockStage:15},
  {id:'scout',name:'탐사 일지',desc:'지휘관 전투 경험치 +15%/개 · 작전 통신기와 함께 탐사 정보망 활성화',cap:4,unlockStage:25},
  {id:'fortune',name:'중복 해체권',desc:'중복 유물 발견 시 수집 수마다 추가 크레딧 획득',cap:3,unlockStage:30},
@@ -65,7 +65,7 @@ const normalizedLongestEncounter=raw=>raw&&typeof raw==='object'&&
  stage:integer(raw.stage,0,100000),seconds:num(raw.seconds,0,1e9)
 }:initialLongestEncounter();
 // Per-run relic action telemetry; old saves default to no past activations.
-const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0});
+const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0});
 // New standard-enemy role is deterministic per stage and independent of drop RNG.
 function enemyKind(stage){
  if(isBoss(stage))return 'boss';
@@ -83,7 +83,7 @@ const combatEffectReport=raw=>raw&&typeof raw==='object'?{
  counterDamage:num(raw.counterDamage,0,1e14),rushes:integer(raw.rushes,0,1e9),
  braces:integer(raw.braces,0,1e9),braceDamage:num(raw.braceDamage,0,1e14),
   jams:integer(raw.jams,0,1e9),cleanses:integer(raw.cleanses,0,1e9),cleanseDamage:num(raw.cleanseDamage,0,1e14),
-  commandMoves:integer(raw.commandMoves,0,1e9),commandSurges:integer(raw.commandSurges,0,1e9)
+  commandMoves:integer(raw.commandMoves,0,1e9),commandSurges:integer(raw.commandSurges,0,1e9),guardPlateBlocks:integer(raw.guardPlateBlocks,0,1e9)
 }:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
@@ -181,7 +181,7 @@ function normalize(raw,now=Date.now()){
  s.longestEncounter=normalizedLongestEncounter(raw.longestEncounter);
  s.longEngagements=integer(raw.longEngagements,0,1e9);
  s.relicEffects=initialRelicEffects();
- for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','jams','cleanses','commandMoves','commandSurges'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
+ for(const k of ['volleys','triages','flankShots','intercepts','rushes','braces','jams','cleanses','commandMoves','commandSurges','guardPlateBlocks'])s.relicEffects[k]=integer(raw.relicEffects?.[k],0,1e9);
  s.relicEffects.intelClears=integer(raw.relicEffects?.intelClears,0,1);
  s.relicEffects.intelFinds=integer(raw.relicEffects?.intelFinds,0,2);
  s.relicEffects.volleyBonusDamage=num(raw.relicEffects?.volleyBonusDamage,0,1e14);
@@ -561,7 +561,19 @@ function fight(s,dt){
  const pierce=rear.length?(boss?.22:isElite(s.stage)?.14:s.enemyTactic.kind==='disruptor'?.13:.08):0;
  function hit(actor,amount){
   if(!actor||amount<=0)return;
-  const taken=Math.min(actor.hp,amount);
+  // At late depths, exponential enemy damage had reached 9,000+ damage
+  // against ~600-700 HP guards. A selected frontliner was one-shot every
+  // second, unable to reach melee range. Only the earned shield+escort
+  // combo tempers a single guard strike to 65% maximum HP. The remaining
+  // enemy attack is blocked, not rerouted into a fragile rear unit.
+  // Two consecutive strikes can still defeat a guard; early fights do
+  // not gain any free defense. Time fractional steps retain parity.
+  const guardedImpactCap=actor.id==='guard'&&s.stage>=55&&
+   relic(s,'shield')>0&&relic(s,'guard')>0?
+   actorMaxHp(s,'guard')*.65*dt:Infinity;
+  if(amount>guardedImpactCap)
+   s.relicEffects.guardPlateBlocks=Math.min(1e9,s.relicEffects.guardPlateBlocks+1);
+  const taken=Math.min(actor.hp,amount,guardedImpactCap);
   s.contribution.taken[actor.id]+=taken;
   actor.hp=Math.max(0,actor.hp-taken);
   if(actor.hp<=0){
