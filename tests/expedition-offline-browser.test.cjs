@@ -114,6 +114,44 @@ async function main(){
   assert.deepEqual(blockedErrors,[],'storage failure should not crash the browser');
   await blocked.close();
   console.log('PASS standalone file:// storage-denied warning, continued growth and fresh JSON backup');
+  // A transient quota/write failure must clear its warning only AFTER an
+  // actually verified save succeeds. Prove the saved upgrade survives reload.
+  const recovered=await browser.newContext({viewport:{width:390,height:800},acceptDownloads:true});
+  await recovered.setOffline(true);
+  const recoveredPage=await recovered.newPage();
+  await recoveredPage.goto(pathToFileURL(packaged).href,{waitUntil:'load'});
+  assert.equal(await recoveredPage.locator('#squadScreen [data-storage-warning]').isVisible(),false);
+  await recoveredPage.evaluate(()=>{
+   const original=Storage.prototype.setItem;
+   window.__originalStorageWrite=original;
+   Storage.prototype.setItem=function(key,value){
+    if(key==='neon_expedition_prototype_v1')return; // fail silently
+    return original.call(this,key,value);
+   };
+  });
+  await recoveredPage.locator('#hire').click();
+  assert.equal(await recoveredPage.locator('#squadScreen [data-storage-warning]').isVisible(),true,
+   'a silently discarded save must be caught by readback');
+  await recoveredPage.evaluate(()=>{
+   Storage.prototype.setItem=window.__originalStorageWrite;
+  });
+  await recoveredPage.locator('[data-tab="archive"]').click();
+  await recoveredPage.locator('#saveNow').click();
+  assert.equal(await recoveredPage.locator('#archiveScreen [data-storage-warning]').isVisible(),false,
+   'warning clears only after the browser can persist again');
+  const storedAfter=await recoveredPage.evaluate(()=>JSON.parse(
+   localStorage.getItem('neon_expedition_prototype_v1')||'null'
+  ));
+  assert.equal(Object.values(storedAfter.units).reduce((a,b)=>a+b,0),3);
+  await recoveredPage.reload({waitUntil:'load'});
+  const afterReload=await recoveredPage.evaluate(()=>JSON.parse(
+   localStorage.getItem('neon_expedition_prototype_v1')||'null'
+  ));
+  assert.equal(Object.values(afterReload.units).reduce((a,b)=>a+b,0),3,
+   'a recovered persistent store keeps the purchase after reload');
+  assert.equal(await recoveredPage.locator('#squadScreen [data-storage-warning]').isVisible(),false);
+  await recovered.close();
+  console.log('PASS standalone file:// silent save failure detection and durable recovery');
  }finally{await browser.close();}
 }
 main().catch(err=>{console.error(err);process.exitCode=1;});
