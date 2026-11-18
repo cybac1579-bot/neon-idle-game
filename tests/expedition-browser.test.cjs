@@ -4,9 +4,9 @@ const {chromium}=require('playwright');
 const site=path.resolve(__dirname,'../site');
 const server=http.createServer((req,res)=>{
  const filename=decodeURIComponent((req.url||'/').split('?')[0].replace(/^\/+/,''));
- if(!['expedition.html','expedition-engine.js','expedition-app.js','expedition-field.js'].includes(filename)){res.writeHead(404);res.end();return;}
+ if(!['expedition.html','expedition-engine.js','expedition-ui.css','expedition-ui.js','expedition-app.js','expedition-field.js'].includes(filename)){res.writeHead(404);res.end();return;}
  const name=path.join(site,filename);
- res.writeHead(200,{'Content-Type':filename.endsWith('.html')?'text/html; charset=utf-8':'text/javascript; charset=utf-8'});
+ res.writeHead(200,{'Content-Type':filename.endsWith('.html')?'text/html; charset=utf-8':filename.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8'});
  fs.createReadStream(name).pipe(res);
 });
 async function main(){
