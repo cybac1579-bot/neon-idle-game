@@ -5,16 +5,19 @@
  * Player manually chooses return and (optional) investment. */
 const assert=require('node:assert/strict');
 const E=require('../site/expedition-engine.js');
-const SEEDS=[123456789,987654321,20261118],MODES=['balanced','adaptive'];
+const SEEDS=[123456789,987654321,20261118,314159265,271828182,135791357,246802468,44444444,7654321,111333555,987456321,20261119],MODES=['balanced','adaptive'];
 const ROUTES=[{label:'no-return',returnAfter:0,invest:false},
  {label:'return15-no-core',returnAfter:15,invest:false},
  {label:'return15-invest',returnAfter:15,invest:true},
  {label:'return25-no-core',returnAfter:25,invest:false},
- {label:'return25-invest',returnAfter:25,invest:true}];
+ {label:'return25-invest',returnAfter:25,invest:true},
+ // Diagnostic only: grant earned core investment but neutralize extra shallow
+ // permanent stacks from re-clearing old distances, without altering the game.
+ {label:'return25-core-only-counterfactual',returnAfter:25,invest:true,neutralizeReplays:true}];
 function run(seed,mode,route){
  const s=E.newState(1000000);s.seed=seed;
  assert.equal(E.setAutoBuy(s,mode,true),true);
- let priorCleared=0,firstReturnSeconds=null,paidCores=0,opened=0;
+ let priorCleared=0,firstReturnSeconds=null,paidCores=0,opened=0,neutralizedRepeatRelics=0;
  for(let sec=1;sec<=10000;sec++){
   E.tick(s,1);
   const cleared=s.stage-1;
@@ -24,7 +27,16 @@ function run(seed,mode,route){
   // Every alternative gets the same manual opportunity to open earned
   // chests: each 5-clear milestone, plus each 5-minute check-in.
   if(milestone||sec%300===0||chooseReturn){
-   while(s.chests>0){assert.ok(E.openChest(s));opened++;}
+   while(s.chests>0){
+    const depth=s.chestDepths[0],repeated=depth>0&&depth<=s.claimedBreakthroughDistance;
+    const found=E.openChest(s);assert.ok(found);opened++;
+    if(route.neutralizeReplays&&repeated&&found.id){
+     // Consume exactly the same chest and RNG. Remove only the relic boost
+     // in this synthetic counterfactual; the real game never removes it.
+     s.relics[found.id]=Math.max(0,s.relics[found.id]-1);
+     neutralizedRepeatRelics++;
+    }
+   }
   }
   if(chooseReturn){
    paidCores=E.rebirth(s);assert.ok(paidCores>0);
@@ -38,7 +50,7 @@ function run(seed,mode,route){
     cleared45AtSeconds:sec,paidCores,unclaimedCores:E.rebirthGain(s),
     totalEarnedOrUnclaimedCores:paidCores+E.rebirthGain(s),
     spentCores:s.coreSpent,combatCoreLevel:s.coreUpgrades.valor,
-    openedChests:opened,relicKinds:E.RELICS.filter(r=>E.relic(s,r.id)>0).length,
+    openedChests:opened,neutralizedRepeatRelics,relicKinds:E.RELICS.filter(r=>E.relic(s,r.id)>0).length,
     relicCopies:E.RELICS.reduce((total,r)=>total+E.relic(s,r.id),0),
     returns:s.rebirths};
   }
@@ -74,9 +86,14 @@ for(const mode of MODES)for(const seed of SEEDS){
 // advantage before choosing whether to rebalance core prices or relic odds.
 const routeComparison=MODES.flatMap(mode=>SEEDS.map(seed=>{
  const r=label=>rows.find(x=>x.mode===mode&&x.seed===seed&&x.route===label);
- const base=r('no-return'),noCore=r('return25-no-core'),invest=r('return25-invest');
+ const base=r('no-return'),noCore=r('return25-no-core'),invest=r('return25-invest'),coreOnly=r('return25-core-only-counterfactual');
  const shortcutPercent=+(100*(base.cleared45AtSeconds-invest.cleared45AtSeconds)/
   base.cleared45AtSeconds).toFixed(1);
+ assert.equal(coreOnly.openedChests,invest.openedChests);
+ assert.equal(coreOnly.firstReturnSeconds,invest.firstReturnSeconds);
+ assert.equal(coreOnly.paidCores,invest.paidCores);
+ assert.equal(coreOnly.combatCoreLevel,invest.combatCoreLevel);
+ assert.ok(coreOnly.neutralizedRepeatRelics>=0&&coreOnly.neutralizedRepeatRelics<=5);
  // This is a regression ceiling, not a promise that earliest return should
  // be optimal. Earlier experiments found a 25-26% shortcut in some seeds.
  assert.ok(shortcutPercent<=35,
@@ -85,10 +102,18 @@ const routeComparison=MODES.flatMap(mode=>SEEDS.map(seed=>{
   direct45Seconds:base.cleared45AtSeconds,
   return25NoCoreSeconds:noCore.cleared45AtSeconds,
   return25InvestedSeconds:invest.cleared45AtSeconds,
+  return25OnlyCoresSeconds:coreOnly.cleared45AtSeconds,
+  neutralizedRepeatRelics:coreOnly.neutralizedRepeatRelics,
   extraChestOpens:invest.openedChests-base.openedChests,
   incrementalCoreInvestmentSavedSeconds:noCore.cleared45AtSeconds-invest.cleared45AtSeconds,
   measuredShortcutPercent:shortcutPercent};
 }));
+const shortcutStats={
+ sampleCount:routeComparison.length,
+ averagePercent:+(routeComparison.reduce((sum,r)=>sum+r.measuredShortcutPercent,0)/routeComparison.length).toFixed(2),
+ maximumPercent:Math.max(...routeComparison.map(r=>r.measuredShortcutPercent)),
+ fasterCases:routeComparison.filter(r=>r.measuredShortcutPercent>0).length
+};
 console.log(JSON.stringify({experiment:'controlled-first-return-vs-extra-relic-chests',synthetic:true,
  note:'First clear45 elapsed time. 5-min manual checkins PLUS every five-clear milestone chest opening in *both* direct and returned runs. Early return is manually chosen; core investment is separately controlled. No forced first-rebirth time, no hidden timer.',
- rows,routeComparison}));
+ shortcutStats,routeComparison}));
