@@ -7,7 +7,16 @@ on:
     branches:
       - development/main-redesign-integration-20261114
       - integration/reconcile-main-redesign-20261114
+    # Docs-only notes do not change the actual expedition build.
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   workflow_dispatch:
+# Preserve a full report for the latest branch head, without paying for
+# multiple superseded runs during rapid manual/automated integration pushes.
+concurrency:
+  group: integration-portrait-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 jobs:
   portrait:
     runs-on: ubuntu-24.04
