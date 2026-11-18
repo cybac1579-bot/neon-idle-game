@@ -1059,6 +1059,11 @@ function nextRelicCopyPreview(s,id){
    return {id,copies,cap:info.cap,capped:false,unique:true,label:'고유 유물'};
   default:return null;
  }
+ // If the next copy completes a real conditional pair, say so in the
+ // archive/reward without presenting the extra counter as a generic DPS buff.
+ if((id==='guard'||id==='archer')&&copies===1&&
+    relic(s,id==='guard'?'archer':'guard')>=2)
+  context=(context?context+' · ':'')+'40거리 이후 사수 2인 호위 협공 해금';
  return {id,copies,cap:info.cap,capped:false,unique:false,
   label,from:Math.round(from*100)/100,to:Math.round(to*100)/100,unit,context};
 }
