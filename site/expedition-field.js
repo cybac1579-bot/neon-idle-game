@@ -144,9 +144,14 @@ function sync(s){
  }
  previousRoster=roster;previousTraining=training;
  const shown=selected(s);
- // In a 360px portrait screen 3 full-height fighters cannot occupy three
- // distinct rows. Compact only the preview geometry, never actor counts.
- arena.classList.toggle('formation-dense',shown.length>=6);
+ // A crowded roster or three of one role in a short field needs
+ // compact silhouettes to keep every head within the actual arena.
+ // The actual unit counts and backline reserves remain unchanged.
+ const displayedByRole={guard:0,ranger:0,medic:0};
+ shown.forEach(({a})=>{displayedByRole[a.id]++;});
+ const needsRows=Object.values(displayedByRole).some(count=>count>=3);
+ arena.classList.toggle('formation-dense',shown.length>=6||
+  (needsRows&&field.clientHeight<210));
  const key=shown.map(x=>x.index+':'+x.a.id).join('|');
  if(key!==visibleKey){
   field.replaceChildren();
