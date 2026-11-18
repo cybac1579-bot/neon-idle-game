@@ -341,6 +341,30 @@ async function main(){
    assert.match(await page.locator('#relicList').textContent(),/작전 통신기와 함께 탐사 정보망/);
    assert.match(await page.locator('#relicList').textContent(),/탐사 일지와 함께 자동 유물 조사/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
+   // Exercise the actual replaceable field visualizer with a real engine
+   // enemy-focus pattern. UI cannot fake it with a static CSS label.
+   const tacticView=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,field=window.ExpeditionField;
+    const s=E.newState(Date.now());
+    s.stage=s.best=s.runBest=15;s.enemyHp=1e10;
+    s.relics.guard=1;s.relics.archer=1;s.units.ranger=1;
+    s.actors.push({id:'ranger',hp:E.actorMaxHp(s,'ranger'),revive:0,progress:1,cooldown:100,shots:0});
+    for(const a of s.actors){a.hp=E.actorMaxHp(s,a.id);a.progress=1;a.cooldown=100;}
+    E.tick(s,3);field.sync(s);
+    const intent=document.querySelector('.enemy-intent');
+    const warning={visible:!intent.hidden,text:intent.textContent};
+    E.tick(s,2);field.sync(s);
+    const result={visible:!intent.hidden,text:intent.textContent,intercepts:s.relicEffects.intercepts,
+      event:document.querySelector('.combat-cue')?.textContent};
+    return {warning,result};
+   });
+   assert.equal(tacticView.warning.visible,true,'elite telegraph visible during growth or archive use');
+   assert.match(tacticView.warning.text,/측면 조준/);
+   assert.equal(tacticView.result.visible,true);
+   assert.match(tacticView.result.text,/호위.*반격/);
+   assert.equal(tacticView.result.intercepts,1);
+   assert.match(tacticView.result.event,/호위 반격/);
+   assert.equal(await page.locator('#battleScreen').isVisible(),true);
    await context.close();
    console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison/chronicle');
   }
