@@ -145,6 +145,9 @@ function returnReportHtml(r){
  return row('완료한 탐사',fmt(r.number)+'회차 · '+fmt(r.cleared)+'거리까지 격파')+
   row('이번 귀환 코어',fmt(r.cores)+'개 (격파 적립 '+fmt(r.earned)+' · 첫 기록 '+fmt(r.firstClear)+')')+
   row('영구 유물 수집',fmt(r.relicKinds)+'종 · 총 '+fmt(r.relicCopies)+'개')+
+  (r.relicFindCounts?row('이번 탐사 첫 발견 / 중복 / 교환',
+   fmt(r.relicFindCounts.first)+'종 / '+fmt(r.relicFindCounts.duplicates)+'개 / '+
+   fmt(r.relicFindCounts.exchanges)+'상자'+(r.relicFindCounts.partial?' · 이전 수집 기록 일부 제외':'')):'')+
   (Number.isFinite(r.autoChestOpened)?row('지난 탐사 자동 개봉',fmt(r.autoChestOpened)+'개'):'')+
   (r.longestEncounter?.stage?row('최장 적 격파 교전',fmt(r.longestEncounter.stage)+'거리 · '+Math.floor(r.longestEncounter.seconds/60)+'분 '+Math.floor(r.longestEncounter.seconds%60)+'초'):'')+
   (Number.isFinite(r.longEngagements)?row('1분 이상 걸린 격파',fmt(r.longEngagements)+'회'):'')+
@@ -155,8 +158,13 @@ function renderArchive(){
  let found=0,copies=0;E.RELICS.forEach(r=>{if(E.relic(s,r.id))found++;copies+=E.relic(s,r.id);});
  $('relicSummary').textContent=found+'/'+E.RELICS.length+' 발견 · '+copies+'개 수집';
  const capped=E.RELICS.reduce((sum,r)=>sum+r.cap,0);
+ const cm=s.runMetrics;
  $('relicCollectionProgress').textContent='발견한 종류 '+found+'/'+E.RELICS.length+
-   ' · 보유 '+copies+'/'+capped+'개 (중복 강화 포함) · 미개봉 '+fmt(s.chests)+'상자';
+   ' · 보유 '+copies+'/'+capped+'개 (중복 강화 포함) · 미개봉 '+fmt(s.chests)+'상자'+
+   ' · 이번 탐사 첫 발견 '+fmt(cm.firstRelicFinds)+'종 / 중복 강화 '+fmt(cm.duplicateRelics)+
+   '개 / 상한 교환 '+fmt(cm.relicExchanges)+'상자'+
+   (cm.legacyRelicCounter?' (과거 저장분 집계 제외)':'')+
+   (found===E.RELICS.length?' · 공개된 유물 종류 완성 · 남은 중복 강화 슬롯 '+fmt(capped-copies)+'개':'');
  // The battle HUD remains lean; collectors can confirm that an owned relic
  // changed combat behavior rather than merely inflating base damage.
  const effects=s.relicEffects||{volleys:0,volleyBonusDamage:0,triages:0,intelClears:0,intelFinds:0};
@@ -222,7 +230,9 @@ function renderArchive(){
  const choice=E.returnChoiceSnapshot(s);
  const unlockGoal=choice.nextUnopenedTier?
   choice.nextUnopenedTier+'거리 상자에서 새로운 유물군 개방':
-  '공개된 유물 깊이 모두 해금 · 미수집 유물 탐색 가능';
+  choice.ownedRelicKinds===E.RELICS.length?
+   '공개된 유물 '+fmt(E.RELICS.length)+'종 모두 발견 · 현재 원형의 신규 종류 없음 · 중복 강화는 계속 가능':
+   '공개된 유물 깊이 모두 해금 · 미수집 유물 탐색 가능';
  const investable=choice.offers.filter(o=>o.affordableAfterReturn);
  const investLabel=investable.length?investable.map(o=>
   (o.id==='valor'?'전선 강화':'보급 강화')+' LV.'+(o.level+1)+' (각 '+fmt(o.cost)+'코어)'
@@ -235,7 +245,7 @@ function renderArchive(){
   '미개봉 '+fmt(choice.pendingChests)+'상자 (귀환 후에도 유지) · 첫 발견 후보 '+
   fmt(choice.pendingNewKinds)+'종'+
   (choice.guaranteedFirstDiscovery?' · 아직 미발견인 깊이 전용 유물 확정 상자 포함':
-   ' · 발견 여부는 확률로 결정'):
+   choice.pendingNewKinds?' · 발견 여부는 확률로 결정':' · 새 종류 후보 없음, 중복 강화 또는 상한 교환'):
   '미개봉 상자 없음 · 5거리 단위 정예/보스 격파로 새 상자 확보';
  $('returnChoices').innerHTML=
   '<div class="return-choice"><strong>↻ 지금 귀환</strong><p>'+safe(returnText)+'</p>'+
