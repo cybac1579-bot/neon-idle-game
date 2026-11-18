@@ -132,6 +132,8 @@ async function main(){
    assert.match(await page.locator('#milestoneSummary').textContent(),/10거리 보스/);
    const awaiting=await page.evaluate(()=>JSON.parse(localStorage.getItem('neon_expedition_prototype_v1')));
    assert.equal(awaiting.chests,4,'chests remain unopened until explicitly clicked');
+   assert.match(await page.locator('#openChest').textContent(),/첫 유물 확인 · 상자 1개 열기/,
+    'first permanent discovery should be obvious on the live battle screen');
    await page.locator('#openArchiveChest').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),true);
    assert.equal(await page.locator('#popupResults .reward-item').count(),1);
@@ -139,6 +141,8 @@ async function main(){
     'new item explains its actual measured improvement');
    await page.locator('#popupClose').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),false);
+   assert.match(await page.locator('#openChest').textContent(),/상자 1개 열기 · 보유 3개/,
+    'battle button opens one box while the archive remains the batch control');
    assert.match(await page.locator('#openArchiveBatch').textContent(),/3개 함께 열기/);
    await page.locator('#openArchiveBatch').click();
    assert.equal(await page.locator('#relicPopup').isVisible(),true);
