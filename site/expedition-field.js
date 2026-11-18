@@ -34,10 +34,17 @@ function sync(s){
  }
  shown.forEach(({a,index},i)=>{
   const el=field.querySelector('[data-actor-index="'+index+'"]');if(!el)return;
-  const lane=a.id==='guard'?i%3:a.id==='ranger'?(i%3):i%2;
-  const x=a.id==='guard'?7+safe(a.progress)*58:a.id==='ranger'?3+safe(a.progress)*35:2+safe(a.progress)*25;
+  const lane=a.id==='guard'?i%3:a.id==='ranger'?i%3:i%2;
+  // Formation lanes are deliberately separated by roughly a full fighter
+  // height in the compact persistent arena. The former 7–8% lane gaps
+  // stacked duplicate names/health bars directly on top of each other.
+  const x=a.id==='guard'?7+safe(a.progress)*55+lane*2:
+   a.id==='ranger'?3+safe(a.progress)*33+lane*4:
+   2+safe(a.progress)*24+lane*5;
   el.style.left=x+'%';
-  el.style.bottom=(a.id==='guard'?8+lane*8:a.id==='ranger'?38+lane*7:68+lane*7)+'%';
+  el.style.bottom=(a.id==='guard'?5+lane*31:
+   a.id==='ranger'?12+lane*28:
+   16+lane*30)+'%';
   const down=a.revive>0||a.hp<=0;
   el.classList.toggle('down',down);
   el.classList.toggle('advance',!down&&a.progress<.83);
