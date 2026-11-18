@@ -27,11 +27,13 @@ const centerOf=node=>{
  return {x:rect.left-base.left+rect.width/2,y:rect.top-base.top+rect.height/2};
 };
 function showMotion(evt){
- motion.replaceChildren();
  const kind=evt.type;
+ // Unrecognised/metadata events must not erase an ongoing real combat cue.
+ // Only a new drawable event replaces the previous transient motion.
  if(!offensive.has(kind)&&!incoming.has(kind)&&!warning.has(kind)&&
     !defense.has(kind)&&!support.has(kind)&&
     !['clear','intel','pursuit','fallen','rally'].includes(kind))return;
+ motion.replaceChildren();
  const fighter=id=>field.querySelector('.fighter.'+id+':not(.down)')||
    field.querySelector('.fighter.'+id);
  const foe=arena.querySelector('.foe .silhouette');
