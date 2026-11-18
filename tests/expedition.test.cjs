@@ -895,8 +895,8 @@ test('relic mechanics persist through rebirth but activation counters do not',()
  assert.ok(E.rebirth(s)>0);
  assert.equal(E.relic(s,'archer'),2);
  assert.equal(E.relic(s,'medkit'),3);
- assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0});
- assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0},
+ assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,partialBraces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0});
+ assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0,rushes:0,braces:0,partialBraces:0,braceDamage:0,jams:0,cleanses:0,cleanseDamage:0,commandMoves:0,commandSurges:0,guardPlateBlocks:0,escortDuets:0},
   'completed return keeps evidence of tactical relic activation');
  assert.deepEqual(s.latestReturn.relicEffects,s.runHistory.at(-1).relicEffects);
  const normalized=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
@@ -1184,6 +1184,34 @@ test('shield and march drum combination keeps formation and auto-counters the sa
  assert.equal(loaded.relicEffects.braceDamage,prepared.relicEffects.braceDamage);
  assert.equal(loaded.enemyTactic.result,'brace');
 });
+test('one shield copy partially resists a charge and retains it through save and return',()=>{
+ const plain=chargeFixture(),partial=chargeFixture({brace:true}),full=chargeFixture({brace:true});
+ partial.relics.swift=0;
+ for(let i=0;i<5;i++){E.tick(plain,1);E.tick(partial,1);E.tick(full,1);}
+ assert.equal(plain.enemyTactic.result,'rush');
+ assert.equal(partial.enemyTactic.result,'brace-step');
+ assert.equal(full.enemyTactic.result,'brace');
+ assert.equal(partial.battleEvent.type,'brace-step');
+ assert.equal(partial.relicEffects.partialBraces,1);
+ assert.equal(partial.relicEffects.braces,0);
+ assert.equal(partial.relicEffects.braceDamage,0);
+ assert.equal(plain.actors[0].progress,.22);
+ assert.equal(partial.actors[0].progress,.45);
+ assert.equal(full.actors[0].progress,1);
+ assert.equal(partial.enemyHp,plain.enemyHp,'partial defense grants no extra damage');
+ assert.equal(partial.relicEffects.rushes,1,'original enemy rush count is unchanged');
+ const loaded=E.normalize(JSON.parse(JSON.stringify(partial)),Date.now());
+ assert.equal(loaded.relicEffects.partialBraces,1);
+ assert.equal(loaded.enemyTactic.result,'brace-step');
+ assert.equal(loaded.battleEvent.type,'brace-step');
+ E.tick(partial,20);
+ assert.equal(partial.relicEffects.partialBraces,1,'one partial brace per regular charger');
+ assert.ok(E.rebirth(partial)>0);
+ assert.equal(partial.relicEffects.partialBraces,0);
+ assert.equal(partial.latestReturn.relicEffects.partialBraces,1);
+ const older=chargeFixture();delete older.relicEffects.partialBraces;
+ assert.equal(E.normalize(older,Date.now()).relicEffects.partialBraces,0);
+});
 test('charger defense needs both relics and a living deployed guard',()=>{
  for(const cond of ['none','shieldOnly','swiftOnly','guardDown']){
   const s=chargeFixture({brace:true});
@@ -1199,7 +1227,7 @@ test('charger defense needs both relics and a living deployed guard',()=>{
    assert.equal(s.relicEffects.rushes,0);
   }else{
    assert.equal(s.relicEffects.rushes,1);
-   assert.equal(s.enemyTactic.result,'rush');
+   assert.equal(s.enemyTactic.result,cond==='shieldOnly'?'brace-step':'rush');
   }
  }
 });
