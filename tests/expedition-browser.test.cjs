@@ -164,9 +164,11 @@ async function main(){
      const role=[...el.classList].find(k=>k in groups);
      groups[role].push(box);
     }
-    const clipped=Object.values(groups).flat().some(b=>
-      b.top<field.top-2||b.bottom>field.bottom+2||
-      b.left<field.left-2||b.right>field.right+2);
+    const clipDetails=Object.entries(groups).flatMap(([role,boxes])=>boxes
+      .map((b,i)=>({role,i,top:b.top-field.top,bottom:field.bottom-b.bottom,
+        left:b.left-field.left,right:field.right-b.right,height:b.height}))
+      .filter(b=>b.top< -2||b.bottom< -2||b.left< -2||b.right< -2));
+    const clipped=clipDetails.length>0;
     const overlaps=[];
     for(const [role,boxes] of Object.entries(groups))
      for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){
@@ -176,7 +178,7 @@ async function main(){
       if(area>18)overlaps.push({role,i,j,area});
      }
     return {sizes:Object.fromEntries(Object.entries(groups).map(([k,v])=>[k,v.length])),
-      clipped,overlaps,width:field.width,height:field.height};
+      clipped,clipDetails,overlaps,width:field.width,height:field.height};
    });
    assert.deepEqual(geometry.sizes,{guard:3,ranger:3,medic:2},
     'dense field keeps three guards, three rangers, two medics');
