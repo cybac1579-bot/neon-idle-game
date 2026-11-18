@@ -216,6 +216,31 @@ function renderArchive(){
  const last=s.latestReturn;
  $('returnReportPanel').hidden=!last;
  if(last)$('returnReportContent').innerHTML=returnReportHtml(last);
+ const choice=E.returnChoiceSnapshot(s);
+ const unlockGoal=choice.nextUnopenedTier?
+  choice.nextUnopenedTier+'거리 상자에서 새로운 유물군 개방':
+  '공개된 유물 깊이 모두 해금 · 미수집 유물 탐색 가능';
+ const investable=choice.offers.filter(o=>o.affordableAfterReturn);
+ const investLabel=investable.length?investable.map(o=>
+  (o.id==='valor'?'전선 강화':'보급 강화')+' LV.'+(o.level+1)+' (각 '+fmt(o.cost)+'코어)'
+ ).join(' 또는 '):'현재 보유량으로 다음 코어 강화 불가';
+ const returnText=choice.canReturn?
+  '지금 귀환하면 '+fmt(choice.returnCores)+'코어 확정 · 기존 보유분 포함 '+
+  fmt(choice.coresAfterReturn)+'코어 · 투자 여부와 방향은 직접 선택':
+  '현재 귀환 보상이 없어 · 10거리 보스 격파와 코어 적립 이후 선택 가능';
+ const chestText=choice.pendingChests?
+  '미개봉 '+fmt(choice.pendingChests)+'상자 (귀환 후에도 유지) · 첫 발견 후보 '+
+  fmt(choice.pendingNewKinds)+'종'+
+  (choice.guaranteedFirstDiscovery?' · 아직 미발견인 깊이 전용 유물 확정 상자 포함':
+   ' · 발견 여부는 확률로 결정'):
+  '미개봉 상자 없음 · 5거리 단위 정예/보스 격파로 새 상자 확보';
+ $('returnChoices').innerHTML=
+  '<div class="return-choice"><strong>↻ 지금 귀환</strong><p>'+safe(returnText)+'</p>'+
+  '<p>'+safe(choice.canReturn?'귀환 후 다음 1회 강화 선택: '+investLabel:
+   '이미 보유한 코어는 귀환하지 않아도 영구 강화에 사용 가능')+'</p></div>'+
+  '<div class="return-choice"><strong>↗ 계속 탐사</strong><p>'+safe(chestText)+'</p>'+
+  '<p>'+safe('현재 깊이까지 해금됐지만 미발견 유물 '+fmt(choice.uncollectedUnlockedKinds)+
+   '종 · '+unlockGoal)+'</p></div>';
  const rewards=E.rebirthRewards(s),gain=rewards.total;
  const nextRecord=E.BREAKTHROUGHS.find(b=>b.stage>Math.max(s.claimedBreakthroughDistance,s.runBest-1));
  const nextReturnForecast=nextRecord?E.projectedRebirthRewards(s,nextRecord.stage):null;
