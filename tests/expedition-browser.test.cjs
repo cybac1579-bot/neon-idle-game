@@ -203,6 +203,29 @@ async function main(){
    const chronicleBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(chronicleBounds.scroll<=chronicleBounds.width+1,
     'chronicle archive horizontal overflow: '+JSON.stringify(chronicleBounds));
+   // An opt-in long-saving policy may be deliberately slow. Make that delay
+   // visible in the squad tab only. Never replace the player's mode for them.
+   await page.addInitScript(()=>{
+    const key='neon_expedition_prototype_v1',state=JSON.parse(localStorage.getItem(key));
+    if(state?.rebirths===1){
+     state.stage=50;state.best=Math.max(50,state.best);state.runBest=50;
+     state.enemyHp=1e8;state.credits=0;
+     state.questLevels.contract=13;
+     state.autoBuy={...state.autoBuy,enabled:true,mode:'reserve',cursor:2,elapsed:0};
+     state.lastSaved=Date.now();
+     localStorage.setItem(key,JSON.stringify(state));
+    }
+   });
+   await page.reload({waitUntil:'networkidle'});
+   await page.locator('[data-tab="squad"]').click();
+   assert.equal(await page.locator('#autoMode').inputValue(),'reserve');
+   assert.match(await page.locator('#autoDetails').textContent(),/보급 수익만 가정하면 약/);
+   assert.match(await page.locator('#autoDetails').textContent(),/성장이 멈춘 것 같다면 균형\/유동형 전환 가능/);
+   await page.locator('#autoMode').selectOption('balanced');
+   assert.doesNotMatch(await page.locator('#autoDetails').textContent(),/보급 수익만 가정하면 약/);
+   const adviceBounds=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
+   assert.ok(adviceBounds.scroll<=adviceBounds.width+1,
+    'reserve advice horizontal overflow: '+JSON.stringify(adviceBounds));
    await context.close();
    console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison/chronicle');
   }
