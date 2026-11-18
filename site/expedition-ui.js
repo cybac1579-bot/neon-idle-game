@@ -156,14 +156,17 @@ function renderArchive(){
  // The battle HUD remains lean; collectors can confirm that an owned relic
  // changed combat behavior rather than merely inflating base damage.
  const effects=s.relicEffects||{volleys:0,volleyBonusDamage:0,triages:0,intelClears:0,intelFinds:0};
- const intelActive=E.relic(s,'scout')>0&&E.relic(s,'relay')>0;
- const hasTactics=E.relic(s,'archer')>0||E.relic(s,'medkit')>0||intelActive;
+ const scoutOwned=E.relic(s,'scout')>0,relayOwned=E.relic(s,'relay')>0;
+ const intelActive=scoutOwned&&relayOwned;
+ const intelPieces=Number(scoutOwned)+Number(relayOwned);
+ const hasTactics=E.relic(s,'archer')>0||E.relic(s,'medkit')>0||intelPieces>0;
  $('relicEffectSummary').hidden=!hasTactics;
  $('relicEffectSummary').textContent=hasTactics?
   '이번 탐사 전술 발동 · 정밀 일제사격 '+fmt(effects.volleys)+'회 (추가 유효 피해 '+fmt(effects.volleyBonusDamage)+
   ') · 긴급 재합류 '+fmt(effects.triages)+'회'+
   (intelActive?' · 탐사 정보망 '+fmt(effects.intelFinds)+'/2회 자동 발견'+
-    ((effects.intelFinds||0)<2?' · 정예 조사 '+fmt(effects.intelClears||0)+'/2':' · 이번 귀환 보상 완료'):'')+
+    ((effects.intelFinds||0)<2?' · 정예 조사 '+fmt(effects.intelClears||0)+'/2':' · 이번 귀환 보상 완료'):
+    intelPieces===1?' · 조합 목표 · 탐사 정보망 1/2 (미발견: '+(scoutOwned?'작전 통신기':'탐사 일지')+')':'')+
   ' · 추가 조작 없이 자동 발동':'';
 
  $('relicList').innerHTML=E.RELICS.map(r=>{
