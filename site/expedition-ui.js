@@ -216,7 +216,7 @@ function renderArchive(){
   row('아직 미개방 유물 등급',fmt(lockedKinds)+'종 · 누적 최고 '+fmt(lifetimeCleared)+'거리 격파')+
   row('다음 신규 유물 개방',nextDepthRelics.length?
    nextDeep+'거리 격파 · '+nextDepthRelics.map(r=>r.name).join(' · '):
-   '공개된 유물 15종 모두 깊이 개방 · 미수집 유물은 도감 확인')+
+   '공개된 유물 '+fmt(E.RELICS.length)+'종 모두 깊이 개방 · 미수집 유물은 도감 확인')+
   row('격파 성과로 적립한 코어',fmt(rewards.base)+'개')+
   row('다음 코어 적립 진행',Math.min(99.9,Math.max(0,rewards.fraction*100)).toFixed(1)+'% · 다음 탐사로 이월')+
   row('이번 첫 기록 보너스',fmt(rewards.recordBonus)+'개')+
