@@ -9,7 +9,7 @@ function chest(depth){
 test('chronicle is a single-copy stage-50-only discovery',()=>{
  const r=E.RELICS.find(x=>x.id==='chronicle');
  assert.ok(r);assert.equal(r.unlockStage,50);assert.equal(r.cap,1);
- assert.equal(E.RELICS.length,16);
+ assert.equal(E.RELICS.length,17);
  const s=chest(50),found=E.openChest(s);
  assert.equal(found.id,'chronicle');
  assert.equal(found.depth,50);assert.equal(found.duplicate,false);
