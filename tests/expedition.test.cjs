@@ -894,14 +894,124 @@ test('relic mechanics persist through rebirth but activation counters do not',()
  assert.ok(E.rebirth(s)>0);
  assert.equal(E.relic(s,'archer'),2);
  assert.equal(E.relic(s,'medkit'),3);
- assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0});
- assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2},
+ assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0});
+ assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0},
   'completed return keeps evidence of tactical relic activation');
  assert.deepEqual(s.latestReturn.relicEffects,s.runHistory.at(-1).relicEffects);
  const normalized=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
  assert.deepEqual(normalized.runHistory.at(-1).relicEffects,s.runHistory.at(-1).relicEffects);
  assert.deepEqual(normalized.latestReturn.relicEffects,s.latestReturn.relicEffects);
  assert.ok(s.actors.every(a=>a.shots===0));
+});
+
+
+function clearIntelFixture(s,stage){
+ s.stage=stage;s.best=Math.max(s.best,stage);s.runBest=Math.max(s.runBest,stage);
+ s.enemyHp=.01;
+ for(const a of s.actors){a.progress=1;a.cooldown=0;a.revive=0;a.hp=48;}
+ E.tick(s,.1);
+ assert.equal(s.stage,stage+1,'the fixture clears only one intended elite stage');
+}
+
+test('scout and relay together automatically discover an eligible relic after every two deep elite clears',()=>{
+ const s=E.newState(1000);s.relics.scout=1;s.relics.relay=1;
+ assert.equal(s.chests,0);assert.equal(s.relicEffects.intelFinds,0);
+ clearIntelFixture(s,30);
+ assert.equal(s.relicEffects.intelClears,1);
+ assert.equal(s.relicEffects.intelFinds,0);
+ assert.equal(s.chests,1);
+ assert.deepEqual(s.chestDepths,[30]);
+ clearIntelFixture(s,35);
+ assert.equal(s.relicEffects.intelClears,0);
+ assert.equal(s.relicEffects.intelFinds,1);
+ assert.equal(s.chests,2,'network discovery is a separate reward and does not consume ordinary chests');
+ assert.deepEqual(s.chestDepths,[30,35],'oldest queued boxes retain their original depth');
+ assert.equal(s.runMetrics.chestsOpened,0,'automatic network reward is not a manual chest open');
+ assert.equal(s.relicHistory.length,1);
+ assert.equal(s.relicHistory[0].source,'intel');
+ assert.equal(s.relicHistory[0].depth,35);
+ assert.equal(s.relicHistory[0].duplicate,false,'a missing kind is guaranteed whenever possible');
+ assert.equal(s.battleEvent.type,'intel','network discovery has an explicit combat cue');
+ assert.equal(s.relicEffects.volleys,0);
+ assert.equal(s.relicEffects.triages,0);
+ const saved=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.deepEqual(saved.chestDepths,[30,35]);
+ assert.equal(saved.relicEffects.intelFinds,1);
+ assert.equal(saved.relicHistory[0].source,'intel');
+});
+
+test('a lone scout or lone relay cannot activate the network',()=>{
+ for(const have of ['scout','relay','neither']){
+  const s=E.newState(1000);
+  if(have!=='neither')s.relics[have]=1;
+  for(const distance of [30,35,40])clearIntelFixture(s,distance);
+  assert.equal(s.relicEffects.intelFinds,0,have+' has no combination');
+  assert.equal(s.relicHistory.length,0);
+  assert.equal(s.chests,3,'regular boss and elite rewards are unchanged');
+ }
+});
+
+test('network guarantees a still-missing relic from the earned distance without reaching into future pools',()=>{
+ const s=E.newState(1000);
+ for(const r of E.RELICS)if(r.unlockStage<=35&&r.id!=='bounty')s.relics[r.id]=1;
+ assert.ok(s.relics.scout>0&&s.relics.relay>0);
+ clearIntelFixture(s,30);clearIntelFixture(s,35);
+ assert.equal(s.relicHistory.length,1);
+ assert.equal(s.relicHistory[0].id,'bounty');
+ assert.equal(s.relicHistory[0].duplicate,false);
+ assert.ok(!s.relics.enlist&&!s.relics.drill&&!s.relics.chronicle,'deep reward tiers remain locked');
+ const ordinary=E.openChest(s);
+ assert.equal(ordinary.source,'chest');
+ assert.equal(ordinary.depth,30,'next ordinary chest keeps its original depth and FIFO draw');
+ assert.equal(s.chests,1);
+});
+
+test('network is capped at two auto finds per run and save reload keeps half-completed progress',()=>{
+ const s=E.newState(1000);
+ s.relics.scout=s.relics.relay=1;
+ clearIntelFixture(s,30);
+ let restored=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.equal(restored.relicEffects.intelClears,1);
+ for(const distance of [35,40,45,50,55,60,65])clearIntelFixture(restored,distance);
+ assert.equal(restored.relicEffects.intelFinds,2);
+ assert.equal(restored.relicEffects.intelClears,0);
+ assert.equal(restored.relicHistory.filter(x=>x.source==='intel').length,2);
+ assert.equal(restored.chests,8,'normal 5-distance boxes remain available even after reward cap');
+ assert.equal(restored.runMetrics.manualPurchases,0);
+ assert.equal(restored.runMetrics.chestsOpened,0);
+});
+
+test('network progress resets on return, discoveries and completed-run count persist',()=>{
+ const s=E.newState(1000);
+ s.relics.scout=s.relics.relay=1;
+ for(const distance of [30,35,40])clearIntelFixture(s,distance);
+ assert.equal(s.relicEffects.intelFinds,1);
+ assert.equal(s.relicEffects.intelClears,1);
+ const kept=s.relicHistory.map(x=>({...x}));
+ const got=E.rebirth(s);
+ assert.ok(got>0);
+ assert.equal(s.relicEffects.intelFinds,0);
+ assert.equal(s.relicEffects.intelClears,0);
+ assert.equal(s.relics.scout,1);assert.equal(s.relics.relay,1);
+ assert.deepEqual(s.relicHistory,kept);
+ assert.equal(s.runHistory.at(-1).relicEffects.intelFinds,1);
+ assert.equal(s.latestReturn.relicEffects.intelFinds,1);
+ const loaded=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.equal(loaded.latestReturn.relicEffects.intelFinds,1);
+ assert.equal(loaded.relicEffects.intelFinds,0);
+});
+
+test('pre-network backups migrate without invented network progress or earlier auto finds',()=>{
+ const old=E.newState(1000);
+ old.relics.scout=old.relics.relay=1;
+ delete old.relicEffects.intelClears;
+ delete old.relicEffects.intelFinds;
+ old.relicHistory=[{id:'scout',duplicate:false,stack:1,credits:0,stage:31,depth:30,run:1}];
+ const s=E.normalize(old,Date.now());
+ assert.equal(s.relicEffects.intelFinds,0);
+ assert.equal(s.relicEffects.intelClears,0);
+ assert.equal(s.relicHistory[0].source,'chest','old ordinary chest journal is not marked network');
+ assert.ok(s.relics.scout&&s.relics.relay,'old relic ownership remains');
 });
 
 // Optional automated collection must preserve manual loot and existing saved preferences.
