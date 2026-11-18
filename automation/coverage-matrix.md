@@ -479,3 +479,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Second save after resumed 15m checkpoint | 2026-11-19 00:53 KST, test `e908394a` | Added 60s continuation → second normalize/reload preservation assertions for clock, stage, credits, auto-buy mode, relics across six seeded 30m paths; exact new CI **pending**, previous shared HEAD `b1772d82` five workflows SUCCESS (fast 44330517963, save 44330517914, portrait 44330517757, first rebirth 44330518019, three rebirth 44330517911) | **P0:** verify new fast CI; physical S25+ file:// storage/background still unverified, readiness 92% provisional |
+
+| Second-save resumed checkpoint — exact HEAD CI closure | 2026-11-19 02:00 KST; HEAD `40f3651f` | `e908394a` fast run 44340858690 **cancelled** (four other workflows success); identical-test subsequent HEAD `40f3651f` five SUCCESS: fast 44340902705, save 44340902557, portrait 44340902691, first rebirth 44340902564, three rebirth 44340902574 | **Technical gate green** for second-save synthetic assertion; **P0** S25+ file-origin persistence/background and visual 30m human experience still unverified. 92% provisional, no release |
