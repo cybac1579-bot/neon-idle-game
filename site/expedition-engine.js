@@ -122,7 +122,7 @@ const collectionBoost=s=>relic(s,'chronicle')?
 const newState=(now=Date.now())=>({
  version:VERSION,lastSaved:now,seed:123456789,clock:0,credits:65,stage:1,best:1,runBest:1,
  units:{guard:2,ranger:0,medic:0},training:0,questLevels:{dispatch:0,salvage:0,contract:0},
- questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,bossHpBalanceVersion:3,eliteHpBalanceVersion:2,squadHp:96,respawn:0,
+ questClocks:{dispatch:0,salvage:0,contract:0},enemyHp:13,bossHpBalanceVersion:3,firstDeepBossHpBalanceVersion:1,eliteHpBalanceVersion:2,squadHp:96,respawn:0,
  actors:[{id:'guard',hp:48,revive:0,progress:0,cooldown:.6,shots:0},{id:'guard',hp:48,revive:0,progress:0,cooldown:1.2,shots:0}],battleEvent:null,battleCueSeq:0,
  enemyTactic:initialEnemyTactic(1),
  kills:0,runKills:0,heroLevel:1,heroXp:0,traitPoints:0,traits:{command:0,supply:0},
@@ -309,6 +309,15 @@ function normalize(raw,now=Date.now()){
      id:UNITS.some(u=>u.id===raw.battleEvent.id)?raw.battleEvent.id:'guard',value:num(raw.battleEvent.value,0,1e14)}:null;
  s.battleCueSeq=integer(raw.battleCueSeq);
  updateSquadHealth(s);
+ // First 40-distance boss: the first run had ~9.3-11.8 minutes of combat
+ // without a newly earned chest. Scale ONLY the live stage-40 boss by 10%
+ // and preserve the defeated fraction of an older saved encounter once.
+ // The separate marker keeps 50+/65+ historic HP migrations independent.
+ if(raw.firstDeepBossHpBalanceVersion!==1&&s.stage===40&&s.enemyHp>0){
+  const oldMax=Math.round(3.8*13*Math.pow(1.235,39));
+  const newMax=enemyMax(40);
+  s.enemyHp=Math.max(1,Math.min(newMax,Math.round(s.enemyHp/oldMax*newMax)));
+ }
  // Phase 2 scaled 50+ bosses from 3.8x to 2.2x (marker 2). Phase 3
  // trims 60+ to 1.9x. Migrate exactly once, preserving the remaining HP
  // fraction of an active boss; 50-boss saved progress is not changed again.
@@ -337,13 +346,14 @@ function normalize(raw,now=Date.now()){
 function rand(s){let x=(s.seed>>>0)||123456789;x^=x<<13;x^=x>>>17;x^=x<<5;s.seed=x>>>0;return s.seed/4294967296;}
 function note(s,m){s.events.push(m);if(s.events.length>8)s.events.shift();}
 function enemyMax(stage){
- // Keep stages 1..40 exactly as before. After 40, slow exponential HP
- // growth without hiding a boss or eliminating progressive combat difficulty.
+ // Keep stages 1..39 unchanged. The 40 boss is one modest 10% reduction
+ // to shorten a measured first-run reward gap while retaining a long fight.
+ // After 40, slow exponential HP growth without hiding the boss identity.
  const early=Math.min(stage-1,39),late=Math.max(0,Math.min(stage-40,60));
- // Boss tiers and all fights through 64 stay unchanged. Later elite fights
+ // Other boss tiers and fights through 64 stay unchanged. Later elite fights
  // used to be 20+ minute stationary HP walls, often longer than a boss.
  // A 1.2x tier still keeps the 65+ elite stronger than its ordinary predecessor.
- const rankMultiplier=isBoss(stage)?(stage>=60?1.9:stage>=50?2.2:3.8):
+ const rankMultiplier=isBoss(stage)?(stage===40?3.42:stage>=60?1.9:stage>=50?2.2:3.8):
   isElite(stage)?(stage>=65?1.2:2):1;
  return Math.min(1e13,Math.round(rankMultiplier*
   13*Math.pow(1.235,early)*Math.pow(1.18,late)));
