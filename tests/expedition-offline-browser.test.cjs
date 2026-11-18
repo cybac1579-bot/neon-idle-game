@@ -68,6 +68,7 @@ async function main(){
      view.sync(sample);
      const replayed=effects.firstElementChild!==first;
      sample.training=8;view.sync(sample);
+     const growthTraining=document.querySelector('#battleGrowth')?.textContent||'';
      // Movement transitions follow each saved actor progress, not an idle loop.
      sample.actors[0].progress=.4;view.sync(sample);
      const marching=document.querySelector('.fighter.guard').classList.contains('advance');
@@ -84,7 +85,7 @@ async function main(){
      const compactThreeGuards=document.querySelector('.arena').classList.contains('formation-dense');
      const shouldCompactThreeGuards=document.querySelector('#squad').clientHeight<210;
      const trainingTier=document.querySelector('.arena').dataset.trainingTier;
-     const growthTraining=document.querySelector('#battleGrowth')?.textContent||'';
+
      sample.units.ranger=1;
      sample.actors.push({id:'ranger',hp:17,revive:0,progress:1,cooldown:0,shots:0});
      sample.battleCueSeq++;
