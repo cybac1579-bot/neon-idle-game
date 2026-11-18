@@ -37,7 +37,12 @@ function renderBattle(){
  $('enemyHp').textContent=fmt(s.enemyHp)+' / '+fmt(E.enemyMax(s.stage));
  $('event').textContent=Date.now()<getNotice().until?getNotice().text:(s.events[s.events.length-1]||'자동 전진 중…');
  $('openChest').hidden=s.chests<1;
- $('openChest').textContent='✦ 보급 상자 '+fmt(s.chests)+'개 열기';
+ // The battle-screen control opens exactly one box; keep batch opening in
+ // the archive and make the very first permanent discovery unmistakable.
+ const hasDiscoveredRelic=E.RELICS.some(r=>E.relic(s,r.id)>0);
+ $('openChest').textContent=!hasDiscoveredRelic?
+  '✦ 첫 유물 확인 · 상자 1개 열기':
+  '✦ 상자 1개 열기 · 보유 '+fmt(s.chests)+'개';
  $('goal').textContent=fmt(s.stage+((5-s.stage%5)%5))+'거리';
  const availableCores=E.rebirthGain(s),ready=availableCores>0;
  $('returnQuick').hidden=!ready;
