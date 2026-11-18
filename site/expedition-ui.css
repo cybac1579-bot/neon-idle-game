@@ -1,0 +1,234 @@
+/* 네온 방치단 독립 탐사 · 임시 UI 스킨 v1
+   이 파일은 향후 교체 가능하며 전투/저장/경제 시스템 로직을 포함하지 않는다. */
+:root{color-scheme:dark;font-family:system-ui,'Noto Sans KR',sans-serif;background:#0c1323;color:#eef4ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 5%,#1e3553 0,#0c1323 55%);min-height:100dvh}
+button{font:inherit;cursor:pointer;touch-action:manipulation}button:focus-visible,a:focus-visible{outline:3px solid #ffe59a;outline-offset:3px}
+button:disabled{opacity:.4;cursor:default}a{color:#9cebd4}button{border:1px solid #6784a0;background:#263b50;color:#f2f7ff;border-radius:10px;padding:12px;font-weight:700}
+button.primary{background:#edb963;color:#19263a;border-color:#ffe3a2}
+button.soft{background:#163b43;border-color:#4ba99e}button.active{border-color:#ffe29d;color:#ffe29d;background:#253e54}
+button small{display:block;font-size:11px;font-weight:400;margin-top:4px;line-height:1.35;color:#c2d1dd}
+button.primary small{color:#38404b}main{max-width:530px;margin:0 auto;padding:0 12px calc(95px + env(safe-area-inset-bottom))}
+header{position:relative;padding:19px 4px 8px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-size:19px;margin:0;letter-spacing:.015em}h2{font-size:16px;margin:0 0 12px;color:#d6f4ed}
+p{line-height:1.55}header .sub{margin:3px 0 0}.sub,small{color:#9db0c4;font-size:12px}
+.top-info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}
+.metric{background:#17243a;border:1px solid #384f69;border-radius:12px;padding:10px 7px;min-width:0}
+.metric span{color:#93aeca;font-size:11px}.metric strong{display:block;margin-top:3px;font-size:19px;letter-spacing:-.02em;overflow-wrap:anywhere;color:#f2dfad}
+.panel{background:linear-gradient(165deg,#17253c,#101c30);border:1px solid #334a67;padding:14px;border-radius:15px;margin:10px 0;box-shadow:0 6px 18px #0002}
+.arena{position:relative;overflow:hidden;min-height:clamp(275px,42svh,400px);border:1px solid #536a87;border-radius:14px;background:radial-gradient(ellipse at 50% 95%,#1c628080,transparent 63%),linear-gradient(180deg,#0a233a 0%,#24425b 75%,#25384c 75%,#1c283b 100%)}
+.arena:before{content:'';position:absolute;left:0;right:0;bottom:24%;height:1px;background:#e7d3a733;box-shadow:0 14px 42px #b2d0ca4a}
+.arena:after{content:'';position:absolute;left:-20%;right:-20%;top:13%;height:2px;background:linear-gradient(90deg,transparent,#69b9d066,transparent);box-shadow:0 40px 50px #e6d8a822}
+.arena-head{position:absolute;inset:12px 12px auto;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#d1e4e8;z-index:2}
+.arena-head span{background:#0b1627bb;border:1px solid #8496a655;border-radius:99px;padding:5px 9px}
+.field{position:absolute;left:8px;right:8px;bottom:13%;display:flex;justify-content:space-between;align-items:flex-end;z-index:1;gap:6px}
+.squad{display:flex;align-items:flex-end;gap:3px;min-width:0;flex:1;justify-content:flex-start}
+.unit{min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px}
+.unit .silhouette{width:clamp(43px,13vw,68px);height:clamp(65px,20vw,93px);border:2px solid #668ca3;border-radius:25px 25px 11px 11px;background:linear-gradient(135deg,#355b75,#142a4d);box-shadow:0 8px 0 #07101c;display:grid;place-items:center;color:#c3f4e9;font-size:32px}
+.unit.guard .silhouette{background:linear-gradient(130deg,#466d85,#1c4562)}.unit.ranger .silhouette{background:linear-gradient(130deg,#46636b,#20555e)}
+.unit.medic .silhouette{background:linear-gradient(130deg,#556479,#354665)}.unit small{font-size:10px;color:#e2f1f3;white-space:nowrap}
+.foe{width:37%;display:flex;flex-direction:column;align-items:center;gap:8px}
+.foe .silhouette{width:clamp(73px,27vw,130px);height:clamp(105px,32vw,170px);display:grid;place-items:center;font-size:64px;color:#f5b9ad;border:2px solid #bd6f87;border-radius:45% 43% 20% 25%;background:linear-gradient(170deg,#593a62,#2b284c);box-shadow:0 9px 0 #0a1729}
+.foe.boss .silhouette{background:linear-gradient(170deg,#864960,#56253b);border-color:#f3b066;box-shadow:0 0 26px #ed9c5366}
+.foe small{font-size:11px;color:#fff4dc}
+.bars{display:grid;gap:8px;margin:12px 3px 3px}
+.barrow{display:grid;grid-template-columns:54px minmax(0,1fr) 75px;gap:7px;align-items:center;font-size:11px;color:#b4c5d8}
+.barrow b{text-align:right;color:#e5f2f4;font-variant-numeric:tabular-nums}
+.track{height:11px;background:#10192b;border:1px solid #3b4765;border-radius:30px;overflow:hidden}.fill{height:100%;width:100%;background:#67cfc9;transition:width .2s}.fill.foehealth{background:#eaa274}
+.event{min-height:22px;margin:13px 1px 8px;font-size:12px;color:#ffe3a8}
+.goal{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #41546a;padding-top:10px;margin-top:12px}
+.goal span{font-size:12px;color:#aabfd3}.goal strong{font-size:13px;color:#f3e1b8}
+.stack{display:grid;gap:9px}.action{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:11px 12px;border:1px solid #374e6b;border-radius:12px;background:#122036}
+.action>div{min-width:0;flex:1}.action strong{display:block;font-size:13px}.action p{font-size:11px;color:#aabfd3;margin:4px 0 0}.action button{flex-shrink:0;font-size:12px;min-width:99px;padding:10px}
+.statline{display:flex;justify-content:space-between;gap:10px;color:#c9d8e3;font-size:12px;padding:8px 0;border-bottom:1px solid #3a4c6244}
+.statline b{color:#f3db9e;font-variant-numeric:tabular-nums}
+/* Archive comparison is intentionally detailed; prevent overflow at 360px. */
+#milestoneSummary .statline{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:start;gap:8px}
+#milestoneSummary .statline b{text-align:right;overflow-wrap:anywhere;line-height:1.5}
+/* Return-planning detail is in the archive, never the compact battle HUD. */
+#rebirthSummary .statline{display:grid;grid-template-columns:112px minmax(0,1fr);gap:8px;align-items:start}
+#rebirthSummary .statline b{text-align:right;overflow-wrap:anywhere;line-height:1.5}
+.relics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.relic{border:1px solid #3d536b;border-radius:12px;padding:11px;background:#0e1b30;min-height:115px}
+.relic.owned{border-color:#ae9561;background:#20283a}.relic .glyph{font-size:22px;color:#eecb85}
+.relic strong{display:block;margin:6px 0 4px;font-size:12px}.relic small{font-size:11px;line-height:1.45;display:block}
+.relic .count{font-size:11px;color:#ffe0a4;margin-top:5px}
+.toast{border:1px solid #cfac72;background:#333149;padding:12px;border-radius:11px;color:#ffe7aa;margin:10px 0;line-height:1.5}
+footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
+.tabs{position:fixed;z-index:10;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:530px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#0c1525f7;padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid #4b6580}
+.tabs button{padding:10px 1px;min-height:49px;font-size:13px;background:#192a40;border-color:#344f6b}.tabs button.active{background:#36536b;border-color:#e5c18a;color:#ffe3a7}
+.screen[hidden]{display:none!important}.two{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+#relicPopup[hidden]{display:none}#relicPopup{position:fixed;z-index:30;inset:0;background:#040a15d6;display:grid;place-items:center;padding:25px}
+#relicPopup>div{max-width:330px;width:100%;background:#20334e;border:1px solid #e6c889;border-radius:18px;padding:22px;text-align:center;box-shadow:0 0 80px #000d}
+#relicPopup h2{font-size:20px;color:#ffe8af;margin:12px 0}
+#relicPopup p{font-size:13px}
+#relicPopup button{width:100%;margin-top:12px}
+@media(prefers-reduced-motion:no-preference){.unit .silhouette{animation:unit-idle 2s ease-in-out infinite}.foe .silhouette{animation:foe-idle 1.7s ease-in-out infinite}@keyframes unit-idle{50%{transform:translateY(-4px)}}@keyframes foe-idle{50%{transform:translateY(-7px)}}}
+@media(max-width:365px){main{padding-left:8px;padding-right:8px}.panel{padding:10px}.action{gap:6px;padding:9px}.action button{min-width:92px}.unit .silhouette{font-size:24px}.foe .silhouette{font-size:48px}}
+
+/* Expedition field v2: actor positions are driven by real engine progress, not a cosmetic loop. */
+.field{position:absolute;inset:15% 5px 10%;height:auto;display:block}
+.squad{position:absolute;inset:0;display:block;min-width:0;width:100%;pointer-events:none;z-index:2}
+.foe{position:absolute;right:1%;bottom:0;z-index:1;width:31%;display:flex;justify-content:flex-end;align-items:center}
+.foe .silhouette{width:clamp(69px,24vw,114px);height:clamp(92px,30vw,145px);font-size:clamp(44px,13vw,62px)}
+.foe small{background:#08142299;border-radius:5px;padding:2px 5px}
+.fighter{position:absolute;z-index:3;display:flex;flex-direction:column;align-items:center;gap:2px;width:clamp(37px,11vw,53px);max-width:53px;
+ left:2%;bottom:8%;transition:left .32s linear,bottom .32s ease,opacity .2s}
+.fighter-symbol{width:100%;height:clamp(48px,15vw,68px);border-radius:48% 47% 12px 12px;
+ border:2px solid #7b9ebc;background:linear-gradient(155deg,#44617c,#152b49);display:grid;place-items:center;
+ font-size:clamp(22px,7vw,33px);box-shadow:0 5px 0 #071626,0 2px 10px #0008}
+.fighter.ranger .fighter-symbol{border-color:#89bfa7;background:linear-gradient(155deg,#385c5b,#163a49)}
+.fighter.medic .fighter-symbol{border-color:#baa5df;background:linear-gradient(155deg,#655d7c,#35354e)}
+.fighter-name{font-size:9px;font-weight:700;color:#ebf4ef;text-align:center;white-space:nowrap;text-shadow:0 2px 4px #000}
+.fighter-health{width:90%;height:4px;background:#3a2535;border:1px solid #19293c;border-radius:9px;overflow:hidden}
+.fighter-health div{height:100%;width:100%;background:#71d4b7;transition:width .2s}
+.fighter.down{opacity:.3;filter:grayscale(1);transform:translateY(13px)}
+.fighter.advance .fighter-symbol{animation:expedition-march .45s ease-in-out infinite alternate}
+#battleFx{pointer-events:none;position:absolute;inset:0;z-index:4;display:grid;place-items:center}
+.combat-cue{font-size:clamp(14px,4vw,21px);font-weight:900;letter-spacing:-.04em;color:#f6e0a7;
+ text-shadow:0 2px 5px #07101c,0 0 9px #000;animation:combat-flash .8s ease-out both}
+.combat-cue.heal,.combat-cue.returned{color:#9cf1c7}.combat-cue.fallen,.combat-cue.rally{color:#ffd0b5}
+.combat-cue.clear{font-size:25px;color:#ffe49c}
+.arena.combat-impact .foe .silhouette{animation:enemy-damaged .25s ease-out}
+.arena.arena-boss{border-color:#cf9a66;box-shadow:inset 0 0 26px #ae6d5340}
+.roster-note{position:absolute;left:10px;bottom:9px;z-index:5;font-size:10px;color:#c4d9de;background:#0a1724b9;padding:4px 6px;border:1px solid #365469;border-radius:6px;pointer-events:none}.roster-note[hidden]{display:none}
+@keyframes expedition-march{to{transform:translateY(-3px)}}
+@keyframes combat-flash{0%{transform:translateY(16px) scale(.85);opacity:0}20%{opacity:1}100%{transform:translateY(-16px) scale(1);opacity:0}}
+@keyframes enemy-damaged{0%,100%{filter:brightness(1)}50%{filter:brightness(2)}}
+@media(prefers-reduced-motion:reduce){.fighter,.fighter-health div{transition:none}.fighter.advance .fighter-symbol,.arena.combat-impact .foe .silhouette,.combat-cue{animation:none}}
+.batch-control{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0 12px}.batch-control button{padding:8px 14px;min-height:37px;font-size:12px}.permanent-summary{margin-top:12px;padding-top:10px;border-top:1px solid #43586b}.permanent-summary h3{font-size:12px;margin:0 0 5px;color:#bad7e2}.auto-label{display:block;font-size:12px;color:#bbd2df;margin:8px 0 6px}
+.auto-select{width:100%;min-height:44px;padding:9px 11px;background:#14253a;border:1px solid #63849b;color:#edf5ff;border-radius:9px;font:inherit;font-size:13px}
+.auto-select:focus-visible{outline:3px solid #ffe59a;outline-offset:2px}
+.auto-control{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:11px 0}
+.auto-control button{font-size:12px;padding:10px 13px;min-width:125px}
+#autoDetails{line-height:1.5;border-top:1px solid #344c63;padding-top:9px}
+
+.relic-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 12px}
+.relic-actions button{font-size:12px;min-width:0;padding:10px 7px}
+.relic-actions button[hidden]{display:none}
+.relic-actions:has(>button[hidden]){grid-template-columns:1fr}
+#relicCollectionProgress{font-size:12px;line-height:1.5;border-bottom:1px solid #445970;padding-bottom:8px}
+.collection-journal{margin-top:14px;border-top:1px solid #445970;padding-top:12px}
+.collection-journal h3{margin:0 0 8px;font-size:13px;color:#d8e8de}
+.collection-log{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#b9cee1;padding:5px 0;border-bottom:1px solid #32465c}
+.collection-log strong{color:#edd29d;font-weight:700}
+#relicPopup>div{max-width:420px;max-height:min(86dvh,700px);overflow:auto;text-align:left}
+#relicPopup h2{margin:7px 0}
+.reward-results{display:grid;gap:7px;max-height:47dvh;overflow:auto;overscroll-behavior:contain;padding:3px 2px}
+.reward-item{display:grid;grid-template-columns:27px minmax(0,1fr);gap:10px;background:#14243a;border:1px solid #405976;border-radius:11px;padding:9px}
+.reward-item.first{border-color:#ebc97e;background:#2c3042}
+.reward-item .reward-glyph{color:#ffe1a4;font-size:24px;align-self:start}
+.reward-item strong{font-size:13px;display:block;color:#ffe9c6}
+.reward-item small{display:block;font-size:11px;line-height:1.45;margin-top:4px;color:#c3d2dc}
+.reward-impact{font-size:12px;line-height:1.6;color:#d8e8e0;margin:9px 0 3px}
+@media(max-width:380px){#relicPopup{padding:12px}#relicPopup>div{padding:14px}}
+/* A compact, non-intrusive post-return result: no extra HUD stats. */
+#returnPopup[hidden],#returnReportPanel[hidden]{display:none}
+#returnPopup{position:fixed;z-index:35;inset:0;background:#040a15e5;display:grid;place-items:center;padding:16px}
+#returnPopup>div{width:100%;max-width:410px;max-height:88dvh;overflow:auto;background:#20334e;border:1px solid #e6c889;border-radius:17px;padding:20px;box-shadow:0 0 72px #000b}
+#returnPopup h2{font-size:21px;color:#ffe1a4;margin:7px 0 13px}
+#returnPopup button{font-size:12px;min-width:0;padding:11px 6px}
+#returnPopupSummary .statline{font-size:12px}
+.return-comparison{padding:9px 10px;margin:12px 0;background:#15283a;border:1px solid #49617b;border-radius:10px}
+.return-comparison h3{color:#d6f4ed;font-size:12px;margin:0 0 7px}
+.return-comparison .statline b{font-size:11px}
+@media(max-width:365px){#returnPopup>div{padding:13px}#returnPopup{padding:10px}}
+
+/* ==========================================================
+   COMMAND VIEW · all-action persistent battlefield
+   Visual direction: midnight command deck / warm brass / teal signals
+   No separate battlefield tab: arena is permanently rendered above
+   an independently scrollable command tray.
+   ========================================================== */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:#09121c;color:#f3f0e5}
+main.game-shell{
+ width:100%;height:100dvh;max-width:600px;margin:0 auto;padding:0;
+ display:grid;grid-template-rows:auto auto minmax(235px,42dvh) auto minmax(0,1fr);
+ overflow:hidden;background:linear-gradient(175deg,#162838 0%,#0d1b2a 45%,#0b1523 100%);
+ box-shadow:0 0 55px #0007;border-left:1px solid #21384c;border-right:1px solid #21384c
+}
+.command-header{padding:9px 14px 7px;margin:0;min-height:52px;gap:10px;justify-content:flex-start;border-bottom:1px solid #48657840}
+.brand-emblem{width:32px;height:32px;flex:none;border:1px solid #967b4c;background:linear-gradient(140deg,#294956,#152735);border-radius:9px;display:grid;place-items:center;color:#eccb82;font-size:23px}
+.brand-copy{min-width:0;flex:1}.brand-copy h1{font-size:17px;color:#fff0c7;letter-spacing:.02em}
+.brand-copy .sub{margin:1px 0 0;font-size:10px;color:#a8bbca}
+.online-dot{display:inline-block;background:#5ce0b6;width:6px;height:6px;border-radius:50%;vertical-align:middle;box-shadow:0 0 7px #42e6ad99}
+.build-tag{font-size:10px;white-space:nowrap;color:#cfbb93;border:1px solid #a3854c77;background:#2b2b2b80;border-radius:20px;padding:5px 8px}
+.top-info{margin:0;gap:0;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid #5b788c55}
+.metric{border:0;border-right:1px solid #4c617259;border-radius:0;padding:6px 12px 7px;background:#101f2dd9}
+.metric:last-child{border-right:0}.metric span{color:#9fb4c2;font-size:10px;letter-spacing:.025em}
+.metric strong{font-size:18px;line-height:1.2;margin:2px 0 0;color:#f8e6b3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric:first-child strong{color:#8fe1cf;font-size:21px}
+.combat-stage{min-width:0;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:hidden;background:#101e2d;position:relative}
+.combat-stage[hidden]{display:grid!important}
+.combat-stage .arena{height:100%;min-height:0;border-radius:0;border:0;border-bottom:1px solid #55758a;background:
+ radial-gradient(ellipse at 58% 90%,#66b1aa36,transparent 55%),
+ radial-gradient(ellipse at 75% 28%,#45637d73,transparent 40%),
+ linear-gradient(180deg,#122d3e 0%,#254658 70%,#27343f 71%,#172a34 100%)}
+.combat-stage .arena:before{bottom:23%}.combat-stage .field{inset:14% 7px 8%}
+.combat-stage .arena-head{inset:8px 9px auto;gap:8px;align-items:flex-start}
+.combat-stage .arena-head span{font-size:10px;color:#e6e3d5;letter-spacing:.04em;border:1px solid #9bafba4a;background:#0e2330cc}
+#returnQuick{font-size:11px;font-weight:800;min-height:31px;padding:6px 12px;background:#e9c982;border:1px solid #f9e1a9;color:#1a2831;border-radius:24px;box-shadow:0 0 11px #e9c98266}
+#returnQuick[hidden],#returnBadge[hidden],#openChest[hidden]{display:none!important}
+.combat-stage .foe .silhouette{filter:drop-shadow(0 3px 7px #050d15b5);border-radius:45% 45% 25% 25%}
+.combat-stage .fighter{width:clamp(33px,10.5vw,50px)}
+.combat-stage .fighter-symbol{height:clamp(42px,12.5vw,63px)}
+.battle-readout{border-top:1px solid #63829377;background:#121f2a;box-shadow:0 -7px 18px #070f1b44;padding:6px 12px 5px;min-width:0}
+.battle-readout .bars{display:grid;gap:4px;margin:0}
+.battle-readout .barrow{grid-template-columns:25px minmax(0,1fr) 96px;gap:6px;font-size:10px}
+.battle-readout .barrow b{font-size:10px;color:#e1e4df;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.battle-readout .track{height:7px;border-radius:20px}
+.battle-ticker{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:21px;padding:4px 0 0}
+.battle-ticker .event{min-height:0;margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#ecd4a0}
+.next-reward{font-size:10px;color:#a7c0ca;white-space:nowrap}
+.next-reward b{color:#f7db9c}
+#openChest{width:100%;margin:5px 0 0;padding:6px;font-size:11px;min-height:29px}
+.tabs{position:relative;bottom:auto;left:auto;transform:none;max-width:none;width:100%;padding:5px 8px;gap:5px;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #50697c;border-bottom:1px solid #455b6d;background:#0b1826;z-index:6}
+.tabs button{min-height:42px;border-radius:9px;padding:8px 3px;background:#1c3040;border:1px solid #40586a;font-size:12px;white-space:nowrap;color:#b9cbd1}
+.tabs button.active{background:linear-gradient(140deg,#b1935b,#d4b471);border-color:#e0c689;color:#1b2b35;box-shadow:0 2px 8px #0004}
+.tabs button.available:not(.active){border-color:#e8c982;background:#473e34;color:#ffdf92}
+#returnBadge{font-size:9px;font-weight:900;padding-left:2px}
+.workbench{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#45647a transparent;padding:8px 12px calc(22px + env(safe-area-inset-bottom))}
+.screen{min-width:0}.screen[hidden]{display:none!important}
+.workbench .panel{background:#152536;border:1px solid #384e60;border-radius:13px;margin:6px 0 10px;box-shadow:0 2px 10px #0002;padding:13px}
+.workbench .panel h2{font-size:14px;letter-spacing:.005em;margin-bottom:8px;color:#f5ddaa}
+.workbench .panel p{font-size:11px;line-height:1.5;color:#a9bfca}
+.workbench .panel .sub{font-size:11px}
+.workbench button{min-height:42px;box-shadow:none}
+.workbench .quick-panel{background:linear-gradient(135deg,#233f4b,#162b3b);border-color:#657b72}
+.section-eyebrow{font-size:10px;font-weight:700;letter-spacing:.06em;color:#90d1bf;margin:0 0 4px}
+.quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.quick-actions button{min-height:52px;font-size:12px;line-height:1.3;padding:8px 5px}
+.quick-panel .batch-control{margin:7px 0 0}
+.quick-panel .batch-control button{min-height:30px;padding:5px 11px}
+.workbench .detail-fold>summary,.auto-explanation>summary{cursor:pointer;list-style:none;color:#d7e6e4;font-size:12px;font-weight:700;padding:4px 0}
+.workbench .detail-fold>summary::before,.auto-explanation>summary::before{content:'▸ ';color:#ebc986}
+.workbench .detail-fold[open]>summary::before,.auto-explanation[open]>summary::before{content:'▾ '}
+.detail-fold .stack{margin:9px 0 0}
+.auto-explanation{padding:7px 0;margin-bottom:6px;border-bottom:1px solid #334b61}
+.auto-explanation p{margin:6px 0}
+#autoPurchasePanel{padding:12px}
+#autoPurchasePanel .auto-control{margin:7px 0}
+#autoPurchasePanel .auto-select{min-height:40px;padding:7px;font-size:12px}
+#autoPurchasePanel .auto-control button{min-height:39px;padding:8px}
+.return-intro{padding:9px 8px 7px;background:#26323a;border-left:3px solid #e2bd72;border-radius:0 8px 8px 0;margin:5px 0 8px}
+.return-intro strong{color:#f7dc9e;font-size:14px}
+.return-intro p{font-size:11px;color:#c0ced1;margin:4px 0;line-height:1.5}
+#returnScreen .panel:first-of-type{border-color:#a48a5c}
+.workbench .statline{font-size:11px;line-height:1.5;gap:8px}
+.workbench .statline b{text-align:right;overflow-wrap:anywhere}
+.workbench .action{padding:10px 8px}
+.workbench .relic{padding:9px;min-height:105px}
+.workbench footer{font-size:10px;margin:12px 0;color:#7893a4}
+@media (max-width:380px){
+ .command-header{min-height:45px;padding:6px 9px 5px}
+ .brand-emblem{width:29px;height:29px}.brand-copy h1{font-size:15px}
+ .build-tag{padding:4px 6px;font-size:9px}
+ .metric{padding:6px 7px}
+ main.game-shell{grid-template-rows:auto auto minmax(225px,40dvh) auto minmax(0,1fr)}
+ .workbench{padding:7px 8px calc(15px + env(safe-area-inset-bottom))}
+}
+@media(max-height:680px){
+ main.game-shell{grid-template-rows:auto auto minmax(205px,40dvh) auto minmax(0,1fr)}
+ .combat-stage .foe .silhouette{max-height:95px}
+ .battle-readout .battle-ticker{min-height:16px}
+}
