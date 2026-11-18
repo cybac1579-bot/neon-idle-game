@@ -63,7 +63,9 @@ function sync(s){
  const rushing=intent?.kind==='charger'||intent?.move==='rush'&&intent?.kind!=='disruptor';
  const commanderSurge=rushing&&intent?.kind!=='charger';
  const disrupting=intent?.kind==='disruptor';
- enemyIntent.hidden=!(aiming||last);
+ // Second-phase status reuses the existing narrow intent strip.
+ const chasing=E.pursuitBoost(s)>1;
+ enemyIntent.hidden=!(aiming||last||chasing);
  enemyIntent.classList.toggle('aiming',!!aiming);
  enemyIntent.classList.toggle('charging',!!rushing);
  enemyIntent.classList.toggle('disrupting',!!disrupting);
@@ -73,6 +75,7 @@ function sync(s){
    (intent.result==='brace'?'🛡 철벽 진형 · 돌진 저지':commanderSurge?'↗ 지휘급 전열 압박 · 방벽병 밀려남':'↗ 돌격 충격 · 방벽병 밀려남'):
    disrupting?(intent.result==='unjam'?'✚ 역통신 반격 · 교란 무효':'◎ 교란 사격 · 사수 공격 지연'):
    (intent.result==='intercept'?'🛡 방벽 호위 · 사수 반격 성공':'⚡ 적 후열 집중 타격');
+ else if(chasing)enemyIntent.textContent='⚡ 추격 신호기 · 후반전 화력 +60%';
  else enemyIntent.textContent='';
  if(s.battleCueSeq===lastCue||!s.battleEvent)return;
  lastCue=s.battleCueSeq;
