@@ -109,8 +109,11 @@ async function main(){
   ]);
   const blockedBackup=JSON.parse(fs.readFileSync(await blockedDownload.path(),'utf8'));
   assert.equal(blockedBackup.schema,'neon-expedition-full-save-v1');
-  assert.equal(Object.values(blockedBackup.state.units).reduce((a,b)=>a+b,0),3,
-   'failed local save must never prevent export of the new recruitment');
+  const backupActorCount=Object.values(blockedBackup.state.units).reduce((a,b)=>a+b,0);
+  assert.ok(backupActorCount>2&&backupActorCount<=7,
+   'failed local save must export the actual batch recruitment, not the original roster');
+  assert.equal(backupActorCount,await blockedPage.locator('#squad .fighter').count(),
+   'backup must match the live roster after a potentially multi-unit purchase');
   assert.equal(blockedBackup.state.credits<65,true);
   assert.equal(await blockedPage.locator('#archiveScreen [data-storage-warning]').isVisible(),true);
   assert.equal(await blockedPage.evaluate(()=>localStorage.getItem('neon_expedition_prototype_v1')),null,
@@ -134,6 +137,9 @@ async function main(){
    };
   });
   await recoveredPage.locator('#hire').click();
+  const recruitedActorCount=await recoveredPage.locator('#squad .fighter').count();
+  assert.ok(recruitedActorCount>2&&recruitedActorCount<=7,
+   'batch recruitment must happen during the simulated write failure');
   assert.equal(await recoveredPage.locator('#squadScreen [data-storage-warning]').isVisible(),true,
    'a silently discarded save must be caught by readback');
   await recoveredPage.evaluate(()=>{
@@ -146,13 +152,14 @@ async function main(){
   const storedAfter=await recoveredPage.evaluate(()=>JSON.parse(
    localStorage.getItem('neon_expedition_prototype_v1')||'null'
   ));
-  assert.equal(Object.values(storedAfter.units).reduce((a,b)=>a+b,0),3);
+  assert.equal(Object.values(storedAfter.units).reduce((a,b)=>a+b,0),recruitedActorCount,
+   'recovery should persist the exact number recruited, not assume a one-unit purchase');
   await recoveredPage.reload({waitUntil:'load'});
   const afterReload=await recoveredPage.evaluate(()=>JSON.parse(
    localStorage.getItem('neon_expedition_prototype_v1')||'null'
   ));
-  assert.equal(Object.values(afterReload.units).reduce((a,b)=>a+b,0),3,
-   'a recovered persistent store keeps the purchase after reload');
+  assert.equal(Object.values(afterReload.units).reduce((a,b)=>a+b,0),recruitedActorCount,
+   'a recovered persistent store keeps the entire batch purchase after reload');
   assert.equal(await recoveredPage.locator('#squadScreen [data-storage-warning]').isVisible(),false);
   await recovered.close();
   console.log('PASS standalone file:// silent save failure detection and durable recovery');
