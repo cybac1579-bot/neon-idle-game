@@ -19,6 +19,8 @@ jobs:
           node-version: '22'
       - name: Verify game compatibility and static integration
         run: node tests/integration-static.test.cjs
+      - name: Validate replaceable expedition UI contract
+        run: node tests/expedition-ui-contract.test.cjs
       - name: Run standalone expedition engine regression
         run: node --test tests/expedition.test.cjs
       - name: Probe 30-minute expedition pacing
