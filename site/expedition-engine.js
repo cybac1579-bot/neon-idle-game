@@ -54,6 +54,11 @@ const initialAutoChest=()=>({enabled:false,elapsed:0,opened:0});
 const initialRunMetrics=()=>({manualPurchases:0,manualSpent:0,chestsOpened:0});
 // Per-run relic action telemetry; old saves default to no past activations.
 const initialRelicEffects=()=>({volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0});
+const combatEffectReport=raw=>raw&&typeof raw==='object'?{
+ volleys:integer(raw.volleys,0,1e9),
+ volleyBonusDamage:num(raw.volleyBonusDamage,0,1e14),
+ triages:integer(raw.triages,0,1e9)
+}:null;
 const MAX_PLAYTEST_SNAPSHOTS=360;
 const initialPlaytest=()=>({snapshots:[],offlineSeconds:0});
 // Bounded in-run boss/elite clear timestamps: 60-second snapshots miss the opening.
@@ -152,7 +157,8 @@ function normalize(raw,now=Date.now()){
   relicKinds:integer(report.relicKinds,0,RELICS.length),
   relicCopies:integer(report.relicCopies,0,1000),
   chests:integer(report.chests,0,1e9),
-  before:validOpening(report.before),after:validOpening(report.after)
+  before:validOpening(report.before),after:validOpening(report.after),
+  relicEffects:combatEffectReport(report.relicEffects)
  }:null;
  s.runMilestones=normalizedMilestones(raw.runMilestones);
  s.runHistory=Array.isArray(raw.runHistory)?raw.runHistory.slice(-5).filter(x=>x&&typeof x==='object').map(x=>({
@@ -160,7 +166,8 @@ function normalize(raw,now=Date.now()){
   kills:integer(x.kills,0,1e9),cores:integer(x.cores,0,1e9),
   manualPurchases:integer(x.manualPurchases,0,1e9),
   autoPurchases:integer(x.autoPurchases,0,1e9),
-  chestsOpened:integer(x.chestsOpened,0,1e9),milestones:normalizedMilestones(x.milestones)
+  chestsOpened:integer(x.chestsOpened,0,1e9),milestones:normalizedMilestones(x.milestones),
+  relicEffects:combatEffectReport(x.relicEffects)
  })):[];
  // Bound the lifetime discovery journal. No historical reroll or reward is granted
  // when migrating a save made before this field existed.
@@ -649,10 +656,11 @@ function rebirth(s){
   duration:Math.floor(s.clock),cores:gain,earned:reward.base,firstClear:reward.recordBonus,
   relicKinds:RELICS.filter(r=>relic(s,r.id)>0).length,
   relicCopies:RELICS.reduce((sum,r)=>sum+relic(s,r.id),0),
-  chests:s.chests,before};
+  chests:s.chests,before,relicEffects:combatEffectReport(s.relicEffects)};
  const summary={duration:Math.floor(s.clock),best:s.runBest,kills:s.runKills,cores:gain,
   manualPurchases:s.runMetrics.manualPurchases,autoPurchases:s.autoBuy.purchases,
-  chestsOpened:s.runMetrics.chestsOpened,milestones:{...s.runMilestones}};
+  chestsOpened:s.runMetrics.chestsOpened,milestones:{...s.runMilestones},
+  relicEffects:combatEffectReport(s.relicEffects)};
  const history=[...(s.runHistory||[]),summary].slice(-5);
  const keep={claimedBreakthroughDistance:Math.max(s.claimedBreakthroughDistance,s.runBest-1),
   coreReserve:Math.min(1,Math.max(0,reward.fraction)),chestDepths:s.chestDepths.slice(),runHistory:history,relicHistory:s.relicHistory.map(x=>({...x})),playtest:{snapshots:s.playtest.snapshots.map(x=>({...x})),offlineSeconds:s.playtest.offlineSeconds},seed:s.seed,heroLevel:s.heroLevel,heroXp:s.heroXp,traits:{...s.traits},relics:{...s.relics},cores:s.cores+gain,coreSpent:s.coreSpent,coreUpgrades:{...s.coreUpgrades},rebirths:s.rebirths+1,best:s.best,chests:s.chests,chestsOpened:s.chestsOpened,kills:s.kills,autoBuy:{...initialAutoBuy(),enabled:s.autoBuy.enabled,mode:s.autoBuy.mode},autoChest:{...initialAutoChest(),enabled:s.autoChest.enabled}};
