@@ -151,6 +151,15 @@ function renderArchive(){
  const capped=E.RELICS.reduce((sum,r)=>sum+r.cap,0);
  $('relicCollectionProgress').textContent='발견한 종류 '+found+'/'+E.RELICS.length+
    ' · 보유 '+copies+'/'+capped+'개 (중복 강화 포함) · 미개봉 '+fmt(s.chests)+'상자';
+ // The battle HUD remains lean; collectors can confirm that an owned relic
+ // changed combat behavior rather than merely inflating base damage.
+ const effects=s.relicEffects||{volleys:0,volleyBonusDamage:0,triages:0};
+ const hasTactics=E.relic(s,'archer')>0||E.relic(s,'medkit')>0;
+ $('relicEffectSummary').hidden=!hasTactics;
+ $('relicEffectSummary').textContent=hasTactics?
+  '이번 탐사 전술 발동 · 정밀 일제사격 '+fmt(effects.volleys)+'회 (추가 유효 피해 '+fmt(effects.volleyBonusDamage)+
+  ') · 긴급 재합류 '+fmt(effects.triages)+'회 · 유물 효과는 자동 발동':'';
+
  $('relicList').innerHTML=E.RELICS.map(r=>{
   const n=E.relic(s,r.id);
   return '<div class="relic '+(n?'owned':'')+'"><div class="glyph" aria-hidden="true">'+(n?'✦':'◇')+'</div>'+
