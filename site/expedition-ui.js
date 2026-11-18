@@ -146,6 +146,8 @@ function returnReportHtml(r){
   row('이번 귀환 코어',fmt(r.cores)+'개 (격파 적립 '+fmt(r.earned)+' · 첫 기록 '+fmt(r.firstClear)+')')+
   row('영구 유물 수집',fmt(r.relicKinds)+'종 · 총 '+fmt(r.relicCopies)+'개')+
   (Number.isFinite(r.autoChestOpened)?row('지난 탐사 자동 개봉',fmt(r.autoChestOpened)+'개'):'')+
+  (r.longestEncounter?.stage?row('최장 적 격파 교전',fmt(r.longestEncounter.stage)+'거리 · '+Math.floor(r.longestEncounter.seconds/60)+'분 '+Math.floor(r.longestEncounter.seconds%60)+'초'):'')+
+  (Number.isFinite(r.longEngagements)?row('1분 이상 걸린 격파',fmt(r.longEngagements)+'회'):'')+
   (r.relicEffects?row('이번 탐사 유물 전술','정밀 사격 '+fmt(r.relicEffects.volleys)+'회 · 긴급 회수 '+fmt(r.relicEffects.triages)+'회 · 정보망 '+fmt(r.relicEffects.intelFinds||0)+'회 · 측면 공격 '+fmt(r.relicEffects.flankShots||0)+'회 · 호위 반격 '+fmt(r.relicEffects.intercepts||0)+'회 · 돌격 저지 '+fmt(r.relicEffects.braces||0)+'회 · 원거리 교란 '+fmt(r.relicEffects.jams||0)+'회 · 역통신 반격 '+fmt(r.relicEffects.cleanses||0)+'회 · 지휘 전술 전환 '+fmt(r.relicEffects.commandMoves||0)+'회'):'')+
   comparison;
 }
@@ -224,7 +226,19 @@ function renderArchive(){
  const nextDeep=Math.min(Infinity,...E.RELICS.map(r=>r.unlockStage).filter(depth=>depth>lifetimeCleared));
  const nextDepthRelics=Number.isFinite(nextDeep)?E.RELICS.filter(r=>r.unlockStage===nextDeep):[];
  const lockedKinds=E.RELICS.filter(r=>r.unlockStage>lifetimeCleared).length;
+ const fight=s.engagement?.stage===s.stage?s.engagement:null;
+ const elapsed=Math.floor(fight?.seconds||0);
+ const fighting=elapsed>=1;
+ const fightClock=Math.floor(elapsed/60)+'분 '+elapsed%60+'초';
+ const enemyRemaining=Math.max(0,Math.min(100,100*s.enemyHp/E.enemyMax(s.stage)));
+ const sinceLoad=fight?.legacyResume?' · 이전 저장 데이터의 과거 교전 시간은 미포함':'';
+ const growthDuringFight=Math.max(0,s.autoBuy.purchases-(fight?.autoBuyStart||0));
  $('rebirthSummary').innerHTML=row('이번 탐사 최고 거리',fmt(s.runBest))+
+  (fighting?row('현재 적과 교전',fmt(s.stage)+'거리 · '+fightClock+sinceLoad):'')+
+  (fighting?row('현재 적 체력 / 교전 중 자동 강화',enemyRemaining.toFixed(1)+'% 남음 · 자동 구매 '+fmt(growthDuringFight)+'회'):'')+
+  row('이번 탐사 1분 이상 교전 격파',fmt(s.longEngagements||0)+'회')+
+  (s.longestEncounter?.stage?row('이번 탐사 최장 격파 교전',fmt(s.longestEncounter.stage)+'거리 · '+
+   Math.floor(s.longestEncounter.seconds/60)+'분 '+Math.floor(s.longestEncounter.seconds%60)+'초'):'')+
   row('아직 미개방 유물 등급',fmt(lockedKinds)+'종 · 누적 최고 '+fmt(lifetimeCleared)+'거리 격파')+
   row('다음 신규 유물 개방',nextDepthRelics.length?
    nextDeep+'거리 격파 · '+nextDepthRelics.map(r=>r.name).join(' · '):
@@ -268,7 +282,7 @@ function renderArchive(){
   return ' · 직전 대비 '+Math.abs(change).toFixed(1)+'% '+(change>0?'단축':'증가');
  };
  $('milestoneSummary').innerHTML='<p class="sub">해당 거리 적 격파 시각 · 직전 탐사와 비교 (미격파 시 비교 없음)</p>'+
-  [5,10,15,25,35,40,45,50].map(stage=>row(
+  [5,10,15,25,35,40,45,50,55,60,75,100].map(stage=>row(
    stage+'거리 '+(stage%10===0?'보스':'정예'),
    '이번 '+milestoneTime(s.runMilestones[stage])+
    (former[stage]!==undefined?' · 직전 '+milestoneTime(former[stage]):'')+
