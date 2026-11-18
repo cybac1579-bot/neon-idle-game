@@ -41,8 +41,12 @@ async function main(){
    await page.goto(pathToFileURL(packaged).href,{waitUntil:'load'});
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
    assert.ok(await page.locator('#squad .fighter').count()>=2);
+   assert.equal(await page.locator('#squadScreen [data-storage-warning]').isVisible(),false,
+    'ordinary file:// play must never display a false persistence warning');
    assert.match(await page.locator('footer').textContent(),/오프라인 단일 HTML/);
    await page.locator('[data-tab="archive"]').click();
+   assert.equal(await page.locator('#archiveScreen [data-storage-warning]').isVisible(),false,
+    'ordinary archive remains uncluttered when autosave is usable');
    assert.equal(await page.locator('#exportSave').isVisible(),true);
    const [dl]=await Promise.all([page.waitForEvent('download'),page.locator('#exportSave').click()]);
    const backup=JSON.parse(fs.readFileSync(await dl.path(),'utf8'));
