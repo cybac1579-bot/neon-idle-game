@@ -470,3 +470,6 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Reduced-motion combat growth cue and exact-HEAD CI | 2026-11-18 21:54 KST, `9c6118ca` | CSS reduced-motion expiry reviewed; fast 44307351038, save 44307351649, first-rebirth 44307351074, three-rebirth 44307351143 SUCCESS; portrait 44307351034 IN_PROGRESS at inspection | **P0:** verify portrait completion and reduced-motion expiry in actual browser; manual S25+ cue readability and 30m engagement remain unverified. No readiness increase (92% provisional). |
+
+
+| Restored-run isolation from live 30-minute session | 2026-11-18 22:52 KST, test commit `058e1a3f` | Six-seed gate now snapshots the live state before ticking a separately normalized restored copy for 60 seconds, asserting no mutation of live state. Exact-change CI **pending** (no runs returned at first query). | **P0:** verify exact commit CI; if red repair test or engine; actual Android file:// save/background and V3 formation observation still require device evaluation. Readiness 92% provisional, +0pp. |
