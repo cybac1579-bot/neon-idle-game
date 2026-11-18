@@ -22,15 +22,20 @@ test('real 55 elite victory gives a chest, not unearned automatic pickup',()=>{
  assert.equal(s.runMilestones[55],1);assert.equal(E.relic(s,'pursuit'),0);
  assert.equal(E.openChest(s).id,'pursuit');
 });
-test('only 60+ injured bosses trigger the conditional 60% attack boost',()=>{
+test('only injured 60+ bosses and 65+ elites gain the conditional 60% attack boost',()=>{
  const s=battle(60);s.relics.pursuit=1;
- for(const st of [5,25,45,50,55,59,61]){
+ for(const st of [5,25,45,50,55,59,61,64,66,69]){
   s.stage=st;s.enemyHp=E.enemyMax(st)*.25;assert.equal(E.pursuitBoost(s),1);
  }
  s.stage=60;const hp=E.enemyMax(60);
  s.enemyHp=hp*.5001;assert.equal(E.pursuitBoost(s),1);
  s.enemyHp=hp*.5;assert.equal(E.pursuitBoost(s),1.6);
  s.enemyHp=hp*.25;assert.equal(E.pursuitBoost(s),1.6);
+ for(const depth of [65,70,75]){
+  s.stage=depth;
+  s.enemyHp=E.enemyMax(depth)*.55;assert.equal(E.pursuitBoost(s),1);
+  s.enemyHp=E.enemyMax(depth)*.45;assert.equal(E.pursuitBoost(s),1.6);
+ }
  s.relics.pursuit=0;assert.equal(E.pursuitBoost(s),1);
 });
 test('real guard damage and displayed DPS share the exact 1.6 finisher factor',()=>{
@@ -56,6 +61,33 @@ test('crossing half health announces the finishing tactic once across reload',()
  assert.equal(loaded.battleEvent.seq,s.battleEvent.seq);
  E.tick(loaded,1);
  assert.ok(loaded.events.filter(e=>e.includes('추격 신호기')).length<=1);
+});
+test('65 elite pursuit fires once across save/reload with no automatic spending',()=>{
+ const s=battle(65);s.relics.pursuit=1;s.enemyHp=E.enemyMax(65)*.5+1;
+ s.actors.forEach(a=>{a.hp=1e8;a.progress=1;a.cooldown=0});
+ const starting={cores:s.cores,rebirths:s.rebirths,chests:s.chests};
+ E.tick(s,1);
+ assert.equal(s.enemyTactic.pursuitTriggered,true);
+ assert.equal(s.battleEvent.type,'pursuit');
+ assert.equal(E.pursuitBoost(s),1.6);
+ assert.equal(s.events.filter(e=>e.includes('추격 신호기')).length,1);
+ const restored=E.normalize(JSON.parse(JSON.stringify(s)),2000);
+ assert.equal(restored.enemyTactic.pursuitTriggered,true);
+ assert.equal(restored.battleEvent.type,'pursuit');
+ E.tick(restored,1);
+ assert.equal(restored.events.filter(e=>e.includes('추격 신호기')).length,1);
+ for(const key of Object.keys(starting))assert.equal(restored[key],starting[key]);
+});
+test('real guard strikes gain 1.6x on wounded 65 elite, but no earlier elite',()=>{
+ for(const depth of [55,65]){
+  const a=battle(depth);a.enemyHp=E.enemyMax(depth)*.4;
+  a.actors.forEach(u=>{u.hp=1e8;u.progress=1;u.cooldown=0});
+  const b=JSON.parse(JSON.stringify(a));b.relics.pursuit=1;
+  E.tick(a,1);E.tick(b,1);
+  assert.ok(a.contribution.damage.guard>0);
+  const factor=b.contribution.damage.guard/a.contribution.damage.guard;
+  assert.ok(Math.abs(factor-(depth===65?1.6:1))<1e-8,'distance '+depth+' ratio '+factor);
+ }
 });
 test('opt-in opening of earned 55 chest equals manual roll and never returns automatically',()=>{
  const a=chest(55),b=chest(55);a.enemyHp=b.enemyHp=1e13;
