@@ -894,8 +894,8 @@ test('relic mechanics persist through rebirth but activation counters do not',()
  assert.ok(E.rebirth(s)>0);
  assert.equal(E.relic(s,'archer'),2);
  assert.equal(E.relic(s,'medkit'),3);
- assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0});
- assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0},
+ assert.deepEqual(s.relicEffects,{volleys:0,volleyBonusDamage:0,triages:0,triageCooldown:0,intelClears:0,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0});
+ assert.deepEqual(s.runHistory.at(-1).relicEffects,{volleys:14,volleyBonusDamage:300,triages:2,intelFinds:0,flankShots:0,intercepts:0,counterDamage:0},
   'completed return keeps evidence of tactical relic activation');
  assert.deepEqual(s.latestReturn.relicEffects,s.runHistory.at(-1).relicEffects);
  const normalized=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
@@ -1012,6 +1012,107 @@ test('pre-network backups migrate without invented network progress or earlier a
  assert.equal(s.relicEffects.intelClears,0);
  assert.equal(s.relicHistory[0].source,'chest','old ordinary chest journal is not marked network');
  assert.ok(s.relics.scout&&s.relics.relay,'old relic ownership remains');
+});
+
+
+
+function setFlankFixture(s,stage=15,{combo=false,medic=true}={}){
+ s.stage=stage;s.best=Math.max(stage,s.best);s.runBest=Math.max(stage,s.runBest);
+ s.enemyHp=1e10;
+ s.units.ranger=1;s.actors.push({id:'ranger',hp:17000,revive:0,progress:1,cooldown:100,shots:0});
+ if(medic){s.units.medic=1;s.actors.push({id:'medic',hp:25000,revive:0,progress:1,cooldown:100,shots:0});}
+ for(const a of s.actors){a.progress=1;a.cooldown=100;a.hp=a.id==='guard'?48000:a.hp;a.revive=0;}
+ if(combo){s.relics.guard=1;s.relics.archer=1;}
+ return s;
+}
+test('elite telegraphs a focused rear-line attack for two full seconds',()=>{
+ const s=setFlankFixture(E.newState(1000));
+ for(let sec=1;sec<=3;sec++)E.tick(s,1);
+ assert.equal(s.enemyTactic.phase,'windup');
+ assert.equal(s.enemyTactic.windup,2);
+ assert.equal(s.battleEvent.type,'aim');
+ E.tick(s,1);
+ assert.equal(s.enemyTactic.windup,1);
+ const old=E.normalize(JSON.parse(JSON.stringify(s)),Date.now());
+ assert.equal(old.enemyTactic.phase,'windup','telegraph survives a real save/reload');
+ assert.equal(old.enemyTactic.windup,1);
+ E.tick(old,1);
+ assert.equal(old.enemyTactic.phase,'fired');
+ assert.equal(old.enemyTactic.used,true);
+ assert.equal(old.relicEffects.flankShots,1);
+ assert.equal(old.relicEffects.intercepts,0);
+ assert.equal(old.battleEvent.type,'flank');
+ assert.ok(old.contribution.taken.ranger+old.contribution.taken.medic>0);
+ E.tick(old,8);
+ assert.equal(old.relicEffects.flankShots,1,'only one focus strike per enemy');
+});
+
+test('guard plus focus sight cancels rear-targeted strike and creates real ranger counterattack',()=>{
+ const base=setFlankFixture(E.newState(1000));
+ const combo=setFlankFixture(E.newState(1000),15,{combo:true});
+ for(let i=0;i<5;i++){E.tick(base,1);E.tick(combo,1);}
+ assert.equal(base.relicEffects.flankShots,1);
+ assert.equal(combo.relicEffects.flankShots,1);
+ assert.equal(base.relicEffects.intercepts,0);
+ assert.equal(combo.relicEffects.intercepts,1);
+ assert.equal(combo.battleEvent.type,'intercept');
+ assert.ok(combo.relicEffects.counterDamage>0);
+ assert.equal(combo.enemyHp,base.enemyHp-combo.relicEffects.counterDamage,
+  'counterattack applies actual combat damage, not merely a cosmetic cue');
+ const baseRear=base.contribution.taken.ranger+base.contribution.taken.medic;
+ const comboRear=combo.contribution.taken.ranger+combo.contribution.taken.medic;
+ assert.ok(baseRear>comboRear,'combination redirects focused rear damage onto the tank');
+ assert.ok(combo.contribution.taken.guard>base.contribution.taken.guard,
+  'tank absorbs damage that would have hit the rear');
+ const total=x=>Object.values(x.contribution.taken).reduce((a,b)=>a+b,0);
+ assert.ok(Math.abs(total(base)-total(combo))<1e-8,
+  'same total enemy attack power, only target allocation changes');
+ const loaded=E.normalize(JSON.parse(JSON.stringify(combo)),Date.now());
+ assert.equal(loaded.relicEffects.intercepts,1);
+ assert.equal(loaded.relicEffects.counterDamage,combo.relicEffects.counterDamage);
+ assert.equal(loaded.enemyTactic.result,'intercept');
+});
+test('countering requires both relics and living frontline guard and active ranger',()=>{
+ for(const what of ['guardOnly','archerOnly','noGuard','noRanger']){
+  const s=setFlankFixture(E.newState(1000),20,{combo:true});
+  if(what==='guardOnly')s.relics.archer=0;
+  if(what==='archerOnly')s.relics.guard=0;
+  if(what==='noGuard'){for(const a of s.actors.filter(a=>a.id==='guard')){a.hp=0;a.revive=100;a.progress=0;}}
+  if(what==='noRanger'){for(const a of s.actors.filter(a=>a.id==='ranger')){a.hp=0;a.revive=100;a.progress=0;}}
+  for(let i=0;i<5;i++)E.tick(s,1);
+  assert.equal(s.relicEffects.intercepts,0,what+' does not produce a free combo counter');
+  assert.equal(s.relicEffects.counterDamage,0);
+ }
+});
+test('regular distance and short enemy encounters do not gain extra flank damage',()=>{
+ const normal=setFlankFixture(E.newState(1000),14,{combo:true});
+ E.tick(normal,9);
+ assert.equal(normal.relicEffects.flankShots,0);
+ assert.equal(normal.relicEffects.intercepts,0);
+ assert.equal(normal.enemyTactic.phase,'idle');
+ const quick=E.newState(1000);
+ quick.stage=quick.best=quick.runBest=15;quick.enemyHp=.01;
+ for(const a of quick.actors){a.cooldown=0;a.progress=1;}
+ E.tick(quick,.1);
+ assert.equal(quick.stage,16);
+ assert.equal(quick.enemyTactic.stage,16);
+ assert.equal(quick.enemyTactic.used,false);
+});
+test('flank and counter counters reset on rebirth while preserving last expedition report',()=>{
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=15;s.relics.guard=1;s.relics.archer=1;
+ s.relicEffects.flankShots=6;s.relicEffects.intercepts=4;s.relicEffects.counterDamage=62;
+ assert.ok(E.rebirth(s)>0);
+ assert.equal(s.relicEffects.flankShots,0);
+ assert.equal(s.relicEffects.intercepts,0);
+ assert.equal(s.relicEffects.counterDamage,0);
+ assert.equal(s.runHistory.at(-1).relicEffects.intercepts,4);
+ assert.equal(s.latestReturn.relicEffects.counterDamage,62);
+ assert.equal(E.normalize(JSON.parse(JSON.stringify(s)),Date.now()).latestReturn.relicEffects.flankShots,6);
+ const older=E.newState(1000);delete older.enemyTactic;delete older.relicEffects;
+ const restored=E.normalize(older,Date.now());
+ assert.equal(restored.relicEffects.flankShots,0);
+ assert.equal(restored.enemyTactic.phase,'idle');
 });
 
 // Optional automated collection must preserve manual loot and existing saved preferences.
