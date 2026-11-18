@@ -27,6 +27,10 @@ async function main(){
    const movedActor=await page.locator('#squad .fighter').first().getAttribute('style');
    assert.notEqual(firstActor,movedActor,'fighter must advance visibly with engine state');
    assert.ok(await page.locator('#squad .fighter-health').count()>=2);
+   const firstGuards=await page.locator('#squad .fighter.guard').evaluateAll(nodes=>nodes.slice(0,2).map(el=>el.getBoundingClientRect().top));
+   assert.equal(firstGuards.length,2,'starting escort must display two frontline fighters');
+   assert.ok(Math.abs(firstGuards[0]-firstGuards[1])>=20,
+    'starting guards must be visually separated in the persistent viewport');
    assert.equal(await page.locator('[data-tab="squad"]').getAttribute('aria-current'),'page','growth is default and battle remains on top');
    const assertBattleFrame=async label=>{
     const boxes=await page.evaluate(()=>{
