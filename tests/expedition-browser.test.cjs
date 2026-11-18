@@ -558,6 +558,7 @@ async function main(){
     state.best=46;state.runBest=1;state.stage=1;
     state.claimedBreakthroughDistance=45;state.rebirths=2;
     state.enemyHp=13;state.coreUpgrades.valor=3;
+    state.heroLevel=8;state.traits.command=3;state.traits.supply=2;state.cores=11;
     state.relics.shield=1;state.relics.guard=1;
     state.relicEffects.guardPlateBlocks=12;state.lastSaved=Date.now();
     localStorage.setItem(key,JSON.stringify(state));
@@ -580,6 +581,23 @@ async function main(){
    await frontierPage.locator('[data-tab="archive"]').click();
    assert.match(await frontierPage.locator('#relicEffectSummary').textContent(),
     /심층 방벽 진형.*일격 방어 12회/);
+   // Trait reallocation stays in the squad detail, never in battle.
+   await frontierPage.locator('[data-tab="squad"]').click();
+   assert.equal(await frontierPage.locator('#traitRespec').isDisabled(),false);
+   assert.match(await frontierPage.locator('#heroSummary').textContent(),/미사용 특성 포인트2/);
+   await frontierPage.locator('#traitRespec').click();
+   assert.match(await frontierPage.locator('#heroSummary').textContent(),/미사용 특성 포인트7/);
+   const respecResult=await frontierPage.evaluate(()=>{
+    const stored=JSON.parse(localStorage.getItem('neon_expedition_prototype_v1'));
+    const normalized=window.ExpeditionEngine.normalize(stored,Date.now());
+    return {level:normalized.heroLevel,traits:normalized.traits,cores:normalized.cores,
+     valor:normalized.coreUpgrades.valor,shield:window.ExpeditionEngine.relic(normalized,'shield'),
+     guard:window.ExpeditionEngine.relic(normalized,'guard')};
+   });
+   assert.deepEqual(respecResult,{level:8,traits:{command:0,supply:0},cores:11,valor:3,shield:1,guard:1});
+   await frontierPage.locator('#traitSupply').click();
+   assert.match(await frontierPage.locator('#heroSummary').textContent(),/미사용 특성 포인트6/);
+   assert.equal(await frontierPage.locator('#traitRespec').isDisabled(),false);
    const goalBounds=await frontierPage.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
    assert.ok(goalBounds.scroll<=goalBounds.width+1,
     'next deep collectible goal portrait overflow: '+JSON.stringify(goalBounds));
