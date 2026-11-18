@@ -432,10 +432,12 @@ main.game-shell{
   45%{transform:translateX(5px) scale(1.08)}}
 @media(prefers-reduced-motion:reduce){
  .battle-trail,.battle-trail:after,.battle-burst{display:none!important}
- #battleGrowth.playing{animation:none;opacity:1;transform:none}
+ #battleGrowth.playing{animation:expedition-growth-reduced 1.55s steps(1,end) both;transform:none}
  .fighter.battle-acting .fighter-symbol{animation:none!important}
 }
 @media(max-width:380px){
  .actor-emblem{width:16px;height:16px;font-size:11px;right:-3px;bottom:-3px}
  .actor-tool{right:0}
 }
+
+@keyframes expedition-growth-reduced{0%,85%{opacity:1}100%{opacity:0}}
