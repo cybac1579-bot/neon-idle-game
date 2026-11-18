@@ -108,3 +108,6 @@ require('./expedition-deep-second-run-audit.cjs');
 
 // Regression: previously observed 45-50 growth freeze is bounded.
 require('./expedition-stage45-growth-fix-audit.cjs');
+
+// Same manual chest-opening conditions before attributing early returns to cores.
+require('./expedition-controlled-first-return-audit.cjs');
