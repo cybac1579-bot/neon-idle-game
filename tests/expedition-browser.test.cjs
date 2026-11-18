@@ -264,6 +264,12 @@ async function main(){
    assert.equal(payload.minuteSnapshots[0].autoChestEnabled,null);
    assert.equal(payload.minuteSnapshots[0].autoChestOpened,null);
    assert.equal(payload.offlineSettledSeconds,90);
+   assert.deepEqual(payload.offlineResumeHistory,[],
+    'legacy offline aggregate must not invent individual resumes');
+   assert.deepEqual(payload.saveDiagnostics,{
+    storageAvailableAtExport:true,blockedAtStartup:false,
+    failedSaveAttempts:0,verifiedSaveRecoveries:0,originKind:'web'
+   });
    assert.equal(payload.recentReturns.length,1);
    assert.deepEqual(payload.latestReturnComparison,savedAfter.latestReturn);
    assert.deepEqual(payload.currentRunOpening,savedAfter.runOpening);
