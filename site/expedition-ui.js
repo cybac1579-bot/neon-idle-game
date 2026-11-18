@@ -201,10 +201,16 @@ function renderArchive(){
   ' · 추가 조작 없이 자동 발동':'';
 
  $('relicList').innerHTML=E.RELICS.map(r=>{
-  const n=E.relic(s,r.id);
+  const n=E.relic(s,r.id),next=n?E.nextRelicCopyPreview(s,r.id):null;
+  const preview=next?(next.capped?
+   (next.unique?'고유 유물 수집 완료 · 중복 불가':'수집 상한 달성 · 같은 유물 중복 효과는 여기까지'):
+   next.unique?'고유 유물 · 동일 종류 중복 수집 불가':
+   '다음 1개 효과 · '+next.label+' '+next.from+next.unit+' → '+next.to+next.unit+
+   (next.context?' · '+next.context:'')):'';
   return '<div class="relic '+(n?'owned':'')+'"><div class="glyph" aria-hidden="true">'+(n?'✦':'◇')+'</div>'+
    '<strong>'+safe(n?r.name:'아직 발견하지 않은 유물')+'</strong><small>'+safe(n?r.desc:'다음 탐사에서 새로운 유물을 찾아보자')+'</small>'+
-   '<div class="count">'+(n?'보유 '+n+' / 상한 '+r.cap:'미발견 · '+r.unlockStage+'거리 상자에서 등장')+'</div></div>';
+   '<div class="count">'+(n?'보유 '+n+' / 상한 '+r.cap:'미발견 · '+r.unlockStage+'거리 상자에서 등장')+'</div>'+
+   (preview?'<div class="next-effect">'+safe(preview)+'</div>':'')+'</div>';
  }).join('');
  $('openArchiveChest').hidden=s.chests<1;
  $('openArchiveChest').textContent='상자 1개 열기';
