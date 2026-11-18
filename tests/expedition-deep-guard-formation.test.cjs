@@ -66,3 +66,14 @@ test('guard damage mitigation never creates extra cores, loot or enemy damage',(
  assert.ok(s.contribution.taken.guard<=E.actorMaxHp(s,'guard')*.65+1e-8);
  assert.ok(s.enemyHp>0);
 });
+
+test('offline late formation fight matches identical foreground seconds and counters',()=>{
+ const initial=front(60);const direct=JSON.parse(JSON.stringify(initial));
+ const hidden=JSON.parse(JSON.stringify(initial));hidden.lastSaved=1000;
+ E.tick(direct,25);
+ assert.equal(E.offline(hidden,26000),25);
+ assert.equal(hidden.relicEffects.guardPlateBlocks,direct.relicEffects.guardPlateBlocks);
+ assert.equal(hidden.contribution.falls.guard,direct.contribution.falls.guard);
+ assert.ok(Math.abs(hidden.enemyHp-direct.enemyHp)<.0001);
+ assert.equal(hidden.stage,direct.stage);
+});
