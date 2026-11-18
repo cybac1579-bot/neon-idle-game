@@ -114,3 +114,6 @@ require('./expedition-controlled-first-return-audit.cjs');
 
 // Low-touch players check earned chests every 5/10 minutes, not every boss.
 require('./expedition-first-return-low-touch-audit.cjs');
+
+// Auto chest collection is optional, observable, and not a forced strategy.
+require('./expedition-auto-chest-impact-audit.cjs');
