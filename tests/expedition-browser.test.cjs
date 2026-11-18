@@ -365,6 +365,32 @@ async function main(){
    assert.equal(tacticView.result.intercepts,1);
    assert.match(tacticView.result.event,/호위 반격/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
+   // Regression: after a 45-clear voluntary return, the low-level run stage
+   // must NOT advertise relic tiers 15/25/40 as "new" a second time.
+   const frontierContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
+   const frontierPage=await frontierContext.newPage();
+   await frontierPage.goto(url,{waitUntil:'networkidle'});
+   await frontierPage.addInitScript(()=>{
+    const key='neon_expedition_prototype_v1';
+    const state=JSON.parse(localStorage.getItem(key));
+    if(!state)return;
+    state.best=46;state.runBest=1;state.stage=1;
+    state.claimedBreakthroughDistance=45;state.rebirths=2;
+    state.enemyHp=13;state.lastSaved=Date.now();
+    localStorage.setItem(key,JSON.stringify(state));
+   });
+   await frontierPage.reload({waitUntil:'networkidle'});
+   await frontierPage.locator('[data-tab="return"]').click();
+   const depthGoals=await frontierPage.locator('#rebirthSummary').textContent();
+   assert.match(depthGoals,/아직 미개방 유물 등급1종 · 누적 최고 45거리 격파/,
+    'legacy return depth 45 must offer chronicle unlock');
+   assert.match(depthGoals,/다음 신규 유물 개방50거리 격파 · 원정 연대기/);
+   assert.doesNotMatch(depthGoals,/15거리 격파 · 진군 북/,
+    'return should never make a previously unlocked depth look new');
+   const goalBounds=await frontierPage.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
+   assert.ok(goalBounds.scroll<=goalBounds.width+1,
+    'next deep collectible goal portrait overflow: '+JSON.stringify(goalBounds));
+   await frontierContext.close();
    await context.close();
    console.log('PASS expedition portrait',width,'recruit/relic/rebirth/save/overflow/milestone-comparison/chronicle');
   }
