@@ -77,6 +77,34 @@ test('the earned action respects one-time save/reload and retains battle cue',()
  E.tick(again,10);
  assert.equal(again.relicEffects.diagrams,1,'reloading never grants a second strike');
 });
+test('weak-point field cue persists through overlapping combat events, save and a downed squad',()=>{
+ const s=prepared(70);
+ E.tick(s,1);
+ assert.equal(s.relicEffects.diagrams,1);
+ assert.equal(s.enemyTactic.diagramFlash,4);
+ // The last event slot is allowed to contain a fallen guard or a volley.
+ // The separate short display timer still proves the earned hit occurred.
+ s.battleEvent={seq:++s.battleCueSeq,type:'fallen',id:'guard',value:0};
+ const restored=E.normalize(copy(s),2000);
+ assert.equal(restored.enemyTactic.diagramFlash,4);
+ assert.equal(restored.battleEvent.type,'fallen');
+ E.tick(restored,2);
+ assert.equal(restored.enemyTactic.diagramFlash,2);
+ for(const a of restored.actors){a.hp=0;a.revive=20;a.progress=0;}
+ E.tick(restored,2);
+ assert.equal(restored.enemyTactic.diagramFlash,0,
+  'the visual cue must expire even while the whole squad is down');
+ assert.equal(restored.relicEffects.diagrams,1);
+ assert.equal(restored.enemyTactic.diagramTriggered,true);
+});
+test('a historical save without display-only timer does not invent a diagram signal',()=>{
+ const old=prepared(70);
+ delete old.enemyTactic.diagramFlash;
+ const loaded=E.normalize(copy(old),2000);
+ assert.equal(loaded.enemyTactic.diagramFlash,0);
+ const empty=E.newState(1000);
+ assert.equal(empty.enemyTactic.diagramFlash,0);
+});
 test('deep diagram reward cannot mint cores or buy units and survives voluntary return',()=>{
  const s=prepared(70);const ordinary=prepared(70,false);
  E.tick(s,1);E.tick(ordinary,1);
