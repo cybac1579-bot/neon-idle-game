@@ -540,3 +540,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Low-touch 30m late reward gap sensitivity (9 scenarios) | 2026-11-20 05:52 KST, test `6a125ab9` | Added 3 initial clocks × 3 auto-buy policies, 5m chest/relic/stage/auto deltas and reconciliation. Prior exact-base CI 5/5 success, **new test CI/metrics pending**; initial clock variation is not proven RNG variation | **P0:** inspect `LOW_TOUCH_30M_SENSITIVITY` output and CI failures, compare policy-dependent 20–30m droughts, then evidence-based engine/presentation change. Android real-device and 30m human fun unverified; readiness 92%, main protected |
+
+| 30m low-touch strategy sensitivity: balanced/train/recruit | 2026-11-20 06:59 KST; base `84482812`, fast CI 44613097867 job 135874570955 | **PASS**, log decoded: stage 41/35/40; first relics 8/6/7; late zero-chest 5m windows 1/1/2. All three initial clocks per policy identical, so no independent RNG-seed evidence. Other four CI workflows pass. | **P0:** establish true independent RNG or state sensitivity; evaluate 20–30m presentation and choices, then only evidence-based code adjustment. S25+ subjective play unverified. |
