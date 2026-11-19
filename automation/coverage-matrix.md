@@ -511,3 +511,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Funded auto-buy and natural combat cue sampling | 2026-11-19 16:00 KST, base `99a9df23`, browser probe `09350f87` | Exact base five PR CI SUCCESS: portrait 44469124868, fast 44469124856, save 44469124855, first rebirth 44469124772, three rebirth 44469124874. Added 390px six-second natural #battleFx mutation timestamps; **new probe CI pending** | **P0:** collect actual probe logs and 30m low-input telemetry; no fabricated density claim. S25+ lifecycle/subjective spectator experience unverified, readiness 92%, main/Pages untouched |
+
+| Natural combat cue density — Chromium runtime | 2026-11-19 16:55 KST; shared `e1c782aa` | Exact-HEAD portrait CI `44476280596` SUCCESS; job `135399739180` measured 2 real cue changes/6s at 390px (979ms clear, 2377ms hit); normal/reduced opacity expiry verified; other four workflows SUCCESS | **P0:** compare engine events with rendered cues over longer/varied battle phases; six seconds cannot prove 30m pacing or fun. S25+ lifecycle and human play unverified; 92% provisional, no release |
