@@ -47,3 +47,37 @@ test('rebirth preserves five histories and resets run-specific counters',()=>{
  const loaded=E.normalize(JSON.parse(JSON.stringify(s)),2000);
  assert.deepEqual(loaded.runHistory,s.runHistory);
 });
+
+test('30-minute low-touch expedition records actual reward and growth cadence',()=>{
+ const s=E.newState(1000);
+ E.setAutoBuy(s,'balanced',true);
+ const checkpoints=[];
+ let deliberateActions=0;
+ for(let minute=1;minute<=30;minute++){
+  E.tick(s,60);
+  // One optional strategic intervention per minute, never rapid tapping.
+  const kind=minute%2===0?'recruit':'train';
+  const bought=E.purchase(s,kind,1);
+  if(bought.count)deliberateActions++;
+  if(s.chests>0){
+   const reward=E.openChest(s);
+   if(reward)deliberateActions++;
+  }
+  if(minute%5===0)checkpoints.push({
+   minute,stage:s.stage,best:s.runBest,credits:Math.floor(s.credits),
+   recruits:Object.values(s.units).reduce((a,n)=>a+n,0),
+   training:s.training,chestsOpened:s.runMetrics.chestsOpened,
+   firstRelics:s.runMetrics.firstRelicFinds,
+   duplicateRelics:s.runMetrics.duplicateRelics,
+   automaticPurchases:s.autoBuy.purchases,
+   manualActions:deliberateActions
+  });
+ }
+ assert.equal(checkpoints.length,6);
+ assert.equal(Math.floor(s.clock),1800);
+ assert.ok(checkpoints.every(x=>Number.isFinite(x.credits)&&x.stage>=1));
+ assert.ok(checkpoints.every((x,i)=>i===0||x.chestsOpened>=checkpoints[i-1].chestsOpened));
+ assert.ok(s.runMetrics.manualPurchases<=30);
+ assert.ok(deliberateActions<=60);
+ console.log('LOW_TOUCH_30M '+JSON.stringify(checkpoints));
+});
