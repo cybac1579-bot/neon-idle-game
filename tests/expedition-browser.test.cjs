@@ -62,10 +62,19 @@ async function main(){
      const cue=document.querySelector('#battleFx');
      if(!cue)return {available:false};
      const samples=[],started=performance.now();
-     let last=cue.textContent.trim();
-     const record=()=>{const text=cue.textContent.trim();if(text&&text!==last)
-      samples.push({atMs:Math.round(performance.now()-started),text:text.slice(0,70)});
-      last=text;};
+     // Count each newly inserted cue, including consecutive identical text.
+     // Comparing text alone undercounts repeated damage of the same value.
+     const record=(mutations)=>{for(const mutation of mutations){
+      for(const node of mutation.addedNodes){
+       const elements=node.nodeType===1
+        ?[node,...(node.querySelectorAll?.('.combat-cue')||[])]:[];
+       for(const el of elements){
+        if(!el.classList?.contains('combat-cue'))continue;
+        const text=el.textContent.trim();
+        if(text)samples.push({atMs:Math.round(performance.now()-started),text:text.slice(0,70)});
+       }
+      }
+     }};
      const observer=new MutationObserver(record);
      observer.observe(cue,{subtree:true,childList:true,characterData:true});
      // Sample three consecutive phases to expose long silent stretches and
