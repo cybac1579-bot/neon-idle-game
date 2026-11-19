@@ -96,3 +96,31 @@ test('30-minute low-touch expedition records actual reward and growth cadence',(
  console.log('LOW_TOUCH_30M '+JSON.stringify(checkpoints));
  console.log('LOW_TOUCH_30M_INTERVALS '+JSON.stringify(intervals));
 });
+
+test('30-minute low-touch reward drought sensitivity across initial clocks and purchase choices',()=>{
+ const results=[];
+ for(const seed of [1000,2000,3000]){
+  for(const policy of ['balanced','train','recruit']){
+   const s=E.newState(seed);
+   E.setAutoBuy(s,policy==='balanced'?'balanced':policy,true);
+   const windows=[];let prior={best:1,chests:0,first:0,auto:0};let manual=0;
+   for(let minute=1;minute<=30;minute++){
+    E.tick(s,60);
+    const bought=E.purchase(s,minute%2===0?'recruit':'train',1);
+    if(bought.count)manual++;
+    if(s.chests>0&&E.openChest(s))manual++;
+    if(minute%5===0){
+     const now={best:s.runBest,chests:s.runMetrics.chestsOpened,first:s.runMetrics.firstRelicFinds,auto:s.autoBuy.purchases};
+     windows.push({minute,bestGain:now.best-prior.best,chests:now.chests-prior.chests,first:now.first-prior.first,auto:now.auto-prior.auto});
+     prior=now;
+    }
+   }
+   assert.equal(windows.length,6);
+   assert.ok(windows.every(w=>w.bestGain>=0&&w.chests>=0&&w.first>=0&&w.auto>=0));
+   assert.ok(manual<=60);
+   assert.equal(windows.reduce((a,w)=>a+w.chests,0),s.runMetrics.chestsOpened);
+   results.push({seed,policy,stage:s.runBest,firstRelics:s.runMetrics.firstRelicFinds,lateZeroChestWindows:windows.slice(4).filter(w=>w.chests===0).length,windows});
+  }
+ }
+ console.log('LOW_TOUCH_30M_SENSITIVITY '+JSON.stringify(results));
+});
