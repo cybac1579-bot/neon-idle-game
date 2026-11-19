@@ -515,3 +515,9 @@ main.game-shell{
 .arena.formation-dense .fighter-health{height:3px}
 .arena.formation-dense .fighter-name{font-size:8px;line-height:9px;letter-spacing:-.02em}
 .arena.formation-dense .actor-emblem{width:14px;height:14px;font-size:10px;right:-3px;bottom:-3px}
+
+/* Ordinary damage belongs beside the enemy, not over the squad or tactical callouts.
+   Keep named skills, relics, boss warnings and clear rewards centered and prominent. */
+#battleFx .combat-cue.hit{position:absolute;right:11%;top:43%;max-width:30%;text-align:center;
+ font-size:clamp(13px,3.5vw,18px);color:#f6d6ae;text-shadow:0 2px 5px #07101c,0 0 7px #111a27}
+@media(max-width:380px){#battleFx .combat-cue.hit{right:8%;top:46%}}
