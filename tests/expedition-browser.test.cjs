@@ -25,6 +25,31 @@ async function main(){
    // are placed. Allow startup rendering to complete, but keep hard failure
    // with diagnostic detail if a genuine JavaScript bootstrap error occurs.
    await page.waitForTimeout(300);
+   // Verify ordinary damage is localized near the enemy while named tactical
+   // callouts keep their centered priority. CSS geometry, not subjective taste.
+   // Use temporary DOM probes outside the live #battleFx to avoid altering
+   // natural combat cue counts and engine events.
+   const cueHierarchy=await page.evaluate(()=>{
+    const arena=document.querySelector('.arena'),fx=document.querySelector('#battleFx');
+    if(!arena||!fx)return {available:false};
+    const hit=document.createElement('span'),special=document.createElement('span');
+    hit.className='combat-cue hit';hit.textContent='-2';
+    special.className='combat-cue';special.textContent='전술 발동';
+    fx.append(hit,special);
+    const frame=fx.getBoundingClientRect(),h=hit.getBoundingClientRect(),s=special.getBoundingClientRect();
+    const hs=getComputedStyle(hit),ss=getComputedStyle(special);
+    const result={available:true,frameWidth:frame.width,hitX:h.x+h.width/2-frame.x,
+     specialX:s.x+s.width/2-frame.x,hitPosition:hs.position,
+     hitRight:hs.right,specialPosition:ss.position};
+    hit.remove();special.remove();return result;
+   });
+   assert.equal(cueHierarchy.available,true,'combat cue container missing');
+   assert.equal(cueHierarchy.hitPosition,'absolute','ordinary damage must be enemy-anchored');
+   assert.ok(cueHierarchy.hitX>cueHierarchy.frameWidth*.57,
+    'ordinary damage must stay on enemy side: '+JSON.stringify(cueHierarchy));
+   assert.ok(Math.abs(cueHierarchy.specialX-cueHierarchy.frameWidth/2)<cueHierarchy.frameWidth*.15,
+    'named tactical cue must remain centered: '+JSON.stringify(cueHierarchy));
+   console.log('CHROMIUM_COMBAT_CUE_HIERARCHY '+JSON.stringify({width,...cueHierarchy}));
    // Measure the actual Chromium animation lifecycle, not just CSS source text.
    // Keep the probe outside #battleFx so real combat events cannot replace it.
    if(width===390){
