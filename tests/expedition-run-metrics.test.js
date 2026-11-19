@@ -79,5 +79,20 @@ test('30-minute low-touch expedition records actual reward and growth cadence',(
  assert.ok(checkpoints.every((x,i)=>i===0||x.chestsOpened>=checkpoints[i-1].chestsOpened));
  assert.ok(s.runMetrics.manualPurchases<=30);
  assert.ok(deliberateActions<=60);
+ const intervals=checkpoints.map((point,i)=>{
+  const previous=i?checkpoints[i-1]:{minute:0,best:1,chestsOpened:0,firstRelics:0,duplicateRelics:0,automaticPurchases:0,manualActions:0};
+  return {fromMinute:previous.minute,toMinute:point.minute,
+   bestStageGain:point.best-previous.best,
+   chestsOpened:point.chestsOpened-previous.chestsOpened,
+   firstRelics:point.firstRelics-previous.firstRelics,
+   duplicateRelics:point.duplicateRelics-previous.duplicateRelics,
+   automaticPurchases:point.automaticPurchases-previous.automaticPurchases,
+   manualActions:point.manualActions-previous.manualActions};
+ });
+ assert.ok(intervals.every(x=>x.bestStageGain>=0&&x.chestsOpened>=0&&x.firstRelics>=0&&x.duplicateRelics>=0&&x.automaticPurchases>=0&&x.manualActions>=0));
+ assert.equal(intervals.reduce((n,x)=>n+x.chestsOpened,0),s.runMetrics.chestsOpened);
+ assert.equal(intervals.reduce((n,x)=>n+x.firstRelics,0),s.runMetrics.firstRelicFinds);
+ assert.equal(intervals.reduce((n,x)=>n+x.duplicateRelics,0),s.runMetrics.duplicateRelics);
  console.log('LOW_TOUCH_30M '+JSON.stringify(checkpoints));
+ console.log('LOW_TOUCH_30M_INTERVALS '+JSON.stringify(intervals));
 });
