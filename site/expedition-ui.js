@@ -43,7 +43,10 @@ function renderBattle(){
  $('openChest').textContent=!hasDiscoveredRelic?
   '✦ 첫 유물 확인 · 상자 1개 열기':
   '✦ 상자 1개 열기 · 보유 '+fmt(s.chests)+'개';
- $('goal').textContent=fmt(s.stage+((5-s.stage%5)%5))+'거리';
+ // Show the actual next chest milestone, including whether it is a boss chest.
+ // The current elite/boss stage still awards its chest on victory.
+ const nextChest=s.stage+((5-s.stage%5)%5);
+ $('goal').textContent=fmt(nextChest)+'거리 · '+(E.isBoss(nextChest)?'지휘급':'정예')+' 격파';
  const availableCores=E.rebirthGain(s),ready=availableCores>0;
  $('returnQuick').hidden=!ready;
  $('returnQuick').textContent='↻ 귀환 가능 · +'+fmt(availableCores)+'코어';
