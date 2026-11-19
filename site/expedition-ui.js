@@ -94,8 +94,13 @@ function renderAutoBuy(){
  const firstRunIdleHelp=!a.enabled&&s.rebirths===0&&s.clock>=180&&
   s.runMetrics.manualPurchases===0&&hasAffordableGrowth?
   '첫 탐사 성장 안내 · 크레딧이 모여 있어도 강화는 자동으로 구매되지 않아. 위에서 직접 소집·훈련하거나, 원하면 성장 자동 구매를 켜줘. / ':'';
+ const narrowPolicyStall=a.enabled&&['train','recruit','supply'].includes(a.mode)&&
+  s.engagement?.stage===s.stage&&s.engagement.seconds>=300&&
+  s.autoBuy.purchases===s.engagement.autoBuyStart;
+ const stallAdvice=narrowPolicyStall?
+  '현재 교전 5분 이상 · 이 전투 중 자동 구매가 없어. 단일 분야만 구매하는 설정이 원인일 수 있어. 균형으로 바꾸거나 다른 강화를 직접 선택할 수 있어. / ':'';
  $('autoStatus').textContent=a.enabled?'작동 중 · '+E.AUTO_BUY_INTERVAL+'초마다 구매 판단':'자동 구매 꺼짐';
- $('autoDetails').textContent=firstRunIdleHelp+(a.mode==='adaptive'?'유동형 균형 · 현재 구매 가능 항목 확인 / ':a.mode==='reserve'?'장기 저축 · 현재 항목 완료까지 구매 대기 / ':a.mode==='balanced'?'균형 · 장기 대기 시 부담 적은 성장으로 전환 / ':'')+
+ $('autoDetails').textContent=firstRunIdleHelp+stallAdvice+(a.mode==='adaptive'?'유동형 균형 · 현재 구매 가능 항목 확인 / ':a.mode==='reserve'?'장기 저축 · 현재 항목 완료까지 구매 대기 / ':a.mode==='balanced'?'균형 · 장기 대기 시 부담 적은 성장으로 전환 / ':'')+
    '다음 대상: '+label+(target?' · '+fmt(target.cost)+' 크레딧'+(s.credits>=target.cost?' · 구매 가능':' · 크레딧 축적 중'):'')+
    reserveWait+
    ' / 이번 탐사 자동 구매 '+fmt(a.purchases)+'회 · '+fmt(a.spent)+' 크레딧 사용';
