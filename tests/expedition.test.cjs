@@ -1380,3 +1380,17 @@ test('spectator motion survives nonvisual combat events',()=>{
  assert.ok(body.indexOf('motion.replaceChildren();')>body.indexOf("includes(kind))return;"),
   'only drawable combat events may replace active motion');
 });
+
+// The permanent chest target must identify the next real elite/boss encounter.
+test('portrait next-chest objective distinguishes elite and boss milestones',()=>{
+ const fs=require('node:fs');
+ const ui=fs.readFileSync(require.resolve('../site/expedition-ui.js'),'utf8');
+ assert.match(ui,/const nextChest=s\.stage\+\(\(5-s\.stage%5\)%5\)/);
+ assert.match(ui,/E\.isBoss\(nextChest\)\?'지휘급':'정예'/);
+ for(const stage of [1,5,6,10,11,15,16]){
+  const target=stage+((5-stage%5)%5);
+  assert.equal(target%5,0);
+  assert.ok(target>=stage&&target-stage<5);
+  assert.equal(E.isBoss(target),target%10===0);
+ }
+});
