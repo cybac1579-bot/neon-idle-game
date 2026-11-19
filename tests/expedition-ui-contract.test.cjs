@@ -46,9 +46,9 @@ assert.ok(field.indexOf('if(!visibleKinds.has(evt.type))return;')<field.indexOf(
  'ignore metadata before clearing the current battle cue');
 // Reduced-motion users still need transient cues to expire; disabling the
 // animation entirely leaves the last battle label stuck until another event.
-assert.match(css, /@keyframes combat-flash-reduced\\s*\\{[^}]*100%\\s*\\{opacity:0;/,
+assert.match(css, /@keyframes combat-flash-reduced\s*\{[\s\S]*?100%\s*\{opacity:0;/,
  'reduced-motion combat label must expire without movement');
-assert.match(css, /\\.combat-cue\\s*\\{animation:combat-flash-reduced\\s+1\\.2s/,
+assert.match(css, /\.combat-cue\s*\{animation:combat-flash-reduced\s+1\.2s/,
  'reduced-motion cue must use a finite non-moving expiry');
 // It is OK to replace all CSS and markup, but not to silently drop a
 // controller binding or to alter the user's old or current save keys.
