@@ -10,6 +10,7 @@ on:
       - 'tests/expedition-first-playable-stall-audit.cjs'
       - 'tests/expedition-first-playable-stage40-options-audit.cjs'
       - 'tests/expedition.test.cjs'
+      - 'tests/expedition-run-metrics.test.js'
       - '.github/workflows/expedition-fast-regression.yml'
   pull_request:
     branches:
@@ -21,6 +22,7 @@ on:
       - 'tests/expedition-first-playable-stall-audit.cjs'
       - 'tests/expedition-first-playable-stage40-options-audit.cjs'
       - 'tests/expedition.test.cjs'
+      - 'tests/expedition-run-metrics.test.js'
       - '.github/workflows/expedition-fast-regression.yml'
   workflow_dispatch:
 permissions:
@@ -41,6 +43,7 @@ jobs:
         run: |
           node --check site/expedition-engine.js
           node --check tests/expedition.test.cjs
+          node --check tests/expedition-run-metrics.test.js
           node --check tests/expedition-stage65-diagram.test.cjs
           node --check tests/expedition-elite65-hp-migration.test.cjs
           node --check tests/expedition-boss50-pacing.test.cjs
@@ -49,7 +52,7 @@ jobs:
           node --check tests/expedition-first-playable-stall-audit.cjs
           node --check tests/expedition-first-playable-stage40-options-audit.cjs
       - name: Run expedition engine regression before browser installation
-        run: node --test tests/expedition.test.cjs tests/expedition-stage65-diagram.test.cjs tests/expedition-elite65-hp-migration.test.cjs tests/expedition-boss50-pacing.test.cjs tests/expedition-stage40-boss-balance.test.cjs
+        run: node --test tests/expedition.test.cjs tests/expedition-stage65-diagram.test.cjs tests/expedition-elite65-hp-migration.test.cjs tests/expedition-boss50-pacing.test.cjs tests/expedition-stage40-boss-balance.test.cjs tests/expedition-run-metrics.test.js
       - name: Verify first playable 30-minute loop and two-hour resume
         run: node tests/expedition-first-playable-gate.cjs
       - name: Observe first-run 15-to-30-minute stall and reward intervals
