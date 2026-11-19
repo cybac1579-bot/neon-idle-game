@@ -68,11 +68,19 @@ async function main(){
       last=text;};
      const observer=new MutationObserver(record);
      observer.observe(cue,{subtree:true,childList:true,characterData:true});
-     await new Promise(resolve=>setTimeout(resolve,6000));
+     // Sample three consecutive phases to expose long silent stretches and
+     // bursts; do not assert a minimum rate for stochastic auto-combat.
+     const windows=[];
+     for(let i=0;i<3;i++){
+      await new Promise(resolve=>setTimeout(resolve,6000));
+      const start=i*6000,end=(i+1)*6000;
+      windows.push({startMs:start,endMs:end,
+       changes:samples.filter(x=>x.atMs>=start&&x.atMs<end).length});
+     }
      observer.disconnect();
-     return {available:true,windowMs:6000,changes:samples.length,
-      firstAtMs:samples[0]?.atMs??null,lastAtMs:samples.at(-1)?.atMs??null,
-      samples:samples.slice(0,8)};
+     return {available:true,windowMs:18000,changes:samples.length,
+      windows,firstAtMs:samples[0]?.atMs??null,lastAtMs:samples.at(-1)?.atMs??null,
+      samples:samples.slice(0,12)};
     });
     console.log('CHROMIUM_NATURAL_COMBAT_CUE_DENSITY '+JSON.stringify(cueDensity));
    }
