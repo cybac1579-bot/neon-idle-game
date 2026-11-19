@@ -97,17 +97,21 @@ test('30-minute low-touch expedition records actual reward and growth cadence',(
  console.log('LOW_TOUCH_30M_INTERVALS '+JSON.stringify(intervals));
 });
 
-test('30-minute low-touch reward drought sensitivity across initial clocks and purchase choices',()=>{
+test('30-minute low-touch reward drought sensitivity across genuinely distinct intervention policies',()=>{
  const results=[];
- for(const seed of [1000,2000,3000]){
+ // Initial timestamps do not seed the engine RNG. Compare actual player choices instead.
+ for(const intervention of ['none','alternating','train','recruit']){
   for(const policy of ['balanced','train','recruit']){
-   const s=E.newState(seed);
-   E.setAutoBuy(s,policy==='balanced'?'balanced':policy,true);
+   const s=E.newState(1000);
+   E.setAutoBuy(s,policy,true);
    const windows=[];let prior={best:1,chests:0,first:0,auto:0};let manual=0;
    for(let minute=1;minute<=30;minute++){
     E.tick(s,60);
-    const bought=E.purchase(s,minute%2===0?'recruit':'train',1);
-    if(bought.count)manual++;
+    const choice=intervention==='alternating'?(minute%2===0?'recruit':'train'):intervention;
+    if(choice!=='none'){
+     const bought=E.purchase(s,choice,1);
+     if(bought.count)manual++;
+    }
     if(s.chests>0&&E.openChest(s))manual++;
     if(minute%5===0){
      const now={best:s.runBest,chests:s.runMetrics.chestsOpened,first:s.runMetrics.firstRelicFinds,auto:s.autoBuy.purchases};
@@ -119,8 +123,10 @@ test('30-minute low-touch reward drought sensitivity across initial clocks and p
    assert.ok(windows.every(w=>w.bestGain>=0&&w.chests>=0&&w.first>=0&&w.auto>=0));
    assert.ok(manual<=60);
    assert.equal(windows.reduce((a,w)=>a+w.chests,0),s.runMetrics.chestsOpened);
-   results.push({seed,policy,stage:s.runBest,firstRelics:s.runMetrics.firstRelicFinds,lateZeroChestWindows:windows.slice(4).filter(w=>w.chests===0).length,windows});
+   assert.equal(windows.reduce((a,w)=>a+w.first,0),s.runMetrics.firstRelicFinds);
+   results.push({intervention,policy,stage:s.runBest,firstRelics:s.runMetrics.firstRelicFinds,lateZeroChestWindows:windows.slice(4).filter(w=>w.chests===0).length,manualActions:manual,windows});
   }
  }
- console.log('LOW_TOUCH_30M_SENSITIVITY '+JSON.stringify(results));
+ assert.equal(results.length,12);
+ console.log('LOW_TOUCH_30M_POLICY_SENSITIVITY '+JSON.stringify(results));
 });
