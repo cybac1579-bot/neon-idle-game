@@ -55,6 +55,27 @@ async function main(){
     }
     await page.emulateMedia({reducedMotion:'no-preference'});
    }
+   // Observe naturally occurring spectator cues without injecting synthetic
+   // combat events or requiring an arbitrary minimum frequency.
+   if(width===390){
+    const cueDensity=await page.evaluate(async()=>{
+     const cue=document.querySelector('#battleFx');
+     if(!cue)return {available:false};
+     const samples=[],started=performance.now();
+     let last=cue.textContent.trim();
+     const record=()=>{const text=cue.textContent.trim();if(text&&text!==last)
+      samples.push({atMs:Math.round(performance.now()-started),text:text.slice(0,70)});
+      last=text;};
+     const observer=new MutationObserver(record);
+     observer.observe(cue,{subtree:true,childList:true,characterData:true});
+     await new Promise(resolve=>setTimeout(resolve,6000));
+     observer.disconnect();
+     return {available:true,windowMs:6000,changes:samples.length,
+      firstAtMs:samples[0]?.atMs??null,lastAtMs:samples.at(-1)?.atMs??null,
+      samples:samples.slice(0,8)};
+    });
+    console.log('CHROMIUM_NATURAL_COMBAT_CUE_DENSITY '+JSON.stringify(cueDensity));
+   }
    const initialFighters=await page.locator('#squad .fighter').count();
    const boot=await page.evaluate(()=>({field:!!window.ExpeditionField,
     engine:!!window.ExpeditionEngine,ui:!!window.ExpeditionUI,
