@@ -25,6 +25,36 @@ async function main(){
    // are placed. Allow startup rendering to complete, but keep hard failure
    // with diagnostic detail if a genuine JavaScript bootstrap error occurs.
    await page.waitForTimeout(300);
+   // Measure the actual Chromium animation lifecycle, not just CSS source text.
+   // Keep the probe outside #battleFx so real combat events cannot replace it.
+   if(width===390){
+    for(const [motion,expectedName,expiry] of [
+     ['no-preference','combat-flash',1000],
+     ['reduce','combat-flash-reduced',1400]
+    ]){
+     await page.emulateMedia({reducedMotion:motion});
+     const probe=await page.evaluate(()=>{
+      const el=document.createElement('span');
+      el.className='combat-cue';el.textContent='전투 알림 측정';
+      el.style.position='absolute';el.style.top='0';el.style.left='0';
+      document.querySelector('.arena').appendChild(el);
+      const style=getComputedStyle(el);
+      return {name:style.animationName,duration:style.animationDuration};
+     });
+     assert.equal(probe.name,expectedName,'unexpected cue animation for '+motion);
+     assert.equal(probe.duration,motion==='reduce'?'1.2s':'0.8s');
+     await page.waitForTimeout(expiry);
+     const faded=await page.evaluate(()=>{
+      const el=document.querySelector('.arena > .combat-cue');
+      const opacity=Number(getComputedStyle(el).opacity);
+      el.remove();return opacity;
+     });
+     assert.ok(faded<=0.05,'Chromium cue must expire for '+motion+': opacity '+faded);
+     console.log('CHROMIUM_COMBAT_CUE_EXPIRY '+JSON.stringify({motion,animation:probe.name,
+      duration:probe.duration,observedAfterMs:expiry,opacity:faded}));
+    }
+    await page.emulateMedia({reducedMotion:'no-preference'});
+   }
    const initialFighters=await page.locator('#squad .fighter').count();
    const boot=await page.evaluate(()=>({field:!!window.ExpeditionField,
     engine:!!window.ExpeditionEngine,ui:!!window.ExpeditionUI,
