@@ -148,6 +148,20 @@ async function main(){
    assert.ok(await page.locator('#roleContribution').textContent());
    assert.equal(await page.locator('#autoMode').inputValue(),'balanced');
    assert.equal(await page.locator('#autoToggle').getAttribute('aria-pressed'),'false');
+   // Auto-purchase is opt-in and affordability-dependent. Seed a funded
+   // save before testing the purchase path; a fresh run can spend its initial
+   // credits on the preceding manual hire and legitimately buy nothing.
+   await page.addInitScript(()=>{
+    const key='neon_expedition_prototype_v1';
+    const state=JSON.parse(localStorage.getItem(key));
+    if(state&&state.rebirths===0){
+     state.credits=Math.max(state.credits,8000);
+     state.lastSaved=Date.now();
+     localStorage.setItem(key,JSON.stringify(state));
+    }
+   });
+   await page.reload({waitUntil:'networkidle'});
+   await page.locator('[data-tab="squad"]').click();
    await page.locator('#autoMode').selectOption('reserve');
    assert.equal(await page.locator('#autoMode').inputValue(),'reserve');
    await page.locator('#autoMode').selectOption('adaptive');
