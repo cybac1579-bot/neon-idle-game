@@ -94,7 +94,9 @@ footer{margin-top:20px;text-align:center;color:#8c9aaf;font-size:11px}
 @keyframes expedition-march{to{transform:translateY(-3px)}}
 @keyframes combat-flash{0%{transform:translateY(16px) scale(.85);opacity:0}20%{opacity:1}100%{transform:translateY(-16px) scale(1);opacity:0}}
 @keyframes enemy-damaged{0%,100%{filter:brightness(1)}50%{filter:brightness(2)}}
-@media(prefers-reduced-motion:reduce){.fighter,.fighter-health div{transition:none}.fighter.advance .fighter-symbol,.arena.combat-impact .foe .silhouette,.combat-cue{animation:none}}
+@media(prefers-reduced-motion:reduce){.fighter,.fighter-health div{transition:none}.fighter.advance .fighter-symbol,.arena.combat-impact .foe .silhouette{animation:none}
+ .combat-cue{animation:combat-flash-reduced 1.2s steps(1,end) both}}
+@keyframes combat-flash-reduced{0%,85%{opacity:1;transform:none}100%{opacity:0;transform:none}}
 .batch-control{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0 12px}.batch-control button{padding:8px 14px;min-height:37px;font-size:12px}.permanent-summary{margin-top:12px;padding-top:10px;border-top:1px solid #43586b}.permanent-summary h3{font-size:12px;margin:0 0 5px;color:#bad7e2}.auto-label{display:block;font-size:12px;color:#bbd2df;margin:8px 0 6px}
 .auto-select{width:100%;min-height:44px;padding:9px 11px;background:#14253a;border:1px solid #63849b;color:#edf5ff;border-radius:9px;font:inherit;font-size:13px}
 .auto-select:focus-visible{outline:3px solid #ffe59a;outline-offset:2px}
