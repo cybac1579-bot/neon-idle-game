@@ -575,3 +575,11 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 | Expedition spectator growth feedback | 2026-11-20 20:58 KST, `d4fbe116` | Existing `else if` suppressed training when recruitment happened in same render; source now joins both; Chromium assertion authored, exact-head CI pending | **High:** confirm browser test passes, inspect overlay readability at 360/390/412 and real 20–30m viewing; no device proof |
 
 | Combined recruit/training cue — exact-head browser closure | 2026-11-20 22:00 KST, `b5d08313` | **5/5 CI SUCCESS:** portrait `44732086654`, fast `44732086638`, save `44732086698`, first `44732086629`, three `44732086888`. Browser fixture asserts both simultaneous growth labels; no human/device assessment. | **P0:** test chest/growth overlay collision and narrow 360px legibility, then 20–30m low-input reward/choice observation. Galaxy S25+ and fun unverified; 92% provisional, main protected |
+
+
+### 2026-11-20 23:00 KST — integration branch current supplemental coverage
+| Area | Last inspected | Evidence | Outstanding |
+| --- | --- | --- | --- |
+| Portrait reward and growth cues | `e0a53e95`, 2026-11-20 | Independent `#battleReward` and `#battleGrowth` layers, matching animations, browser assertions updated; source commits `df14c5af`, `51be896f` | **High:** CI not confirmed for new code; 360/390/412px simultaneous visual geometry and Android device unverified |
+| Low-input 30-minute engagement | 2026-11-20 | Reviewed growth/reward cues and manual balance trial | **High:** actual spectator experience, reward cadence and user interaction still unverified |
+| Release and compatibility | 2026-11-20 | main read-only, shared integration branch changed; save schema untouched | **High:** verify integration CI and production state; do not deploy without explicit approval |
