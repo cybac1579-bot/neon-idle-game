@@ -116,6 +116,13 @@ function showMotion(evt){
  case 'clear':
  case 'intel':
   burst(foe,'reward',kind==='clear'&&E.isElite(evt.value)?'breakthrough':'');
+  // A real elite/boss victory grants a chest. Reinforce that milestone in
+  // the existing arena growth layer, without inventing drops or extra HUD.
+  if(kind==='clear'&&E.isElite(evt.value)){
+   growth.textContent=E.isBoss(evt.value)?'✦ 지휘급 격파 · 상자 +1':'✦ 정예 격파 · 상자 +1';
+   growth.classList.remove('playing');void growth.offsetWidth;
+   growth.classList.add('playing');
+  }
   break;
  case 'fallen':
   burst(target,'danger');break;
