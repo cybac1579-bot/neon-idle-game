@@ -25,9 +25,9 @@ async function main(){
    // milestone inside the arena, with no invented reward on normal clears.
    const chestFeedback=await page.evaluate(()=>{
     const E=window.ExpeditionEngine,F=window.ExpeditionField;
-    const s=E.createState();
+    const s=E.newState();
     const checks=[];
-    for(const stage of [10,20,11]){
+    for(const stage of [5,10,11]){
      s.stage=stage;s.enemyHp=E.enemyMax(stage);
      s.battleEvent={type:'clear',value:stage,id:'guard'};
      s.battleCueSeq=(s.battleCueSeq||0)+1;
