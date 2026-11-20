@@ -13,13 +13,19 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
  assert.equal(E.setAutoBuy(s,mode,true),true);
  assert.equal(s.autoChest.enabled,false);
  let opened=0,manualActions=0,firstChest=null,firstRelic=null;
+ let lastChestDropAt=0,longestChestDropWait=0,chestDropEvents=[];
  const checkpoints=[];
  const milestones=[];
  let lastStage=s.stage,lastRelicCount=0,lastAdvanceAt=0,lastRewardAt=0;
  let longestStageWait=0,longestRewardWait=0,stageWaitAt=null,rewardWaitAt=null;
  const rewardEvents=[];
  for(let second=1;second<=1800;second++){
+  const chestsBeforeTick=s.chests;
   E.tick(s,1);
+  if(s.chests>chestsBeforeTick){
+   longestChestDropWait=Math.max(longestChestDropWait,second-lastChestDropAt);
+   chestDropEvents.push({second,count:s.chests-chestsBeforeTick});lastChestDropAt=second;
+  }
   if(s.stage>lastStage){
    if(second-lastAdvanceAt>longestStageWait){longestStageWait=second-lastAdvanceAt;stageWaitAt=lastStage;}
    milestones.push({second,stage:s.stage});lastStage=s.stage;lastAdvanceAt=second;
@@ -37,21 +43,22 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
   lastRelicCount=count;
   if(second%300===0)checkpoints.push({minute:second/60,stage:s.stage,credits:s.credits,chests:s.chests,opened,uniqueRelics:count,manualActions});
  }
+ longestChestDropWait=Math.max(longestChestDropWait,1800-lastChestDropAt);
  if(1800-lastAdvanceAt>longestStageWait){longestStageWait=1800-lastAdvanceAt;stageWaitAt=lastStage;}
  if(1800-lastRewardAt>longestRewardWait){longestRewardWait=1800-lastRewardAt;rewardWaitAt=1800;}
  assert.equal(checkpoints.length,6);
  assert.ok(manualActions<=1800/chestEvery,'manual chest batches cannot exceed scheduled checks');
  assert.ok(milestones.every((x,i)=>i===0||x.second>=milestones[i-1].second));
  results.push({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,
-  finalStage:s.stage,uniqueRelics:lastRelicCount,longestStageWait,stageWaitAt,longestRewardWait,rewardWaitAt,rewardEvents,stageMilestones:milestones,checkpoints});
+  finalStage:s.stage,uniqueRelics:lastRelicCount,longestChestDropWait,chestDropEvents,longestStageWait,stageWaitAt,longestRewardWait,rewardWaitAt,rewardEvents,stageMilestones:milestones,checkpoints});
 }
 assert.equal(results.length,12);
 const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
  methodology:'Actual expedition engine, 1-second ticks, auto-buy enabled, chest batch every 60s or 300s, no forced drops/returns, 3 seeds x 2 auto-buy modes.',
- caveats:['No human or mobile device observations','Engine ticks are not frame-rate or offline lifecycle evidence','Chest opening is a scheduled manual action; no tapping combat','Milestones represent stage advancement, not subjective enjoyment'],
+ caveats:['No human or mobile device observations','Engine ticks are not frame-rate or offline lifecycle evidence','Chest opening is a scheduled manual action; no tapping combat','Chest drop gap tracks actual chest acquisition; reward gap tracks scheduled opening and is policy-dependent','Milestones represent stage advancement, not subjective enjoyment'],
  results};
 const target=path.join(__dirname,'..','artifacts','expedition','low-input-30m.json');
 fs.mkdirSync(path.dirname(target),{recursive:true});
 fs.writeFileSync(target,JSON.stringify(output,null,2)+'\n');
-console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestStageWait,stageWaitAt,longestRewardWait,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestStageWait,stageWaitAt,longestRewardWait,checkpoints}))));
+console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestStageWait,stageWaitAt,longestRewardWait,checkpoints}))));
 console.log('LOW_INPUT_30M_OUTPUT '+target);
