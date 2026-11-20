@@ -82,6 +82,18 @@ async function main(){
     }
     return checks;
    });
+   // A single auto-buy interval can increase roster and training together.
+   // Both actual gains must be visible in the same arena growth cue.
+   const combinedGrowth=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,F=window.ExpeditionField,s=E.newState();
+    F.sync(s);
+    s.actors.push({...s.actors[0]});
+    s.training+=1;
+    F.sync(s);
+    return document.querySelector('#battleGrowth').textContent;
+   });
+   assert.match(combinedGrowth,/용병 증원 · \+1명/,'simultaneous recruitment feedback');
+   assert.match(combinedGrowth,/부대 훈련 · LV\.1/,'simultaneous training feedback');
    assert.match(chestFeedback[0].text,/상자 \+1/,'elite clear must show actual chest milestone');
    assert.match(chestFeedback[1].text,/지휘급 격파.*상자 \+1/,'boss clear must be distinguished');
    assert.equal(chestFeedback[0].playing,true,'elite reward must animate');
