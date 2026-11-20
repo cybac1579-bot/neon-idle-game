@@ -52,7 +52,6 @@ const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
  results};
 const target=path.join(__dirname,'..','artifacts','expedition','low-input-30m.json');
 fs.mkdirSync(path.dirname(target),{recursive:true});
-fs.writeFileSync(target,JSON.stringify(output,null,2)+'
-');
+fs.writeFileSync(target,JSON.stringify(output,null,2)+'\n');
 console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestStageWait,stageWaitAt,longestRewardWait,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestStageWait,stageWaitAt,longestRewardWait,checkpoints}))));
 console.log('LOW_INPUT_30M_OUTPUT '+target);
