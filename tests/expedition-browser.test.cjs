@@ -20,6 +20,48 @@ async function main(){
    page.on('pageerror',e=>errors.push(String(e)));
    await page.goto(url,{waitUntil:'networkidle'});
    assert.match(await page.title(),/용병단 탐사 원형/);
+    // pagehide can precede document.hidden; bfcache return must settle once.
+    if(width===390){
+     const lc=await browser.newContext({viewport:{width,height:800}});
+     const lp=await lc.newPage();
+     await lp.goto(url,{waitUntil:'networkidle'});
+     await lp.evaluate(()=>{
+      const E=window.ExpeditionEngine;
+      window.__lifecycleProbe={ticks:0,settlements:0};
+      const tick=E.tick,offline=E.offline;
+      E.tick=function(...args){window.__lifecycleProbe.ticks++;return tick.apply(this,args);};
+      E.offline=function(...args){window.__lifecycleProbe.settlements++;return offline.apply(this,args);};
+      window.dispatchEvent(new Event('pagehide'));
+     });
+     const frozen=await lp.evaluate(()=>({
+      ...window.__lifecycleProbe,
+      saved:JSON.parse(localStorage.getItem(window.ExpeditionEngine.SAVE_KEY)).lastSaved,
+      hidden:document.hidden
+     }));
+     assert.equal(frozen.hidden,false,'pagehide-before-hidden fixture');
+     await lp.waitForTimeout(900);
+     const during=await lp.evaluate(()=>({
+      ...window.__lifecycleProbe,
+      saved:JSON.parse(localStorage.getItem(window.ExpeditionEngine.SAVE_KEY)).lastSaved
+     }));
+     assert.equal(during.ticks,frozen.ticks,'frozen run must not tick');
+     assert.equal(during.saved,frozen.saved,'offline anchor must remain stable');
+     await lp.evaluate(()=>{
+      const e=new Event('pageshow');Object.defineProperty(e,'persisted',{value:true});
+      window.dispatchEvent(e);
+     });
+     const resumed=await lp.evaluate(()=>({...window.__lifecycleProbe}));
+     assert.equal(resumed.settlements,1,'bfcache must settle once');
+     await lp.evaluate(()=>{
+      const e=new Event('pageshow');Object.defineProperty(e,'persisted',{value:true});
+      window.dispatchEvent(e);
+      document.dispatchEvent(new Event('visibilitychange'));
+     });
+     assert.equal(await lp.evaluate(()=>window.__lifecycleProbe.settlements),1,
+      'duplicate lifecycle events must not settle twice');
+     await lc.close();
+     console.log('CHROMIUM_PAGEHIDE_FREEZE '+JSON.stringify({width,frozen,during,resumed}));
+    }
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
    // An actual engine-shaped elite/boss clear cue must surface the chest
    // milestone inside the arena, with no invented reward on normal clears.
