@@ -1786,3 +1786,10 @@
 - **Exact-HEAD CI 5/5 SUCCESS**: portrait Chromium `44758756889`, fast expedition `44758756779`, save regression `44758757164`, first rebirth `44758757035`, three rebirth `44758757139`. Earlier cancelled runs were superseded by these successful checks. This closes pending automated verification for measured-height chest/growth cue separation; it does not prove physical Android layout or subjective readability.
 - No game-source change in this closure; avoid speculative balance adjustment without 20–30m reward/choice evidence. Next: actual low-input 30m engine run and reward cadence, plus narrow viewport visual inspection; physical Galaxy S25+ and human enjoyment remain unverified.
 - Readiness **92% provisional (+0pp)**; no main merge, Pages deployment, or PR transition.
+
+
+## 2026-11-21 01:56 KST — real-engine 30-minute low-input cadence audit added
+- Base HEAD `78ee135b25ae968ea32052adb8bf4af53c9af32a`; protected main `9918709e31325e41cfb93e9506cb48ce11638496`, PR #2 draft/open. Reviewed automation README/log/matrix/reference research, manual decisions/status/handoff and reactor trial, and current engine/three-return audit.
+- Competing hypotheses: (1) sparse chest opening creates long uncelebrated reward gaps; (2) automatic purchases maintain progression but player-visible milestones remain repetitive. Added **real engine 30-minute** observation with 3 seeds × 2 autobuy modes × 60s/300s chest batch cadence, six 5-minute checkpoints, first chest/relic, manual batch count and stage milestones. No forced drops, rebirth or tap combat. Test commit `722843e2`, workflow commit `e3dad78a`.
+- **CI outcome not yet verified** for new audit; do not treat authored test as passed or infer gameplay fun. No game engine/balance/save/UI changes. Browser/device 30m human engagement still unverified.
+- Main/Pages untouched; PR remains draft; readiness **92% provisional (+0pp)**. Next: inspect new workflow run and artifact, correct failures, compare reward gaps and progression, implement only evidence-supported player-facing improvement.
