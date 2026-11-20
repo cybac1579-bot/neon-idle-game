@@ -583,3 +583,6 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 | Portrait reward and growth cues | `e0a53e95`, 2026-11-20 | Independent `#battleReward` and `#battleGrowth` layers, matching animations, browser assertions updated; source commits `df14c5af`, `51be896f` | **High:** CI not confirmed for new code; 360/390/412px simultaneous visual geometry and Android device unverified |
 | Low-input 30-minute engagement | 2026-11-20 | Reviewed growth/reward cues and manual balance trial | **High:** actual spectator experience, reward cadence and user interaction still unverified |
 | Release and compatibility | 2026-11-20 | main read-only, shared integration branch changed; save schema untouched | **High:** verify integration CI and production state; do not deploy without explicit approval |
+
+
+| Portrait combined growth/reward geometry | 2026-11-20 23:58 KST, source `9be53afd`, browser fixture `1c38aa9d` | Source now positions reward below measured wrapped growth height, minimum original 94px. Browser regression asserts overlay separation. **Exact-code Chromium CI pending; no real device proof.** | **P0:** confirm Chromium at 360/390/412px, correct any failure; then low-input 30m reward cadence and Galaxy S25+ subjective evaluation. Readiness 92%, main/Pages unchanged |
