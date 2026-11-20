@@ -21,6 +21,33 @@ async function main(){
    await page.goto(url,{waitUntil:'networkidle'});
    assert.match(await page.title(),/용병단 탐사 원형/);
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
+   // An actual engine-shaped elite/boss clear cue must surface the chest
+   // milestone inside the arena, with no invented reward on normal clears.
+   const chestFeedback=await page.evaluate(()=>{
+    const E=window.ExpeditionEngine,F=window.ExpeditionField;
+    const s=E.createState();
+    const checks=[];
+    for(const stage of [10,20,11]){
+     s.stage=stage;s.enemyHp=E.enemyMax(stage);
+     s.battleEvent={type:'clear',value:stage,id:'guard'};
+     s.battleCueSeq=(s.battleCueSeq||0)+1;
+     F.sync(s);
+     const node=document.querySelector('#battleGrowth');
+     const rect=node.getBoundingClientRect(),arena=document.querySelector('.arena').getBoundingClientRect();
+     checks.push({stage,text:node.textContent,playing:node.classList.contains('playing'),
+      animation:getComputedStyle(node).animationName,
+      inside:rect.left>=arena.left-1&&rect.right<=arena.right+1});
+    }
+    return checks;
+   });
+   assert.match(chestFeedback[0].text,/상자 \\+1/,'elite clear must show actual chest milestone');
+   assert.match(chestFeedback[1].text,/지휘급 격파.*상자 \\+1/,'boss clear must be distinguished');
+   assert.equal(chestFeedback[0].playing,true,'elite reward must animate');
+   assert.equal(chestFeedback[0].inside,true,'reward cue must fit portrait arena');
+   assert.equal(chestFeedback[1].inside,true,'boss reward cue must fit portrait arena');
+   assert.equal(chestFeedback[2].text,chestFeedback[1].text,
+    'ordinary clear must not invent another chest milestone');
+   console.log('CHROMIUM_CHEST_MILESTONE '+JSON.stringify({width,checks:chestFeedback}));
    // A slow CI browser can finish the DOM navigation before field sprites
    // are placed. Allow startup rendering to complete, but keep hard failure
    // with diagnostic detail if a genuine JavaScript bootstrap error occurs.
