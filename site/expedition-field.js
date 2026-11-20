@@ -141,11 +141,14 @@ const selected=s=>{
 function sync(s){
  const roster=(s.actors||[]).length;
  const training=Math.max(0,Number(s.training)||0);
- let growthText='';
+ const growthParts=[];
  if(previousRoster!==null&&roster>previousRoster)
-  growthText='✦ 용병 증원 · +'+(roster-previousRoster)+'명';
- else if(previousTraining!==null&&training>previousTraining)
-  growthText='▲ 부대 훈련 · LV.'+training;
+  growthParts.push('✦ 용병 증원 · +'+(roster-previousRoster)+'명');
+ if(previousTraining!==null&&training>previousTraining)
+  growthParts.push('▲ 부대 훈련 · LV.'+training);
+ // Auto-buy may recruit and train between two renders; show both real
+ // improvements rather than silently discarding the second one.
+ const growthText=growthParts.join(' / ');
  if(growthText){
   growth.textContent=growthText;
   growth.classList.remove('playing');void growth.offsetWidth;
