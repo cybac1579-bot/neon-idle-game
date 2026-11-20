@@ -586,3 +586,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Portrait combined growth/reward geometry | 2026-11-20 23:58 KST, source `9be53afd`, browser fixture `1c38aa9d` | Source now positions reward below measured wrapped growth height, minimum original 94px. Browser regression asserts overlay separation. **Exact-code Chromium CI pending; no real device proof.** | **P0:** confirm Chromium at 360/390/412px, correct any failure; then low-input 30m reward cadence and Galaxy S25+ subjective evaluation. Readiness 92%, main/Pages unchanged |
+
+| Portrait chest/growth geometry — exact-head CI closure | 2026-11-21 00:57 KST, `f23e569f` | **5/5 SUCCESS:** Chromium `44758756889`, fast `44758756779`, save `44758757164`, first `44758757035`, three `44758757139`; previous cancelled jobs superseded | **P0:** 20–30m low-input reward cadence and actual Android visual/return checks; human fun unverified. 92% provisional, main/Pages unchanged |
