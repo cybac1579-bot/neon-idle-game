@@ -568,3 +568,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Pagehide-before-hidden + bfcache duplicate resume browser fixture | 2026-11-20 18:55 KST, test `caa200fa` | Prior exact base `d3b9a9a9` CI 5/5 SUCCESS (portrait 44706821907). New 390px Chromium fixture checks frozen tick counter and lastSaved after 900ms plus exactly one offline settlement on persisted pageshow/duplicate visibilitychange. **New fixture CI pending.** | **P0:** confirm exact-head Chromium CI, fix any false fixture or lifecycle bug. Physical Galaxy S25+ background restore and 30m subjective engagement unverified; readiness 92%, no release |
+
+| Pagehide-before-hidden and bfcache fixture exact-head closure | 2026-11-20 19:57 KST, `afc14ae2` | **5/5 exact-head CI SUCCESS**: portrait `44714854548`, fast `44714854537`, save `44714854530`, first `44714854541`, three `44714854526`. Chromium fixture verifies 900ms frozen ticks/anchor and one settlement despite duplicate resume events. | **P0:** 20–30m spectator/reward experience and actual Galaxy S25+ lifecycle; no human/device proof, 92% provisional, main/Pages protected |
