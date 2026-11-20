@@ -74,7 +74,7 @@ async function main(){
      s.battleEvent={type:'clear',value:stage,id:'guard'};
      s.battleCueSeq=(s.battleCueSeq||0)+1;
      F.sync(s);
-     const node=document.querySelector('#battleGrowth');
+     const node=document.querySelector('#battleReward');
      const rect=node.getBoundingClientRect(),arena=document.querySelector('.arena').getBoundingClientRect();
      checks.push({stage,text:node.textContent,playing:node.classList.contains('playing'),
       animation:getComputedStyle(node).animationName,
@@ -94,6 +94,7 @@ async function main(){
    });
    assert.match(combinedGrowth,/용병 증원 · \+1명/,'simultaneous recruitment feedback');
    assert.match(combinedGrowth,/부대 훈련 · LV\.1/,'simultaneous training feedback');
+   assert.equal(chestFeedback[0].playing,true,'chest milestone stays independent of squad growth');
    assert.match(chestFeedback[0].text,/상자 \+1/,'elite clear must show actual chest milestone');
    assert.match(chestFeedback[1].text,/지휘급 격파.*상자 \+1/,'boss clear must be distinguished');
    assert.equal(chestFeedback[0].playing,true,'elite reward must animate');
