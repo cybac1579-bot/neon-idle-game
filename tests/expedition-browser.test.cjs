@@ -874,6 +874,43 @@ async function main(){
      /호위 협공 0회.*준비 완료/);
     await gainContext.close();
    }
+   // Exercise the narrow-policy stall advice in real Chromium at every portrait width.
+   // Restore a valid saved engagement; avoid a 5-minute wall-clock test.
+   {
+    const hintContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
+    const hintPage=await hintContext.newPage();
+    await hintPage.goto(url,{waitUntil:'networkidle'});
+    const fixture=async(mode,seconds,purchases,start,enabled=true,stageMatches=true)=>{
+     await hintPage.evaluate(({mode,seconds,purchases,start,enabled,stageMatches})=>{
+      const key='neon_expedition_prototype_v1';
+      const state=JSON.parse(localStorage.getItem(key));
+      state.stage=state.best=state.runBest=20;
+      state.enemyHp=1e9;state.lastSaved=Date.now();
+      state.autoBuy={...state.autoBuy,mode,enabled,purchases};
+      state.engagement={stage:stageMatches?20:19,seconds,autoBuyStart:start,legacyResume:false};
+      localStorage.setItem(key,JSON.stringify(state));
+     },{mode,seconds,purchases,start,enabled,stageMatches});
+     await hintPage.reload({waitUntil:'networkidle'});
+     await hintPage.locator('[data-tab="squad"]').click();
+     return hintPage.locator('#autoDetails').textContent();
+    };
+    const advice='현재 교전 5분 이상';
+    assert.match(await fixture('train',301,7,7),new RegExp(advice));
+    assert.match(await fixture('recruit',301,7,7),new RegExp(advice));
+    assert.match(await fixture('supply',301,7,7),new RegExp(advice));
+    assert.doesNotMatch(await fixture('train',299,7,7),new RegExp(advice));
+    assert.doesNotMatch(await fixture('train',301,8,7),new RegExp(advice));
+    assert.doesNotMatch(await fixture('balanced',301,7,7),new RegExp(advice));
+    assert.doesNotMatch(await fixture('train',301,7,7,false),new RegExp(advice));
+    assert.doesNotMatch(await fixture('train',301,7,7,true,false),new RegExp(advice));
+    assert.equal(await hintPage.locator('#battleScreen #autoDetails').count(),0,
+     'stall advice belongs to squad details, never battle HUD');
+    const rect=await hintPage.locator('#autoDetails').boundingBox();
+    assert.ok(rect&&rect.width>0&&rect.x>=0&&rect.x+rect.width<=width+1,
+     'stall details must fit portrait viewport '+width+': '+JSON.stringify(rect));
+    console.log('CHROMIUM_STALL_ADVICE '+JSON.stringify({width,positive:3,negative:5,rectWidth:rect.width}));
+    await hintContext.close();
+   }
    // Actual 10-minute combat evidence is visible only in the detail tray.
    // Check reloaded state and user-triggered JSON export, without a fake HUD.
    if(width===390){
