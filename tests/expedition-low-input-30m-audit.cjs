@@ -15,25 +15,27 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
  let opened=0,manualActions=0,firstChest=null,firstRelic=null;
  const checkpoints=[];
  const milestones=[];
- let lastStage=s.stage,lastRelicCount=0;
+ let lastStage=s.stage,lastRelicCount=0,lastAdvanceAt=0,lastRewardAt=0;
+ let longestStageWait=0,longestRewardWait=0,stageWaitAt=null,rewardWaitAt=null;
+ const rewardEvents=[];
  for(let second=1;second<=1800;second++){
   E.tick(s,1);
-  if(s.stage>lastStage){milestones.push({second,stage:s.stage});lastStage=s.stage;}
+  if(s.stage>lastStage){\n   if(second-lastAdvanceAt>longestStageWait){longestStageWait=second-lastAdvanceAt;stageWaitAt=lastStage;}\n   milestones.push({second,stage:s.stage});lastStage=s.stage;lastAdvanceAt=second;\n  }
   if(s.chests>0&&firstChest===null)firstChest=second;
   if(second%chestEvery===0){
    if(s.chests>0)manualActions++;
-   while(s.chests>0){assert.ok(E.openChest(s));opened++;}
+   while(s.chests>0){assert.ok(E.openChest(s));opened++;\n    if(second-lastRewardAt>longestRewardWait){longestRewardWait=second-lastRewardAt;rewardWaitAt=second;}\n    rewardEvents.push({second,kind:'chest-open'});lastRewardAt=second;\n   }
   }
   const count=E.RELICS.filter(r=>E.relic(s,r.id)>0).length;
   if(count>lastRelicCount&&firstRelic===null)firstRelic=second;
   lastRelicCount=count;
   if(second%300===0)checkpoints.push({minute:second/60,stage:s.stage,credits:s.credits,chests:s.chests,opened,uniqueRelics:count,manualActions});
  }
- assert.equal(checkpoints.length,6);
+ if(1800-lastAdvanceAt>longestStageWait){longestStageWait=1800-lastAdvanceAt;stageWaitAt=lastStage;}\n if(1800-lastRewardAt>longestRewardWait){longestRewardWait=1800-lastRewardAt;rewardWaitAt=1800;}\n assert.equal(checkpoints.length,6);
  assert.ok(manualActions<=1800/chestEvery,'manual chest batches cannot exceed scheduled checks');
  assert.ok(milestones.every((x,i)=>i===0||x.second>=milestones[i-1].second));
  results.push({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,
-  finalStage:s.stage,uniqueRelics:lastRelicCount,stageMilestones:milestones,checkpoints});
+  finalStage:s.stage,uniqueRelics:lastRelicCount,longestStageWait,stageWaitAt,longestRewardWait,rewardWaitAt,rewardEvents,stageMilestones:milestones,checkpoints});
 }
 assert.equal(results.length,12);
 const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
@@ -43,5 +45,5 @@ const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
 const target=path.join(__dirname,'..','artifacts','expedition','low-input-30m.json');
 fs.mkdirSync(path.dirname(target),{recursive:true});
 fs.writeFileSync(target,JSON.stringify(output,null,2)+'\n');
-console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,checkpoints}))));
+console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestStageWait,stageWaitAt,longestRewardWait,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestStageWait,stageWaitAt,longestRewardWait,checkpoints}))));
 console.log('LOW_INPUT_30M_OUTPUT '+target);
