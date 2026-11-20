@@ -573,3 +573,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Expedition spectator growth feedback | 2026-11-20 20:58 KST, `d4fbe116` | Existing `else if` suppressed training when recruitment happened in same render; source now joins both; Chromium assertion authored, exact-head CI pending | **High:** confirm browser test passes, inspect overlay readability at 360/390/412 and real 20–30m viewing; no device proof |
+
+| Combined recruit/training cue — exact-head browser closure | 2026-11-20 22:00 KST, `b5d08313` | **5/5 CI SUCCESS:** portrait `44732086654`, fast `44732086638`, save `44732086698`, first `44732086629`, three `44732086888`. Browser fixture asserts both simultaneous growth labels; no human/device assessment. | **P0:** test chest/growth overlay collision and narrow 360px legibility, then 20–30m low-input reward/choice observation. Galaxy S25+ and fun unverified; 92% provisional, main protected |
