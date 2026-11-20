@@ -596,3 +596,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Prolonged encounter visible objective progress | 2026-11-21 04:00 KST, UI `2ac99b42`, browser test `70184cc4` | At 300s active engagement, existing battle goal adds actual remaining enemy HP percentage; 10m boss Chromium fixture assertion authored. **New CI pending**; no engine/balance/save changes. | **P0:** verify exact-source portrait/full CI and fix regressions; check 360/390/412px readability and Galaxy S25+ real 30m engagement. 92% provisional; main/Pages protected |
+
+| Exact 30m stage and chest reward gap telemetry | 2026-11-21 04:57 KST, `23c23dce` | Added per-second longest no-stage-advance and no-chest-opening intervals plus reward timestamps to existing 12-case engine audit; **new CI pending**, prior 5/5 CI on `8d6cc10d` succeeded | **P0:** verify audit CI and quantify waits before game balance/UI changes; 30m human/mobile engagement and full input counts still unverified, 92% provisional |
