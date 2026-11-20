@@ -40,8 +40,8 @@ async function main(){
     }
     return checks;
    });
-   assert.match(chestFeedback[0].text,/상자 \\+1/,'elite clear must show actual chest milestone');
-   assert.match(chestFeedback[1].text,/지휘급 격파.*상자 \\+1/,'boss clear must be distinguished');
+   assert.match(chestFeedback[0].text,/상자 \+1/,'elite clear must show actual chest milestone');
+   assert.match(chestFeedback[1].text,/지휘급 격파.*상자 \+1/,'boss clear must be distinguished');
    assert.equal(chestFeedback[0].playing,true,'elite reward must animate');
    assert.equal(chestFeedback[0].inside,true,'reward cue must fit portrait arena');
    assert.equal(chestFeedback[1].inside,true,'boss reward cue must fit portrait arena');
