@@ -330,7 +330,9 @@ window.addEventListener('pageshow',e=>{
 });
 let lastPassiveRender=0;
 setInterval(()=>{
- if(document.hidden)return;
+ // pagehide can freeze the save before visibilitychange marks the page hidden.
+ // Do not tick a frozen run or overwrite its offline settlement anchor.
+ if(document.hidden||backgroundFrozen)return;
  const now=performance.now(),elapsed=Math.min(2,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
  E.tick(s,elapsed);
  if(Date.now()-saveAt>5000)save();
