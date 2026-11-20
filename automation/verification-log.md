@@ -1772,3 +1772,10 @@
 - Verification: GitHub content updates accepted with fresh blob SHA rechecks; **CI for new source commit not confirmed** (commit workflow lookup returned no runs at inspection). Real-device portrait, animation overlap and 30-minute spectator enjoyment **unverified**. Do not claim green CI.
 - Deployment: no main/Pages writes, PR #2 remains intended draft; current live deployment not independently confirmed this run.
 - Next: confirm CI for modified source, check actual reward/growth overlap at 360/390/412px, then 20–30-minute low-input reward cadence and on-device validation.
+
+
+## 2026-11-20 23:58 KST — narrow portrait reward/growth spacing
+- Starting shared HEAD `ae3d7a76ae88f1ef9d40c956fc97ed64be709655` verified by compare (identical); main remained read-only. Reviewed automation README/log/matrix, manual decisions/status/handoff/reactor trial and current field/CSS/browser source.
+- Competing hypotheses: independent overlays eliminate text overwrite, but fixed `top:94px` can still overlap wrapped multi-line squad growth at `top:43px`; second possibility is that short text never wraps on 360px. Selected minimal measured-height positioning, preserving two distinct layers and no new HUD.
+- Gameplay UI code commit `9be53afd`: after genuine growth update, reward layer moves below measured growth cue height (minimum original 94px). Browser geometry assertion commit `1c38aa9d` checks no overlap in existing portrait test. **No local Chromium or exact-new-commit CI executed/confirmed**; test is pending, not PASS. No economy, save, combat timing, relic, art or input changes.
+- Production main/Pages not modified, no deployment. Readiness 92% provisional (+0pp); Galaxy S25+ device, 30m human fun, and actual low-input spectator experience unverified. Next: inspect exact-code CI and fix if failed; then observe reward cadence and 30m low-input play.
