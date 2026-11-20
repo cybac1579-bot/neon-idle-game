@@ -381,7 +381,13 @@ main.game-shell{
  background:#102837e8;border:1px solid #c9b7789c;border-radius:9px;
  padding:7px 10px;max-width:calc(100% - 22px);opacity:0;
  box-shadow:0 6px 20px #0008}
+#battleReward{position:absolute;left:11px;top:94px;z-index:5;pointer-events:none;
+ color:#f8e6ae;font-size:12px;font-weight:800;letter-spacing:.015em;
+ background:#102837e8;border:1px solid #c9b7789c;border-radius:9px;
+ padding:7px 10px;max-width:calc(100% - 22px);opacity:0;
+ box-shadow:0 6px 20px #0008}
 #battleGrowth.playing{animation:expedition-growth 1.55s ease-out both}
+#battleReward.playing{animation:expedition-growth 1.55s ease-out both}
 @keyframes expedition-growth{0%{opacity:0;transform:translateY(7px)}
   16%,65%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-8px)}}
 #battleMotion{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
@@ -435,6 +441,7 @@ main.game-shell{
 @media(prefers-reduced-motion:reduce){
  .battle-trail,.battle-trail:after,.battle-burst{display:none!important}
  #battleGrowth.playing{animation:expedition-growth-reduced 1.55s steps(1,end) both;transform:none}
+#battleReward.playing{animation:expedition-growth-reduced 1.55s steps(1,end) both;transform:none}
  .fighter.battle-acting .fighter-symbol{animation:none!important}
 }
 @media(max-width:380px){
