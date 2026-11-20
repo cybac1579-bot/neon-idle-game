@@ -880,6 +880,12 @@ async function main(){
     const hintContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
     const hintPage=await hintContext.newPage();
     await hintPage.goto(url,{waitUntil:'networkidle'});
+    // Fresh state is not guaranteed to be saved until the first tick.
+    await hintPage.evaluate(()=>{
+     const key='neon_expedition_prototype_v1';
+     if(!localStorage.getItem(key))
+      localStorage.setItem(key,JSON.stringify(window.ExpeditionEngine.newState(Date.now())));
+    });
     // Install the fixture before app bootstrap. The pagehide handler can
     // overwrite a storage edit made just before reload, and a fresh page
     // need not have persisted its initial state yet.
