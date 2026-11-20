@@ -1779,3 +1779,10 @@
 - Competing hypotheses: independent overlays eliminate text overwrite, but fixed `top:94px` can still overlap wrapped multi-line squad growth at `top:43px`; second possibility is that short text never wraps on 360px. Selected minimal measured-height positioning, preserving two distinct layers and no new HUD.
 - Gameplay UI code commit `9be53afd`: after genuine growth update, reward layer moves below measured growth cue height (minimum original 94px). Browser geometry assertion commit `1c38aa9d` checks no overlap in existing portrait test. **No local Chromium or exact-new-commit CI executed/confirmed**; test is pending, not PASS. No economy, save, combat timing, relic, art or input changes.
 - Production main/Pages not modified, no deployment. Readiness 92% provisional (+0pp); Galaxy S25+ device, 30m human fun, and actual low-input spectator experience unverified. Next: inspect exact-code CI and fix if failed; then observe reward cadence and 30m low-input play.
+
+
+## 2026-11-21 00:57 KST — exact-HEAD portrait geometry CI closure
+- Base integration HEAD `f23e569f98792a3479b4134502fa0c4a9644b742`; protected main `9918709e31325e41cfb93e9506cb48ce11638496`; PR #2 open/draft. Reviewed automation README/log/matrix and manual decisions/status/handoff/reactor trial; source release untouched.
+- **Exact-HEAD CI 5/5 SUCCESS**: portrait Chromium `44758756889`, fast expedition `44758756779`, save regression `44758757164`, first rebirth `44758757035`, three rebirth `44758757139`. Earlier cancelled runs were superseded by these successful checks. This closes pending automated verification for measured-height chest/growth cue separation; it does not prove physical Android layout or subjective readability.
+- No game-source change in this closure; avoid speculative balance adjustment without 20–30m reward/choice evidence. Next: actual low-input 30m engine run and reward cadence, plus narrow viewport visual inspection; physical Galaxy S25+ and human enjoyment remain unverified.
+- Readiness **92% provisional (+0pp)**; no main merge, Pages deployment, or PR transition.
