@@ -156,6 +156,10 @@ function sync(s){
   growth.textContent=growthText;
   growth.classList.remove('playing');void growth.offsetWidth;
   growth.classList.add('playing');
+  // A combined recruit/training cue can wrap on narrow portrait screens.
+  // Keep the independent chest reward below its measured height instead
+  // of assuming the growth cue always fits on one line.
+  reward.style.top=Math.max(94,43+growth.offsetHeight+8)+'px';
  }
  previousRoster=roster;previousTraining=training;
  const shown=selected(s);
