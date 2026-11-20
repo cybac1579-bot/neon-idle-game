@@ -46,7 +46,12 @@ function renderBattle(){
  // Show the actual next chest milestone, including whether it is a boss chest.
  // The current elite/boss stage still awards its chest on victory.
  const nextChest=s.stage+((5-s.stage%5)%5);
- $('goal').textContent=fmt(nextChest)+'거리 · '+(E.isBoss(nextChest)?'지휘급':'정예')+' 격파';
+ // A prolonged encounter must show observable progress without another HUD row.
+ // Use actual current enemy HP, not a guessed time-to-kill or new reward.
+ const longEncounter=s.engagement?.stage===s.stage&&s.engagement.seconds>=300;
+ const hpLeft=Math.max(0,Math.min(100,100*s.enemyHp/E.enemyMax(s.stage)));
+ $('goal').textContent=fmt(nextChest)+'거리 · '+(E.isBoss(nextChest)?'지휘급':'정예')+' 격파'+
+  (longEncounter?' · 현재 적 HP '+hpLeft.toFixed(0)+'%':'');
  const availableCores=E.rebirthGain(s),ready=availableCores>0;
  $('returnQuick').hidden=!ready;
  $('returnQuick').textContent='↻ 귀환 가능 · +'+fmt(availableCores)+'코어';
