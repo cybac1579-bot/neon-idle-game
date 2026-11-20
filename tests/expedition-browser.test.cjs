@@ -90,10 +90,15 @@ async function main(){
     s.actors.push({...s.actors[0]});
     s.training+=1;
     F.sync(s);
-    return document.querySelector('#battleGrowth').textContent;
+    const growth=document.querySelector('#battleGrowth');
+    const reward=document.querySelector('#battleReward');
+    return {text:growth.textContent,growthBottom:growth.getBoundingClientRect().bottom,
+     rewardTop:reward.getBoundingClientRect().top};
    });
-   assert.match(combinedGrowth,/용병 증원 · \+1명/,'simultaneous recruitment feedback');
-   assert.match(combinedGrowth,/부대 훈련 · LV\.1/,'simultaneous training feedback');
+   assert.match(combinedGrowth.text,/용병 증원 · \+1명/,'simultaneous recruitment feedback');
+   assert.match(combinedGrowth.text,/부대 훈련 · LV\.1/,'simultaneous training feedback');
+   assert.ok(combinedGrowth.rewardTop>=combinedGrowth.growthBottom+5,
+    'wrapped squad cue must not overlap chest milestone on portrait');
    assert.equal(chestFeedback[0].playing,true,'chest milestone stays independent of squad growth');
    assert.match(chestFeedback[0].text,/상자 \+1/,'elite clear must show actual chest milestone');
    assert.match(chestFeedback[1].text,/지휘급 격파.*상자 \+1/,'boss clear must be distinguished');
