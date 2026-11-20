@@ -1761,3 +1761,14 @@
 - **Exact-starting-HEAD CI 5/5 SUCCESS**: mobile portrait Chromium `44732086654`, fast expedition regression `44732086638`, save regression `44732086698`, first-rebirth telemetry `44732086629`, three-rebirth telemetry `44732086888`. These validate simultaneous recruit/training feedback in the browser fixture; not human legibility or Android device.
 - Two competing presentation risks remain: (1) combined growth text can be long at 360px; (2) chest victory cue and growth cue share one layer and can overwrite one another if events coincide. No untested gameplay change made. Next implementation should ensure reward cue priority/queue and narrow-screen legibility with targeted browser checks, then low-input 20–30m run observation.
 - Readiness **92% provisional (+0pp)**; Galaxy S25+ physical play, subjective 30-minute enjoyment and new Pages deployment unverified. Main/Pages unchanged; PR remains draft.
+
+
+## 2026-11-20 23:00 KST — portrait chest/growth cue collision prevention
+- Base integration HEAD: `eafb5bb414999240c1e46ced143b925cec214fc0` (verified identical before changes). Protected main compared; not modified or deployed.
+- Reviewed automated README, verification log, coverage matrix, manual decision/status/handoff and first-rebirth reactor trial. Manual docs are historical and are not substituted for live integration code.
+- Root cause hypotheses: (1) same `#battleGrowth` node overwritten by elite/boss clear and auto-buy growth in consecutive render cycles; (2) long combined recruit/train copy on narrow screens. Prioritized (1) as definite source-level collision. Kept existing copy and economy unchanged.
+- Gameplay change: `site/expedition-field.js` now writes genuine chest milestones into independent `#battleReward` layer; `site/expedition-ui.css` stacks it below squad-growth cue with matching animation and reduced-motion handling. No extra rewards, gameplay ticks, save schema, combat mechanics or user input added. Commits `df14c5af`, `51be896f`.
+- Targeted browser test updated to read reward layer in `tests/expedition-browser.test.cjs`, commit `e0a53e95`. Existing browser checks for elite/boss/normal clears and simultaneous recruitment/training remain; no new runtime test has passed yet.
+- Verification: GitHub content updates accepted with fresh blob SHA rechecks; **CI for new source commit not confirmed** (commit workflow lookup returned no runs at inspection). Real-device portrait, animation overlap and 30-minute spectator enjoyment **unverified**. Do not claim green CI.
+- Deployment: no main/Pages writes, PR #2 remains intended draft; current live deployment not independently confirmed this run.
+- Next: confirm CI for modified source, check actual reward/growth overlap at 360/390/412px, then 20–30-minute low-input reward cadence and on-device validation.
