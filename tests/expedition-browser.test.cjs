@@ -880,16 +880,26 @@ async function main(){
     const hintContext=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:1});
     const hintPage=await hintContext.newPage();
     await hintPage.goto(url,{waitUntil:'networkidle'});
+    // Install the fixture before app bootstrap. The pagehide handler can
+    // overwrite a storage edit made just before reload, and a fresh page
+    // need not have persisted its initial state yet.
+    await hintPage.addInitScript(()=>{
+     const config=sessionStorage.getItem('__stall_fixture');
+     if(!config)return;
+     const {mode,seconds,purchases,start,enabled,stageMatches}=JSON.parse(config);
+     const key='neon_expedition_prototype_v1';
+     const raw=localStorage.getItem(key);
+     const state=raw?JSON.parse(raw):null;
+     if(!state)return;
+     state.stage=state.best=state.runBest=20;
+     state.enemyHp=1e9;state.lastSaved=Date.now();
+     state.autoBuy={...state.autoBuy,mode,enabled,purchases};
+     state.engagement={stage:stageMatches?20:19,seconds,autoBuyStart:start,legacyResume:false};
+     localStorage.setItem(key,JSON.stringify(state));
+    });
     const fixture=async(mode,seconds,purchases,start,enabled=true,stageMatches=true)=>{
-     await hintPage.evaluate(({mode,seconds,purchases,start,enabled,stageMatches})=>{
-      const key='neon_expedition_prototype_v1';
-      const state=JSON.parse(localStorage.getItem(key));
-      state.stage=state.best=state.runBest=20;
-      state.enemyHp=1e9;state.lastSaved=Date.now();
-      state.autoBuy={...state.autoBuy,mode,enabled,purchases};
-      state.engagement={stage:stageMatches?20:19,seconds,autoBuyStart:start,legacyResume:false};
-      localStorage.setItem(key,JSON.stringify(state));
-     },{mode,seconds,purchases,start,enabled,stageMatches});
+     await hintPage.evaluate(config=>sessionStorage.setItem('__stall_fixture',JSON.stringify(config)),
+      {mode,seconds,purchases,start,enabled,stageMatches});
      await hintPage.reload({waitUntil:'networkidle'});
      await hintPage.locator('[data-tab="squad"]').click();
      return hintPage.locator('#autoDetails').textContent();
