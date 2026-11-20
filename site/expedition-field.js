@@ -12,6 +12,9 @@ const fx=document.createElement('div');fx.id='battleFx';fx.setAttribute('aria-hi
 const motion=document.createElement('div');motion.id='battleMotion';motion.setAttribute('aria-hidden','true');arena.appendChild(motion);
 const growth=document.createElement('div');growth.id='battleGrowth';growth.className='battle-growth';
 growth.setAttribute('aria-hidden','true');arena.appendChild(growth);
+// Keep actual elite/boss chest milestones independent of automatic growth cues.
+const reward=document.createElement('div');reward.id='battleReward';reward.className='battle-growth';
+reward.setAttribute('aria-hidden','true');arena.appendChild(reward);
 let previousRoster=null,previousTraining=null;
 const rosterNote=document.createElement('div');rosterNote.className='roster-note';rosterNote.hidden=true;arena.appendChild(rosterNote);
 const enemyIntent=document.createElement('div');enemyIntent.className='enemy-intent';enemyIntent.hidden=true;enemyIntent.setAttribute('aria-live','off');arena.appendChild(enemyIntent);
@@ -119,9 +122,9 @@ function showMotion(evt){
   // A real elite/boss victory grants a chest. Reinforce that milestone in
   // the existing arena growth layer, without inventing drops or extra HUD.
   if(kind==='clear'&&E.isElite(evt.value)){
-   growth.textContent=E.isBoss(evt.value)?'✦ 지휘급 격파 · 상자 +1':'✦ 정예 격파 · 상자 +1';
-   growth.classList.remove('playing');void growth.offsetWidth;
-   growth.classList.add('playing');
+   reward.textContent=E.isBoss(evt.value)?'✦ 지휘급 격파 · 상자 +1':'✦ 정예 격파 · 상자 +1';
+   reward.classList.remove('playing');void reward.offsetWidth;
+   reward.classList.add('playing');
   }
   break;
  case 'fallen':
