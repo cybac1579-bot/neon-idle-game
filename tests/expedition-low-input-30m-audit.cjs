@@ -77,6 +77,21 @@ assert.equal(results.length,12);
 // Keep a compact aggregate in the CI log, not only the downloadable JSON artifact.
 const plateauSummary=results.map(r=>({mode:r.mode,seed:r.seed,chestEvery:r.chestEvery,stage40Seconds:r.stage40Seconds,stage40AutoBuys:r.stage40AutoBuys,stage40ChestDrops:r.stage40ChestDrops,stage40Start:r.stage40Start,stage40End:r.stage40End,finalStage:r.finalStage,lastTenMinuteChestDrops:r.lastTenMinuteChestDrops,lastTenMinuteChestOpens:r.lastTenMinuteChestOpens}));
 console.log('STAGE40_ATTRIBUTION '+JSON.stringify(plateauSummary));
+// Surface a compact, comparable 20–30 minute reward/progression window in CI.
+// This is diagnostic telemetry, not evidence that waiting is intrinsically bad.
+const tailWindow=results.map(r=>({
+ mode:r.mode,seed:r.seed,chestEvery:r.chestEvery,
+ stageAt20m:r.checkpoints[3].stage,stageAt30m:r.finalStage,
+ stageAdvances:r.lastTenMinuteStageAdvances,
+ autoBuys:r.lastTenMinuteAutoBuys,
+ chestDrops:r.lastTenMinuteChestDrops,
+ chestOpens:r.lastTenMinuteChestOpens,
+ stage40Seconds:r.stage40Seconds,
+ stage40AutoBuys:r.stage40AutoBuys,
+ stage40ChestDrops:r.stage40ChestDrops
+}));
+assert.ok(tailWindow.every(r=>r.stageAt30m>=r.stageAt20m&&r.autoBuys>=0&&r.chestDrops>=0));
+console.log('LOW_INPUT_20_30M_ATTRIBUTION '+JSON.stringify(tailWindow));
 const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
  methodology:'Actual expedition engine, 1-second ticks, auto-buy enabled, chest batch every 60s or 300s, no forced drops/returns, 3 seeds x 2 auto-buy modes.',
  caveats:['No human or mobile device observations','Engine ticks are not frame-rate or offline lifecycle evidence','Chest opening is a scheduled manual action; no tapping combat','Chest drop gap tracks actual chest acquisition; reward gap tracks scheduled opening and is policy-dependent','Milestones represent stage advancement, not subjective enjoyment'],
