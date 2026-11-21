@@ -1,0 +1,34 @@
+name: Expedition 30-minute low-input cadence
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'tests/expedition-low-input-30m-audit.cjs'
+      - '.github/workflows/expedition-low-input-30m.yml'
+      - 'site/expedition-engine.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: expedition-low-input-30m-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run real engine low-input 30-minute seeded audit
+        run: node tests/expedition-low-input-30m-audit.cjs
+      - name: Preserve per-5-minute stage and relic cadence evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expedition-low-input-30m
+          path: artifacts/expedition/low-input-30m.json
+          if-no-files-found: warn
+          retention-days: 30

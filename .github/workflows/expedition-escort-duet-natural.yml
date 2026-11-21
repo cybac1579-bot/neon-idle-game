@@ -1,0 +1,34 @@
+name: Expedition natural escort duet three-return audit
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'tests/expedition-escort-duet-natural-audit.cjs'
+      - '.github/workflows/expedition-escort-duet-natural.yml'
+      - 'site/expedition-engine.js'
+  workflow_dispatch:
+concurrency:
+  group: expedition-escort-duet-natural-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Measure naturally earned two-copy escort duets without forced drops
+        run: node tests/expedition-escort-duet-natural-audit.cjs
+      - name: Save per-run recruitment and duet gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expedition-escort-duet-natural
+          path: artifacts/expedition/escort-duet-natural.json
+          if-no-files-found: warn
+          retention-days: 30

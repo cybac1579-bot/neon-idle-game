@@ -1,0 +1,92 @@
+name: First-rebirth balance telemetry
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'site/game.js'
+      - 'tests/balance-simulation.cjs'
+      - '.github/workflows/first-rebirth-balance.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'site/game.js'
+      - 'tests/balance-simulation.cjs'
+      - '.github/workflows/first-rebirth-balance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare full-game first-rebirth strategies, 5 fixed seeds
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 540s node tests/balance-simulation.cjs 2>&1 | tee balance-console.log
+      - name: Measure 60-second low-input visits (20 seeded scenarios; one upgrade type, up to 3 levels per click)
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 240s env BALANCE_MODE=low-input node tests/balance-simulation.cjs 2>&1 | tee low-input-console.log
+      - name: Measure one-level purchase per 60-second visit (20 seeded scenarios)
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 240s env BALANCE_MODE=one-buy node tests/balance-simulation.cjs 2>&1 | tee one-buy-console.log
+      - name: Measure 120-second visits with up to three levels of one upgrade (20 seeded scenarios)
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 240s env BALANCE_MODE=two-minute node tests/balance-simulation.cjs 2>&1 | tee two-minute-console.log
+      - name: Compare four STAGE55 allocation choices with three seeded low-input runs each
+        shell: bash
+        run: |
+          set -eo pipefail
+          for mode in assault balanced supply supply-pivot; do
+            echo "ALLOCATION_MODE=${mode}"
+            timeout --signal=TERM --kill-after=10s 120s env BALANCE_MODE=low-input BALANCE_DIAGNOSTIC=1 BALANCE_ALLOCATION="${mode}" node tests/balance-simulation.cjs 2>&1 | tee "allocation-${mode}-console.log"
+          done
+      - name: Compare early versus delayed first-skill choice (three seeded low-input runs per skill)
+        shell: bash
+        run: |
+          set -eo pipefail
+          for stage in 20 35 40; do
+            timeout --signal=TERM --kill-after=10s 150s env BALANCE_MODE=low-input BALANCE_DIAGNOSTIC=1 BALANCE_SKILL_CHOICE_STAGE="${stage}" node tests/balance-simulation.cjs 2>&1 | tee "skill-choice-stage-${stage}-console.log"
+          done
+      - name: Compare STAGE75 weapon, skill, credits and no-reward choices under identical low-input seeds
+        shell: bash
+        run: |
+          set -eo pipefail
+          for reward in weapon skill credits none; do
+            echo "STAGE75_REWARD=${reward}"
+            timeout --signal=TERM --kill-after=10s 120s env BALANCE_MODE=low-input BALANCE_DIAGNOSTIC=1 BALANCE_STAGE75_REWARD="${reward}" node tests/balance-simulation.cjs 2>&1 | tee "stage75-reward-${reward}-console.log"
+          done
+      - name: Upload baseline metrics and scenario details
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: first-rebirth-balance
+          path: |
+            artifacts/balance/first-rebirth-baseline.json
+            balance-console.log
+            low-input-console.log
+            one-buy-console.log
+            two-minute-console.log
+            artifacts/balance/first-rebirth-two-minute.json
+            artifacts/balance/first-rebirth-one-buy.json
+            artifacts/balance/first-rebirth-low-input.json
+            artifacts/balance/allocation-*.json
+            allocation-*-console.log
+            artifacts/balance/skill-choice-stage-*.json
+            skill-choice-stage-*-console.log
+            artifacts/balance/stage75-reward-*.json
+            stage75-reward-*-console.log
+          if-no-files-found: warn
+          retention-days: 14

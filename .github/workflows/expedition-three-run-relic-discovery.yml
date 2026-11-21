@@ -1,0 +1,34 @@
+name: Expedition three-run permanent relic discovery
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'tests/expedition-three-run-relic-discovery-audit.cjs'
+      - '.github/workflows/expedition-three-run-relic-discovery.yml'
+      - 'site/expedition-engine.js'
+  workflow_dispatch:
+concurrency:
+  group: relic-discovery-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+permissions:
+  contents: read
+jobs:
+  discovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Trace real-engine relic first discoveries and duplicates in three returns
+        run: node tests/expedition-three-run-relic-discovery-audit.cjs
+      - name: Upload per-run relic acquisition data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expedition-three-run-relic-discovery
+          path: artifacts/expedition/three-run-relic-discovery.json
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,0 +1,90 @@
+'use strict';
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const E=require('../site/expedition-engine.js');
+const clone=s=>JSON.parse(JSON.stringify(s));
+const metrics=s=>({first:s.runMetrics.firstRelicFinds,duplicates:s.runMetrics.duplicateRelics,exchanges:s.runMetrics.relicExchanges});
+test('real chest outcomes count first find, duplicate upgrade and tier-cap exchange separately',()=>{
+ const s=E.newState(1000);
+ s.chests=1;s.chestDepths=[15];
+ const first=E.openChest(s);
+ assert.ok(first.id&&!first.duplicate);
+ assert.deepEqual(metrics(s),{first:1,duplicates:0,exchanges:0});
+ // Leave exactly one non-capped shallow kind, already owned.
+ for(const r of E.RELICS)if(r.unlockStage===5)s.relics[r.id]=r.cap;
+ s.relics.ember=1;
+ s.chests=1;s.chestDepths=[5];
+ const dup=E.openChest(s);
+ assert.equal(dup.id,'ember');
+ assert.equal(dup.duplicate,true);
+ assert.deepEqual(metrics(s),{first:1,duplicates:1,exchanges:0});
+ for(const r of E.RELICS)if(r.unlockStage===5)s.relics[r.id]=r.cap;
+ s.chests=1;s.chestDepths=[5];
+ const exchanged=E.openChest(s);
+ assert.equal(exchanged.id,null);
+ assert.ok(exchanged.credits>0);
+ assert.deepEqual(metrics(s),{first:1,duplicates:1,exchanges:1});
+ assert.equal(s.runMetrics.chestsOpened,3);
+ const loaded=E.normalize(clone(s),2000);
+ assert.deepEqual(metrics(loaded),metrics(s));
+});
+test('network first discoveries count without pretending an earned chest was opened',()=>{
+ const s=E.newState(1000);
+ s.relics.scout=1;s.relics.relay=1;
+ const clear=stage=>{
+  s.stage=s.best=s.runBest=stage;s.enemyHp=1;
+  for(const a of s.actors){a.progress=1;a.cooldown=0;a.hp=1e6;a.revive=0;}
+  E.tick(s,1);
+ };
+ clear(30);clear(35);
+ assert.equal(s.relicEffects.intelFinds,1);
+ assert.equal(s.runMetrics.chestsOpened,0);
+ assert.deepEqual(metrics(s),{first:1,duplicates:0,exchanges:0});
+ assert.equal(s.relicHistory.at(-1).source,'intel');
+});
+test('return preserves actual run acquisition summary but resets counters for the next run',()=>{
+ const s=E.newState(1000);
+ s.chests=2;s.chestDepths=[5,15];
+ E.openChestBatch(s,5);
+ const counted=metrics(s);
+ assert.deepEqual(counted,{first:2,duplicates:0,exchanges:0});
+ s.stage=s.best=s.runBest=26;
+ const paid=E.rebirth(s);
+ assert.ok(paid>0);
+ assert.deepEqual(metrics(s),{first:0,duplicates:0,exchanges:0});
+ assert.deepEqual(s.latestReturn.relicFindCounts,{...counted,partial:false});
+ assert.deepEqual(s.runHistory.at(-1).relicFindCounts,{...counted,partial:false});
+ const restored=E.normalize(clone(s),2000);
+ assert.deepEqual(restored.latestReturn.relicFindCounts,{...counted,partial:false});
+ assert.deepEqual(restored.runHistory.at(-1).relicFindCounts,{...counted,partial:false});
+});
+test('old mid-run save marks unknown earlier relic history without fabricating counts',()=>{
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=26;
+ s.runMetrics.manualPurchases=2;
+ delete s.runMetrics.firstRelicFinds;
+ delete s.runMetrics.duplicateRelics;
+ delete s.runMetrics.relicExchanges;
+ delete s.runMetrics.legacyRelicCounter;
+ const old=E.normalize(clone(s),2000);
+ assert.deepEqual(metrics(old),{first:0,duplicates:0,exchanges:0});
+ assert.equal(old.runMetrics.legacyRelicCounter,true);
+ old.chests=1;old.chestDepths=[25];
+ assert.ok(E.openChest(old));
+ assert.equal(old.runMetrics.firstRelicFinds,1,'only newly observed discovery is counted');
+ assert.ok(E.rebirth(old)>0);
+ assert.equal(old.latestReturn.relicFindCounts.partial,true);
+ assert.equal(old.runMetrics.legacyRelicCounter,false,'next run starts fresh');
+});
+test('bounded 24-entry discovery journal does not erase accurate per-run counts',()=>{
+ const s=E.newState(1000);
+ s.chests=30;s.chestDepths=Array(30).fill(5);
+ const result=E.openChestBatch(s,20);
+ assert.equal(result.results.length,20);
+ const leftover=E.openChestBatch(s,20);
+ assert.equal(leftover.results.length,10);
+ assert.equal(s.relicHistory.length,24);
+ assert.equal(s.runMetrics.firstRelicFinds+s.runMetrics.duplicateRelics+s.runMetrics.relicExchanges,30);
+ assert.equal(s.runMetrics.chestsOpened,30);
+ assert.equal(s.chests,0);
+});
