@@ -52,7 +52,7 @@ function renderBattle(){
  const hpLeft=Math.max(0,Math.min(100,100*s.enemyHp/E.enemyMax(s.stage)));
  $('goal').textContent=fmt(nextChest)+'거리 · '+(E.isBoss(nextChest)?'지휘급':'정예')+' 격파'+
   (longEncounter?' · 현재 적 HP '+(s.enemyHp>0&&hpLeft<1?'<1':hpLeft.toFixed(0))+'%':'')+
-  (s.stage===40&&s.engagement?.stage===40&&s.engagement.seconds>=300?
+  (s.stage===40&&s.engagement?.stage===40&&s.engagement.seconds>=120?
    ' · 교전 중 자동 강화 '+fmt(Math.max(0,s.autoBuy.purchases-(s.engagement.autoBuyStart||0)))+'회':'');
  const availableCores=E.rebirthGain(s),ready=availableCores>0;
  $('returnQuick').hidden=!ready;
