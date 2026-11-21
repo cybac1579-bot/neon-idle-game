@@ -1090,7 +1090,7 @@ async function main(){
     });
     await engagementPage.reload({waitUntil:'networkidle'});
     const longFightGoal=await engagementPage.locator('#goal').textContent();
-    assert.match(longFightGoal,/50거리 · 지휘급 격파 · 현재 적 HP [0-9]+%/,
+    assert.match(longFightGoal,/50거리 · 지휘급 격파 시 상자 \+1 · 현재 적 HP [0-9]+%/,
      'a 10-minute boss encounter exposes actual remaining HP in the existing objective');
     await engagementPage.locator('[data-tab="return"]').click();
     const report=await engagementPage.locator('#rebirthSummary').textContent();
