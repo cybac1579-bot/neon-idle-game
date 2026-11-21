@@ -7,6 +7,13 @@ on:
       - 'tests/expedition-low-input-30m-audit.cjs'
       - '.github/workflows/expedition-low-input-30m.yml'
       - 'site/expedition-engine.js'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'tests/expedition-low-input-30m-audit.cjs'
+      - '.github/workflows/expedition-low-input-30m.yml'
+      - 'site/expedition-engine.js'
   workflow_dispatch:
 permissions:
   contents: read
