@@ -1053,6 +1053,9 @@ async function main(){
      if(!raw)return;
      const state=JSON.parse(raw);
      state.engagement.seconds=Number(requested);
+     const stage40=sessionStorage.getItem('__test_engagement_stage40')==='yes';
+     state.stage=stage40?40:50;
+     state.engagement.stage=state.stage;
      state.lastSaved=Date.now();
      localStorage.setItem(key,JSON.stringify(state));
     });
@@ -1068,6 +1071,24 @@ async function main(){
      assert.ok(rect&&rect.x>=0&&rect.x+rect.width<=width+1,
       'goal must fit '+width+'px portrait viewport');
     }
+    // Stage-40 119s/120s auto-growth cue boundary (no new HUD row).
+    await engagementPage.evaluate(()=>sessionStorage.setItem('__test_engagement_stage40','yes'));
+    for(const seconds of [119,120,645]){
+     await engagementPage.evaluate(seconds=>
+      sessionStorage.setItem('__test_engagement_seconds',String(seconds)),seconds);
+     await engagementPage.reload({waitUntil:'networkidle'});
+     const goal=await engagementPage.locator('#goal').textContent();
+     if(seconds===119)assert.doesNotMatch(goal,/교전 중 자동 강화/,'119s: no growth cue');
+     else assert.match(goal,/교전 중 자동 강화 5회/,'120s: actual purchases visible');
+     const rect=await engagementPage.locator('#goal').boundingBox();
+     assert.ok(rect&&rect.x>=0&&rect.x+rect.width<=width+1,
+      'stage-40 goal must fit '+width+'px portrait viewport');
+    }
+    await engagementPage.evaluate(()=>{
+     sessionStorage.removeItem('__test_engagement_stage40');
+     sessionStorage.setItem('__test_engagement_seconds','645');
+    });
+    await engagementPage.reload({waitUntil:'networkidle'});
     const longFightGoal=await engagementPage.locator('#goal').textContent();
     assert.match(longFightGoal,/50거리 · 지휘급 격파 · 현재 적 HP [0-9]+%/,
      'a 10-minute boss encounter exposes actual remaining HP in the existing objective');
