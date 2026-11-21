@@ -185,7 +185,7 @@ main.game-shell{
 .battle-readout .track{height:7px;border-radius:20px}
 .battle-ticker{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:21px;padding:4px 0 0}
 .battle-ticker .event{min-height:0;margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#ecd4a0}
-.next-reward{font-size:10px;color:#a7c0ca;white-space:nowrap}
+.next-reward{font-size:10px;color:#a7c0ca;min-width:0;max-width:75%;white-space:normal;overflow-wrap:anywhere;text-align:right;line-height:1.35}
 .next-reward b{color:#f7db9c}
 #openChest{width:100%;margin:5px 0 0;padding:6px;font-size:11px;min-height:29px}
 .tabs{position:relative;bottom:auto;left:auto;transform:none;max-width:none;width:100%;padding:5px 8px;gap:5px;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #50697c;border-bottom:1px solid #455b6d;background:#0b1826;z-index:6}
