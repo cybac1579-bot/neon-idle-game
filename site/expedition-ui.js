@@ -50,7 +50,7 @@ function renderBattle(){
  // Use actual current enemy HP, not a guessed time-to-kill or new reward.
  const longEncounter=s.engagement?.stage===s.stage&&s.engagement.seconds>=60;
  const hpLeft=Math.max(0,Math.min(100,100*s.enemyHp/E.enemyMax(s.stage)));
- $('goal').textContent=fmt(nextChest)+'거리 · '+(E.isBoss(nextChest)?'지휘급':'정예')+' 격파'+
+ $('goal').textContent=fmt(nextChest)+'거리 · '+(E.isBoss(nextChest)?'지휘급':'정예')+' 격파 시 상자 +1'+
   (longEncounter?' · 현재 적 HP '+(s.enemyHp>0&&hpLeft<1?'<1':hpLeft.toFixed(0))+'%':'')+
   (s.stage===40&&s.engagement?.stage===40&&s.engagement.seconds>=120?
    ' · 교전 중 자동 강화 '+fmt(Math.max(0,s.autoBuy.purchases-(s.engagement.autoBuyStart||0)))+'회':'');
