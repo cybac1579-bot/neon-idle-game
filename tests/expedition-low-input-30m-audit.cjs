@@ -14,6 +14,7 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
  assert.equal(s.autoChest.enabled,false);
  let opened=0,manualActions=0,firstChest=null,firstRelic=null;
  let lastTenMinuteAutoBuys=0,lastTenMinuteChestDrops=0,lastTenMinuteStageAdvances=0,lastTenMinuteChestOpens=0;
+ let stage40Seconds=0,stage40AutoBuys=0,stage40ChestDrops=0,stage40Start=null,stage40End=null;
  let lastChestDropAt=0,longestChestDropWait=0,chestDropEvents=[];
  const checkpoints=[];
  const milestones=[];
@@ -22,7 +23,13 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
  const rewardEvents=[];
  for(let second=1;second<=1800;second++){
   const chestsBeforeTick=s.chests,stageBeforeTick=s.stage,autoBuysBeforeTick=s.autoBuy.purchases;
+  if(stageBeforeTick===40){stage40Seconds++;if(stage40Start===null)stage40Start=second;}
   E.tick(s,1);
+  if(stageBeforeTick===40){
+   stage40AutoBuys+=Math.max(0,s.autoBuy.purchases-autoBuysBeforeTick);
+   stage40ChestDrops+=Math.max(0,s.chests-chestsBeforeTick);
+   if(s.stage>40&&stage40End===null)stage40End=second;
+  }
   if(second>1200){
    lastTenMinuteAutoBuys+=Math.max(0,s.autoBuy.purchases-autoBuysBeforeTick);
    lastTenMinuteStageAdvances+=Math.max(0,s.stage-stageBeforeTick);
@@ -56,7 +63,7 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
  assert.ok(manualActions<=1800/chestEvery,'manual chest batches cannot exceed scheduled checks');
  assert.ok(milestones.every((x,i)=>i===0||x.second>=milestones[i-1].second));
  results.push({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,
-  finalStage:s.stage,uniqueRelics:lastRelicCount,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,longestChestDropWait,chestDropEvents,longestStageWait,stageWaitAt,longestRewardWait,rewardWaitAt,rewardEvents,stageMilestones:milestones,checkpoints});
+  finalStage:s.stage,uniqueRelics:lastRelicCount,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,longestChestDropWait,chestDropEvents,longestStageWait,stageWaitAt,longestRewardWait,rewardWaitAt,rewardEvents,stageMilestones:milestones,checkpoints});
 }
 assert.equal(results.length,12);
 const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
@@ -66,5 +73,5 @@ const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
 const target=path.join(__dirname,'..','artifacts','expedition','low-input-30m.json');
 fs.mkdirSync(path.dirname(target),{recursive:true});
 fs.writeFileSync(target,JSON.stringify(output,null,2)+'\n');
-console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints}))));
+console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints}))));
 console.log('LOW_INPUT_30M_OUTPUT '+target);
