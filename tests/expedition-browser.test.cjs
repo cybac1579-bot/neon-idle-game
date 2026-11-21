@@ -1043,6 +1043,23 @@ async function main(){
      localStorage.setItem(key,JSON.stringify(state));
     });
     await engagementPage.reload({waitUntil:'networkidle'});
+    // 59s/60s boundary: preserve the uncluttered objective line.
+    for(const seconds of [59,60,645]){
+     await engagementPage.evaluate(seconds=>{
+      const key='neon_expedition_prototype_v1';
+      const state=JSON.parse(localStorage.getItem(key));
+      state.engagement.seconds=seconds;
+      state.lastSaved=Date.now();
+      localStorage.setItem(key,JSON.stringify(state));
+     },seconds);
+     await engagementPage.reload({waitUntil:'networkidle'});
+     const goal=await engagementPage.locator('#goal').textContent();
+     if(seconds===59)assert.doesNotMatch(goal,/현재 적 HP/,'59s: no HP cue');
+     else assert.match(goal,/현재 적 HP [0-9]+%/,'60s: HP cue visible');
+     const rect=await engagementPage.locator('#goal').boundingBox();
+     assert.ok(rect&&rect.x>=0&&rect.x+rect.width<=width+1,
+      'goal must fit '+width+'px portrait viewport');
+    }
     const longFightGoal=await engagementPage.locator('#goal').textContent();
     assert.match(longFightGoal,/50거리 · 지휘급 격파 · 현재 적 HP [0-9]+%/,
      'a 10-minute boss encounter exposes actual remaining HP in the existing objective');
