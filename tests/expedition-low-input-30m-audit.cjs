@@ -13,7 +13,7 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
  assert.equal(E.setAutoBuy(s,mode,true),true);
  assert.equal(s.autoChest.enabled,false);
  let opened=0,manualActions=0,firstChest=null,firstRelic=null;
- let lastTenMinuteAutoBuys=0,lastTenMinuteChestDrops=0,lastTenMinuteStageAdvances=0;
+ let lastTenMinuteAutoBuys=0,lastTenMinuteChestDrops=0,lastTenMinuteStageAdvances=0,lastTenMinuteChestOpens=0;
  let lastChestDropAt=0,longestChestDropWait=0,chestDropEvents=[];
  const checkpoints=[];
  const milestones=[];
@@ -39,7 +39,7 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
   if(s.chests>0&&firstChest===null)firstChest=second;
   if(second%chestEvery===0){
    if(s.chests>0)manualActions++;
-   while(s.chests>0){assert.ok(E.openChest(s));opened++;
+   while(s.chests>0){assert.ok(E.openChest(s));opened++;if(second>1200)lastTenMinuteChestOpens++;
     if(second-lastRewardAt>longestRewardWait){longestRewardWait=second-lastRewardAt;rewardWaitAt=second;}
     rewardEvents.push({second,kind:'chest-open'});lastRewardAt=second;
    }
@@ -56,7 +56,7 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
  assert.ok(manualActions<=1800/chestEvery,'manual chest batches cannot exceed scheduled checks');
  assert.ok(milestones.every((x,i)=>i===0||x.second>=milestones[i-1].second));
  results.push({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,
-  finalStage:s.stage,uniqueRelics:lastRelicCount,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,longestChestDropWait,chestDropEvents,longestStageWait,stageWaitAt,longestRewardWait,rewardWaitAt,rewardEvents,stageMilestones:milestones,checkpoints});
+  finalStage:s.stage,uniqueRelics:lastRelicCount,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,longestChestDropWait,chestDropEvents,longestStageWait,stageWaitAt,longestRewardWait,rewardWaitAt,rewardEvents,stageMilestones:milestones,checkpoints});
 }
 assert.equal(results.length,12);
 const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
@@ -66,5 +66,5 @@ const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
 const target=path.join(__dirname,'..','artifacts','expedition','low-input-30m.json');
 fs.mkdirSync(path.dirname(target),{recursive:true});
 fs.writeFileSync(target,JSON.stringify(output,null,2)+'\n');
-console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,checkpoints}))));
+console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints}))));
 console.log('LOW_INPUT_30M_OUTPUT '+target);
