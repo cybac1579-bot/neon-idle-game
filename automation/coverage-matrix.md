@@ -633,3 +633,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Stage-40 119/120s auto-growth cue boundary | 2026-11-21 21:55 KST, test `6407fad4` | Added 390px Chromium pre-boot fixture for 119/120/645 seconds, 5 actual automatic purchases, goal bounds and stage-50 restoration. Starting exact-head 5 PR checks PASS; **new test CI unverified**. | **P0:** confirm new portrait CI, then 12-case stage-40 attribution; Galaxy S25+ human play unverified, readiness 92%, main/Pages unchanged. |
+
+| Stage-40 119/120s growth cue — exact-source Chromium regression | 2026-11-21 22:51 KST, HEAD `69527871` | [Portrait run 44906324348](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44906324348) **SUCCESS** including 360/390/412px smoke and 119/120/645s fixture; companion save/fast/three-rebirth/first-rebirth runs 44906324292/44906324349/44906324295/44906324340 all SUCCESS | **Resolved CI boundary:** real S25+ still unverified. **P0:** obtain latest dedicated 12-case stage-40 auto-buy/drop attribution before balance changes. 92% provisional, no main/Pages release. |
