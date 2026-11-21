@@ -2,6 +2,7 @@
 
 | Area | Last checked | Evidence | Status / next priority |
 | --- | --- | --- | --- |
+| Portrait HP 59/60s boundary browser regression | 2026-11-21, base `a7091f41`, test fix `2641c522` | CI 44863990434 **failed** at 59s fixture; unload-save race suspected and test setup changed to preboot init script | **Critical:** rerun portrait CI; no pass claimed; then check 360/390/412px and long-fight UI |
 | Mobile portrait combat visibility | 2026-11-12, `d6bf73bc` | Hit feedback runtime fixture and prior contracts: CI run 43204867687 **success (20 tests)**; Pages run 43196140841 **success** for game commit `cc90b325` | **High:** real phone hit visibility, FPS, boss animation/filter interactions; CI is not device proof |
 | Combat logic, attacks, skills, enemies, bosses | 2026-11-12, `d6bf73bc` | New runtime test confirms hit cue throttle, offline suppression and reduced-motion behavior; 20-case CI success 43204867687; boss/skill regression retained | **High:** real-browser cue, boss/skill feedback and performance |
 | Save/load, old-version compatibility | 2026-11-12, `ec66c1d5` | GitHub Actions run 43117916982: **4/4 Node fixture tests passed** after fixing fake DOM innerHTML children | Browser/device migration and malformed nested fields remain unverified; high |
