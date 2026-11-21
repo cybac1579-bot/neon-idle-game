@@ -59,6 +59,14 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
  longestChestDropWait=Math.max(longestChestDropWait,1800-lastChestDropAt);
  if(1800-lastAdvanceAt>longestStageWait){longestStageWait=1800-lastAdvanceAt;stageWaitAt=lastStage;}
  if(1800-lastRewardAt>longestRewardWait){longestRewardWait=1800-lastRewardAt;rewardWaitAt=1800;}
+ // Verify stage-40 counters are coherent before using them to justify balance changes.
+ assert.ok(stage40Seconds>=0&&stage40Seconds<=1800);
+ assert.ok(stage40AutoBuys>=0&&stage40ChestDrops>=0);
+ assert.ok(stage40ChestDrops<=chestDropEvents.reduce((sum,e)=>sum+e.count,0));
+ if(stage40Start!==null){
+  assert.ok(stage40Start>=1&&stage40Start<=1800);
+  if(stage40End!==null)assert.ok(stage40End>=stage40Start&&stage40End<=1800);
+ }
  assert.equal(checkpoints.length,6);
  assert.ok(manualActions<=1800/chestEvery,'manual chest batches cannot exceed scheduled checks');
  assert.ok(milestones.every((x,i)=>i===0||x.second>=milestones[i-1].second));
@@ -66,6 +74,9 @@ for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCad
   finalStage:s.stage,uniqueRelics:lastRelicCount,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,longestChestDropWait,chestDropEvents,longestStageWait,stageWaitAt,longestRewardWait,rewardWaitAt,rewardEvents,stageMilestones:milestones,checkpoints});
 }
 assert.equal(results.length,12);
+// Keep a compact aggregate in the CI log, not only the downloadable JSON artifact.
+const plateauSummary=results.map(r=>({mode:r.mode,seed:r.seed,chestEvery:r.chestEvery,stage40Seconds:r.stage40Seconds,stage40AutoBuys:r.stage40AutoBuys,stage40ChestDrops:r.stage40ChestDrops,stage40Start:r.stage40Start,stage40End:r.stage40End,finalStage:r.finalStage,lastTenMinuteChestDrops:r.lastTenMinuteChestDrops,lastTenMinuteChestOpens:r.lastTenMinuteChestOpens}));
+console.log('STAGE40_ATTRIBUTION '+JSON.stringify(plateauSummary));
 const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
  methodology:'Actual expedition engine, 1-second ticks, auto-buy enabled, chest batch every 60s or 300s, no forced drops/returns, 3 seeds x 2 auto-buy modes.',
  caveats:['No human or mobile device observations','Engine ticks are not frame-rate or offline lifecycle evidence','Chest opening is a scheduled manual action; no tapping combat','Chest drop gap tracks actual chest acquisition; reward gap tracks scheduled opening and is policy-dependent','Milestones represent stage advancement, not subjective enjoyment'],
