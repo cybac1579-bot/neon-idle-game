@@ -1043,15 +1043,23 @@ async function main(){
      localStorage.setItem(key,JSON.stringify(state));
     });
     await engagementPage.reload({waitUntil:'networkidle'});
+    // Apply each fixture before boot. A page reload may save the live state
+    // during unload, overwriting localStorage edits made just before reload.
+    await engagementPage.addInitScript(()=>{
+     const requested=sessionStorage.getItem('__test_engagement_seconds');
+     if(requested===null)return;
+     const key='neon_expedition_prototype_v1';
+     const raw=localStorage.getItem(key);
+     if(!raw)return;
+     const state=JSON.parse(raw);
+     state.engagement.seconds=Number(requested);
+     state.lastSaved=Date.now();
+     localStorage.setItem(key,JSON.stringify(state));
+    });
     // 59s/60s boundary: preserve the uncluttered objective line.
     for(const seconds of [59,60,645]){
-     await engagementPage.evaluate(seconds=>{
-      const key='neon_expedition_prototype_v1';
-      const state=JSON.parse(localStorage.getItem(key));
-      state.engagement.seconds=seconds;
-      state.lastSaved=Date.now();
-      localStorage.setItem(key,JSON.stringify(state));
-     },seconds);
+     await engagementPage.evaluate(seconds=>
+      sessionStorage.setItem('__test_engagement_seconds',String(seconds)),seconds);
      await engagementPage.reload({waitUntil:'networkidle'});
      const goal=await engagementPage.locator('#goal').textContent();
      if(seconds===59)assert.doesNotMatch(goal,/현재 적 HP/,'59s: no HP cue');
