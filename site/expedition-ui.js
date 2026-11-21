@@ -48,7 +48,7 @@ function renderBattle(){
  const nextChest=s.stage+((5-s.stage%5)%5);
  // A prolonged encounter must show observable progress without another HUD row.
  // Use actual current enemy HP, not a guessed time-to-kill or new reward.
- const longEncounter=s.engagement?.stage===s.stage&&s.engagement.seconds>=300;
+ const longEncounter=s.engagement?.stage===s.stage&&s.engagement.seconds>=60;
  const hpLeft=Math.max(0,Math.min(100,100*s.enemyHp/E.enemyMax(s.stage)));
  $('goal').textContent=fmt(nextChest)+'거리 · '+(E.isBoss(nextChest)?'지휘급':'정예')+' 격파'+
   (longEncounter?' · 현재 적 HP '+hpLeft.toFixed(0)+'%':'');
