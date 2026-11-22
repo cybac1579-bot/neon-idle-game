@@ -2034,3 +2034,11 @@
 - Compared two risks: stage-40 endurance remains unresolved (one-time initial HP is not persistent max HP), and uploaded CI artifact existence alone does not guarantee JSON integrity. Chose minimal targeted test improvement rather than unproven production balance changes.
 - Test commit `cf47f520d752207a0e279e1fcdc31363f89e7d17` re-parses persisted 30m and 60m JSON; validates 60m metadata, 12 pairs, and exact equality with computed data before upload. This is test-only; no gameplay/save changes. Post-change CI pending independent verification; do not claim success yet.
 - Readiness 92% provisional (+0pp). Android Galaxy S25+ human play and actual first return timing unverified; main/Pages release not authorized. Next: check changed-source CI and artifact integrity guard, then persistent max-HP/wipe/return-time comparison.
+
+
+## 2026-11-22 14:59 KST — CI confirmation and comparison gate
+- Base HEAD: `8a5ac393747512353622b0832bbf3730b493ebe9`; compare against shared integration branch: identical (ahead/behind 0/0). Reviewed automation README, coverage, previous verification records, manual decisions/status/handoff and first-rebirth reactor trial. Historical docs contain stale snapshots; current shared branch takes precedence.
+- Scope: verify exact-head workflow outcomes for the prior 30/60-minute JSON integrity change. GitHub commit-workflow-run lookup reports **six completed successes**: expedition fast 44987496876, save 44987496885, 30-minute low-input 44987496908, three-rebirth 44987496890, first-rebirth balance 44987496879, portrait browser 44987496913.
+- Finding: previous pending CI has completed successfully. This establishes workflow conclusions only, not JSON artifact internal contents, physical device quality, first-rebirth timing under changed boss max HP, or human enjoyment. No production game/balance changes made this run; prior 92% provisional readiness unchanged (+0 pp).
+- Deployment: protected main/Pages not modified. PR #2 must remain draft; live deployment parity not independently verified in this run.
+- Risk/next: retrieve and inspect JSON artifacts and source test path; compare persistent boss max-HP reduction including wipe/recovery and first-rebirth effects before any balance change. Physical Galaxy S25+ 30-minute play remains unverified.
