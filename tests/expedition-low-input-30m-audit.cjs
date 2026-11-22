@@ -192,3 +192,16 @@ console.log('STAGE40_INITIAL_HP_60M_COUNTERFACTUAL '+JSON.stringify({
  limitation:'Initial current HP reduced once only; wipe resets to original HP. No rebirth action, no human/mobile evidence.',
  comparisons:hourProbe
 }));
+
+// Preserve the full 60m paired evidence as a CI artifact, not only console text.
+// The file is explicitly labelled as a one-time current-HP counterfactual.
+const hourTarget=pathJoinForHour();
+function pathJoinForHour(){return path.join(__dirname,'..','artifacts','expedition','stage40-initial-hp-60m.json');}
+fs.writeFileSync(hourTarget,JSON.stringify({
+ experiment:'stage40-initial-current-hp-60m-counterfactual',synthetic:true,
+ productionBalanceChanged:false,rebirthSimulated:false,
+ methodology:'12 paired 60-minute real-engine runs; one-time 10% current HP reduction only at first stage-40 entry; identical seeds, auto-buy and chest schedules.',
+ limitations:['Squad wipe restores original stage-40 max HP','No actual first rebirth is performed','Not human play or Android device evidence'],
+ comparisons:hourProbe
+},null,2)+'\n');
+console.log('STAGE40_60M_ARTIFACT '+hourTarget);
