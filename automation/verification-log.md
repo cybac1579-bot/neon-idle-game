@@ -2042,3 +2042,9 @@
 - Finding: previous pending CI has completed successfully. This establishes workflow conclusions only, not JSON artifact internal contents, physical device quality, first-rebirth timing under changed boss max HP, or human enjoyment. No production game/balance changes made this run; prior 92% provisional readiness unchanged (+0 pp).
 - Deployment: protected main/Pages not modified. PR #2 must remain draft; live deployment parity not independently verified in this run.
 - Risk/next: retrieve and inspect JSON artifacts and source test path; compare persistent boss max-HP reduction including wipe/recovery and first-rebirth effects before any balance change. Physical Galaxy S25+ 30-minute play remains unverified.
+
+
+## 2026-11-22 15:50 KST — stage-40 probe baseline correction
+- Base shared HEAD `025f3fbd3ebb36733f4dc9913f4cb7f4f04ab154`; compared against integration branch (identical). Reviewed automation README/log/matrix and manual decisions/status/handoff/reactor trial. Exact-base six PR workflow runs 44991713303, 44991713265, 44991713283, 44991713341, 44991713252, 44991713300 all completed success.
+- Found a material interpretation error: production `enemyMax(40)` was **already reduced 10%** (`3.8` to `3.42`), with save migration and targeted test. Existing 30m/60m counterfactual labelled a further one-time 10% reduction ambiguously as if the baseline were original HP. Corrected methodology/caveats and added a baseline assertion in `tests/expedition-low-input-30m-audit.cjs`, commit `420b8f41811856d25a8a57bc195cfb837423c25a`. No game engine/balance changed.
+- Post-change CI must be checked; do not treat previous six successes as proof of this new test. 92% provisional (+0pp), physical S25+ 30m play unverified. `main` and Pages untouched. Next: inspect post-change CI, then evaluate actual production boss behavior and first-return times without stacking a second unnecessary HP reduction.
