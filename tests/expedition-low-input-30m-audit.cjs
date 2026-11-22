@@ -231,6 +231,22 @@ console.log('STAGE40_60M_GUARDS '+JSON.stringify({
  chestParity:hourProbe.filter(x=>x.probe.opened===x.baseline.opened).length,
  caution:'Synthetic one-time current HP only; not a permanent max HP change or rebirth timing'
 }));
+// Surface the measured return outcome rather than inferring it from a CI PASS.
+// This is still an initial-current-HP counterfactual, not a persistent boss nerf.
+const returnSummary=hourProbe.map(({mode,seed,chestEvery,baseline,probe})=>({
+ mode,seed,chestEvery,
+ baselineEligibleSecond:baseline.firstReturnEligible,
+ probeEligibleSecond:probe.firstReturnEligible,
+ eligibilityShiftSeconds:baseline.firstReturnEligible===null||probe.firstReturnEligible===null?null:probe.firstReturnEligible-baseline.firstReturnEligible,
+ baselineCoreGain:baseline.returnGainAt60m,
+ probeCoreGain:probe.returnGainAt60m,
+ coreGainDelta:probe.returnGainAt60m-baseline.returnGainAt60m,
+ baselineExecutedReturn:baseline.executedReturnGain,
+ probeExecutedReturn:probe.executedReturnGain
+}));
+assert.equal(returnSummary.length,12);
+assert.ok(returnSummary.every(x=>Number.isFinite(x.coreGainDelta)));
+console.log('STAGE40_60M_RETURN_COMPARISON '+JSON.stringify(returnSummary));
 console.log('STAGE40_INITIAL_HP_60M_COUNTERFACTUAL '+JSON.stringify({
  synthetic:true,notProductionBalance:true,notRebirthTiming:true,
  limitation:'Production stage-40 max HP already includes a historical 10% reduction. This probe applies an additional initial-only 10%; wipe resets to current production max HP. First eligibility and 60m return gain are measured, but a cloned 60m return is executed where eligible, but no post-return acceleration or human/mobile evidence.',
