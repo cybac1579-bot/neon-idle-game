@@ -135,3 +135,40 @@ console.log('STAGE40_INITIAL_HP_10PCT_PROBE '+JSON.stringify({
  limitation:'Only initial current HP is reduced once; any subsequent squad wipe resets full stage-40 HP. Not equivalent to changing enemyMax(40).',
  comparisons:stage40Probe
 }));
+
+// Extended 60-minute counterfactual: keep the exact same low-input policy and
+// compare the one-time initial-HP probe with an untouched engine run.
+// No automatic rebirth is triggered; this measures progression only, not
+// first-rebirth timing. Never interpret this as a production HP multiplier.
+const hourProbe=[];
+for(const baseline of results){
+ const pair=[];
+ for(const reduceInitialHp of [false,true]){
+  const s=E.newState(1000);s.seed=baseline.seed;
+  assert.equal(E.setAutoBuy(s,baseline.mode,true),true);
+  let entered40=false,adjusted=false,exit40=null,opened=0;
+  for(let second=1;second<=3600;second++){
+   if(s.stage===40){
+    entered40=true;
+    if(reduceInitialHp&&!adjusted){
+     s.enemyHp=Math.max(1,Math.round(s.enemyHp*.9));adjusted=true;
+    }
+   }
+   E.tick(s,1);
+   if(entered40&&exit40===null&&s.stage>40)exit40=second;
+   if(second%baseline.chestEvery===0){
+    while(s.chests>0){assert.ok(E.openChest(s));opened++;}
+   }
+  }
+  pair.push({reduceInitialHp,finalStage:s.stage,exit40,opened,entered40});
+ }
+ assert.equal(pair[0].entered40,pair[1].entered40);
+ hourProbe.push({mode:baseline.mode,seed:baseline.seed,chestEvery:baseline.chestEvery,
+  baseline:pair[0],probe:pair[1]});
+}
+assert.equal(hourProbe.length,12);
+console.log('STAGE40_INITIAL_HP_60M_COUNTERFACTUAL '+JSON.stringify({
+ synthetic:true,notProductionBalance:true,notRebirthTiming:true,
+ limitation:'Initial current HP reduced once only; wipe resets to original HP. No rebirth action, no human/mobile evidence.',
+ comparisons:hourProbe
+}));
