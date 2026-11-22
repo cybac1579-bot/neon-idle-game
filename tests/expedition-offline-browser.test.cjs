@@ -16,6 +16,8 @@ async function main(){
  assert.ok(fs.existsSync(packaged),'build the offline HTML first');
  const file=fs.readFileSync(packaged,'utf8');
  assert.ok(file.includes('data-inline-source="expedition-engine.js"'));
+ assert.ok(file.includes('data-inline-source="expedition-art.js"'));
+ assert.ok(file.includes('data:image/webp;base64,'),'art must be embedded without network');
  assert.ok(file.includes('data-inline-source="expedition-field.js"'));
  assert.ok(file.includes('data-inline-source="expedition-ui.js"'));
  assert.ok(file.includes('data-inline-skin="prototype-v1"'));
@@ -28,7 +30,7 @@ async function main(){
 
  // Artifact provenance: the packaged executable must embed the current checkout's
  // exact scripts, not just scripts with the expected filenames.
- for(const name of ['expedition-engine.js','expedition-field.js','expedition-ui.js','expedition-app.js']){
+ for(const name of ['expedition-engine.js','expedition-art.js','expedition-field.js','expedition-ui.js','expedition-app.js']){
   const source=fs.readFileSync(path.resolve(__dirname,'../site',name),'utf8').replace(/<\/script/gi,'<\\/script');
   assert.ok(file.includes('<script data-inline-source="'+name+'">\n'+source+'\n</script>'),
    'standalone package must embed current source: '+name);
@@ -49,6 +51,15 @@ async function main(){
    await page.goto(pathToFileURL(packaged).href,{waitUntil:'load'});
    assert.equal(await page.locator('#battleScreen').isVisible(),true);
    assert.ok(await page.locator('#squad .fighter').count()>=2);
+   const art=await page.evaluate(()=>{
+    const arena=document.querySelector('.arena');
+    return {active:arena.classList.contains('art-ready'),
+      source:window.ExpeditionSpriteAtlas?.startsWith('data:image/webp;base64,'),
+      guard:getComputedStyle(document.querySelector('.fighter.guard .fighter-symbol')).backgroundImage.includes('data:image/webp'),
+      enemy:getComputedStyle(document.querySelector('.foe .silhouette')).backgroundImage.includes('data:image/webp')};
+   });
+   assert.ok(Object.values(art).every(Boolean),
+     'offline 5-sprite art should be rendered: '+JSON.stringify(art));
    // Spectator feedback must reflect the *engine's* battle cue, never generate
    // extra hits or rewards. Probe a separate engine state without touching
    // the live autosave and check cue replay protection in the real file:// page.
