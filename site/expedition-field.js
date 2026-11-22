@@ -6,6 +6,12 @@ if(!E)return;
 const $=id=>document.getElementById(id);
 const field=$('squad'),arena=document.querySelector('.arena');
 if(!field||!arena)return;
+// Optional, fully offline five-character atlas. Retain CSS placeholder
+// art if the asset script is missing, disabled, or failed to load.
+if(typeof root.ExpeditionSpriteAtlas==='string'&&root.ExpeditionSpriteAtlas.startsWith('data:image/webp;base64,')){
+ arena.style.setProperty('--expedition-art-atlas','url("'+root.ExpeditionSpriteAtlas+'")');
+ arena.classList.add('art-ready');
+}
 const fx=document.createElement('div');fx.id='battleFx';fx.setAttribute('aria-hidden','true');arena.appendChild(fx);
 // This layer mirrors real battleEvent cues. It neither ticks the game nor
 // invents combat attacks, rewards or relic activations for decoration.
