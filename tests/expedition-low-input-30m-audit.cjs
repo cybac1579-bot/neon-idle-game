@@ -167,6 +167,26 @@ for(const baseline of results){
   baseline:pair[0],probe:pair[1]});
 }
 assert.equal(hourProbe.length,12);
+// Guard the diagnostic against accidental divergence: an initial-only HP
+// adjustment cannot delay the stage-40 clear, and this fixed-seed experiment
+// must not silently change the 60-minute reward/endpoint baseline.
+for(const sample of hourProbe){
+ assert.ok(sample.baseline.exit40!==null&&sample.probe.exit40!==null,
+  '60m paired scenario must clear stage 40 in both arms');
+ assert.ok(sample.probe.exit40<=sample.baseline.exit40,
+  'initial HP reduction must not delay the stage-40 clear');
+ assert.equal(sample.probe.finalStage,sample.baseline.finalStage,
+  '60m endpoint drift requires explicit balance review');
+ assert.equal(sample.probe.opened,sample.baseline.opened,
+  '60m chest drift requires explicit reward review');
+}
+console.log('STAGE40_60M_GUARDS '+JSON.stringify({
+ pairs:hourProbe.length,
+ earlierOrEqual:hourProbe.filter(x=>x.probe.exit40<=x.baseline.exit40).length,
+ stageParity:hourProbe.filter(x=>x.probe.finalStage===x.baseline.finalStage).length,
+ chestParity:hourProbe.filter(x=>x.probe.opened===x.baseline.opened).length,
+ caution:'Synthetic one-time current HP only; not a permanent max HP change or rebirth timing'
+}));
 console.log('STAGE40_INITIAL_HP_60M_COUNTERFACTUAL '+JSON.stringify({
  synthetic:true,notProductionBalance:true,notRebirthTiming:true,
  limitation:'Initial current HP reduced once only; wipe resets to original HP. No rebirth action, no human/mobile evidence.',
