@@ -205,3 +205,20 @@ fs.writeFileSync(hourTarget,JSON.stringify({
  comparisons:hourProbe
 },null,2)+'\n');
 console.log('STAGE40_60M_ARTIFACT '+hourTarget);
+
+// Verify both persisted artifacts can be parsed and match the in-memory
+// experiment before CI uploads them. An upload alone cannot prove integrity.
+const persistedHour=JSON.parse(fs.readFileSync(hourTarget,'utf8'));
+assert.equal(persistedHour.experiment,'stage40-initial-current-hp-60m-counterfactual');
+assert.equal(persistedHour.productionBalanceChanged,false);
+assert.equal(persistedHour.rebirthSimulated,false);
+assert.deepEqual(persistedHour.comparisons,hourProbe);
+assert.equal(persistedHour.comparisons.length,12);
+const persistedThirty=JSON.parse(fs.readFileSync(target,'utf8'));
+assert.ok(persistedThirty && typeof persistedThirty==='object',
+ '30m artifact must be valid JSON object');
+console.log('LOW_INPUT_ARTIFACT_INTEGRITY_PASS '+JSON.stringify({
+ thirtyMinuteBytes:fs.statSync(target).size,
+ sixtyMinuteBytes:fs.statSync(hourTarget).size,
+ pairedCases:persistedHour.comparisons.length
+}));
