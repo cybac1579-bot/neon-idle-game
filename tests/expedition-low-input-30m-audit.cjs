@@ -140,7 +140,7 @@ console.log('STAGE40_INITIAL_HP_10PCT_PROBE '+JSON.stringify({
 
 // Extended 60-minute counterfactual: keep the exact same low-input policy and
 // compare the one-time initial-HP probe with an untouched engine run.
-// No automatic rebirth is triggered; this measures progression only, not
+// No automatic rebirth is triggered during the run; a 60m clone tests the return action, not
 // first-rebirth timing. Never interpret this as a production HP multiplier.
 const hourProbe=[];
 for(const baseline of results){
@@ -163,7 +163,23 @@ for(const baseline of results){
     while(s.chests>0){assert.ok(E.openChest(s));opened++;}
    }
   }
-  pair.push({reduceInitialHp,finalStage:s.stage,exit40,opened,entered40,firstReturnEligible,returnGainAt60m:E.rebirthGain(s)});
+  // Exercise an actual player-chosen return on a snapshot at 60m, not merely eligibility.
+  // The live 60m run is left intact; this clone tests return bookkeeping.
+  const gainBeforeReturn=E.rebirthGain(s);
+  const returnSnapshot=E.normalize(JSON.parse(JSON.stringify(s)),s.lastSaved||1000);
+  const coresBeforeReturn=returnSnapshot.cores;
+  const rebirthsBeforeReturn=returnSnapshot.rebirths;
+  const executedReturnGain=gainBeforeReturn>0?E.rebirth(returnSnapshot):null;
+  if(gainBeforeReturn>0){
+   assert.ok(executedReturnGain>0,'eligible 60m run must execute a positive return');
+   assert.equal(returnSnapshot.rebirths,rebirthsBeforeReturn+1,'return count must advance once');
+   assert.equal(returnSnapshot.stage,1,'return must reset expedition stage');
+   assert.ok(returnSnapshot.cores>=coresBeforeReturn,'return must not lose existing cores');
+  }
+  pair.push({reduceInitialHp,finalStage:s.stage,exit40,opened,entered40,firstReturnEligible,
+   returnGainAt60m:gainBeforeReturn,executedReturnGain,
+   returnedStage:executedReturnGain===null?null:returnSnapshot.stage,
+   returnedRebirths:executedReturnGain===null?null:returnSnapshot.rebirths});
  }
  assert.equal(pair[0].entered40,pair[1].entered40);
  hourProbe.push({mode:baseline.mode,seed:baseline.seed,chestEvery:baseline.chestEvery,
@@ -204,7 +220,7 @@ console.log('STAGE40_60M_GUARDS '+JSON.stringify({
 }));
 console.log('STAGE40_INITIAL_HP_60M_COUNTERFACTUAL '+JSON.stringify({
  synthetic:true,notProductionBalance:true,notRebirthTiming:true,
- limitation:'Production stage-40 max HP already includes a historical 10% reduction. This probe applies an additional initial-only 10%; wipe resets to current production max HP. First eligibility and 60m return gain are measured, but no rebirth action or human/mobile evidence.',
+ limitation:'Production stage-40 max HP already includes a historical 10% reduction. This probe applies an additional initial-only 10%; wipe resets to current production max HP. First eligibility and 60m return gain are measured, but a cloned 60m return is executed where eligible, but no post-return acceleration or human/mobile evidence.',
  comparisons:hourProbe
 }));
 
@@ -214,9 +230,9 @@ const hourTarget=pathJoinForHour();
 function pathJoinForHour(){return path.join(__dirname,'..','artifacts','expedition','stage40-initial-hp-60m.json');}
 fs.writeFileSync(hourTarget,JSON.stringify({
  experiment:'stage40-initial-current-hp-60m-counterfactual',synthetic:true,
- productionBalanceChanged:false,rebirthSimulated:false,
+ productionBalanceChanged:false,rebirthSimulated:true,
  methodology:'12 paired 60-minute real-engine runs on current production stage-40 max HP (already 10% below historical); probe applies an additional one-time 10% current HP reduction on first entry; identical seeds, auto-buy and chest schedules.',
- limitations:['Production stage-40 max HP already has a 10% historical reduction; probe is an additional one-time 10%','Squad wipe restores current production stage-40 max HP','No actual first rebirth is performed','Not human play or Android device evidence'],
+ limitations:['Production stage-40 max HP already has a 10% historical reduction; probe is an additional one-time 10%','Squad wipe restores current production stage-40 max HP','An optional return is executed on a cloned 60m snapshot; no post-return acceleration is simulated','Not human play or Android device evidence'],
  comparisons:hourProbe
 },null,2)+'\n');
 console.log('STAGE40_60M_ARTIFACT '+hourTarget);
@@ -226,7 +242,7 @@ console.log('STAGE40_60M_ARTIFACT '+hourTarget);
 const persistedHour=JSON.parse(fs.readFileSync(hourTarget,'utf8'));
 assert.equal(persistedHour.experiment,'stage40-initial-current-hp-60m-counterfactual');
 assert.equal(persistedHour.productionBalanceChanged,false);
-assert.equal(persistedHour.rebirthSimulated,false);
+assert.equal(persistedHour.rebirthSimulated,true);
 assert.deepEqual(persistedHour.comparisons,hourProbe);
 assert.equal(persistedHour.comparisons.length,12);
 const persistedThirty=JSON.parse(fs.readFileSync(target,'utf8'));
