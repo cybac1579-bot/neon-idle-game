@@ -169,12 +169,17 @@ for(const baseline of results){
   const returnSnapshot=E.normalize(JSON.parse(JSON.stringify(s)),s.lastSaved||1000);
   const coresBeforeReturn=returnSnapshot.cores;
   const rebirthsBeforeReturn=returnSnapshot.rebirths;
+  const heroLevelBeforeReturn=returnSnapshot.heroLevel;
+  const relicsBeforeReturn=JSON.stringify(returnSnapshot.relics);
   const executedReturnGain=gainBeforeReturn>0?E.rebirth(returnSnapshot):null;
   if(gainBeforeReturn>0){
    assert.ok(executedReturnGain>0,'eligible 60m run must execute a positive return');
    assert.equal(returnSnapshot.rebirths,rebirthsBeforeReturn+1,'return count must advance once');
    assert.equal(returnSnapshot.stage,1,'return must reset expedition stage');
-   assert.ok(returnSnapshot.cores>=coresBeforeReturn,'return must not lose existing cores');
+   assert.equal(returnSnapshot.cores,coresBeforeReturn+executedReturnGain,'return must credit exactly the earned cores');
+   assert.equal(returnSnapshot.heroLevel,heroLevelBeforeReturn,'return must preserve permanent hero level');
+   assert.equal(JSON.stringify(returnSnapshot.relics),relicsBeforeReturn,'return must preserve permanent relic collection');
+   assert.equal(s.stage,baseline.finalStage,'cloned return must not mutate the 60m source state');
   }
   pair.push({reduceInitialHp,finalStage:s.stage,exit40,opened,entered40,firstReturnEligible,
    returnGainAt60m:gainBeforeReturn,executedReturnGain,
