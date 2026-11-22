@@ -8,7 +8,7 @@ const outDir=path.join(root,'artifacts','expedition-standalone');
 const out=path.join(outDir,'neon-expedition-offline.html');
 const source=fs.readFileSync(path.join(site,'expedition.html'),'utf8');
 const sha=(process.env.GITHUB_SHA||'local-source').replace(/[^a-z0-9]/gi,'').slice(0,12);
-const files=['expedition-engine.js','expedition-field.js','expedition-ui.js','expedition-app.js'];
+const files=['expedition-engine.js','expedition-art.js','expedition-field.js','expedition-ui.js','expedition-app.js'];
 let compiled=source;
 const cssTag='<link rel="stylesheet" href="./expedition-ui.css" data-expedition-skin="prototype-v1">';
 assert.equal(compiled.split(cssTag).length,2,'expected exactly one replaceable prototype stylesheet');
