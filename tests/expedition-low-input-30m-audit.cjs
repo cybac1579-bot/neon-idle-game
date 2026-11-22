@@ -181,6 +181,13 @@ for(const baseline of results){
    assert.equal(returnSnapshot.heroLevel,heroLevelBeforeReturn,'return must preserve permanent hero level');
    assert.equal(JSON.stringify(returnSnapshot.relics),relicsBeforeReturn,'return must preserve permanent relic collection');
    assert.equal(JSON.stringify(s),sourceStateBeforeReturn,'cloned return must not mutate the 60m source state');
+   // Re-load the completed return through the same normalization path used for saves.
+   const restoredReturn=E.normalize(JSON.parse(JSON.stringify(returnSnapshot)),returnSnapshot.lastSaved||1000);
+   assert.equal(restoredReturn.stage,1,'saved return must remain at expedition start');
+   assert.equal(restoredReturn.rebirths,returnSnapshot.rebirths,'saved return count must persist');
+   assert.equal(restoredReturn.cores,returnSnapshot.cores,'saved return cores must persist exactly');
+   assert.equal(restoredReturn.heroLevel,heroLevelBeforeReturn,'saved return must retain permanent hero level');
+   assert.equal(JSON.stringify(restoredReturn.relics),relicsBeforeReturn,'saved return must retain relics');
   }
   pair.push({reduceInitialHp,finalStage:s.stage,exit40,opened,entered40,firstReturnEligible,
    returnGainAt60m:gainBeforeReturn,executedReturnGain,
