@@ -182,6 +182,18 @@ for(const sample of hourProbe){
   '60m endpoint drift requires explicit balance review');
  assert.equal(sample.probe.opened,sample.baseline.opened,
   '60m chest drift requires explicit reward review');
+ // First-return eligibility is not a completed return. Validate both arms
+ // independently and preserve changes in timing/reward as diagnostic evidence.
+ for(const arm of [sample.baseline,sample.probe]){
+  assert.ok(arm.firstReturnEligible===null||
+   (Number.isInteger(arm.firstReturnEligible)&&arm.firstReturnEligible>=1&&arm.firstReturnEligible<=3600),
+   'first-return eligibility must be a valid second or null');
+  assert.ok(Number.isFinite(arm.returnGainAt60m)&&arm.returnGainAt60m>=0,
+   'return gain must be finite and nonnegative');
+  if(arm.firstReturnEligible!==null)assert.ok(arm.returnGainAt60m>0,
+   'eligible return must retain positive reward at 60m');
+ }
+
 }
 console.log('STAGE40_60M_GUARDS '+JSON.stringify({
  pairs:hourProbe.length,
