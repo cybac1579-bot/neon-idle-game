@@ -102,10 +102,12 @@ fs.writeFileSync(target,JSON.stringify(output,null,2)+'\n');
 console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints}))));
 console.log('LOW_INPUT_30M_OUTPUT '+target);
 
-// Controlled diagnostic only: reduce the first stage-40 enemy's *current* HP by 10%
-// on entry. This is NOT a production balance change: later rally resets still use
-// the original enemyMax(40), so the experiment is an upper-bound probe, not a
+// Controlled diagnostic relative to the ALREADY reduced production stage-40 max HP: reduce the first enemy's *current* HP by an additional 10%
+// on entry. This does not change production balance: later rally resets still use
+// the current production enemyMax(40), so the experiment is a marginal probe, not a
 // faithful simulation of changing the permanent stage-40 HP multiplier.
+assert.ok(Math.abs(E.enemyMax(40)/Math.round(3.8*13*Math.pow(1.235,39))-.9)<.00001,
+ 'stage-40 probe baseline must reflect the already-deployed 10% max-HP reduction');
 const stage40Probe=[];
 for(const baseline of results){
  const s=E.newState(1000);s.seed=baseline.seed;
@@ -132,7 +134,7 @@ for(const baseline of results){
 assert.equal(stage40Probe.length,12);
 console.log('STAGE40_INITIAL_HP_10PCT_PROBE '+JSON.stringify({
  synthetic:true,notProductionBalance:true,
- limitation:'Only initial current HP is reduced once; any subsequent squad wipe resets full stage-40 HP. Not equivalent to changing enemyMax(40).',
+ limitation:'Production stage-40 max HP is already 10% below the historical value. Probe trims initial current HP by an additional 10%; subsequent squad wipe resets to current production enemyMax(40). Not a permanent additional 10% max-HP reduction.',
  comparisons:stage40Probe
 }));
 
@@ -189,7 +191,7 @@ console.log('STAGE40_60M_GUARDS '+JSON.stringify({
 }));
 console.log('STAGE40_INITIAL_HP_60M_COUNTERFACTUAL '+JSON.stringify({
  synthetic:true,notProductionBalance:true,notRebirthTiming:true,
- limitation:'Initial current HP reduced once only; wipe resets to original HP. No rebirth action, no human/mobile evidence.',
+ limitation:'Production stage-40 max HP already includes a historical 10% reduction. This probe applies an additional initial-only 10%; wipe resets to current production max HP. No rebirth action or human/mobile evidence.',
  comparisons:hourProbe
 }));
 
@@ -200,8 +202,8 @@ function pathJoinForHour(){return path.join(__dirname,'..','artifacts','expediti
 fs.writeFileSync(hourTarget,JSON.stringify({
  experiment:'stage40-initial-current-hp-60m-counterfactual',synthetic:true,
  productionBalanceChanged:false,rebirthSimulated:false,
- methodology:'12 paired 60-minute real-engine runs; one-time 10% current HP reduction only at first stage-40 entry; identical seeds, auto-buy and chest schedules.',
- limitations:['Squad wipe restores original stage-40 max HP','No actual first rebirth is performed','Not human play or Android device evidence'],
+ methodology:'12 paired 60-minute real-engine runs on current production stage-40 max HP (already 10% below historical); probe applies an additional one-time 10% current HP reduction on first entry; identical seeds, auto-buy and chest schedules.',
+ limitations:['Production stage-40 max HP already has a 10% historical reduction; probe is an additional one-time 10%','Squad wipe restores current production stage-40 max HP','No actual first rebirth is performed','Not human play or Android device evidence'],
  comparisons:hourProbe
 },null,2)+'\n');
 console.log('STAGE40_60M_ARTIFACT '+hourTarget);
