@@ -282,3 +282,47 @@ console.log('LOW_INPUT_ARTIFACT_INTEGRITY_PASS '+JSON.stringify({
  sixtyMinuteBytes:fs.statSync(hourTarget).size,
  pairedCases:persistedHour.comparisons.length
 }));
+
+
+// Actual post-return continuation: compare a returned 60m snapshot against a
+// fresh expedition under the same low-input policy. This is not an optimal
+// rebirth-timing claim and does not modify production HP or rewards.
+const postReturnContinuations=[];
+for(const scenario of results.filter(x=>x.mode==='balanced'&&x.chestEvery===300)){
+ const returned=E.newState(1000);returned.seed=scenario.seed;
+ E.setAutoBuy(returned,scenario.mode,true);
+ for(let second=1;second<=3600;second++){
+  E.tick(returned,1);
+  if(second%scenario.chestEvery===0)
+   while(returned.chests>0)assert.ok(E.openChest(returned));
+ }
+ const earned=E.rebirthGain(returned);
+ assert.ok(earned>0,'60m state must permit an actual return');
+ const beforeReturnCores=returned.cores;
+ assert.equal(E.rebirth(returned),earned);
+ assert.equal(returned.cores,beforeReturnCores+earned);
+ const fresh=E.newState(1000);fresh.seed=scenario.seed;
+ E.setAutoBuy(fresh,scenario.mode,true);
+ const returnedStartStage=returned.stage;
+ let returnedChestOpens=0,freshChestOpens=0;
+ for(let second=1;second<=600;second++){
+  E.tick(returned,1);E.tick(fresh,1);
+  if(second%scenario.chestEvery===0){
+   while(returned.chests>0){assert.ok(E.openChest(returned));returnedChestOpens++;}
+   while(fresh.chests>0){assert.ok(E.openChest(fresh));freshChestOpens++;}
+  }
+ }
+ assert.equal(returnedStartStage,1,'return must restart the expedition');
+ assert.ok(returned.stage>=1&&fresh.stage>=1);
+ assert.ok(Number.isFinite(returned.credits)&&Number.isFinite(fresh.credits));
+ postReturnContinuations.push({seed:scenario.seed,mode:scenario.mode,
+  earnedCores:earned,returnedStageAt10m:returned.stage,
+  freshStageAt10m:fresh.stage,stageDelta:returned.stage-fresh.stage,
+  returnedChestOpens,freshChestOpens});
+}
+assert.equal(postReturnContinuations.length,3);
+console.log('POST_RETURN_10M_CONTINUATION '+JSON.stringify({
+ synthetic:true,notOptimalTiming:true,
+ caveat:'Three seeded engine-only continuations after optional return at 60m; 300s chest checks, no physical device or subjective play evidence.',
+ cases:postReturnContinuations
+}));
