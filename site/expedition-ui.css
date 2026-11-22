@@ -528,3 +528,57 @@ main.game-shell{
 #battleFx .combat-cue.hit{position:absolute;right:11%;top:43%;max-width:30%;text-align:center;
  font-size:clamp(13px,3.5vw,18px);color:#f6d6ae;text-shadow:0 2px 5px #07101c,0 0 7px #111a27}
 @media(max-width:380px){#battleFx .combat-cue.hit{right:8%;top:46%}}
+
+
+/* EXPEDITION ART PASS 1 — generated mercenary/foe atlas bundled in the
+   offline HTML. No runtime requests and no combat data modifications.
+   Keep all existing DOM nodes as graceful geometric fallback. */
+.arena.art-ready{
+ background:
+  radial-gradient(ellipse at 79% 70%,#9d64723c,transparent 39%),
+  radial-gradient(ellipse at 28% 90%,#55a7a143,transparent 50%),
+  repeating-linear-gradient(94deg,transparent 0 34px,#b6cde20b 35px 36px,transparent 37px 70px),
+  linear-gradient(180deg,#101d31 0%,#233d50 74%,#2c3749 75%,#101e30 100%);
+}
+.arena.art-ready .fighter-symbol,
+.arena.art-ready .foe .silhouette{
+ background-color:transparent!important;
+ background-image:var(--expedition-art-atlas)!important;
+ background-repeat:no-repeat!important;
+ background-size:500% 100%!important;
+ border:0!important;
+ border-radius:0!important;
+ box-shadow:none!important;
+ overflow:visible;
+ font-size:0;
+ filter:drop-shadow(0 2px 2px #06111fbb);
+}
+.arena.art-ready .fighter-symbol{isolation:auto}
+.arena.art-ready .fighter-symbol>.actor-head,
+.arena.art-ready .fighter-symbol>.actor-body,
+.arena.art-ready .fighter-symbol>.actor-tool,
+.arena.art-ready .fighter-symbol>.actor-emblem,
+.arena.art-ready .foe .silhouette:before,
+.arena.art-ready .foe .silhouette:after{display:none!important}
+.arena.art-ready .fighter.guard .fighter-symbol{background-position:0% 0%}
+.arena.art-ready .fighter.ranger .fighter-symbol{background-position:25% 0%}
+.arena.art-ready .fighter.medic .fighter-symbol{background-position:50% 0%}
+.arena.art-ready .foe .silhouette{background-position:75% 0%}
+.arena.art-ready .foe.boss .silhouette{background-position:100% 0%}
+.arena.art-ready[data-training-tier="1"] .fighter-symbol{
+ filter:drop-shadow(0 0 5px #9edbd064)}
+.arena.art-ready[data-training-tier="2"] .fighter-symbol{
+ filter:drop-shadow(0 0 8px #9eeed890)}
+.arena.art-ready[data-training-tier="3"] .fighter-symbol{
+ filter:drop-shadow(0 0 9px #f0d79eaa)}
+.arena.art-ready .fighter.wounded:not(.down) .fighter-symbol{
+ filter:saturate(.55) brightness(.8) drop-shadow(0 0 3px #df8273)}
+.arena.art-ready.arena-boss.boss-worn .foe .silhouette{
+ filter:saturate(.78) brightness(.86) drop-shadow(0 0 9px #f9ae9377)}
+.arena.art-ready.arena-boss.boss-critical .foe .silhouette{
+ filter:saturate(.63) brightness(.68) drop-shadow(0 0 14px #f39d858e)}
+.arena.art-ready .foe .silhouette{color:transparent}
+@media(prefers-reduced-motion:reduce){
+ .arena.art-ready .fighter.advance .fighter-symbol,
+ .arena.art-ready .fighter.engaged .fighter-symbol{animation:none!important}
+}
