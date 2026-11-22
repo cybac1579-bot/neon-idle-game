@@ -166,6 +166,7 @@ for(const baseline of results){
   // Exercise an actual player-chosen return on a snapshot at 60m, not merely eligibility.
   // The live 60m run is left intact; this clone tests return bookkeeping.
   const gainBeforeReturn=E.rebirthGain(s);
+  const sourceStateBeforeReturn=JSON.stringify(s);
   const returnSnapshot=E.normalize(JSON.parse(JSON.stringify(s)),s.lastSaved||1000);
   const coresBeforeReturn=returnSnapshot.cores;
   const rebirthsBeforeReturn=returnSnapshot.rebirths;
@@ -179,7 +180,7 @@ for(const baseline of results){
    assert.equal(returnSnapshot.cores,coresBeforeReturn+executedReturnGain,'return must credit exactly the earned cores');
    assert.equal(returnSnapshot.heroLevel,heroLevelBeforeReturn,'return must preserve permanent hero level');
    assert.equal(JSON.stringify(returnSnapshot.relics),relicsBeforeReturn,'return must preserve permanent relic collection');
-   assert.equal(s.stage,baseline.finalStage,'cloned return must not mutate the 60m source state');
+   assert.equal(JSON.stringify(s),sourceStateBeforeReturn,'cloned return must not mutate the 60m source state');
   }
   pair.push({reduceInitialHp,finalStage:s.stage,exit40,opened,entered40,firstReturnEligible,
    returnGainAt60m:gainBeforeReturn,executedReturnGain,
