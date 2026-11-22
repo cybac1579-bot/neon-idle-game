@@ -684,3 +684,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | 60m optional return execution on cloned state | 2026-11-22 21:50 KST, test `aac4ff10` | Added real `E.rebirth` on a cloned 60m engine state for all 12 paired scenarios when eligible; asserts stage reset, single rebirth increment, positive gain, no core loss. Source committed; **post-change CI unverified**. | **P0:** run exact-head low-input CI and inspect 60m artifact return fields. No post-return acceleration or real-device evidence; readiness 92% provisional, main/Pages untouched. |
+
+| 60m cloned return permanent-state and exact-core invariants | 2026-11-22 22:53 KST, `bc0d482d` | Previous six base-head CI runs 45024432822/32802/32796/32778/32777/32762 SUCCESS. Added strict core delta, permanent hero level/relic preservation, and source isolation assertions in 60m audit. | **Post-change CI pending/unverified**; next inspect exact-head CI and artifacts, then wipe-reset/max-HP comparison. Android human 30m unverified; readiness 92% provisional. |
