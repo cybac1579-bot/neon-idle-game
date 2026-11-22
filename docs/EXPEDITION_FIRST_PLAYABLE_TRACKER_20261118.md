@@ -184,6 +184,16 @@
 - **최종 성공 실행:** [GitHub Actions 44313162160](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/44313162160). 269/269 독립 엔진 회귀 PASS, 360/390/412px 탐사 모바일 통합·터치, 전투 관전·밀집 배치 브라우저 회귀, 독립 HTML file:// 실행/네트워크 요청 0·백업/복원·저장 차단 감지·페이지 캐시 재진입 정산 검사 PASS. 아티팩트 `neon-expedition-offline-playable` (62,819 bytes 압축) / `neon-touch-playthrough` (2,521,600 bytes) 업로드 확인.
 - **상태 판단:** 기술 준비율 **약 92% 추정 유지**, 1차 관리 작업 완료 3/6 / 미완 R4(실기기 사용성), R5(관전 재미 체감 개선 평가), R6(기준 버전 확정) 3개. 실제 Galaxy S25+ 화면이나 유저 주관적 재미를 CI로 대체하지 않는다. 자동 구매 옵션·코어·환생·유물 드롭/전투 수치는 변경 없음.
 
+## 2026-11-22 · 캐릭터 아트 1차 적용 (실제 게임 소스·오프라인 빌드)
+
+- **게임 기능 기준 SHA:** `153cc9898679955a0a9babf37b0dd43b2ceaf37d`, 작업 브랜치 `integration/reconcile-main-redesign-20261114`. `main`과 기존 공개 Pages/저장은 변경하지 않음.
+- **이전 상태:** 전투원 3병종 및 적군은 `expedition-ui.css`의 머리·몸통·장비 CSS 도형과 추상 실루엣이었다. 생성한 아트 시트는 이전에는 게임에 적용되지 않은 원화 후보였음.
+- **실제 변경:** 아트 시트를 WebP 투명 5칸 캐릭터 아틀라스로 재구성하고 `site/expedition-art.js`에 자체 포함(`data:image/webp;base64`, 외부 요청 없음). `site/expedition.html`은 해당 파일을 필드 렌더링 전 로드. `site/expedition-field.js`는 아트 존재 시 `art-ready` 및 CSS 이미지 변수로 실제 렌더에 연결하며, 빠지면 기존 CSS 실루엣으로 안전하게 폴백. `site/expedition-ui.css`에서 방벽병/사수/정비사/일반 적/지휘급 보스 이미지를 각각 구분하고 기존 동일 전장·건강·행군·전투 동작·적 HP 손상 상태를 유지. 배경 조명을 일부 정돈.
+- **독립 HTML 변경:** `scripts/build-expedition-standalone.cjs`가 `expedition-art.js`를 하나의 HTML에 내장. 게임 실행 중 외부 이미지 다운로드 필요 없음.
+- **회귀 강화:** 모바일 HTTP 서버의 아트 스크립트 허용 목록, 실제 Chromium 360/390/412px CSS 그림 렌더·기존 도형 숨김 검사, `file://` 오프라인 HTML에 정확한 아트 소스가 포함되고 네트워크 0임을 검사.
+- **동일 소스 PASS:** [GitHub Actions 45012949270](https://github.com/cybac1579-bot/neon-idle-game/actions/runs/45012949270). 노드 엔진 271/271 PASS, 기존 모바일 3해상도·터치·저장·복원·환생·전투 효과/축소 모션, 독립 HTML 360/390/412px의 파일 실행/백업/오프라인/저장 거부 회귀 전부 PASS. 플레이 ZIP `neon-expedition-offline-playable` 96,124바이트, 실제 Chromium 캡처 ZIP `neon-touch-playthrough` 2,535,745바이트. 스크린샷 `expedition/expedition-390.png`에서 아트가 실제 용병/적 전장에 나타남을 확인.
+- **현재 한계:** 캐릭터가 단일 포즈 일러스트로 교체된 첫 패스이며 개별 공격·이동·피격 프레임 애니메이션이나 보스별 별도 고품질 아트는 아직 미완료. 유저 Galaxy S25+ 실제 시인성 및 관전 재미 체감은 미검증. 전투·드롭·경제·환생 수치 변경 없음. 기존 92% 추정 준비율과 R4/R5/R6 미완료 상태 유지.
+
 ## 1차 이후
 
 - 실사용 결과를 보고 유물 종류·효과·전투 상호작용과 반복 환생의 신선도 확장.
