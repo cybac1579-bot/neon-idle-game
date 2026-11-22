@@ -148,7 +148,7 @@ for(const baseline of results){
  for(const reduceInitialHp of [false,true]){
   const s=E.newState(1000);s.seed=baseline.seed;
   assert.equal(E.setAutoBuy(s,baseline.mode,true),true);
-  let entered40=false,adjusted=false,exit40=null,opened=0;
+  let entered40=false,adjusted=false,exit40=null,opened=0,firstReturnEligible=null;
   for(let second=1;second<=3600;second++){
    if(s.stage===40){
     entered40=true;
@@ -157,12 +157,13 @@ for(const baseline of results){
     }
    }
    E.tick(s,1);
+   if(firstReturnEligible===null&&E.rebirthGain(s)>0)firstReturnEligible=second;
    if(entered40&&exit40===null&&s.stage>40)exit40=second;
    if(second%baseline.chestEvery===0){
     while(s.chests>0){assert.ok(E.openChest(s));opened++;}
    }
   }
-  pair.push({reduceInitialHp,finalStage:s.stage,exit40,opened,entered40});
+  pair.push({reduceInitialHp,finalStage:s.stage,exit40,opened,entered40,firstReturnEligible,returnGainAt60m:E.rebirthGain(s)});
  }
  assert.equal(pair[0].entered40,pair[1].entered40);
  hourProbe.push({mode:baseline.mode,seed:baseline.seed,chestEvery:baseline.chestEvery,
@@ -191,7 +192,7 @@ console.log('STAGE40_60M_GUARDS '+JSON.stringify({
 }));
 console.log('STAGE40_INITIAL_HP_60M_COUNTERFACTUAL '+JSON.stringify({
  synthetic:true,notProductionBalance:true,notRebirthTiming:true,
- limitation:'Production stage-40 max HP already includes a historical 10% reduction. This probe applies an additional initial-only 10%; wipe resets to current production max HP. No rebirth action or human/mobile evidence.',
+ limitation:'Production stage-40 max HP already includes a historical 10% reduction. This probe applies an additional initial-only 10%; wipe resets to current production max HP. First eligibility and 60m return gain are measured, but no rebirth action or human/mobile evidence.',
  comparisons:hourProbe
 }));
 
