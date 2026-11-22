@@ -312,28 +312,35 @@ for(const scenario of results.filter(x=>x.mode==='balanced'&&x.chestEvery===300)
  E.setAutoBuy(fresh,scenario.mode,true);
  const returnedStartStage=returned.stage;
  let returnedChestOpens=0,investedChestOpens=0,freshChestOpens=0;
- for(let second=1;second<=600;second++){
+ let at10m=null;
+ for(let second=1;second<=1800;second++){
   E.tick(returned,1);E.tick(invested,1);E.tick(fresh,1);
   if(second%scenario.chestEvery===0){
    while(returned.chests>0){assert.ok(E.openChest(returned));returnedChestOpens++;}
    while(invested.chests>0){assert.ok(E.openChest(invested));investedChestOpens++;}
    while(fresh.chests>0){assert.ok(E.openChest(fresh));freshChestOpens++;}
   }
+  if(second===600)at10m={returnedStage:returned.stage,investedStage:invested.stage,freshStage:fresh.stage,
+   returnedChests:returnedChestOpens,investedChests:investedChestOpens,freshChests:freshChestOpens};
  }
+ assert.ok(at10m,'10-minute checkpoint must exist');
  assert.equal(returnedStartStage,1,'return must restart the expedition');
  assert.ok(returned.stage>=1&&fresh.stage>=1&&invested.stage>=1);
  assert.ok(Number.isFinite(returned.credits)&&Number.isFinite(fresh.credits)&&Number.isFinite(invested.credits));
  assert.ok(invested.coreUpgrades.valor>returned.coreUpgrades.valor);
  postReturnContinuations.push({seed:scenario.seed,mode:scenario.mode,
   earnedCores:earned,valorPurchases,investedCoresRemaining:invested.cores,
-  returnedStageAt10m:returned.stage,investedStageAt10m:invested.stage,
-  freshStageAt10m:fresh.stage,stageDelta:returned.stage-fresh.stage,
-  investedStageDelta:invested.stage-fresh.stage,
+  returnedStageAt10m:at10m.returnedStage,investedStageAt10m:at10m.investedStage,
+  freshStageAt10m:at10m.freshStage,stageDelta:at10m.returnedStage-at10m.freshStage,
+  investedStageDelta:at10m.investedStage-at10m.freshStage,
+  returnedStageAt30m:returned.stage,investedStageAt30m:invested.stage,freshStageAt30m:fresh.stage,
+  stageDeltaAt30m:returned.stage-fresh.stage,investedStageDeltaAt30m:invested.stage-fresh.stage,
+  returnedChestOpensAt10m:at10m.returnedChests,investedChestOpensAt10m:at10m.investedChests,freshChestOpensAt10m:at10m.freshChests,
   returnedChestOpens,investedChestOpens,freshChestOpens});
 }
 assert.equal(postReturnContinuations.length,3);
 console.log('POST_RETURN_10M_CONTINUATION '+JSON.stringify({
  synthetic:true,notOptimalTiming:true,
- caveat:'Three seeded engine-only continuations after optional return at 60m; distinguish unspent return cores from deliberate valor investment; 300s chest checks, no physical device or subjective play evidence.',
+ caveat:'Three seeded engine-only 10m and 30m continuations after optional return at 60m; distinguish unspent return cores from deliberate valor investment; 300s chest checks, no physical device or subjective play evidence.',
  cases:postReturnContinuations
 }));
