@@ -380,8 +380,9 @@ function renderArchive(){
  $('rebirth').textContent=gain?'귀환하고 코어 '+fmt(gain)+'개 받기':s.runBest<=10?'10거리 보스를 격파해야 귀환 가능':'코어 적립 중 · 더 깊이 탐사해 줘';
  $('coreSummary').innerHTML=row('전선 코어 · 전투 강화','LV.'+fmt(s.coreUpgrades.valor))+
   row('전선 코어 화력 효과','+'+((E.valorMultiplier(s)-1)*100).toFixed(1)+'% · 9레벨부터 기존 배율')+
-  (s.coreUpgrades.valor<30?row('다음 전선 강화 시 화력',
-   '+'+((E.valorMultiplier({...s,coreUpgrades:{...s.coreUpgrades,valor:s.coreUpgrades.valor+1}})-1)*100).toFixed(1)+
+  (s.coreUpgrades.valor<30?row('다음 전선 강화 효과',
+   '현재 대비 +'+((E.valorMultiplier({...s,coreUpgrades:{...s.coreUpgrades,valor:s.coreUpgrades.valor+1}})/E.valorMultiplier(s)-1)*100).toFixed(1)+
+   '% · 강화 후 누적 +'+((E.valorMultiplier({...s,coreUpgrades:{...s.coreUpgrades,valor:s.coreUpgrades.valor+1}})-1)*100).toFixed(1)+
    '% · 코어 '+fmt(E.coreCost(s,'valor'))+'개 필요'):'')+
   row('보급 코어 · 경제 강화','LV.'+fmt(s.coreUpgrades.trade));
  const b=E.permanentBonuses(s);
