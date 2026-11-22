@@ -101,3 +101,37 @@ fs.mkdirSync(path.dirname(target),{recursive:true});
 fs.writeFileSync(target,JSON.stringify(output,null,2)+'\n');
 console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints}))));
 console.log('LOW_INPUT_30M_OUTPUT '+target);
+
+// Controlled diagnostic only: reduce the first stage-40 enemy's *current* HP by 10%
+// on entry. This is NOT a production balance change: later rally resets still use
+// the original enemyMax(40), so the experiment is an upper-bound probe, not a
+// faithful simulation of changing the permanent stage-40 HP multiplier.
+const stage40Probe=[];
+for(const baseline of results){
+ const s=E.newState(1000);s.seed=baseline.seed;
+ assert.equal(E.setAutoBuy(s,baseline.mode,true),true);
+ let adjusted=false,entered40=false,first40Exit=null,stage40Seconds=0,opened=0;
+ for(let second=1;second<=1800;second++){
+  if(s.stage===40){
+   entered40=true;stage40Seconds++;
+   if(!adjusted){s.enemyHp=Math.max(1,Math.round(s.enemyHp*.9));adjusted=true;}
+  }
+  E.tick(s,1);
+  if(entered40&&first40Exit===null&&s.stage>40)first40Exit=second;
+  if(second%baseline.chestEvery===0){
+   while(s.chests>0){assert.ok(E.openChest(s));opened++;}
+  }
+ }
+ assert.equal(entered40,baseline.stage40Start!==null);
+ stage40Probe.push({mode:baseline.mode,seed:baseline.seed,chestEvery:baseline.chestEvery,
+  baselineStage:baseline.finalStage,probeStage:s.stage,
+  baseline40Seconds:baseline.stage40Seconds,probe40Seconds:stage40Seconds,
+  baseline40Exit:baseline.stage40End,probe40Exit:first40Exit,
+  baselineOpened:baseline.opened,probeOpened:opened});
+}
+assert.equal(stage40Probe.length,12);
+console.log('STAGE40_INITIAL_HP_10PCT_PROBE '+JSON.stringify({
+ synthetic:true,notProductionBalance:true,
+ limitation:'Only initial current HP is reduced once; any subsequent squad wipe resets full stage-40 HP. Not equivalent to changing enemyMax(40).',
+ comparisons:stage40Probe
+}));
