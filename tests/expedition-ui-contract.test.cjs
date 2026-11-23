@@ -67,5 +67,22 @@ assert.match(css, /\.combat-cue\s*\{animation:combat-flash-reduced\s+1\.2s/,
 // It is OK to replace all CSS and markup, but not to silently drop a
 // controller binding or to alter the user's old or current save keys.
 assert.ok(engine.includes('neon_expedition_prototype_v1'),'stable prototype save key');
+
+// Combat visibility regression: fallen early recruits must not conceal
+// healthy reserves, and original actor indices must survive selection.
+const selectSource=field.match(/const selected=s=>\{[\s\S]*?\n\};\nfunction sync\(s\)/);
+assert.ok(selectSource,'combat roster selection must remain inspectable');
+const selectRoster=Function('return ('+selectSource[0].slice(0,-'\nfunction sync(s)'.length).replace(/^const selected=/,'') .replace(/;\s*$/,'')+')')();
+const sample={actors:[
+ {id:'guard',hp:0,revive:4},{id:'guard',hp:0,revive:3},
+ {id:'guard',hp:0,revive:2},{id:'guard',hp:50,revive:0},
+ {id:'ranger',hp:20,revive:0},{id:'medic',hp:10,revive:0}]};
+const shown=selectRoster(sample);
+assert.ok(shown.some(x=>x.index===3),'healthy reserve guard must be visible');
+assert.equal(shown.filter(x=>x.a.id==='guard').length,3,'guard display cap unchanged');
+assert.equal(shown.filter(x=>x.a.id==='guard'&&x.a.hp>0).length,1,
+ 'healthy guard must be prioritized over fallen guards');
+assert.deepEqual(selectRoster({actors:[]}),[],'empty squad remains safe');
+
 console.log('PASS expedition UI interchange contract: '+shellIds.size+
  ' shell IDs, '+new Set(allBindings).size+' bindings, 4 panel ports, engine/save isolated');
