@@ -237,7 +237,9 @@ function sync(s){
  const allDown=(s.actors||[]).length>0&&s.actors.every(a=>a.hp<=0||a.revive>0);
  const nextRevive=allDown?Math.min(...s.actors.map(a=>Math.max(0,Number(a.revive)||0))):0;
  rosterNote.hidden=!allDown&&extra===0;
- if(allDown)rosterNote.textContent='부대 전멸 · 자동 재합류 '+Math.ceil(nextRevive)+'초';
+ if(allDown)rosterNote.textContent=nextRevive>0
+  ?'부대 전멸 · 자동 재합류 '+Math.ceil(nextRevive)+'초'
+  :'부대 전멸 · 재합류 처리 중';
  else if(extra)rosterNote.textContent='전투원 '+shown.length+'명 표시 · 후방 '+extra+'명';
  const bossActive=E.isBoss(s.stage);
  arena.classList.toggle('arena-boss',bossActive);
