@@ -232,8 +232,13 @@ function sync(s){
   el.title=a.id+' HP '+Math.floor(a.hp)+' / '+Math.floor(hpMax)+(down?' · 재합류 '+a.revive.toFixed(1)+'초':'');
  });
  const extra=Math.max(0,(s.actors||[]).length-shown.length);
- rosterNote.hidden=extra===0;
- if(extra)rosterNote.textContent='전투원 '+shown.length+'명 표시 · 후방 '+extra+'명';
+ // A wiped squad must not look like an idle/stalled battle. This is
+ // presentation-only: the engine still owns the actual revival timers.
+ const allDown=(s.actors||[]).length>0&&s.actors.every(a=>a.hp<=0||a.revive>0);
+ const nextRevive=allDown?Math.min(...s.actors.map(a=>Math.max(0,Number(a.revive)||0))):0;
+ rosterNote.hidden=!allDown&&extra===0;
+ if(allDown)rosterNote.textContent='부대 전멸 · 자동 재합류 '+Math.ceil(nextRevive)+'초';
+ else if(extra)rosterNote.textContent='전투원 '+shown.length+'명 표시 · 후방 '+extra+'명';
  const bossActive=E.isBoss(s.stage);
  arena.classList.toggle('arena-boss',bossActive);
  // Purely cosmetic damage wear: these stages follow the actual boss HP
