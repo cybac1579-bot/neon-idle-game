@@ -85,3 +85,24 @@ test('40 reward is still earned only by a genuine victory',()=>{
  assert.equal(s.rebirths,0);
  assert.equal(s.relics.enlist,undefined);
 });
+
+test('stage40 full-squad recovery preserves the encounter and does not invent a return',()=>{
+ const s=E.newState(1000);
+ s.stage=s.best=s.runBest=40;
+ s.enemyHp=E.enemyMax(40)*.6;
+ s.autoBuy.enabled=false;
+ const remaining=s.enemyHp;
+ s.actors.forEach(a=>{a.hp=0;a.revive=3;a.progress=0;a.cooldown=1;});
+ s.squadHp=0;s.respawn=3;
+ E.tick(s,1);
+ assert.equal(s.stage,40,'a wiped squad must not advance');
+ assert.equal(s.enemyHp,remaining,'the enemy should not heal or take fictional damage while all actors recover');
+ assert.equal(s.rebirths,0);
+ assert.equal(s.chests,0);
+ assert.ok(s.actors.every(a=>a.revive>0));
+ E.tick(s,2);
+ assert.ok(s.actors.some(a=>a.revive===0&&a.hp>0),'the squad must rejoin automatically');
+ assert.equal(s.stage,40);
+ assert.equal(s.rebirths,0);
+ assert.ok(s.squadHp>0,'recovered actor HP must update the aggregate health');
+});
