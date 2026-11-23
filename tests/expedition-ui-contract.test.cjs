@@ -90,6 +90,20 @@ assert.match(field,/const allDown=\(s\.actors\|\|\[\]\)\.length>0&&s\.actors\.ev
  'full-wipe notice must require a nonempty roster with no living actors');
 assert.ok(field.includes('nextRevive>0')&&field.includes('재합류 처리 중'),
  'zero-second rejoin tick must not show a misleading countdown');
+// Mixed zero/positive revive counters must show the next pending return,
+// not a false "processing" state caused by the zero entry.
+const pendingSource=field.match(/const pendingRevives=allDown\?[\s\S]*?const nextRevive=pendingRevives\.length\?Math\.min\(\.\.\.pendingRevives\):0;/);
+assert.ok(pendingSource,'pending rejoin countdown must filter nonpositive timers');
+const pendingTimer=Function('actors','allDown',
+ 'const s={actors};'+pendingSource[0]+'return nextRevive;');
+assert.equal(pendingTimer([{revive:0},{revive:2.2},{revive:5}],true),2.2,
+ 'zero-boundary actor must not hide another pending rejoin');
+assert.equal(pendingTimer([{revive:0},{revive:0}],true),0,
+ 'all-zero down actors should show processing');
+assert.equal(pendingTimer([{revive:3}],false),0,
+ 'active squad should not report a wipe timer');
+assert.equal(pendingTimer([{revive:NaN},{revive:4}],true),4,
+ 'invalid timer must not mask a valid pending rejoin');
 assert.match(field,/Math\.ceil\(nextRevive\)/,
  'automatic rejoin countdown must use the real shortest revival timer');
 assert.ok(field.includes('부대 전멸 · 자동 재합류')&&field.includes('rosterNote.hidden=!allDown&&extra===0'),
