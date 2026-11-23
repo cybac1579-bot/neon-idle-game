@@ -2200,3 +2200,5 @@
 - Added a focused executable stage40 fixture to `tests/expedition-stage40-boss-balance.test.cjs`: full wipe, no fabricated enemy damage/loot/rebirth during 1s wait, auto rejoin after 3s, aggregate squad HP positive. Commit `242396bd0dd1d5d1d38e80df68d49eb1534be9a6` (blob SHA checked). This is a new regression test, **not a gameplay fix**.
 - Post-change CI initially not listed for exact commit; new test execution/CI success **unverified**. No physical 360/390/412 browser screenshot or Galaxy S25+ 30m play. Main/Pages not touched or deployed; PR #2 not merged. Readiness remains 92% provisional (+0pp).
 - Next: check exact-head CI and investigate any new test failure; inspect stage40 all-dead and revived visual cue in portrait browser, then prioritize combat observation quality.
+
+- Follow-up test-only adjustment: stage40 boss can legitimately one-shot freshly revived untrained actors in the same tick, so the fixture now sets training=1000 to isolate the respawn bookkeeping rather than assert survival against boss damage. Final source commit `bb4394f8383da1cd5f18bb620a9c805d32fb5c10`; exact-commit CI still unverified at check.
