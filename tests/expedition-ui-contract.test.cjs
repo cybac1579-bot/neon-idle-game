@@ -39,6 +39,15 @@ assert.ok(!/document\.|window\.|querySelector|localStorage/.test(engine),
  'game logic must stay independent of browser view and storage');
 assert.ok(!/\b(?:function|const|let)\s+(?:fight|tick|rebirth)\b/.test(view),
  'UI adapter must not redefine simulation operations');
+// Return core preview must distinguish marginal gain from cumulative gain, and show affordability.
+assert.match(view,/E\.valorMultiplier\(\{\.\.\.s,coreUpgrades:/,
+ 'next-level core preview must calculate from a cloned state');
+assert.match(view,/E\.valorMultiplier\(s\)-1\)\*100/,
+ 'current cumulative core bonus must remain visible');
+assert.ok(view.includes('현재 대비 +')&&view.includes('강화 후 누적 +'),
+ 'marginal and cumulative core effects must be separately labelled');
+assert.ok(view.includes('지금 구매 가능')&&view.includes('개 부족'),
+ 'core preview must disclose whether the next upgrade is affordable');
 // Nonvisual metadata must not erase a still-visible combat cue or trail.
 assert.match(field,/if\(!visibleKinds\.has\(evt\.type\)\)return;/,
  'nonvisual events must leave the current combat label intact');
