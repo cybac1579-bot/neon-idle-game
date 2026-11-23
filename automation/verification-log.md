@@ -2187,3 +2187,9 @@
 - Changed `site/expedition-field.js` only: select active/healthy actors first for each role, then fill remaining visible slots with fallen actors. Preserve original actor indices, engine battle state, real HP, combat event targeting, art and saves. Source commit `6a68d7df225d606ffbc5e046b187cb4d1048ba4a`.
 - Targeted Node assertions for 3 fallen guards + 1 healthy reserve + ranger and empty roster PASS in local isolated function test; this is **not** full browser or engine regression proof. Post-change GitHub CI not yet observed. No main/Pages deployment or PR merge. Galaxy S25+ 30m fun/thermal remain unverified. Readiness 92% provisional (+0pp).
 - Next: obtain exact-head CI, test 360/390/412px with a fallen-front/healthy-reserve fixture and check combat cues still point to original actor indices; inspect stage40 boss wipe/recovery.
+
+## 2026-11-23 12:51 KST — reserve-selection regression
+- Base c711f539, protected main 9918709e. Six exact-base CI workflows succeeded: 45103219276, 45103219138, 45103219134, 45103219181, 45103219237, 45103219154. PR #2 remains draft.
+- Reviewed automation policy/log/coverage and manual decisions/status/handoff/reactor trial. Two hypotheses: healthy reserve fix might regress without fixture; or existing UI contract already covers it. Existing contract had no roster fixture.
+- Added executable roster selector assertions for fallen guards versus healthy fourth guard, role cap, preserved actor index, and empty roster. Test commit e02d0dad. No engine, balance, art or save change.
+- New-head CI not confirmed yet; no physical device or browser fixture verification. Readiness 92% provisional (+0pp); main/Pages unchanged. Next verify exact-head CI, 360/390/412px combat visibility, and stage40 wipe/recovery.
