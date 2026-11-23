@@ -84,5 +84,14 @@ assert.equal(shown.filter(x=>x.a.id==='guard'&&x.a.hp>0).length,1,
  'healthy guard must be prioritized over fallen guards');
 assert.deepEqual(selectRoster({actors:[]}),[],'empty squad remains safe');
 
+// Full-wipe visibility must reflect real engine revive timers without adding
+// an extra permanent battle HUD or changing combat/reward state.
+assert.match(field,/const allDown=\(s\.actors\|\|\[\]\)\.length>0&&s\.actors\.every\(a=>a\.hp<=0\|\|a\.revive>0\)/,
+ 'full-wipe notice must require a nonempty roster with no living actors');
+assert.match(field,/Math\.ceil\(nextRevive\)/,
+ 'automatic rejoin countdown must use the real shortest revival timer');
+assert.ok(field.includes('부대 전멸 · 자동 재합류')&&field.includes('rosterNote.hidden=!allDown&&extra===0'),
+ 'wipe notice must be visible even with no hidden reserves');
+
 console.log('PASS expedition UI interchange contract: '+shellIds.size+
  ' shell IDs, '+new Set(allBindings).size+' bindings, 4 panel ports, engine/save isolated');
