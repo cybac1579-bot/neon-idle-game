@@ -711,3 +711,5 @@ The table tracks actual evidence, not assumed passing tests. Refer to `automatio
 
 
 | Return-core next-upgrade affordability / regression guard | 2026-11-23 09:56 KST, UI `653ddc58`, test `780cc6b8` | Existing incremental/cumulative preview retained; added explicit affordable/deficit message from current core balance; UI contract asserts clone-based projection and both labels. Initial exact-test-commit fast/low-input/save CI SUCCESS, portrait and two others pending at check. | **P0:** verify final-head six CI and 360/390/412px return panel fit; real S25+ visual and 30m fun unverified. Readiness 92%, main/Pages not deployed. |
+
+| Return-core preview portrait wrapping | 2026-11-23 11:00 KST, CSS `4c16a006`, contract `8d2cf348` | Added `#coreSummary` shrinkable grid/wrapping and static contract assertions after prior six exact-head CI SUCCESS (45091845316/369/418/401/310/321); **new CI/browser unverified** | **P0:** verify exact new HEAD CI and 360/390/412px return preview; then combat viewing and stage40 wipe. Galaxy S25+ unverified, 92% provisional, no deployment. |
