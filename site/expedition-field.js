@@ -235,7 +235,11 @@ function sync(s){
  // A wiped squad must not look like an idle/stalled battle. This is
  // presentation-only: the engine still owns the actual revival timers.
  const allDown=(s.actors||[]).length>0&&s.actors.every(a=>a.hp<=0||a.revive>0);
- const nextRevive=allDown?Math.min(...s.actors.map(a=>Math.max(0,Number(a.revive)||0))):0;
+ const pendingRevives=allDown?s.actors.map(a=>Number(a.revive)).filter(n=>Number.isFinite(n)&&n>0):[];
+ // A down actor at zero can be waiting for the next engine tick while other
+ // actors still have real positive timers. Do not let that zero mask the
+ // earliest *pending* return; show processing only when none is pending.
+ const nextRevive=pendingRevives.length?Math.min(...pendingRevives):0;
  rosterNote.hidden=!allDown&&extra===0;
  if(allDown)rosterNote.textContent=nextRevive>0
   ?'부대 전멸 · 자동 재합류 '+Math.ceil(nextRevive)+'초'
