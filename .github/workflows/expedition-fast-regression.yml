@@ -1,0 +1,61 @@
+name: Expedition fast regression
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'site/expedition-engine.js'
+      - 'tests/expedition*.test.cjs'
+      - 'tests/expedition-first-playable-gate.cjs'
+      - 'tests/expedition-first-playable-stall-audit.cjs'
+      - 'tests/expedition-first-playable-stage40-options-audit.cjs'
+      - 'tests/expedition.test.cjs'
+      - 'tests/expedition-run-metrics.test.js'
+      - '.github/workflows/expedition-fast-regression.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'site/expedition-engine.js'
+      - 'tests/expedition*.test.cjs'
+      - 'tests/expedition-first-playable-gate.cjs'
+      - 'tests/expedition-first-playable-stall-audit.cjs'
+      - 'tests/expedition-first-playable-stage40-options-audit.cjs'
+      - 'tests/expedition.test.cjs'
+      - 'tests/expedition-run-metrics.test.js'
+      - '.github/workflows/expedition-fast-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: expedition-fast-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  engine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check expedition engine and test syntax
+        run: |
+          node --check site/expedition-engine.js
+          node --check tests/expedition.test.cjs
+          node --check tests/expedition-run-metrics.test.js
+          node --check tests/expedition-stage65-diagram.test.cjs
+          node --check tests/expedition-elite65-hp-migration.test.cjs
+          node --check tests/expedition-boss50-pacing.test.cjs
+          node --check tests/expedition-stage40-boss-balance.test.cjs
+          node --check tests/expedition-first-playable-gate.cjs
+          node --check tests/expedition-first-playable-stall-audit.cjs
+          node --check tests/expedition-first-playable-stage40-options-audit.cjs
+      - name: Run expedition engine regression before browser installation
+        run: node --test tests/expedition.test.cjs tests/expedition-stage65-diagram.test.cjs tests/expedition-elite65-hp-migration.test.cjs tests/expedition-boss50-pacing.test.cjs tests/expedition-stage40-boss-balance.test.cjs tests/expedition-run-metrics.test.js
+      - name: Verify first playable 30-minute loop and two-hour resume
+        run: node tests/expedition-first-playable-gate.cjs
+      - name: Observe first-run 15-to-30-minute stall and reward intervals
+        run: node tests/expedition-first-playable-stall-audit.cjs
+      - name: Compare stage40 boss wait reductions without changing live balance
+        run: node tests/expedition-first-playable-stage40-options-audit.cjs

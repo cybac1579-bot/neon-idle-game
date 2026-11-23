@@ -1,0 +1,346 @@
+'use strict';
+// Real expedition engine, 30-minute low-input observation; no forced drops or returns.
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const E=require('../site/expedition-engine.js');
+const seeds=[123456789,987654321,20261118];
+const modes=['balanced','adaptive'];
+const chestCadences=[60,300];
+const results=[];
+for(const mode of modes)for(const seed of seeds)for(const chestEvery of chestCadences){
+ const s=E.newState(1000);s.seed=seed;
+ assert.equal(E.setAutoBuy(s,mode,true),true);
+ assert.equal(s.autoChest.enabled,false);
+ let opened=0,manualActions=0,firstChest=null,firstRelic=null;
+ let lastTenMinuteAutoBuys=0,lastTenMinuteChestDrops=0,lastTenMinuteStageAdvances=0,lastTenMinuteChestOpens=0;
+ let stage40Seconds=0,stage40AutoBuys=0,stage40ChestDrops=0,stage40Start=null,stage40End=null;
+ let lastChestDropAt=0,longestChestDropWait=0,chestDropEvents=[];
+ const checkpoints=[];
+ const milestones=[];
+ let lastStage=s.stage,lastRelicCount=0,lastAdvanceAt=0,lastRewardAt=0;
+ let longestStageWait=0,longestRewardWait=0,stageWaitAt=null,rewardWaitAt=null;
+ const rewardEvents=[];
+ for(let second=1;second<=1800;second++){
+  const chestsBeforeTick=s.chests,stageBeforeTick=s.stage,autoBuysBeforeTick=s.autoBuy.purchases;
+  if(stageBeforeTick===40){stage40Seconds++;if(stage40Start===null)stage40Start=second;}
+  E.tick(s,1);
+  if(stageBeforeTick===40){
+   stage40AutoBuys+=Math.max(0,s.autoBuy.purchases-autoBuysBeforeTick);
+   stage40ChestDrops+=Math.max(0,s.chests-chestsBeforeTick);
+   if(s.stage>40&&stage40End===null)stage40End=second;
+  }
+  if(second>1200){
+   lastTenMinuteAutoBuys+=Math.max(0,s.autoBuy.purchases-autoBuysBeforeTick);
+   lastTenMinuteStageAdvances+=Math.max(0,s.stage-stageBeforeTick);
+   lastTenMinuteChestDrops+=Math.max(0,s.chests-chestsBeforeTick);
+  }
+  if(s.chests>chestsBeforeTick){
+   longestChestDropWait=Math.max(longestChestDropWait,second-lastChestDropAt);
+   chestDropEvents.push({second,count:s.chests-chestsBeforeTick});lastChestDropAt=second;
+  }
+  if(s.stage>lastStage){
+   if(second-lastAdvanceAt>longestStageWait){longestStageWait=second-lastAdvanceAt;stageWaitAt=lastStage;}
+   milestones.push({second,stage:s.stage});lastStage=s.stage;lastAdvanceAt=second;
+  }
+  if(s.chests>0&&firstChest===null)firstChest=second;
+  if(second%chestEvery===0){
+   if(s.chests>0)manualActions++;
+   while(s.chests>0){assert.ok(E.openChest(s));opened++;if(second>1200)lastTenMinuteChestOpens++;
+    if(second-lastRewardAt>longestRewardWait){longestRewardWait=second-lastRewardAt;rewardWaitAt=second;}
+    rewardEvents.push({second,kind:'chest-open'});lastRewardAt=second;
+   }
+  }
+  const count=E.RELICS.filter(r=>E.relic(s,r.id)>0).length;
+  if(count>lastRelicCount&&firstRelic===null)firstRelic=second;
+  lastRelicCount=count;
+  if(second%300===0)checkpoints.push({minute:second/60,stage:s.stage,credits:s.credits,chests:s.chests,opened,uniqueRelics:count,manualActions});
+ }
+ longestChestDropWait=Math.max(longestChestDropWait,1800-lastChestDropAt);
+ if(1800-lastAdvanceAt>longestStageWait){longestStageWait=1800-lastAdvanceAt;stageWaitAt=lastStage;}
+ if(1800-lastRewardAt>longestRewardWait){longestRewardWait=1800-lastRewardAt;rewardWaitAt=1800;}
+ // Verify stage-40 counters are coherent before using them to justify balance changes.
+ assert.ok(stage40Seconds>=0&&stage40Seconds<=1800);
+ assert.ok(stage40AutoBuys>=0&&stage40ChestDrops>=0);
+ assert.ok(stage40ChestDrops<=chestDropEvents.reduce((sum,e)=>sum+e.count,0));
+ if(stage40Start!==null){
+  assert.ok(stage40Start>=1&&stage40Start<=1800);
+  if(stage40End!==null)assert.ok(stage40End>=stage40Start&&stage40End<=1800);
+ }
+ assert.equal(checkpoints.length,6);
+ assert.ok(manualActions<=1800/chestEvery,'manual chest batches cannot exceed scheduled checks');
+ assert.ok(milestones.every((x,i)=>i===0||x.second>=milestones[i-1].second));
+ results.push({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,
+  finalStage:s.stage,uniqueRelics:lastRelicCount,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,longestChestDropWait,chestDropEvents,longestStageWait,stageWaitAt,longestRewardWait,rewardWaitAt,rewardEvents,stageMilestones:milestones,checkpoints});
+}
+assert.equal(results.length,12);
+// Keep a compact aggregate in the CI log, not only the downloadable JSON artifact.
+const plateauSummary=results.map(r=>({mode:r.mode,seed:r.seed,chestEvery:r.chestEvery,stage40Seconds:r.stage40Seconds,stage40AutoBuys:r.stage40AutoBuys,stage40ChestDrops:r.stage40ChestDrops,stage40Start:r.stage40Start,stage40End:r.stage40End,finalStage:r.finalStage,lastTenMinuteChestDrops:r.lastTenMinuteChestDrops,lastTenMinuteChestOpens:r.lastTenMinuteChestOpens}));
+console.log('STAGE40_ATTRIBUTION '+JSON.stringify(plateauSummary));
+// Surface a compact, comparable 20–30 minute reward/progression window in CI.
+// This is diagnostic telemetry, not evidence that waiting is intrinsically bad.
+const tailWindow=results.map(r=>({
+ mode:r.mode,seed:r.seed,chestEvery:r.chestEvery,
+ stageAt20m:r.checkpoints[3].stage,stageAt30m:r.finalStage,
+ stageAdvances:r.lastTenMinuteStageAdvances,
+ autoBuys:r.lastTenMinuteAutoBuys,
+ chestDrops:r.lastTenMinuteChestDrops,
+ chestOpens:r.lastTenMinuteChestOpens,
+ stage40Seconds:r.stage40Seconds,
+ stage40AutoBuys:r.stage40AutoBuys,
+ stage40ChestDrops:r.stage40ChestDrops
+}));
+assert.ok(tailWindow.every(r=>r.stageAt30m>=r.stageAt20m&&r.autoBuys>=0&&r.chestDrops>=0));
+console.log('LOW_INPUT_20_30M_ATTRIBUTION '+JSON.stringify(tailWindow));
+const output={experiment:'expedition-30m-low-input-cadence',synthetic:true,
+ methodology:'Actual expedition engine, 1-second ticks, auto-buy enabled, chest batch every 60s or 300s, no forced drops/returns, 3 seeds x 2 auto-buy modes.',
+ caveats:['No human or mobile device observations','Engine ticks are not frame-rate or offline lifecycle evidence','Chest opening is a scheduled manual action; no tapping combat','Chest drop gap tracks actual chest acquisition; reward gap tracks scheduled opening and is policy-dependent','Milestones represent stage advancement, not subjective enjoyment'],
+ results};
+const target=path.join(__dirname,'..','artifacts','expedition','low-input-30m.json');
+fs.mkdirSync(path.dirname(target),{recursive:true});
+fs.writeFileSync(target,JSON.stringify(output,null,2)+'\n');
+console.log('LOW_INPUT_30M_SUMMARY '+JSON.stringify(results.map(({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints})=>({mode,seed,chestEvery,firstChest,firstRelic,opened,manualActions,finalStage,uniqueRelics,stage40Seconds,stage40AutoBuys,stage40ChestDrops,stage40Start,stage40End,longestChestDropWait,longestStageWait,stageWaitAt,longestRewardWait,lastTenMinuteAutoBuys,lastTenMinuteChestDrops,lastTenMinuteStageAdvances,lastTenMinuteChestOpens,checkpoints}))));
+console.log('LOW_INPUT_30M_OUTPUT '+target);
+
+// Controlled diagnostic relative to the ALREADY reduced production stage-40 max HP: reduce the first enemy's *current* HP by an additional 10%
+// on entry. This does not change production balance: later rally resets still use
+// the current production enemyMax(40), so the experiment is a marginal probe, not a
+// faithful simulation of changing the permanent stage-40 HP multiplier.
+assert.ok(Math.abs(E.enemyMax(40)/Math.round(3.8*13*Math.pow(1.235,39))-.9)<.00001,
+ 'stage-40 probe baseline must reflect the already-deployed 10% max-HP reduction');
+const stage40Probe=[];
+for(const baseline of results){
+ const s=E.newState(1000);s.seed=baseline.seed;
+ assert.equal(E.setAutoBuy(s,baseline.mode,true),true);
+ let adjusted=false,entered40=false,first40Exit=null,stage40Seconds=0,opened=0;
+ for(let second=1;second<=1800;second++){
+  if(s.stage===40){
+   entered40=true;stage40Seconds++;
+   if(!adjusted){s.enemyHp=Math.max(1,Math.round(s.enemyHp*.9));adjusted=true;}
+  }
+  E.tick(s,1);
+  if(entered40&&first40Exit===null&&s.stage>40)first40Exit=second;
+  if(second%baseline.chestEvery===0){
+   while(s.chests>0){assert.ok(E.openChest(s));opened++;}
+  }
+ }
+ assert.equal(entered40,baseline.stage40Start!==null);
+ stage40Probe.push({mode:baseline.mode,seed:baseline.seed,chestEvery:baseline.chestEvery,
+  baselineStage:baseline.finalStage,probeStage:s.stage,
+  baseline40Seconds:baseline.stage40Seconds,probe40Seconds:stage40Seconds,
+  baseline40Exit:baseline.stage40End,probe40Exit:first40Exit,
+  baselineOpened:baseline.opened,probeOpened:opened});
+}
+assert.equal(stage40Probe.length,12);
+console.log('STAGE40_INITIAL_HP_10PCT_PROBE '+JSON.stringify({
+ synthetic:true,notProductionBalance:true,
+ limitation:'Production stage-40 max HP is already 10% below the historical value. Probe trims initial current HP by an additional 10%; subsequent squad wipe resets to current production enemyMax(40). Not a permanent additional 10% max-HP reduction.',
+ comparisons:stage40Probe
+}));
+
+// Extended 60-minute counterfactual: keep the exact same low-input policy and
+// compare the one-time initial-HP probe with an untouched engine run.
+// No automatic rebirth is triggered during the run; a 60m clone tests the return action, not
+// first-rebirth timing. Never interpret this as a production HP multiplier.
+const hourProbe=[];
+for(const baseline of results){
+ const pair=[];
+ for(const reduceInitialHp of [false,true]){
+  const s=E.newState(1000);s.seed=baseline.seed;
+  assert.equal(E.setAutoBuy(s,baseline.mode,true),true);
+  let entered40=false,adjusted=false,exit40=null,opened=0,firstReturnEligible=null;
+  for(let second=1;second<=3600;second++){
+   if(s.stage===40){
+    entered40=true;
+    if(reduceInitialHp&&!adjusted){
+     s.enemyHp=Math.max(1,Math.round(s.enemyHp*.9));adjusted=true;
+    }
+   }
+   E.tick(s,1);
+   if(firstReturnEligible===null&&E.rebirthGain(s)>0)firstReturnEligible=second;
+   if(entered40&&exit40===null&&s.stage>40)exit40=second;
+   if(second%baseline.chestEvery===0){
+    while(s.chests>0){assert.ok(E.openChest(s));opened++;}
+   }
+  }
+  // Exercise an actual player-chosen return on a snapshot at 60m, not merely eligibility.
+  // The live 60m run is left intact; this clone tests return bookkeeping.
+  const gainBeforeReturn=E.rebirthGain(s);
+  const sourceStateBeforeReturn=JSON.stringify(s);
+  const returnSnapshot=E.normalize(JSON.parse(JSON.stringify(s)),s.lastSaved||1000);
+  const coresBeforeReturn=returnSnapshot.cores;
+  const rebirthsBeforeReturn=returnSnapshot.rebirths;
+  const heroLevelBeforeReturn=returnSnapshot.heroLevel;
+  const relicsBeforeReturn=JSON.stringify(returnSnapshot.relics);
+  const executedReturnGain=gainBeforeReturn>0?E.rebirth(returnSnapshot):null;
+  if(gainBeforeReturn>0){
+   assert.ok(executedReturnGain>0,'eligible 60m run must execute a positive return');
+   assert.equal(returnSnapshot.rebirths,rebirthsBeforeReturn+1,'return count must advance once');
+   assert.equal(returnSnapshot.stage,1,'return must reset expedition stage');
+   assert.equal(returnSnapshot.cores,coresBeforeReturn+executedReturnGain,'return must credit exactly the earned cores');
+   assert.equal(returnSnapshot.heroLevel,heroLevelBeforeReturn,'return must preserve permanent hero level');
+   assert.equal(JSON.stringify(returnSnapshot.relics),relicsBeforeReturn,'return must preserve permanent relic collection');
+   assert.equal(JSON.stringify(s),sourceStateBeforeReturn,'cloned return must not mutate the 60m source state');
+   // Re-load the completed return through the same normalization path used for saves.
+   const restoredReturn=E.normalize(JSON.parse(JSON.stringify(returnSnapshot)),returnSnapshot.lastSaved||1000);
+   assert.equal(restoredReturn.stage,1,'saved return must remain at expedition start');
+   assert.equal(restoredReturn.rebirths,returnSnapshot.rebirths,'saved return count must persist');
+   assert.equal(restoredReturn.cores,returnSnapshot.cores,'saved return cores must persist exactly');
+   assert.equal(restoredReturn.heroLevel,heroLevelBeforeReturn,'saved return must retain permanent hero level');
+   assert.equal(JSON.stringify(restoredReturn.relics),relicsBeforeReturn,'saved return must retain relics');
+  }
+  pair.push({reduceInitialHp,finalStage:s.stage,exit40,opened,entered40,firstReturnEligible,
+   returnGainAt60m:gainBeforeReturn,executedReturnGain,
+   returnedStage:executedReturnGain===null?null:returnSnapshot.stage,
+   returnedRebirths:executedReturnGain===null?null:returnSnapshot.rebirths});
+ }
+ assert.equal(pair[0].entered40,pair[1].entered40);
+ hourProbe.push({mode:baseline.mode,seed:baseline.seed,chestEvery:baseline.chestEvery,
+  baseline:pair[0],probe:pair[1]});
+}
+assert.equal(hourProbe.length,12);
+// Guard the diagnostic against accidental divergence: an initial-only HP
+// adjustment cannot delay the stage-40 clear, and this fixed-seed experiment
+// must not silently change the 60-minute reward/endpoint baseline.
+for(const sample of hourProbe){
+ assert.ok(sample.baseline.exit40!==null&&sample.probe.exit40!==null,
+  '60m paired scenario must clear stage 40 in both arms');
+ assert.ok(sample.probe.exit40<=sample.baseline.exit40,
+  'initial HP reduction must not delay the stage-40 clear');
+ assert.equal(sample.probe.finalStage,sample.baseline.finalStage,
+  '60m endpoint drift requires explicit balance review');
+ assert.equal(sample.probe.opened,sample.baseline.opened,
+  '60m chest drift requires explicit reward review');
+ // First-return eligibility is not a completed return. Validate both arms
+ // independently and preserve changes in timing/reward as diagnostic evidence.
+ for(const arm of [sample.baseline,sample.probe]){
+  assert.ok(arm.firstReturnEligible===null||
+   (Number.isInteger(arm.firstReturnEligible)&&arm.firstReturnEligible>=1&&arm.firstReturnEligible<=3600),
+   'first-return eligibility must be a valid second or null');
+  assert.ok(Number.isFinite(arm.returnGainAt60m)&&arm.returnGainAt60m>=0,
+   'return gain must be finite and nonnegative');
+  if(arm.firstReturnEligible!==null)assert.ok(arm.returnGainAt60m>0,
+   'eligible return must retain positive reward at 60m');
+ }
+
+}
+console.log('STAGE40_60M_GUARDS '+JSON.stringify({
+ pairs:hourProbe.length,
+ earlierOrEqual:hourProbe.filter(x=>x.probe.exit40<=x.baseline.exit40).length,
+ stageParity:hourProbe.filter(x=>x.probe.finalStage===x.baseline.finalStage).length,
+ chestParity:hourProbe.filter(x=>x.probe.opened===x.baseline.opened).length,
+ caution:'Synthetic one-time current HP only; not a permanent max HP change or rebirth timing'
+}));
+// Surface the measured return outcome rather than inferring it from a CI PASS.
+// This is still an initial-current-HP counterfactual, not a persistent boss nerf.
+const returnSummary=hourProbe.map(({mode,seed,chestEvery,baseline,probe})=>({
+ mode,seed,chestEvery,
+ baselineEligibleSecond:baseline.firstReturnEligible,
+ probeEligibleSecond:probe.firstReturnEligible,
+ eligibilityShiftSeconds:baseline.firstReturnEligible===null||probe.firstReturnEligible===null?null:probe.firstReturnEligible-baseline.firstReturnEligible,
+ baselineCoreGain:baseline.returnGainAt60m,
+ probeCoreGain:probe.returnGainAt60m,
+ coreGainDelta:probe.returnGainAt60m-baseline.returnGainAt60m,
+ baselineExecutedReturn:baseline.executedReturnGain,
+ probeExecutedReturn:probe.executedReturnGain
+}));
+assert.equal(returnSummary.length,12);
+assert.ok(returnSummary.every(x=>Number.isFinite(x.coreGainDelta)));
+console.log('STAGE40_60M_RETURN_COMPARISON '+JSON.stringify(returnSummary));
+console.log('STAGE40_INITIAL_HP_60M_COUNTERFACTUAL '+JSON.stringify({
+ synthetic:true,notProductionBalance:true,notRebirthTiming:true,
+ limitation:'Production stage-40 max HP already includes a historical 10% reduction. This probe applies an additional initial-only 10%; wipe resets to current production max HP. First eligibility and 60m return gain are measured, but a cloned 60m return is executed where eligible, but no post-return acceleration or human/mobile evidence.',
+ comparisons:hourProbe
+}));
+
+// Preserve the full 60m paired evidence as a CI artifact, not only console text.
+// The file is explicitly labelled as a one-time current-HP counterfactual.
+const hourTarget=pathJoinForHour();
+function pathJoinForHour(){return path.join(__dirname,'..','artifacts','expedition','stage40-initial-hp-60m.json');}
+fs.writeFileSync(hourTarget,JSON.stringify({
+ experiment:'stage40-initial-current-hp-60m-counterfactual',synthetic:true,
+ productionBalanceChanged:false,rebirthSimulated:true,
+ methodology:'12 paired 60-minute real-engine runs on current production stage-40 max HP (already 10% below historical); probe applies an additional one-time 10% current HP reduction on first entry; identical seeds, auto-buy and chest schedules.',
+ limitations:['Production stage-40 max HP already has a 10% historical reduction; probe is an additional one-time 10%','Squad wipe restores current production stage-40 max HP','An optional return is executed on a cloned 60m snapshot; no post-return acceleration is simulated','Not human play or Android device evidence'],
+ comparisons:hourProbe
+},null,2)+'\n');
+console.log('STAGE40_60M_ARTIFACT '+hourTarget);
+
+// Verify both persisted artifacts can be parsed and match the in-memory
+// experiment before CI uploads them. An upload alone cannot prove integrity.
+const persistedHour=JSON.parse(fs.readFileSync(hourTarget,'utf8'));
+assert.equal(persistedHour.experiment,'stage40-initial-current-hp-60m-counterfactual');
+assert.equal(persistedHour.productionBalanceChanged,false);
+assert.equal(persistedHour.rebirthSimulated,true);
+assert.deepEqual(persistedHour.comparisons,hourProbe);
+assert.equal(persistedHour.comparisons.length,12);
+const persistedThirty=JSON.parse(fs.readFileSync(target,'utf8'));
+assert.ok(persistedThirty && typeof persistedThirty==='object',
+ '30m artifact must be valid JSON object');
+console.log('LOW_INPUT_ARTIFACT_INTEGRITY_PASS '+JSON.stringify({
+ thirtyMinuteBytes:fs.statSync(target).size,
+ sixtyMinuteBytes:fs.statSync(hourTarget).size,
+ pairedCases:persistedHour.comparisons.length
+}));
+
+
+// Actual post-return continuation: compare a returned 60m snapshot against a
+// fresh expedition under the same low-input policy. This is not an optimal
+// rebirth-timing claim and does not modify production HP or rewards.
+const postReturnContinuations=[];
+for(const scenario of results.filter(x=>x.mode==='balanced'&&x.chestEvery===300)){
+ const returned=E.newState(1000);returned.seed=scenario.seed;
+ E.setAutoBuy(returned,scenario.mode,true);
+ for(let second=1;second<=3600;second++){
+  E.tick(returned,1);
+  if(second%scenario.chestEvery===0)
+   while(returned.chests>0)assert.ok(E.openChest(returned));
+ }
+ const earned=E.rebirthGain(returned);
+ assert.ok(earned>0,'60m state must permit an actual return');
+ const beforeReturnCores=returned.cores;
+ assert.equal(E.rebirth(returned),earned);
+ assert.equal(returned.cores,beforeReturnCores+earned);
+ // Returning alone does not spend cores. Measure that control separately
+ // from a player who actually invests the earned cores in permanent valor.
+ const invested=E.normalize(JSON.parse(JSON.stringify(returned)));
+ let valorPurchases=0;
+ while(E.buyCore(invested,'valor'))valorPurchases++;
+ assert.ok(valorPurchases>0,'earned cores must fund a permanent valor purchase');
+ assert.ok(invested.cores<returned.cores,'investment must consume cores');
+ const fresh=E.newState(1000);fresh.seed=scenario.seed;
+ E.setAutoBuy(fresh,scenario.mode,true);
+ const returnedStartStage=returned.stage;
+ let returnedChestOpens=0,investedChestOpens=0,freshChestOpens=0;
+ let at10m=null;
+ for(let second=1;second<=1800;second++){
+  E.tick(returned,1);E.tick(invested,1);E.tick(fresh,1);
+  if(second%scenario.chestEvery===0){
+   while(returned.chests>0){assert.ok(E.openChest(returned));returnedChestOpens++;}
+   while(invested.chests>0){assert.ok(E.openChest(invested));investedChestOpens++;}
+   while(fresh.chests>0){assert.ok(E.openChest(fresh));freshChestOpens++;}
+  }
+  if(second===600)at10m={returnedStage:returned.stage,investedStage:invested.stage,freshStage:fresh.stage,
+   returnedChests:returnedChestOpens,investedChests:investedChestOpens,freshChests:freshChestOpens};
+ }
+ assert.ok(at10m,'10-minute checkpoint must exist');
+ assert.equal(returnedStartStage,1,'return must restart the expedition');
+ assert.ok(returned.stage>=1&&fresh.stage>=1&&invested.stage>=1);
+ assert.ok(Number.isFinite(returned.credits)&&Number.isFinite(fresh.credits)&&Number.isFinite(invested.credits));
+ assert.ok(invested.coreUpgrades.valor>returned.coreUpgrades.valor);
+ postReturnContinuations.push({seed:scenario.seed,mode:scenario.mode,
+  earnedCores:earned,valorPurchases,investedCoresRemaining:invested.cores,
+  returnedStageAt10m:at10m.returnedStage,investedStageAt10m:at10m.investedStage,
+  freshStageAt10m:at10m.freshStage,stageDelta:at10m.returnedStage-at10m.freshStage,
+  investedStageDelta:at10m.investedStage-at10m.freshStage,
+  returnedStageAt30m:returned.stage,investedStageAt30m:invested.stage,freshStageAt30m:fresh.stage,
+  stageDeltaAt30m:returned.stage-fresh.stage,investedStageDeltaAt30m:invested.stage-fresh.stage,
+  returnedChestOpensAt10m:at10m.returnedChests,investedChestOpensAt10m:at10m.investedChests,freshChestOpensAt10m:at10m.freshChests,
+  returnedChestOpens,investedChestOpens,freshChestOpens});
+}
+assert.equal(postReturnContinuations.length,3);
+console.log('POST_RETURN_10M_CONTINUATION '+JSON.stringify({
+ synthetic:true,notOptimalTiming:true,
+ caveat:'Three seeded engine-only 10m and 30m continuations after optional return at 60m; distinguish unspent return cores from deliberate valor investment; 300s chest checks, no physical device or subjective play evidence.',
+ cases:postReturnContinuations
+}));

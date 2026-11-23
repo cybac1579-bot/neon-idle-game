@@ -1,0 +1,41 @@
+name: STAGE65 skill-loadout comparison
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - site/game.js
+      - tests/balance-simulation.cjs
+      - .github/workflows/stage65-loadout-balance.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  loadouts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate simulator syntax
+        run: node --check tests/balance-simulation.cjs
+      - name: Compare actual equip choices in same low-input seeded stage65-to100 runs
+        shell: bash
+        run: |
+          set -eo pipefail
+          for mode in natural chain capacitor pair; do
+            echo "LOADOUT_MODE=${mode}"
+            timeout --signal=TERM --kill-after=10s 100s env BALANCE_MODE=low-input BALANCE_DIAGNOSTIC=1 BALANCE_SKILL_LOADOUT="${mode}" node tests/balance-simulation.cjs 2>&1 | tee "skill-loadout-${mode}-console.log"
+          done
+      - name: Upload strategy reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage65-skill-loadout-evidence
+          path: |
+            artifacts/balance/skill-loadout-*.json
+            skill-loadout-*-console.log
+          if-no-files-found: warn
+          retention-days: 14

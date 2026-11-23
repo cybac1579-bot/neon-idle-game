@@ -1,0 +1,33 @@
+name: Expedition tactics 30m-120m paired impact
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - tests/expedition-tactics-impact-audit.cjs
+      - .github/workflows/expedition-tactics-impact.yml
+      - site/expedition-engine.js
+  workflow_dispatch:
+jobs:
+  paired:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout history for pinned comparison
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Paired natural and preowned-signal 30m-120m expedition audit
+        run: node tests/expedition-tactics-impact-audit.cjs
+      - name: Upload 12-pair audit data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expedition-tactics-impact
+          path: artifacts/expedition/tactics-impact.json
+          if-no-files-found: warn
+          retention-days: 30

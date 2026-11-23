@@ -1,0 +1,34 @@
+name: Expedition natural three-return combat variety audit
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'tests/expedition-combat-variety-three-return-audit.cjs'
+      - '.github/workflows/expedition-combat-variety.yml'
+      - 'site/expedition-engine.js'
+  workflow_dispatch:
+concurrency:
+  group: expedition-combat-variety-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare naturally triggered tactical events over three voluntary returns
+        run: node tests/expedition-combat-variety-three-return-audit.cjs
+      - name: Archive per-tick action visibility and relic collection evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expedition-combat-variety-three-return
+          path: artifacts/expedition/combat-variety-three-return.json
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,0 +1,34 @@
+name: Expedition permanent relic copy impact
+on:
+  push:
+    branches:
+      - integration/reconcile-main-redesign-20261114
+    paths:
+      - 'tests/expedition-relic-copy-impact-audit.cjs'
+      - '.github/workflows/expedition-relic-copy-impact.yml'
+      - 'site/expedition-engine.js'
+  workflow_dispatch:
+concurrency:
+  group: relic-copy-impact-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare first, second and maximum permanent relic copies
+        run: node tests/expedition-relic-copy-impact-audit.cjs
+      - name: Save independent evidence for each relic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expedition-relic-copy-impact
+          path: artifacts/expedition/relic-copy-impact.json
+          if-no-files-found: warn
+          retention-days: 30

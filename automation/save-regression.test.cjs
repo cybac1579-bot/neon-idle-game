@@ -49,6 +49,66 @@ test('corrupted skill maps with legacy migration do not reset saved progression'
   assert.equal(b.get('s.skillsInherited.includes("bountySkill")'),true);
   assert.equal(b.get('s.skillLevels.bountySkill'),1);
 });
+test('auto-rebirth requires BOTH minimum three cores and 15 percent of total cores',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:100,best:100,rebirths:2,totalCores:100,autoLevel:3,autoRebirth:true,lastSaved:stamp},stamp);
+  assert.equal(b.get('autoRebirthThreshold()'),15);
+  assert.equal(b.get('gainCore()'),5);
+  assert.match(b.document.getElementById('autoDetails').textContent,/모두 충족/);
+  b.get('step(0,true)');
+  assert.equal(b.get('s.rebirths'),2,'five cores are insufficient with total core 100');
+  b.get('s.stage=139;spawn()');
+  assert.ok(b.get('gainCore()')>=15);
+  b.get('step(0,true)');
+  assert.equal(b.get('s.rebirths'),3,'reconstruction occurs when both conditions are met');
+});
+test('phase focus is opt-in and guards STAGE 180 from automatic rebirth',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:179,best:179,rebirths:2,totalCores:20,autoLevel:3,autoBuy:true,autoRebirth:true,phaseFocus:true,lastSaved:stamp},stamp);
+  assert.equal(b.get('phaseFocusHolding()'),true);
+  assert.equal(b.document.getElementById('phaseFocus').checked,true);
+  assert.match(b.document.getElementById('autoDetails').textContent,/자동 환생 보류 중/);
+  b.get('enemyHp=0;step(0,true)');
+  assert.equal(b.get('s.stage'),180);
+  assert.equal(b.get('s.rebirths'),2,'automatic rebirth must not steal a phase target');
+  assert.equal(b.get('s.autoBuy'),true,'phase focus must preserve automatic purchasing');
+  assert.ok(b.get('gainPhase()')>0);
+  b.get('save();load()');
+  assert.equal(b.get('s.phaseFocus'),true,'phase target persists across reload');
+  b.get('phase()');
+  assert.equal(b.get('s.phases'),1);
+  assert.equal(b.get('s.phaseFocus'),true,'a chosen long-term target stays selected');
+  assert.equal(b.get('s.autoRebirth'),false,'phase reset retains prior automation reset policy');
+});
+test('without phase focus auto rebirth remains unchanged and can be manually overridden',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const normal=boot({stage:179,best:179,rebirths:2,totalCores:20,autoLevel:3,autoRebirth:true,lastSaved:stamp},stamp);
+  assert.equal(normal.get('s.phaseFocus'),false,'existing saves default to normal auto-rebirth');
+  normal.get('enemyHp=0;step(0,true)');
+  assert.equal(normal.get('s.stage'),1);
+  assert.equal(normal.get('s.rebirths'),3);
+  const manual=boot({stage:179,best:179,rebirths:2,totalCores:20,autoLevel:3,autoRebirth:true,phaseFocus:true,lastSaved:stamp},stamp);
+  manual.get('s.autoRebirth=false;enemyHp=0;step(0,true)');
+  assert.equal(manual.get('s.stage'),180);
+  assert.ok(manual.get('gainCore()')>0);
+  assert.equal(manual.get('rebirth()'),true,'manual reconstruction remains possible during phase focus');
+  assert.equal(manual.get('s.stage'),1);
+  assert.equal(manual.get('s.rebirths'),3);
+});
+test('phase goal focus pauses only after two reconstructions and can be toggled off',()=>{
+  const stamp=Date.UTC(2026,10,12,0,0,0);
+  const b=boot({stage:100,best:100,rebirths:1,totalCores:0,autoLevel:3,autoRebirth:true,phaseFocus:true,lastSaved:stamp},stamp);
+  b.get('step(0,true)');
+  assert.equal(b.get('s.rebirths'),2,'second reconstruction still happens automatically');
+  assert.equal(b.get('s.phaseFocus'),true);
+  b.get('s.stage=100;spawn();step(0,true)');
+  assert.equal(b.get('s.rebirths'),2,'auto rebirth paused after second reconstruction');
+  b.document.getElementById('phaseFocus').onchange({target:{checked:false}});
+  assert.equal(b.get('s.phaseFocus'),false);
+  b.get('step(0,true)');
+  assert.equal(b.get('s.rebirths'),3,'turning focus off restores the automatic policy');
+});
+
 test('offline settlement never auto-rebirths even when threshold is reached',()=>{
   const b=boot({stage:100,best:100,autoLevel:3,autoRebirth:true,rebirths:0,totalCores:0,
     lastSaved:Date.UTC(2026,10,12,0,0,0)});
@@ -85,17 +145,368 @@ test('combat skill damages enemy and respects cooldown',()=>{
   b.get('skillTick(1)');
   assert.equal(b.get('enemyHp'),after,'skill must not fire again before cooldown');
 });
-test('periodic credit cache accumulates at most five payouts and claims once',()=>{
-  const b=boot({stage:1,best:1,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+test('overload remains a single immediate burst instead of a chain pulse',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:55,best:55,skillsOwned:['overload'],skillsEquipped:['overload'],lastSaved:stamp},stamp);
+ const oldHp=b.get('enemyHp'),strike=b.get('power()');
+ b.get('skillTick(9);render()');
+ assert.ok(Math.abs(b.get('enemyHp')-(oldHp-3*strike))<1e-7,'overload must do 3x immediate damage');
+ assert.equal(b.get('s.chainPulses'),0);
+ assert.match(b.document.getElementById('skillCue').textContent,/과부하 사격/);
+});
+test('chain schedules three separate pulses and transfers remaining hits to the next enemy',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:30,best:30,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ const before=b.get('enemyHp');
+ b.get('skillTick(6)');
+ assert.equal(b.get('s.chainPulses'),3);
+ assert.equal(b.get('enemyHp'),before,'chain starts a timed sequence, not instant damage');
+ b.get('enemyHp=power()*.45');
+ b.get('skillTick(1)');
+ assert.equal(b.get('s.stage'),31,'first pulse defeats the previous enemy');
+ assert.equal(b.get('s.chainPulses'),2);
+ const nextHp=b.get('enemyHp');
+ const nextPower=b.get('power()');
+ b.get('skillTick(1)');
+ assert.equal(b.get('s.chainPulses'),1);
+ assert.equal(b.get('s.stage'),31);
+ assert.ok(Math.abs(b.get('enemyHp')-(nextHp-nextPower*.6))<1e-7,'remaining pulse damages the new enemy');
+ b.get('skillTick(1);render()');
+ assert.equal(b.get('s.chainPulses'),0);
+ assert.match(b.document.getElementById('skillCue').textContent,/3\/3 타격/);
+});
+test('chain pulse progress survives reload and is cleared on unequip or rebirth',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:100,best:100,skillsOwned:['chain'],skillsEquipped:['chain'],skillsInherited:['chain'],lastSaved:stamp},stamp);
+ b.get('skillTick(6);skillTick(1.5)');
+ assert.equal(b.get('s.chainPulses'),2);
+ b.get('save();load()');
+ assert.equal(b.get('s.chainPulses'),2);
+ assert.ok(b.get('s.chainPulseClock')>=0.5,'partial tick is saved');
+ b.get('toggleEquipSkill("chain")');
+ assert.equal(b.get('s.chainPulses'),0,'unequip stops pending pulses');
+ b.get('toggleEquipSkill("chain");skillTick(6)');
+ assert.equal(b.get('s.chainPulses'),3);
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.chainPulses'),0,'chain does not carry in-flight pulses across rebirth');
+ assert.equal(b.get('s.skillLevels.chain'),1);
+ const legacy=boot({stage:25,best:25,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ assert.equal(legacy.get('s.chainPulses'),0,'old saves without pulse state remain compatible');
+});
+test('combat reward and skill cue text is transient, but earned weapon and skills persist',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:20,best:20,lastSaved:stamp},stamp);
+ assert.equal(b.get('chooseSkill("chain")'),true);
+ assert.match(b.document.getElementById('rewardCue').textContent,/첫 스킬 선택/);
+ b.get('skillTick(6);render()');
+ assert.match(b.document.getElementById('skillCue').textContent,/연쇄 방전/);
+ b.get('toggleEquipSkill("chain");skillTick(5);render()');
+ assert.equal(b.document.getElementById('rewardCue').textContent,'','temporary reward notice must expire');
+ assert.equal(b.document.getElementById('skillCue').textContent,'','temporary skill cue must expire');
+ assert.equal(b.get('s.skillsOwned.includes("chain")'),true,'earned ownership must remain');
+});
+
+test('merged auto-buy goal follows active tier-first purchasing without mislabeling manual upgrade hint',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:65,best:65,credits:80000,autoLevel:1,autoBuy:true,lastSaved:stamp},stamp);
+ const automated=b.get('actionableGoal()');
+ assert.match(automated,/자동 구매 목표 \(해금 등급 우선\)/);
+ assert.match(automated,/전투 반응로/);
+ assert.match(automated,/구매 가능/);
+ b.get('s.credits=100');
+ const small=b.get('actionableGoal()');
+ assert.match(small,/자동 구매 목표/);
+ assert.match(small,/전투 엔진/,'current auto-buy keeps insertion-order ties at stage 1');
+ b.get('s.credits=0');
+ const waiting=b.get('actionableGoal()');
+ assert.match(waiting,/자동 구매 목표/);
+ assert.match(waiting,/기본 생산 기준/);
+ assert.doesNotMatch(waiting,/구매 가능$/);
+ b.get('s.autoBuy=false;s.credits=80000');
+ const manual=b.get('actionableGoal()');
+ assert.match(manual,/현재 구매 가능한 최저가 강화/);
+ assert.match(manual,/전투 엔진/);
+ assert.doesNotMatch(manual,/자동 구매 목표/);
+});
+test('saved mid-boss HP survives reload instead of resetting boss to full health',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:10,best:10,savedEnemyHp:1,savedAttackClock:0.4,lastSaved:now},now,13);
+ assert.ok(b.get('enemyMax')>1,'boss maximum HP must be initialized');
+ assert.equal(b.get('enemyHp'),1,'reloaded boss must retain its saved remaining HP');
+ assert.equal(b.get('attackClock'),0.4,'saved attack progress must remain intact');
+ assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
+ const legacy=boot({stage:10,best:10,lastSaved:now},now,13);
+ assert.equal(legacy.get('enemyHp'),legacy.get('enemyMax'),'legacy save without remaining HP starts safely');
+ const bounded=boot({stage:10,best:10,savedEnemyHp:1e10,lastSaved:now},now,13);
+ assert.equal(bounded.get('enemyHp'),bounded.get('enemyMax'),'HP above current maximum is bounded');
+});
+
+test('STAGE 60 frontline support provides one nonblocking per-run choice and no new currency',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:59,best:59,atk:35,forge:4,lastSaved:stamp},stamp);
+ assert.equal(b.get("chooseFrontlineSupport('firepower')"),false,'cannot claim before STAGE60');
+ assert.equal(b.get('s.frontlineSupport'),null);
+ b.get('s.stage=60;spawn();render()');
+ const initial=b.get('s.atk');
+ assert.equal(b.get("chooseFrontlineSupport('firepower')"),true);
+ assert.equal(b.get('s.atk'),initial+2);
+ assert.equal(b.get('s.frontlineSupport'),'firepower');
+ assert.equal(b.get("chooseFrontlineSupport('industry')"),false,'one reward only');
+ assert.equal(b.get("chooseFrontlineSupport('training')"),false);
+ assert.ok(b.get('frontlineSupportGoal()').includes('지원 완료'));
+ b.get('save();load()');
+ assert.equal(b.get('s.frontlineSupport'),'firepower');
+ assert.equal(b.get('s.atk'),initial+2);
+});
+test('frontline support alternatives reward only the existing economy or permanent hero XP',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const econ=boot({stage:60,best:60,forge:7,credits:5000,lastSaved:stamp},stamp);
+ assert.equal(econ.get("chooseFrontlineSupport('industry')"),true);
+ assert.equal(econ.get('s.forge'),9);
+ assert.equal(econ.get('s.credits'),5000,'free upgrade spends no credits');
+ assert.equal(econ.get("chooseFrontlineSupport('industry')"),false);
+ const training=boot({stage:60,best:60,heroLevel:9,heroXp:0,lastSaved:stamp},stamp);
+ const xp=training.get('xpNeeded(s.heroLevel)');
+ assert.equal(training.get("chooseFrontlineSupport('training')"),true);
+ assert.equal(training.get('s.heroLevel'),10,'training award should complete the next full level');
+ assert.equal(training.get('s.frontlineSupport'),'training');
+ assert.equal(training.get('s.traitPointsEarned'),training.get('s.heroLevel')-1);
+});
+test('new choice remains optional for idle combat and resets on rebirth and phase without duplicate payouts',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:60,best:60,atk:30,lastSaved:stamp},stamp);
+ const oldStage=b.get('s.stage'),kills=b.get('s.kills');
+ b.get('enemyHp=0;step(.25,false)');
+ assert.equal(b.get('s.kills'),kills+1);
+ assert.equal(b.get('s.stage'),oldStage+1);
+ assert.equal(b.get('s.frontlineSupport'),null,'idle combat does not silently choose');
+ b.get("chooseFrontlineSupport('industry')");
+ b.get('s.stage=100;spawn()');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.frontlineSupport'),null,'next reconstruction gets a fresh choice');
+ assert.equal(b.get('s.forge'),0,'temporary upgrade cleared by rebirth');
+ b.get('s.stage=180;s.rebirths=2;spawn()');
+ b.get("chooseFrontlineSupport('firepower')");
+ assert.equal(b.get('s.frontlineSupport'),'firepower');
+ b.get('phase()');
+ assert.equal(b.get('s.frontlineSupport'),null,'phase transition cannot preserve transient free reward');
+});
+test('frontline support input is sanitized, keeps allocation independent and never adds a rebirth-count bonus',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:60,best:60,allocation:'assault',frontlineSupport:'invalid',rebirths:5,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.frontlineSupport'),null);
+ assert.equal(b.get('s.allocation'),'assault');
+ assert.ok(b.get('frontlineSupportGoal()').includes('선택 가능'));
+ assert.equal(b.get("chooseFrontlineSupport('invalid')"),false);
+ assert.equal(b.get("chooseFrontlineSupport('firepower')"),true);
+ assert.equal(b.get('s.allocation'),'assault','support must not force permanent allocation');
+ assert.equal(b.get('s.atk'),2,'a fixed 2-level grant with no rebirth-count scaling');
+ const old=boot({stage:60,best:60,lastSaved:stamp},stamp);
+ assert.equal(old.get('s.frontlineSupport'),null,'legacy saves get a fresh opt-in');
+});
+
+test('early hero XP requirement is discounted until level ten, but later thresholds remain unchanged',()=>{
+ const b=boot({stage:20,best:20,heroLevel:1,heroXp:0,lastSaved:Date.UTC(2026,10,12)});
+ assert.equal(b.get('xpNeeded(1)'),6);
+ assert.equal(b.get('xpNeeded(9)'),Math.ceil(10*Math.pow(9,1.45)*.6));
+ assert.equal(b.get('xpNeeded(10)'),Math.ceil(10*Math.pow(10,1.45)));
+ assert.equal(b.get('xpNeeded(25)'),Math.ceil(10*Math.pow(25,1.45)));
+ assert.equal(b.get('skillSlotCount()'),1);
+ assert.equal(b.get('nextSkillSlotLevel()'),10);
+ assert.ok(b.get('xpToNextSkillSlot()')<1017);
+});
+test('hero level ten automatically fills only newly opened slot with a pre-owned unequipped skill',()=>{
+ const stamp=Date.UTC(2026,10,12);
+ const b=boot({stage:25,best:25,heroLevel:9,heroXp:0,skillsOwned:['chain','overload'],skillsEquipped:['chain'],
+  skillLevels:{chain:2,overload:3},lastSaved:stamp},stamp);
+ assert.equal(b.get('skillSlotCount()'),1);
+ assert.deepEqual(Array.from(b.get('s.skillsEquipped')),['chain']);
+ const prior=b.get('s.traitPointsEarned');
+ b.get('gainHeroXp(xpNeeded(9));render()');
+ assert.equal(b.get('s.heroLevel'),10);
+ assert.equal(b.get('s.traitPointsEarned'),prior+1,'trait point gained normally');
+ assert.equal(b.get('skillSlotCount()'),2,'unchanged LV10 slot threshold');
+ assert.equal(b.get('s.skillsEquipped.length'),2);
+ assert.equal(b.get('s.skillsEquipped[1]'),'overload');
+ assert.match(b.document.getElementById('rewardCue').textContent,/자동 장착/);
+ b.get('save();load()');
+ assert.equal(b.get('s.skillsEquipped.length'),2);
+ assert.equal(b.get('s.skillLevels.overload'),3,'skill experience remains');
+});
+test('slot opening never invents skills, clears manual emptiness only on a new slot, or overfills',()=>{
+ const stamp=Date.UTC(2026,10,12);
+ const b=boot({stage:25,best:25,heroLevel:9,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ b.get('gainHeroXp(xpNeeded(9));render()');
+ assert.equal(b.get('s.heroLevel'),10);
+ assert.equal(b.get('s.skillsEquipped.length'),1);
+ assert.match(b.document.getElementById('rewardCue').textContent,/스킬 장착 가능/);
+ const another=boot({stage:25,best:25,heroLevel:9,skillsOwned:['chain','overload','bountySkill'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ another.get('gainHeroXp(xpNeeded(9))');
+ assert.equal(another.get('s.skillsEquipped.length'),2);
+ assert.equal(another.get('s.skillsEquipped[1]'),'overload');
+ assert.equal(another.get('s.skillsOwned.length'),3);
+ another.get('gainHeroXp(0)');
+ assert.equal(another.get('s.skillsEquipped.length'),2,'no further automatic equipping outside milestone');
+});
+test('old partial hero experience loads safely into new early curve and permanent progress survives rebirth',()=>{
+ const stamp=Date.UTC(2026,10,12);
+ const b=boot({stage:100,best:100,heroLevel:9,heroXp:200,traitPointsEarned:8,skillsOwned:['chain','overload'],
+  skillsEquipped:['chain'],skillsInherited:['chain'],lastSaved:stamp},stamp);
+ assert.equal(b.get('s.heroLevel'),9,'save load never downgrades a hero');
+ assert.equal(b.get('s.heroXp'),200,'old accumulated XP not silently lost');
+ b.get('gainHeroXp(0);render()');
+ assert.ok(b.get('s.heroLevel')>=10);
+ assert.equal(b.get('s.skillsEquipped.length'),2);
+ assert.equal(b.get('rebirth()'),true);
+ assert.ok(b.get('s.heroLevel')>=10,'permanent level retained');
+ assert.equal(b.get('skillSlotCount()'),2);
+ assert.equal(b.get('s.skillsEquipped.length'),1,'only inherited skills survive a rebirth, as before');
+});
+
+test('STAGE 20 grants one optional skill choice and never stops idle combat',()=>{
+ const b=boot({stage:19,best:19,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ assert.equal(b.get("chooseSkill('trainingSkill')"),false,'choice locked before stage20');
+ assert.equal(b.get("s.skillsOwned.length"),0);
+ b.get('s.stage=20;spawn();render()');
+ assert.equal(b.get('Object.keys(SKILLS).length'),5,'STAGE65 fifth skill is defined');
+ assert.equal(b.get("chooseSkill('capacitor')"),false,'midgame reward cannot be chosen before stage65');
+ assert.equal(b.document.getElementById('skillChoice').children.length,4);
+ assert.equal(b.get("chooseSkill('trainingSkill')"),true);
+ assert.equal(b.get('s.skillsOwned.includes("trainingSkill")'),true);
+ assert.equal(b.get('s.skillsEquipped.includes("trainingSkill")'),true);
+ assert.equal(b.get('s.skillChoiceUsed'),true);
+ assert.equal(b.get("chooseSkill('overload')"),false,'one selection per run');
+ assert.match(b.document.getElementById('skillChoiceInfo').textContent,/선택 완료/,'choice confirmation is shown');
+ const prior=b.get('s.kills');b.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(b.get('s.kills'),prior+1,'automated combat continues after selection');
+});
+test('skill-choice save, normal reset, inherited skill and legacy save remain compatible',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:100,best:100,skillsOwned:['trainingSkill'],skillsEquipped:['trainingSkill'],skillsInherited:['trainingSkill'],
+  skillLevels:{trainingSkill:12},skillBuffTraining:9,skillChoiceUsed:true,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.skillChoiceUsed'),true);
+ assert.equal(b.get('s.skillBuffTraining'),9);
+ b.get('save();load()');
+ assert.equal(b.get('s.skillChoiceUsed'),true);
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.skillChoiceUsed'),false,'a new run permits another starter choice');
+ assert.equal(b.get('s.skillsOwned.includes("trainingSkill")'),true,'inherited skill survives');
+ assert.equal(b.get('s.skillLevels.trainingSkill'),1,'inherited level resets to one');
+ assert.equal(b.get('s.skillBuffTraining'),0,'temporary buff does not carry across runs');
+ assert.equal(b.get("chooseSkill('overload')"),false,'must reach stage20 again');
+ b.get('s.stage=20;spawn();render()');
+ assert.equal(b.get("chooseSkill('overload')"),true);
+ const legacy=boot({stage:20,best:20,lastSaved:stamp},stamp);
+ assert.equal(legacy.get('s.skillChoiceUsed'),false,'existing saves without flag can opt in');
+});
+test('training skill gives hero XP without changing attack interval or credit income',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:35,best:35,skillsOwned:['trainingSkill'],skillsEquipped:['trainingSkill'],
+  skillLevels:{trainingSkill:1},lastSaved:stamp},stamp);
+ const beforeInterval=b.get('attackInterval()'),credits=b.get('creditRate()');
+ assert.equal(b.get('s.skillBuffTraining'),0);
+ b.get('skillTick(14)');
+ assert.equal(b.get('s.skillBuffTraining'),12);
+ assert.equal(b.get('attackInterval()'),beforeInterval);
+ assert.equal(b.get('creditRate()'),credits);
+ const base=b.get('Math.floor(2*Math.pow(1.035,Math.min(200,s.stage)-1)*(1+traitLevel("training")*.05))');
+ b.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.ok(b.get('s.heroXp')>=base*2 || b.get('s.heroLevel')>1,'active training must boost hero XP');
+ b.get('skillTick(1)');
+ assert.equal(b.get('s.skillBuffTraining'),11);
+});
+test('skill choice does not override full equip slots and remains optional when all known',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:25,best:25,skillsOwned:['overload'],skillsEquipped:['overload'],lastSaved:stamp},stamp);
+ assert.equal(b.get('skillSlotCount()'),1);
+ assert.equal(b.get("chooseSkill('trainingSkill')"),true);
+ assert.equal(b.get('s.skillsOwned.length'),2);
+ assert.equal(b.get('s.skillsEquipped.length'),1,'equipped slot limit is preserved');
+ assert.equal(b.get('s.skillsEquipped.includes("overload")'),true);
+ const all=boot({stage:25,best:25,skillsOwned:['overload','chain','bountySkill','trainingSkill'],lastSaved:stamp},stamp);
+ assert.equal(all.get('s.skillChoiceUsed'),false);
+ assert.equal(all.document.getElementById('skillChoice').children.length,0);
+});
+
+test('timed quests accumulate independently and claim exactly once',()=>{
+  const b=boot({stage:1,best:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   b.get('step(360,false)');
-  const payout=b.get('cachePayout()');
-  assert.equal(b.get('s.cacheCredits'),payout*5);
+  const rewards=b.get('s.questCredits.slice()');
+  assert.ok(rewards.every(x=>x>0),'all unlocked quests should accumulate rewards');
   const before=b.get('s.credits');
-  assert.equal(b.get('transferCacheCredits()'),payout*5);
-  assert.equal(b.get('s.credits'),before+payout*5);
+  const amount=rewards.reduce((a,x)=>a+x,0);
+  assert.equal(b.get('transferCacheCredits()'),amount);
+  assert.equal(b.get('s.credits'),before+amount);
   assert.equal(b.get('transferCacheCredits()'),0);
 });
 
+test('timed quest reserves cap across repeated ticks and claim without duplication',()=>{
+ const b=boot({stage:3,best:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ for(let n=0;n<30;n++)b.get('step(120,false)');
+ assert.ok(b.get('s.questCredits.every((x,i)=>x<=questPayout(i)*QUESTS[i][4])'),'each quest must cap at five payouts');
+ const reserved=b.get('s.questCredits.reduce((a,x)=>a+x,0)');
+ const before=b.get('s.credits');
+ assert.equal(b.get('transferCacheCredits()'),reserved);
+ assert.equal(b.get('transferCacheCredits()'),0);
+ assert.equal(b.get('s.credits'),before+reserved);
+});
+test('legacy credit cache migrates into timed quest reserves',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:3,best:3,cacheCredits:123,cacheClock:12,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.questCredits[1]'),123);
+ assert.equal(b.get('s.questClocks[1]'),12);
+ assert.equal(b.get('s.cacheCredits'),0);
+ assert.equal(b.get('transferCacheCredits()'),123);
+});
+
+test('high-stage legacy credit cache survives payout ticks, save and load without duplication',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const oldCache=917105;
+ const b=boot({stage:60,best:60,cacheCredits:oldCache,cacheClock:0,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.questCredits[1]'),oldCache);
+ assert.ok(b.get('questPayout(1)*5')<oldCache,'legacy reserve must exceed the new quest cap');
+ b.get('questTick(30)');
+ assert.equal(b.get('s.questCredits[1]'),oldCache,'earning a new payout must not delete old saved credit');
+ b.get('save()');
+ b.get('load()');
+ assert.equal(b.get('s.questCredits[1]'),oldCache,'legacy credit must survive a second restore');
+ const creditsBefore=b.get('s.credits');
+ const credited=b.get('transferCacheCredits()');
+ assert.ok(credited>=oldCache,'claim must include at least all legacy credit');
+ assert.equal(b.get('s.credits'),creditsBefore+credited);
+ assert.equal(b.get('transferCacheCredits()'),0,'claim must not duplicate saved credit');
+});
+test('previously migrated oversized quest reserve is not clamped by the next payout',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:60,best:60,questCredits:[0,917105,0],lastSaved:stamp},stamp);
+ b.get('questTick(30)');
+ assert.equal(b.get('s.questCredits[1]'),917105);
+});
+test('loaded skill levels above the real cap normalize to twenty without resetting progress',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:72,best:90,heroLevel:12,skillsOwned:['overload'],
+  skillsEquipped:['overload'],skillLevels:{overload:80},skillXp:{overload:999},lastSaved:stamp},stamp);
+ assert.equal(b.get('s.stage'),72);
+ assert.equal(b.get('s.heroLevel'),12);
+ assert.equal(b.get('s.skillLevels.overload'),20);
+ assert.equal(b.get('s.skillXp.overload'),0);
+ assert.ok(Math.abs(b.get("skillScale('overload')")-1.76)<1e-10);
+ b.get('save()');
+ b.get('load()');
+ assert.equal(b.get('s.skillLevels.overload'),20);
+ const old=boot({stage:25,best:25,skillsOwned:['hasteSkill'],skillsEquipped:['hasteSkill'],
+  skillLevels:{hasteSkill:100},lastSaved:stamp},stamp);
+ assert.equal(old.get('s.skillLevels.bountySkill'),20,'legacy haste-skill migration must obey the same cap');
+});
+
+test('phase transition clears timed quest clocks and reserves',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:180,best:180,rebirths:2,questCredits:[11,22,33],questClocks:[2,3,4],lastSaved:stamp},stamp);
+ assert.ok(b.get('gainPhase()')>0);
+ b.get('phase()');
+ assert.equal(b.get('s.questCredits.reduce((a,x)=>a+x,0)'),0);
+ assert.equal(b.get('s.questClocks.reduce((a,x)=>a+x,0)'),0);
+});
 test('upgrade purchase respects unlock, price and speed cap',()=>{
   const b=boot({stage:1,best:1,credits:1000,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   assert.equal(b.get('purchase("amp")'),false,'locked upgrade must be unavailable');
@@ -125,22 +536,29 @@ test('rebirth requires stage 100 and preserves permanent upgrades',()=>{
   assert.equal(b.get('s.atk'),0);
 });
 
-test('rebirth stage jumps stop at each boss instead of skipping encounters',()=>{
+test('rebirth count never grants free stage skips and bosses are visited in order',()=>{
   const b=boot({stage:8,best:8,rebirths:3,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   b.get('enemyHp=0;resolveEnemyDefeat()');
-  assert.equal(b.get('s.stage'),10,'stage 10 boss must not be skipped');
+  assert.equal(b.get('s.stage'),9,'STAGE 8 advances exactly one stage despite earlier rebirths');
+  assert.equal(b.document.getElementById('enemyImage').src,'enemy_agile.svg');
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),10,'STAGE 10 boss must be fought, not skipped');
   assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
   b.get('enemyHp=0;resolveEnemyDefeat()');
-  assert.equal(b.get('s.stage'),20,'next boss must be visited');
-  assert.equal(b.document.getElementById('enemyImage').src,'boss_overheat.webp');
+  assert.equal(b.get('s.stage'),11,'defeating a boss still advances one stage only');
 });
-test('jump landing on a boss still grants crossed milestone once',()=>{
+test('sequential progression awards STAGE 10 milestone exactly once',()=>{
   const b=boot({stage:8,best:8,rebirths:3,credits:0,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),9);
+  assert.equal(b.get('s.knownUnlocks.filter(k=>k==="milestone-10").length'),0);
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),10);
   assert.equal(b.get('s.knownUnlocks.filter(k=>k==="milestone-10").length'),1);
-  assert.equal(b.get('s.best'),10);
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),11);
+  assert.equal(b.get('s.knownUnlocks.filter(k=>k==="milestone-10").length'),1);
 });
-
 test('auto-buy spends available credits only when enabled and unlocked',()=>{
   const stamp=Date.UTC(2026,10,12,0,0,0);
   const disabled=boot({stage:1,best:1,credits:10000,autoLevel:1,autoBuy:false,lastSaved:stamp});
@@ -150,7 +568,7 @@ test('auto-buy spends available credits only when enabled and unlocked',()=>{
   const enabled=boot({stage:1,best:1,credits:10000,autoLevel:1,autoBuy:true,lastSaved:stamp});
   enabled.get('step(11,false)');
   assert.ok(enabled.get('s.atk+s.spd+s.gen')>0,'enabled auto-buy should purchase an unlocked upgrade');
-  assert.ok(enabled.get('s.credits')<10000,'auto-buy should pay for upgrades');
+  assert.ok(enabled.get('s.credits')<disabled.get('s.credits'),'auto-buy must charge the upgrade price on top of identical earned credits');
   assert.equal(enabled.get('s.amp'),0,'locked upgrades must remain unavailable');
 });
 test('short portrait combat keeps a minimum canvas without hiding combat',()=>{
@@ -275,20 +693,20 @@ test('next-purchase guidance prioritizes an affordable upgrade over an unafforda
   const expected=b.get('(()=>{const opts=Object.keys(costs).filter(k=>s.best>=unlockStage[k]&&(k!=="spd"||s.spd<50)).map(k=>({k,price:cost(k)})).sort((a,b)=>a.price-b.price);const affordable=opts.find(o=>s.credits>=o.price);return affordable?{price:affordable.price,credits:s.credits}:null})()');
   assert.ok(expected,'fixture must have an affordable option');
   assert.match(actual,/구매 가능/,'available purchase must be actionable');
-  assert.match(actual,/수동 구매 참고 \(최저가\): 전투 엔진/,'affordable attack upgrade should be selected');
+  assert.match(actual,/최저가 강화: 전투 엔진/,'affordable attack upgrade should be selected');
 });
 
 test('next-purchase guidance falls back to the cheapest unlocked option when none is affordable',()=>{
   const b=boot({stage:1,best:1,credits:0,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   const actual=b.get('actionableGoal()');
-  assert.match(actual,/수동 구매 참고 \(최저가\): 전투 엔진/,'unaffordable state should name cheapest unlocked upgrade');
+  assert.match(actual,/최저가 강화: 전투 엔진/,'unaffordable state should name cheapest unlocked upgrade');
   assert.doesNotMatch(actual,/구매 가능/,'zero credits should not suggest an immediate purchase');
 });
 
 test('next-purchase guidance stays actionable after rebirth with preserved best stage',()=>{
   const b=boot({stage:1,best:100,rebirths:1,credits:20,lastSaved:Date.UTC(2026,10,12,0,0,0)});
   const actual=b.get('actionableGoal()');
-  assert.match(actual,/수동 구매 참고 \(최저가\): 전투 엔진/);
+  assert.match(actual,/최저가 강화: 전투 엔진/);
   assert.match(actual,/구매 가능/);
 });
 
@@ -300,7 +718,7 @@ test('offline settlement caps credited time at 7200 seconds and never auto-rebir
   assert.equal(credited,7200,'offline credited time must be capped at two hours');
   assert.equal(b.get('s.rebirths'),before,'offline settlement must not trigger automatic rebirth');
   assert.match(b.get('logText'),/방치 진행 7200초 반영/,'return log must report credited, not wall time');
-  assert.ok(b.get('s.cacheCredits')<=b.get('cachePayout()*5'),'offline cache must respect five-payout cap');
+  assert.ok(b.get('s.questCredits.every((x,i)=>x<=questPayout(i)*QUESTS[i][4])'),'offline quest reserves must respect five-payout cap');
 });
 
 
@@ -312,12 +730,12 @@ test('visibility resume settles hidden time once without duplicate cache payout'
   b.setNow(start+60000);
   b.document.hidden=false;
   b.listeners.visibilitychange();
-  const first=b.get('s.cacheCredits');
+  const first=b.get('s.questCredits.reduce((a,x)=>a+x,0)');
   assert.ok(first>0,'one minute hidden should generate a cache payout');
   const savedAt=b.get('s.lastSaved');
   assert.equal(savedAt,start+60000,'settlement must save its credited timestamp');
   b.listeners.visibilitychange();
-  assert.equal(b.get('s.cacheCredits'),first,'duplicate visible event must not credit cache twice');
+  assert.equal(b.get('s.questCredits.reduce((a,x)=>a+x,0)'),first,'duplicate visible event must not credit cache twice');
   assert.equal(b.get('s.lastSaved'),savedAt);
 });
 
@@ -332,7 +750,7 @@ test('repeated hidden events preserve original background start for offline sett
   b.setNow(start+60000);
   b.document.hidden=false;
   b.listeners.visibilitychange();
-  assert.ok(b.get('s.cacheCredits')>0,'two hidden events must not discard the first 30 seconds');
+  assert.ok(b.get('s.questCredits.reduce((a,x)=>a+x,0)')>0,'two hidden events must not discard the first 30 seconds');
   assert.equal(b.get('s.lastSaved'),start+60000);
 });
 
@@ -418,7 +836,7 @@ test('milestone goals distinguish credit-only checkpoints from actual unlocks',(
   b.get('s.stage=10');
   assert.match(b.get('milestoneGoal()'),/STAGE 15.*새 기능: 에너지 증폭기/);
   b.get('s.stage=25');
-  assert.match(b.get('milestoneGoal()'),/STAGE 35.*달성 보너스 크레딧/);
+  assert.match(b.get('milestoneGoal()'),/STAGE 35.*초반 스킬 전술 보급/);
   b.get('s.stage=35');
   assert.match(b.get('milestoneGoal()'),/STAGE 45.*새 기능: 크레딧 주조기/);
   b.get('s.stage=85');
@@ -436,26 +854,20 @@ test('stage 180 goal reports phase prerequisites rather than claiming a transiti
 });
 
 
-test('growth goal matches tier-first auto-buy and manual mode across affordability',()=>{
-  const b=boot({stage:65,best:65,credits:80000,autoLevel:1,autoBuy:true,lastSaved:Date.UTC(2026,10,12,0,0,0)});
-  const automated=b.get('actionableGoal()');
-  assert.match(automated,/자동 구매 목표 \(해금 등급 우선\)/);
-  assert.match(automated,/전투 반응로/);
-  assert.match(automated,/구매 가능/);
-  b.get('s.credits=100');
-  const fallback=b.get('actionableGoal()');
-  assert.match(fallback,/자동 구매 목표/);
-  assert.match(fallback,/공격속도/,'unaffordable top tier must not hide affordable lower-tier fallback');
+test('upgrade hint identifies cheapest available choice without claiming strategic optimality',()=>{
+  const b=boot(undefined);
+  const first=b.get('actionableGoal()');
+  assert.match(first,/현재 구매 가능한 최저가 강화/);
+  assert.match(first,/전투 엔진/);
+  assert.doesNotMatch(first,/추천|최적/);
   b.get('s.credits=0');
   const waiting=b.get('actionableGoal()');
-  assert.match(waiting,/자동 구매 목표/);
-  assert.match(waiting,/기본 생산 기준/);
+  assert.match(waiting,/다음 최저가 강화/);
   assert.doesNotMatch(waiting,/구매 가능$/);
-  b.get('s.autoBuy=false;s.credits=80000');
-  const manual=b.get('actionableGoal()');
-  assert.match(manual,/수동 구매 참고 \(최저가\)/);
-  assert.match(manual,/전투 엔진/);
-  assert.doesNotMatch(manual,/자동 구매 목표/);
+  b.get('s.credits=10000;s.best=65');
+  const affordable=b.get('actionableGoal()');
+  assert.match(affordable,/현재 구매 가능한 최저가 강화/);
+  assert.doesNotMatch(affordable,/추천|최적/);
 });
 
 
@@ -661,6 +1073,31 @@ test('two-hour offline restore reports runtime and preserves settlement cap with
  console.log('two-hour offline restore benchmark:',JSON.stringify({elapsedMs:Math.round(elapsedMs),stage:state.stage,best:state.best,rebirths:state.rebirths}));
 });
 
+test('legacy automation levels above cap migrate to five without losing progression',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:72,best:90,credits:12345,cores:42,autoLevel:19,autoBuy:true,autoRebirth:true,lastSaved:stamp},stamp);
+ assert.equal(b.get('s.autoLevel'),5);
+ assert.equal(b.get('s.stage'),72);
+ assert.equal(b.get('s.credits'),12345);
+ assert.equal(b.get('s.cores'),42);
+ assert.equal(b.get('s.autoBuy'),true);
+ assert.equal(b.get('s.autoRebirth'),true);
+ assert.equal(b.get('autoPurchaseInterval()'),3);
+ assert.equal(b.get('coreCost("autoLevel")'),Infinity);
+ const before=b.get('s.cores');
+ b.get('buyCore("autoLevel")');
+ assert.equal(b.get('s.cores'),before);
+ assert.equal(b.get('s.autoLevel'),5);
+ assert.match(b.document.getElementById('coreUpgrades').children.find(n=>n.dataset.core==='autoLevel').lastElementChild.textContent,/최대 레벨 달성/);
+});
+test('automation research level five refuses additional purchases',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({autoLevel:5,cores:1e6,lastSaved:stamp},stamp);
+ b.get('buyCore("autoLevel")');
+ assert.equal(b.get('s.autoLevel'),5);
+ assert.equal(b.get('s.cores'),1e6);
+});
+
 
 test('auto-buy prioritizes highest unlocked affordable tier, not cheapest cost',()=>{
  const b=boot({stage:65,best:65,credits:80000,autoLevel:1,autoBuy:true,lastSaved:Date.UTC(2026,10,12,0,0,0)});
@@ -697,11 +1134,621 @@ test('30-minute integrated low-input auto-combat with gear, skills, traits and t
  console.log('30-minute integrated low-input scenario:',JSON.stringify({initial,checkpoints}));
 });
 
-test('saved mid-boss HP survives reload instead of resetting boss to full health',()=>{
+
+test('reactor keeps two dramatic early levels then applies a gentler late multiplier',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:65,best:65,energy:10000,atk:10,lastSaved:stamp},stamp);
+ const values=[b.get('power()')];
+ for(let level=1;level<=4;level++){
+  b.get('s.reactor='+level);
+  values.push(b.get('power()'));
+ }
+ const close=(observed,expected)=>assert.ok(Math.abs(observed-expected)<1e-9,
+  'reactor ratio '+observed+' must match '+expected);
+ close(values[1]/values[0],1.8);
+ close(values[2]/values[1],1.8);
+ close(values[3]/values[2],1.3);
+ close(values[4]/values[3],1.3);
+ assert.ok(b.get('Math.abs(allocationComparison()[1][1] / power() - 2.2)')<1e-9,
+  'allocation preview must use the same reactor scaling as actual combat');
+ const button=b.document.getElementById('upgrades').children.find(x=>x.dataset.buy==='reactor');
+ assert.ok(button,'reactor upgrade remains available');
+ assert.match(button.lastElementChild.textContent,/이후 단계마다 ×1\.3/);
+ b.get('save();load()');
+ close(b.get('power()'),values[4]);
+ assert.equal(b.get('s.reactor'),4,'saved upgrade level survives reload');
+});
+
+
+test('manual upgrade batching preserves rising costs, caps, and first-run auto-buy gate',()=>{
+ const stamp=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:1,best:1,credits:100000,autoLevel:0,autoBuy:false,lastSaved:stamp},stamp);
+ const initial=b.get('s.credits');
+ const expected=b.get('(()=>{let total=0;for(let i=0;i<3;i++){total+=cost("atk");purchase("atk")}return {total,atk:s.atk}})()');
+ b.get('s.atk=0;s.credits='+initial);
+ assert.equal(b.get('purchaseBatch("atk",3)'),3);
+ assert.equal(b.get('s.atk'),expected.atk);
+ assert.equal(b.get('s.credits'),initial-expected.total);
+ assert.equal(b.get('s.autoLevel'),0,'batching must not unlock permanent auto-buy');
+ assert.equal(b.get('s.autoBuy'),false);
+ b.get('s.credits=0');
+ assert.equal(b.get('purchaseBatch("atk",3)'),0,'cannot buy without credits');
+ b.get('s.spd=49;s.credits=1e12');
+ assert.equal(b.get('purchaseBatch("spd",3)'),1,'attack speed cap must hold');
+ assert.equal(b.get('s.spd'),50);
+ b.get('save();load()');
+ assert.equal(b.get('s.spd'),50,'batch purchases persist through save/load');
+});
+
+
+test('STAGE75 optional bridge rewards existing skills, once per run, while idle combat continues',()=>{
  const now=Date.UTC(2026,10,12,0,0,0);
- const b=boot({stage:10,best:10,savedEnemyHp:1,savedAttackClock:0.4,lastSaved:now},now,13);
- assert.ok(b.get('enemyMax')>1,'boss maximum HP must be initialized');
- assert.equal(b.get('enemyHp'),1,'reloaded boss must retain its saved remaining HP');
- assert.equal(b.get('attackClock'),0.4,'saved attack progress must remain intact');
- assert.equal(b.document.getElementById('enemyImage').src,'boss_guardian.webp');
+ const b=boot({stage:74,best:74,heroLevel:12,skillsOwned:['chain','overload'],skillsEquipped:['chain','overload'],skillLevels:{chain:3,overload:2},lastSaved:now},now);
+ assert.equal(b.get("chooseBreakthroughReward('skill')"),false,'cannot collect before STAGE75');
+ b.get('s.stage=75;spawn();render()');
+ assert.match(b.document.getElementById('battleGoal').textContent,/후반 보급 선택/);
+ const pre=b.get('s.kills');
+ b.get('enemyHp=0;step(0,false)');
+ assert.equal(b.get('s.kills'),pre+1,'unclaimed choice must not block automatic combat');
+ assert.equal(b.get('s.breakthroughReward'),null,'choice may remain unclaimed');
+ assert.equal(b.get("chooseBreakthroughReward('skill')"),true);
+ assert.equal(b.get('s.skillLevels.chain'),4);
+ assert.equal(b.get('s.skillLevels.overload'),3);
+ assert.equal(b.get("chooseBreakthroughReward('credits')"),false,'cannot claim a second reward');
+ b.get('save();load()');
+ assert.equal(b.get('s.breakthroughReward'),'skill','chosen reward must survive save/load');
+ b.get('s.stage=100;spawn()');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.breakthroughReward'),null,'next run must offer a new choice');
+ assert.equal(b.get('s.skillLevels.chain'),undefined,'non-inherited skill is reset normally');
+});
+
+test('STAGE75 weapon and credit alternatives grant bounded existing-system rewards',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const w=boot({stage:75,best:75,weapon:{tier:1,stage:72},lastSaved:now},now);
+ const before=w.get('power()');
+ assert.equal(w.get("chooseBreakthroughReward('weapon')"),true);
+ assert.ok(w.get('power()')>before*1.19,'weapon choice applies a meaningful current-run combat multiplier');
+ assert.equal(w.get("chooseBreakthroughReward('weapon')"),false,'no duplicate weapon reward');
+ w.get('save();load()');
+ assert.equal(w.get('s.breakthroughReward'),'weapon','weapon choice persists');
+ assert.ok(w.get('power()')>before*1.19,'saved multiplier remains active');
+ w.get('s.stage=100;spawn();rebirth()');
+ assert.equal(w.get('s.breakthroughReward'),null);
+ assert.equal(w.get('s.weapon'),null,'weapon equipment resets on rebirth');
+ const noWeapon=boot({stage:75,best:75,lastSaved:now},now);
+ assert.equal(noWeapon.get("chooseBreakthroughReward('weapon')"),true);
+ assert.equal(noWeapon.get('s.weapon.tier'),0,'unlucky weapon drops do not make option empty');
+ const c=boot({stage:75,best:75,credits:100,lastSaved:now},now);
+ const reward=c.get('enemyReward(75)*4');
+ assert.equal(c.get("chooseBreakthroughReward('credits')"),true);
+ assert.equal(c.get('s.credits'),100+reward);
+ assert.equal(c.get("chooseBreakthroughReward('credits')"),false);
+ assert.equal(c.get('s.credits'),100+reward,'payout not duplicated');
+ const invalid=boot({stage:75,best:75,breakthroughReward:'invalid',lastSaved:now},now);
+ assert.equal(invalid.get('s.breakthroughReward'),null,'legacy/corrupt choice normalized');
+});
+
+test('battle shows minimal hero HUD while details remain on growth and statistics screens',()=>{
+ const b=boot({stage:75,best:75,heroLevel:11,heroXp:22,traitPointsEarned:10,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:Date.UTC(2026,10,12,0,0,0)});
+ const hud=b.document.getElementById('heroGrowth').textContent;
+ assert.match(hud,/주인공 LV\.11/);
+ assert.match(hud,/장착 스킬 1\/2/);
+ assert.doesNotMatch(hud,/특성|경험치|계승/,'battle must not repeat full statistics');
+ for(const id of ['heroDetails','heroStats']){
+  const detail=b.document.getElementById(id).textContent;
+  assert.match(detail,/경험치 22/);
+  assert.match(detail,/스킬 슬롯 2\/5/);
+  assert.match(detail,/계승 1\/2/);
+ }
+ assert.equal(b.get('TRAITS.find(t=>t[0]==="inherit")[3]').includes('스킬 구현 전 효과 대기'),false,'obsolete tooltip must be removed');
+});
+
+
+test('timed quest auto-claim stays opt-in, requires research Lv2 and preserves legacy saves',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const old=boot({stage:3,best:3,autoLevel:2,lastSaved:now},now);
+ assert.equal(old.get('s.autoClaimQuests'),false,'legacy saves do not automatically gain new behavior');
+ assert.equal(old.document.getElementById('autoClaimQuests').checked,false);
+ assert.equal(old.document.getElementById('autoClaimQuests').disabled,false,'research level two unlocks opt-in');
+ old.get('s.questCredits=[7,15,21];s.autoClaimClock=29.75;step(.25,false)');
+ assert.equal(old.get('s.questCredits.reduce((a,b)=>a+b,0)'),43,'default-disabled setting retains manual reserves');
+ const locked=boot({stage:3,best:3,autoLevel:1,autoClaimQuests:true,autoClaimClock:29.75,lastSaved:now},now);
+ assert.equal(locked.document.getElementById('autoClaimQuests').disabled,true);
+ assert.equal(locked.get('autoQuestClaimTick(.25)'),0,'forged option without research must not claim');
+ assert.equal(locked.get('s.questCredits.reduce((a,b)=>a+b,0)'),0);
+});
+
+test('Lv2 auto-claim uses the exact manual transfer path without duplicate credit payout',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:3,best:3,credits:250,autoLevel:2,autoClaimQuests:true,autoClaimClock:29.75,
+  questCredits:[7,15,21],questClocks:[0,0,0],lastSaved:now},now);
+ const before=b.get('s.credits');
+ const passive=b.get('creditRate()')*.25;
+ b.get('step(.25,false)');
+ assert.ok(Math.abs(b.get('s.credits')-before-passive-43)<1e-6,'auto payout must equal exactly pending timed credits');
+ assert.equal(b.get('s.questCredits.reduce((a,b)=>a+b,0)'),0,'auto claim consumes all claimable reserves');
+ assert.equal(b.get('s.autoClaimClock'),0);
+ assert.equal(b.get('transferCacheCredits()'),0,'manual claim cannot duplicate previous auto claim');
+ b.get('save();load()');
+ assert.equal(b.get('s.autoClaimQuests'),true,'user preference survives save/load');
+ assert.equal(b.get('s.autoClaimClock'),0,'clock survives load');
+ b.get('s.questCredits=[3,4,5];s.autoClaimClock=10');
+ const oldBalance=b.get('s.credits');
+ assert.equal(b.get('claimCache()'),true,'manual claim must remain usable while auto mode is enabled');
+ assert.equal(b.get('s.credits'),oldBalance+12,'manual transfer is the same amount');
+ assert.equal(b.get('transferCacheCredits()'),0,'after manual claim there is nothing for auto mode to duplicate');
+});
+
+test('quest claim automation is distinct from autobuy and continues through offline settlement',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const seed={stage:3,best:3,credits:100,autoLevel:2,autoBuy:false,autoClaimQuests:true,
+   questCredits:[0,0,0],questClocks:[0,0,0],lastSaved:now};
+ const a=boot(seed,now,20261116);
+ const m=boot({...seed,autoClaimQuests:false},now,20261116);
+ const paid=a.get('settleElapsed(120)');
+ m.get('settleElapsed(120)');
+ assert.equal(paid,120);
+ assert.equal(a.get('s.autoBuy'),false,'autoclaim must not silently enable purchases');
+ assert.equal(a.get('s.atk+s.spd+s.gen'),0,'no auto purchase despite research level two');
+ assert.equal(a.get('s.stage'),m.get('s.stage'),'claiming alone must not affect combat progression');
+ assert.ok(a.get('s.credits')>m.get('s.credits'),'autoclaim makes already-produced quest rewards spendable during offline time');
+ assert.ok(a.get('s.questCredits.every((x,i)=>x<=questPayout(i)*QUESTS[i][4])'),'quest caps still constrain unclaimed reserves');
+ assert.ok(m.get('s.questCredits.some(x=>x>0)'),'without autoclaim, idle rewards remain manual');
+});
+
+test('quest claim automation survives rebirth but resets with phase research',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const b=boot({stage:100,best:100,rebirths:1,autoLevel:2,autoClaimQuests:true,
+  autoClaimClock:27,questCredits:[4,5,6],lastSaved:now},now);
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.autoLevel'),2,'research should survive normal rebirth');
+ assert.equal(b.get('s.autoClaimQuests'),true,'the saved setting should survive normal rebirth');
+ assert.equal(b.get('s.autoClaimClock'),0,'fresh run begins a fresh claim interval');
+ assert.equal(b.get('s.questCredits.reduce((a,b)=>a+b,0)'),0,'no credit queue carried across rebirth');
+ b.get('s.stage=180;s.rebirths=2;spawn()');
+ b.get('phase()');
+ assert.equal(b.get('s.autoLevel'),0,'phase resets core research as before');
+ assert.equal(b.get('s.autoClaimQuests'),false,'phase removes automation which is no longer unlocked');
+ assert.equal(b.get('s.autoClaimClock'),0);
+ assert.equal(b.document.getElementById('autoClaimQuests').disabled,true);
+});
+
+
+test('automatic quest rewards remain visible as a clear countdown without crowding battle HUD',()=>{
+ const now=Date.UTC(2026,10,12,0,0,0);
+ const enabled=boot({stage:3,best:3,autoLevel:2,autoClaimQuests:true,autoClaimClock:12,lastSaved:now},now);
+ assert.match(enabled.document.getElementById('cacheAutoStatus').textContent,/자동 수령 중/);
+ assert.match(enabled.document.getElementById('cacheAutoStatus').textContent,/18초/);
+ const disabled=boot({stage:3,best:3,autoLevel:2,autoClaimQuests:false,lastSaved:now},now);
+ assert.match(disabled.document.getElementById('cacheAutoStatus').textContent,/재구성 탭에서 켤 수 있어/);
+ const early=boot({stage:3,best:3,autoLevel:0,lastSaved:now},now);
+ assert.equal(early.document.getElementById('cacheAutoStatus').textContent,'','fresh players should not see locked automation warnings');
+ assert.doesNotMatch(enabled.document.getElementById('heroGrowth').textContent,/자동 수령/,'do not crowd battle hero status');
+});
+
+
+test('STAGE85 resonance needs both an equipped skill and a weapon, and scales by current weapon tier',()=>{
+ const at=Date.UTC(2026,10,12);
+ const base={stage:84,best:85,weapon:{tier:0,stage:74},skillsOwned:['overload','chain','bountySkill','trainingSkill'],
+  skillsEquipped:['chain'],skillLevels:{overload:1,chain:1,bountySkill:1,trainingSkill:1},heroLevel:10,traitPointsEarned:9,lastSaved:at};
+ const b=boot(base,at);
+ assert.equal(b.get("resonanceBonus('chain')"),0,'no early-stage skill power leak');
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/STAGE 85/);
+ b.get('s.stage=85;spawn();render()');
+ assert.ok(Math.abs(b.get("resonanceBonus('chain')")-.10)<1e-12,'common tier gives +10% skill effect');
+ assert.equal(b.get("resonanceBonus('overload')"),0,'un-equipped skills cannot receive resonance');
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/연쇄 방전 피해 \+10%/);
+ b.get('s.weapon={tier:1,stage:85};render()');
+ assert.ok(Math.abs(b.get("resonanceBonus('chain')")-.15)<1e-12);
+ b.get('s.weapon={tier:2,stage:85};render()');
+ assert.ok(Math.abs(b.get("resonanceBonus('chain')")-.20)<1e-12);
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/영웅 무기/);
+ b.get('s.weapon=null;render()');
+ assert.equal(b.get("resonanceBonus('chain')"),0,'no weapon means no free resonance');
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/무기를 얻으면/);
+ b.get('s.weapon={tier:2,stage:85};toggleEquipSkill("chain")');
+ assert.equal(b.get("resonanceBonus('chain')"),0,'unequip immediately removes resonance');
+ assert.match(b.document.getElementById('resonanceInfo').textContent,/스킬을 장착해/);
+});
+
+test('STAGE85 weapon resonance only strengthens existing skill effects, not standard attack or raw credit production',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:85,best:85,weapon:{tier:1,stage:85},heroLevel:10,traitPointsEarned:9,
+   skillsOwned:['overload','chain','bountySkill','trainingSkill'],skillsEquipped:['overload','bountySkill'],
+   skillLevels:{overload:1,chain:1,bountySkill:1,trainingSkill:1},lastSaved:at},at);
+ const attack=b.get('power()'),income=b.get('creditRate()');
+ assert.ok(Math.abs(b.get("resonanceBonus('overload')")-.15)<1e-12);
+ const hp=b.get('enemyHp');
+ b.get('skillTick(9)');
+ assert.ok(Math.abs((hp-b.get('enemyHp'))-attack*3*1.15)<1e-5,'burst must gain exactly tier bonus');
+ assert.equal(b.get('power()'),attack,'resonance should not create unlisted auto-attack multiplier');
+ assert.equal(b.get('creditRate()'),income,'resonance should not inflate passive income');
+ const bounty=b.get('bountySkillBonus()');
+ assert.ok(Math.abs(bounty-.25*1.15)<1e-12,'bounty effect receives tier bonus');
+ b.get('toggleEquipSkill("bountySkill")');
+ assert.ok(Math.abs(b.get('bountySkillBonus()')-.25)<1e-12,'unequip removes bounty resonance');
+});
+
+test('STAGE85 chain and training resonance use existing pulse and XP channels',()=>{
+ const at=Date.UTC(2026,10,12);
+ const chain=boot({stage:85,best:85,heroLevel:10,traitPointsEarned:9,weapon:{tier:2,stage:80},
+   skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:at},at);
+ const initialHp=chain.get('enemyHp'),power=chain.get('power()');
+ chain.get('skillTick(6);skillTick(1)');
+ assert.ok(Math.abs((initialHp-chain.get('enemyHp'))-power*.6*1.20)<1e-5,'chain pulse must gain +20% at heroic tier');
+ const xp=boot({stage:85,best:85,weapon:{tier:2,stage:80},skillsOwned:['trainingSkill'],
+   skillsEquipped:['trainingSkill'],skillBuffTraining:12,heroLevel:20,traitPointsEarned:19,lastSaved:at},at);
+ const pre=xp.get('s.heroXp');
+ const expected=xp.get("Math.max(1,Math.floor(2*Math.pow(1.035,Math.min(200,s.stage)-1)*(1+traitLevel('training')*.05)*(2*skillScale('trainingSkill')*1.20)))");
+ xp.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(xp.get('s.heroXp')-pre,expected,'training resonance must use the same hero XP reward');
+});
+
+test('temporary STAGE75 weapon bonus never prevents a stronger replacement drop',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:85,best:85,breakthroughReward:'weapon',weapon:{tier:0,stage:75},lastSaved:at},at);
+ assert.ok(b.get('weaponMultiplier()')>b.get('weaponScore({tier:0,stage:85})'),'fixture reproduces old boosted-weapon comparison error');
+ b.get('Math.random=()=>0;grantDrop();render()');
+ assert.equal(b.get('s.weapon.stage'),85,'the truly better drop replaces earlier unboosted gear');
+ assert.equal(b.get('s.weapon.tier'),0);
+ assert.equal(b.get('s.breakthroughReward'),'weapon','stage75 run-wide choice remains active');
+});
+
+test('STAGE85 resonance survives save/load and reverts at rebirth without adding permanent upgrades',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:100,best:100,weapon:{tier:1,stage:90},heroLevel:25,traitPointsEarned:24,
+    skillsOwned:['chain'],skillsEquipped:['chain'],skillsInherited:['chain'],skillLevels:{chain:5},lastSaved:at},at);
+ assert.ok(b.get("resonanceBonus('chain')")>.14);
+ b.get('save();load();render()');
+ assert.ok(b.get("resonanceBonus('chain')")>.14,'resonance derives from restored loadout');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get("resonanceBonus('chain')"),0,'no permanent resonance after stage reset');
+ assert.equal(b.get('s.weapon'),null,'weapons still reset');
+ assert.equal(b.get('s.skillsOwned.includes("chain")'),true,'inherited skill remains');
+ assert.equal(b.get('s.skillLevels.chain'),1,'inherited level still resets');
+ const legacy=boot({stage:85,best:85,skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:at},at);
+ assert.equal(legacy.get("resonanceBonus('chain')"),0,'old no-weapon saves remain safe');
+});
+
+
+test('STAGE55 allocation modes have real non-dominated attack / credit trade-offs',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:55,best:55,atk:25,gen:3,forge:5,energy:1000,allocation:'balanced',lastSaved:at},at);
+ const preview=b.get('allocationComparison()');
+ const actuals=[];
+ for(const mode of ['balanced','assault','supply']){
+  b.get("s.allocation='"+mode+"';render()");
+  const value=b.get('({power:power(),income:creditRate(),status:document.getElementById("allocationStatus").textContent})');
+  actuals.push(value);
+ }
+ for(let i=0;i<3;i++){
+  assert.ok(Math.abs(actuals[i].power/preview[i][1]-1)<1e-10,'preview combat must match '+preview[i][0]);
+  assert.ok(Math.abs(actuals[i].income/preview[i][2]-1)<1e-10,'preview production must match '+preview[i][0]);
+ }
+ assert.ok(actuals[1].power>actuals[0].power&&actuals[1].income<actuals[0].income,
+  'assault must not strictly dominate balanced');
+ assert.ok(actuals[2].power<actuals[0].power&&actuals[2].income>actuals[0].income,
+  'supply must not strictly dominate balanced');
+ assert.ok(actuals[1].power>actuals[2].power&&actuals[1].income<actuals[2].income,
+  'assault/supply need different opportunity costs');
+ assert.match(actuals[1].status,/×2\.2.*×0\.75/);
+ assert.match(actuals[2].status,/×0\.8.*×2\.5/);
+ assert.match(actuals[0].status,/손실 없는 안정형/);
+});
+
+test('STAGE55 allocation tradeoffs never leak before stage unlock or into enemy/quest rewards',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:54,best:54,atk:15,forge:4,energy:250,lastSaved:at},at);
+ const basic=b.get('({power:power(),income:creditRate(),quest:questPayout(0),kill:enemyReward(54)})');
+ for(const mode of ['balanced','assault','supply']){
+  b.get("s.allocation='"+mode+"'");
+  assert.equal(b.get('power()'),basic.power,'pre-55 power must be unchanged by choice');
+  assert.equal(b.get('creditRate()'),basic.income,'pre-55 credit production must not be affected');
+  assert.equal(b.get('questPayout(0)'),basic.quest,'quests are not multiplied by frontline mode');
+  assert.equal(b.get('enemyReward(54)'),basic.kill,'enemy reward base is not multiplied');
+ }
+ b.get('s.stage=55;spawn();s.allocation="assault";save();load();render()');
+ assert.equal(b.get('s.allocation'),'assault','choice survives same-run save');
+ assert.ok(b.get('creditRate()')<basic.income,'assault income penalty is retained after load');
+ b.get('s.stage=100;spawn()');
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('s.allocation'),'balanced','rebirth resets tactical choice');
+ assert.equal(b.get('allocationEffects()[0]'),1,'rebirth below stage 55 disables combat effect');
+ assert.equal(b.get('allocationEffects()[1]'),1,'rebirth below stage 55 disables production effect');
+});
+
+test('frontline changes are immediate, reversible and do not create spending or extra UI actions',()=>{
+ const at=Date.UTC(2026,10,12);
+ const b=boot({stage:65,best:65,atk:18,forge:4,credits:12345,energy:1000,lastSaved:at},at);
+ const credits=b.get('s.credits');
+ const before=b.get('({power:power(),income:creditRate()})');
+ b.get('s.allocation="supply";render()');
+ const supply=b.get('({power:power(),income:creditRate()})');
+ assert.ok(supply.power<before.power&&supply.income>before.income);
+ b.get('s.allocation="assault";render()');
+ const assault=b.get('({power:power(),income:creditRate()})');
+ assert.ok(assault.power>before.power&&assault.income<before.income);
+ b.get('s.allocation="balanced";render()');
+ assert.equal(b.get('power()'),before.power);
+ assert.equal(b.get('creditRate()'),before.income);
+ assert.equal(b.get('s.credits'),credits,'switches cost no new resource');
+ assert.equal(b.get('s.autoLevel'),0,'tactical choice does not unlock automated purchasing');
+});
+
+
+test('STAGE55 enemy-credit tradeoffs make supply meaningful without inventing any resource',()=>{
+ const at=Date.UTC(2026,10,12);
+ const expected={balanced:1,assault:.8,supply:1.5};
+ const observed={};
+ for(const [mode,mult] of Object.entries(expected)){
+  const b=boot({stage:66,best:66,allocation:mode,credits:100,atk:25,forge:5,lastSaved:at},at,42);
+  const reward=b.get('enemyReward(66)'),credits=b.get('s.credits');
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  observed[mode]=b.get('s.credits')-credits;
+  assert.ok(Math.abs(observed[mode]-reward*mult)<1e-6,
+    mode+' must change only earned enemy credits, never stage/purchase logic');
+  assert.equal(b.get('s.stage'),67);
+  assert.equal(b.get('s.rebirths'),0);
+  const preview=b.get('allocationComparison()');
+  assert.deepEqual(Array.from(preview.map(x=>x[3])),[1,.8,1.5],
+    'the growth screen must show each kill-reward multiplier');
+  assert.equal(b.get('questPayout(0)'),b.get('Math.max(1,Math.floor(1*Math.pow(1.11,Math.min(60,s.best)-1)))'),
+    'claimable timed quest rewards must not inherit combat allocation');
+ }
+ assert.ok(observed.supply>observed.balanced&&observed.balanced>observed.assault);
+});
+
+test('STAGE55 kill credits stay neutral before unlock and revert at normal rebirth',()=>{
+ const at=Date.UTC(2026,10,12);
+ for(const mode of ['balanced','assault','supply']){
+  const b=boot({stage:50,best:50,allocation:mode,credits:0,lastSaved:at},at,99);
+  const reward=b.get('enemyReward(50)');
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.credits'),reward,'pre-55 combat credit must not depend on allocation');
+ }
+ const b=boot({stage:100,best:100,rebirths:0,allocation:'supply',lastSaved:at},at);
+ assert.equal(b.get('allocationEffects()[2]'),1.5);
+ assert.equal(b.get('rebirth()'),true);
+ assert.equal(b.get('allocationEffects()[2]'),1);
+ assert.equal(b.get('s.allocation'),'balanced');
+ assert.equal(b.get('s.stage'),1);
+});
+
+
+test('automation research gradually increases per-tick auto-purchase budget without bulk-Lv1 exploit',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ const tiers=[[1,10,1],[2,8,1],[3,6,2],[4,4,3],[5,3,5]];
+ for(const [level,interval,limit] of tiers){
+  const b=boot({stage:1,best:1,autoLevel:level,autoBuy:true,credits:1e12,lastSaved:now},now);
+  assert.equal(b.get('autoPurchaseInterval()'),interval,'automation level '+level+' interval');
+  assert.equal(b.get('autoPurchaseLimit()'),limit,'automation level '+level+' purchase count');
+  const before=b.get('s.atk+s.spd+s.gen');
+  b.get('step('+interval+',false)');
+  const after=b.get('s.atk+s.spd+s.gen');
+  assert.equal(after-before,limit,'one due timer purchases exactly its level-bound budget');
+  assert.equal(b.get('s.autoLevel'),level,'auto-buy must not spend core research levels');
+  b.get('save();load()');
+  assert.equal(b.get('autoPurchaseLimit()'),limit,'budget follows saved research level');
+ }
+});
+
+test('auto-buy obeys tier-first preference and does not purchase before the interval',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:65,best:65,credits:1e12,autoLevel:1,autoBuy:true,lastSaved:now},now);
+ b.get('step(9,false)');
+ assert.equal(b.get('s.reactor'),0,'research LV1 cannot purchase before its due time');
+ b.get('step(1,false)');
+ assert.equal(b.get('s.reactor'),1,'highest unlocked reactor remains first purchase');
+ assert.equal(b.get('s.atk+s.spd+s.gen+s.amp+s.relay+s.forge'),0,
+  'first automatic interval cannot silently buy ten additional upgrade levels');
+ const off=boot({stage:65,best:65,credits:1e12,autoLevel:5,autoBuy:false,lastSaved:now},now);
+ off.get('step(60,false)');
+ assert.equal(off.get('s.atk+s.spd+s.gen+s.amp+s.relay+s.forge+s.reactor'),0,
+  'autobuy still requires explicit opt-in');
+});
+
+
+test('STAGE65 grants energy-cycle skill at the milestone without manual input or duplicate rewards',()=>{
+ const stamp=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:64,best:64,credits:100,skillsOwned:['chain'],skillsEquipped:['chain'],heroLevel:20,traitPointsEarned:19,lastSaved:stamp},stamp,42); // deterministic: a random drop must not consume the spare slot
+ assert.equal(b.get('SKILLS.capacitor[2]'),18);
+ assert.equal(b.get("chooseSkill('capacitor')"),false,'must not claim exclusive stage65 discovery early');
+ assert.equal(b.get("s.skillsOwned.includes('capacitor')"),false);
+ b.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(b.get('s.stage'),65);
+ assert.equal(b.get("s.skillsOwned.filter(id=>id==='capacitor').length"),1);
+ assert.equal(b.get('s.skillLevels.capacitor'),1);
+ assert.equal(b.get("s.skillsEquipped.includes('capacitor')"),true,'use free slot where available');
+ assert.match(b.get('logText'),/전력 순환/);
+ b.get('save();load()');
+ assert.equal(b.get("s.skillsOwned.filter(id=>id==='capacitor').length"),1,'reward survives loading');
+ const before=b.get('s.skillXp.capacitor');
+ b.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(b.get("s.skillsOwned.filter(id=>id==='capacitor').length"),1,'no duplicate reward at stage66');
+ assert.ok(b.get('s.skillXp.capacitor')>=before,'equipped fifth skill earns ordinary XP');
+});
+
+test('energy-cycle skill is a timed energy-and-sustained-damage alternative to chain and overload',()=>{
+ const stamp=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:70,best:70,heroLevel:25,traitPointsEarned:24,gen:12,relay:4,
+  energy:1e7,weapon:{tier:1,stage:65},skillsOwned:['capacitor'],skillsEquipped:['capacitor'],
+  skillLevels:{capacitor:1},lastSaved:stamp},stamp);
+ const idleRate=b.get('energyRate()'),idlePower=b.get('power()');
+ assert.equal(b.get('capacitorPowerBonus()'),0,'must not grant free base attack before activation');
+ b.get('skillTick(18)');
+ assert.equal(b.get('s.skillBuffCapacitor'),10);
+ assert.equal(b.get('energyRate()'),idleRate*2);
+ assert.ok(b.get('power()')>idlePower*1.3,'stored-energy multiplier should be meaningful, not another damage pulse');
+ assert.equal(b.get('s.chainPulses'),0,'not a chain pulse skill');
+ b.get('skillTick(10)');
+ assert.equal(b.get('s.skillBuffCapacitor'),0,'timed buff must expire');
+ assert.equal(b.get('energyRate()'),idleRate,'energy rate returns to original');
+ assert.equal(b.get('power()'),idlePower,'attack value returns to original');
+});
+
+test('STAGE65 skill respects full slots, inherited reset, legacy load and STAGE85 resonance',()=>{
+ const stamp=Date.UTC(2026,10,16,0,0,0);
+ const full=boot({stage:65,best:65,heroLevel:1,traitPointsEarned:0,
+  skillsOwned:['chain'],skillsEquipped:['chain'],lastSaved:stamp},stamp);
+ assert.equal(full.get('grantStage65Skill()'),true);
+ assert.equal(full.get("s.skillsEquipped.includes('capacitor')"),false,'do not exceed one available slot');
+ assert.equal(full.get('s.skillsOwned.length'),2);
+ full.get('render()');
+ assert.match(full.document.getElementById('skillInfo').textContent,/전력 순환 미장착/,'new reward remains discoverable even if slot is full');
+ assert.equal(full.get('toggleEquipSkill("capacitor")'),false,'manual rearrange requires a free slot');
+ assert.equal(full.get('toggleEquipSkill("chain")'),true);
+ assert.equal(full.get('toggleEquipSkill("capacitor")'),true);
+ assert.equal(full.get('s.skillsEquipped.length'),1);
+ assert.doesNotMatch(full.document.getElementById('skillInfo').textContent,/전력 순환 미장착/,'hint disappears when equipped');
+ assert.equal(full.get('toggleInheritSkill("capacitor")'),true);
+ full.get('s.stage=100;spawn()');
+ assert.equal(full.get('rebirth()'),true);
+ assert.equal(full.get("s.skillsOwned.includes('capacitor')"),true,'selected skill inherited');
+ assert.equal(full.get('s.skillLevels.capacitor'),1);
+ assert.equal(full.get('s.skillBuffCapacitor'),0,'no temporary buff persists through rebirth');
+ assert.equal(full.get('s.weapon'),null);
+ const old=boot({stage:80,best:80,heroLevel:20,traitPointsEarned:19,lastSaved:stamp},stamp);
+ assert.equal(old.get('s.skillBuffCapacitor'),0);
+ old.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(old.get("s.skillsOwned.includes('capacitor')"),true,'old save stage65+ gets skill on next kill');
+ const resonance=boot({stage:85,best:85,weapon:{tier:2,stage:85},energy:1e7,
+  skillsOwned:['capacitor'],skillsEquipped:['capacitor'],skillBuffCapacitor:8,lastSaved:stamp},stamp);
+ assert.ok(Math.abs(resonance.get("resonanceBonus('capacitor')")-.20)<1e-12);
+ assert.ok(resonance.get('capacitorPowerBonus()')>0.45,'heroic equipment boosts the charged energy effect');
+ resonance.get('s.skillBuffCapacitor=999;save();load()');
+ assert.equal(resonance.get('s.skillBuffCapacitor'),10,'corrupt legacy buff duration clipped');
+});
+
+
+test('energy-cycle buff cannot remain active when its skill is unequipped or excluded from a loaded save',()=>{
+ const at=Date.UTC(2026,10,16,0,0,0);
+ const saved={stage:75,best:75,heroLevel:10,traitPointsEarned:9,energy:1e8,
+  skillsOwned:['capacitor','chain'],skillsEquipped:['capacitor'],skillLevels:{capacitor:2,chain:1},
+  skillBuffCapacitor:9,lastSaved:at};
+ const b=boot(saved,at);
+ assert.ok(b.get('capacitorPowerBonus()')>0);
+ const before=b.get('energyRate()');
+ b.get('toggleEquipSkill("capacitor")');
+ assert.equal(b.get('s.skillBuffCapacitor'),0,'unequipping active sustained skill must immediately end its buff');
+ assert.equal(b.get('capacitorPowerBonus()'),0);
+ assert.equal(b.get('energyRate()'),before/2);
+ b.get('save();load()');
+ assert.equal(b.get('s.skillBuffCapacitor'),0,'old saved buff must not revive');
+ const forged=boot({...saved,skillsEquipped:['chain']},at);
+ assert.equal(forged.get('s.skillBuffCapacitor'),0,'un-equipped legacy skill must not keep the benefit');
+ assert.equal(forged.get('capacitorPowerBonus()'),0);
+});
+
+
+test('charged Chain requires both equipped skills and an active Capacitor window',()=>{
+ const at=Date.UTC(2026,10,16,0,0,0);
+ const common={stage:70,best:70,heroLevel:20,traitPointsEarned:19,energy:1e7,atk:12,
+  skillsOwned:['chain','capacitor'],skillsEquipped:['chain','capacitor'],skillLevels:{chain:2,capacitor:2},
+  chainPulses:1,chainPulseClock:0,skillBuffCapacitor:8,lastSaved:at};
+ const b=boot(common,at);
+ assert.equal(b.get('chargedChainMultiplier()'),2,'dual loadout requires both skills');
+ assert.match(b.document.getElementById('skillInfo').textContent,/충전 연쇄 준비.*피해 ×2/,'growth view must expose combination before it activates');
+ const power=b.get('power()'),expected=power*.6*b.get("skillScale('chain')")*2;
+ b.get('enemyHp=1e12;skillTick(1)');
+ const dealt=1e12-b.get('enemyHp');
+ assert.ok(Math.abs(dealt-expected)<Math.max(1e-5,expected*1e-6),'charged pulse damage uses current power and doubles chain pulse');
+ assert.match(b.get('skillNotice'),/충전 연쇄/);
+ b.get('s.skillBuffCapacitor=0');
+ assert.equal(b.get('chargedChainMultiplier()'),1,'outside temporary window there is no charged hit');
+ b.get('s.skillBuffCapacitor=8;toggleEquipSkill("capacitor")');
+ assert.equal(b.get('chargedChainMultiplier()'),1,'unequip must cancel charged chain interaction');
+ assert.equal(b.get('s.skillBuffCapacitor'),0);
+ assert.match(b.document.getElementById('skillInfo').textContent,/조합 힌트.*충전 연쇄/,'guide player to re-equip combo');
+ const solo=boot({...common,skillsEquipped:['chain']},at);
+ assert.equal(solo.get('s.skillBuffCapacitor'),0,'legacy unequipped buff must be normalized');
+ assert.equal(solo.get('chargedChainMultiplier()'),1);
+});
+
+test('charged Chain composes with STAGE85 weapon resonance without changing regular attack speed',()=>{
+ const at=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:85,best:85,heroLevel:20,traitPointsEarned:19,energy:1e7,atk:10,
+  weapon:{tier:2,stage:80},skillsOwned:['chain','capacitor'],
+  skillsEquipped:['chain','capacitor'],skillLevels:{chain:1,capacitor:1},
+  chainPulses:1,chainPulseClock:0,skillBuffCapacitor:8,lastSaved:at},at);
+ const interval=b.get('attackInterval()');
+ const expected=b.get("power()*.6*skillScale('chain')*(1+resonanceBonus('chain'))*chargedChainMultiplier()");
+ b.get('enemyHp=1e12;skillTick(1)');
+ const dealt=1e12-b.get('enemyHp');
+ assert.ok(Math.abs(dealt-expected)<Math.max(1e-5,expected*1e-6),'charge × weapon resonance must match exact chain pulse math');
+ assert.equal(b.get('attackInterval()'),interval,'skill combo must not bypass 0.1s attack speed cap');
+ b.get('save();load()');
+ assert.equal(b.get('chargedChainMultiplier()'),2,'both equipped skills and active charge survive valid save');
+ b.get('s.stage=100;spawn();rebirth()');
+ assert.equal(b.get('chargedChainMultiplier()'),1,'temporary combo is reset at rebirth');
+});
+
+
+test('STAGE35 tactical reinforcement guarantees a complementary second skill after poor RNG',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ for(const [first,expected] of Object.entries({chain:'bountySkill',overload:'trainingSkill',bountySkill:'chain',trainingSkill:'overload'})){
+  const b=boot({stage:34,best:34,heroLevel:10,traitPointsEarned:9,
+   skillsOwned:[first],skillsEquipped:[first],skillLevels:{[first]:1},skillXp:{[first]:0},lastSaved:now},now,42);
+  b.get('Math.random=()=>1;enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.stage'),35);
+  assert.equal(b.get('s.skillsOwned.length'),2,'a weak luck run should have exactly two owned skills');
+  assert.equal(b.get('s.skillsOwned.includes('+JSON.stringify(expected)+')'),true,'reward complements '+first);
+  assert.equal(b.get('s.skillsEquipped.length'),2,'the second LV10 slot should auto-equip reinforcement');
+  assert.equal(b.get('s.skillLevels['+JSON.stringify(expected)+']'),1);
+  assert.match(b.get('rewardNotice'),/전술 보급/);
+  b.get('save();load()');
+  assert.equal(b.get('s.skillsOwned.filter(x=>x==='+JSON.stringify(expected)+').length'),1,'reward persists without duplicate');
+  b.get('enemyHp=0;resolveEnemyDefeat()');
+  assert.equal(b.get('s.skillsOwned.length'),2,'stage36 must not repeat milestone grant');
+ }
+});
+
+test('STAGE35 spare-slot rules and existing two-skill experience reward do not force swaps',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ const full=boot({stage:34,best:34,heroLevel:1,traits:{},skillsOwned:['chain'],
+  skillsEquipped:['chain'],lastSaved:now},now,42);
+ full.get('Math.random=()=>1;enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(full.get('s.skillsOwned.includes("bountySkill")'),true,'own second skill even if no equip slot');
+ assert.equal(full.get('s.skillsEquipped.length'),1,'never silently remove equipped first skill');
+ assert.equal(full.get('s.skillsEquipped[0]'),'chain');
+ const ready=boot({stage:34,best:34,skillsOwned:['overload','chain'],skillsEquipped:['overload'],
+  skillLevels:{overload:1,chain:1},skillXp:{overload:0,chain:0},lastSaved:now},now,42);
+ ready.get('Math.random=()=>1;enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(ready.get('s.skillsOwned.length'),2,'two owned skills get training rather than a third free skill');
+ assert.equal(ready.get('s.skillXp.overload'),4,'kill XP +1 and STAGE35 bonus XP +3');
+ ready.get('enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(ready.get('s.skillXp.overload'),5,'the +3 bonus does not repeat at STAGE36');
+ assert.equal(ready.get('s.skillsOwned.length'),2);
+});
+
+test('6-second quest safely reserves ten payouts for a 60-second visit while other queues keep five',()=>{
+ const now=Date.UTC(2026,10,16,0,0,0);
+ const s={stage:3,best:3,lastSaved:now,credits:0,questCredits:[0,0,0],questClocks:[0,0,0]};
+ const b=boot(s,now);
+ assert.equal(b.get('QUESTS[0][4]'),10);
+ assert.equal(b.get('QUESTS[1][4]'),5);
+ assert.equal(b.get('QUESTS[2][4]'),5);
+ b.get('questTick(60)');
+ assert.equal(b.get('s.questCredits[0]'),10*b.get('questPayout(0)'),'60s should retain all ten fast deliveries');
+ assert.equal(b.get('s.questCredits[1]'),2*b.get('questPayout(1)'));
+ assert.equal(b.get('s.questCredits[2]'),0);
+ b.get('questTick(1200)');
+ for(let i=0;i<3;i++)assert.equal(b.get('s.questCredits['+i+']'),b.get('questPayout('+i+')*QUESTS['+i+'][4]'),'quest '+i+' obeys its own ceiling');
+ const before=b.get('s.credits'),pending=b.get('s.questCredits.reduce((a,b)=>a+b,0)');
+ assert.equal(b.get('transferCacheCredits()'),pending,'manual claim consumes exactly one reserve');
+ assert.equal(b.get('s.credits'),before+pending,'no newly minted credits from the higher cap');
+ assert.equal(b.get('transferCacheCredits()'),0,'cannot double-claim');
+ const offline=boot(s,now);
+ offline.get('settleElapsed(60)');
+ assert.equal(offline.get('s.questCredits[0]'),10*offline.get('questPayout(0)'),'hidden-time aggregation matches visible accrual');
+});
+
+test('STAGE35 does not force a skill or consume the STAGE20 choice for a player who has not chosen',()=>{
+ const at=Date.UTC(2026,10,16,0,0,0);
+ const b=boot({stage:34,best:34,skillsOwned:[],skillsEquipped:[],skillChoiceUsed:false,lastSaved:at},at,42);
+ b.get('Math.random=()=>1;enemyHp=0;resolveEnemyDefeat()');
+ assert.equal(b.get('s.stage'),35);
+ assert.equal(b.get('s.skillsOwned.length'),0,'preserve first skill choice instead of auto-choosing');
+ assert.equal(b.get('s.skillChoiceUsed'),false);
+ assert.equal(b.get("chooseSkill('chain')"),true,'manual STAGE20 choice still accessible');
 });

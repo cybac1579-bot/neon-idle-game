@@ -1,0 +1,85 @@
+name: Integration portrait browser smoke
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - development/main-redesign-integration-20261114
+      - integration/reconcile-main-redesign-20261114
+    # Docs-only notes do not change the actual expedition build.
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+# Preserve a full report for the latest branch head, without paying for
+# multiple superseded runs during rapid manual/automated integration pushes.
+concurrency:
+  group: integration-portrait-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+jobs:
+  portrait:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify game compatibility and static integration
+        run: node tests/integration-static.test.cjs
+      - name: Validate replaceable expedition UI contract
+        run: node tests/expedition-ui-contract.test.cjs
+      - name: Parse all expedition browser scripts before expensive simulations
+        run: |
+          node --check site/expedition-engine.js
+          node --check site/expedition-field.js
+          node --check site/expedition-ui.js
+          node --check site/expedition-app.js
+          node --check tests/expedition-browser.test.cjs
+      - name: Run standalone expedition engine regression
+        run: node --test tests/expedition.test.cjs
+      - name: Probe 30-minute expedition pacing
+        run: node tests/expedition-pacing.cjs
+      - name: Gate first playable low-touch return and offline settlement
+        run: node tests/expedition-first-playable-gate.cjs
+      - name: Probe two-expedition benefits and manual click reduction
+        run: node tests/expedition-two-run.cjs
+      - name: Probe selected auto-buy low-touch 30-minute modes
+        run: node tests/expedition-autobuy-pacing.cjs
+      - name: Audit three consecutive expedition returns across strategies
+        run: node tests/expedition-route-audit.cjs
+      - name: Probe early versus deep return core farming economics
+        run: node tests/expedition-return-efficiency.cjs
+      - name: Build self-contained offline expedition tester
+        run: node scripts/build-expedition-standalone.cjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run 360/390/412 portrait integration smoke
+        run: timeout --signal=TERM --kill-after=10s 120s node tests/integration-portrait.test.cjs
+      - name: Exercise mobile touch playthrough
+        run: timeout --signal=TERM --kill-after=10s 100s node tests/playthrough-browser.test.cjs
+      - name: Run independent expedition browser smoke
+        run: timeout --signal=TERM --kill-after=10s 90s node tests/expedition-browser.test.cjs
+      - name: Test standalone HTML with network disabled and backup round trip
+        run: timeout --signal=TERM --kill-after=10s 110s node tests/expedition-offline-browser.test.cjs
+      - name: Upload private playable offline HTML
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-expedition-offline-playable
+          path: artifacts/expedition-standalone/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload actual Chromium screenshots and playthrough report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-touch-playthrough
+          path: |
+            artifacts/playthrough/
+            artifacts/expedition/
+          if-no-files-found: warn
+          retention-days: 7
