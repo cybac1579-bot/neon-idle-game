@@ -383,7 +383,7 @@ function renderArchive(){
   (s.coreUpgrades.valor<30?row('다음 전선 강화 효과',
    '현재 대비 +'+((E.valorMultiplier({...s,coreUpgrades:{...s.coreUpgrades,valor:s.coreUpgrades.valor+1}})/E.valorMultiplier(s)-1)*100).toFixed(1)+
    '% · 강화 후 누적 +'+((E.valorMultiplier({...s,coreUpgrades:{...s.coreUpgrades,valor:s.coreUpgrades.valor+1}})-1)*100).toFixed(1)+
-   '% · 코어 '+fmt(E.coreCost(s,'valor'))+'개 필요'):'')+
+   '% · 코어 '+fmt(E.coreCost(s,'valor'))+'개 필요'+(s.cores<E.coreCost(s,'valor')?' (현재 '+fmt(E.coreCost(s,'valor')-s.cores)+'개 부족)':' (지금 구매 가능)')):'')+
   row('보급 코어 · 경제 강화','LV.'+fmt(s.coreUpgrades.trade));
  const b=E.permanentBonuses(s);
  const pct=n=>'+'+Math.max(0,(n-1)*100).toFixed(1)+'%';
