@@ -142,9 +142,19 @@ function showMotion(evt){
 const safe=n=>Math.max(0,Math.min(100,Number(n)||0));
 const selected=s=>{
  const pick=[],counts={guard:0,ranger:0,medic:0},limits={guard:3,ranger:3,medic:2};
- (s.actors||[]).forEach((a,index)=>{
-  if(counts[a.id]<limits[a.id]){pick.push({a,index});counts[a.id]++;}
- });
+ // The visible formation must represent fighters who can actually fight.
+ // A fallen early recruit must not hide a healthy reserve of the same role.
+ // Keep original actor indices for stable DOM identity and event targeting.
+ const roster=(s.actors||[]).map((a,index)=>({a,index}));
+ for(const ready of [true,false]){
+  for(const entry of roster){
+   const {a}=entry;
+   if(!Object.hasOwn(limits,a.id)||counts[a.id]>=limits[a.id])continue;
+   const active=a.hp>0&&!(a.revive>0);
+   if(active!==ready)continue;
+   pick.push(entry);counts[a.id]++;
+  }
+ }
  return pick;
 };
 function sync(s){
