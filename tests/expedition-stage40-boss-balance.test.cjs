@@ -91,6 +91,8 @@ test('stage40 full-squad recovery preserves the encounter and does not invent a 
  s.stage=s.best=s.runBest=40;
  s.enemyHp=E.enemyMax(40)*.6;
  s.autoBuy.enabled=false;
+ // Keep revived fighters alive through the stage40 boss strike to isolate respawn bookkeeping.
+ s.training=1000;
  const remaining=s.enemyHp;
  s.actors.forEach(a=>{a.hp=0;a.revive=3;a.progress=0;a.cooldown=1;});
  s.squadHp=0;s.respawn=3;
