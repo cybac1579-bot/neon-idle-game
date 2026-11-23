@@ -88,6 +88,8 @@ assert.deepEqual(selectRoster({actors:[]}),[],'empty squad remains safe');
 // an extra permanent battle HUD or changing combat/reward state.
 assert.match(field,/const allDown=\(s\.actors\|\|\[\]\)\.length>0&&s\.actors\.every\(a=>a\.hp<=0\|\|a\.revive>0\)/,
  'full-wipe notice must require a nonempty roster with no living actors');
+assert.ok(field.includes('nextRevive>0')&&field.includes('재합류 처리 중'),
+ 'zero-second rejoin tick must not show a misleading countdown');
 assert.match(field,/Math\.ceil\(nextRevive\)/,
  'automatic rejoin countdown must use the real shortest revival timer');
 assert.ok(field.includes('부대 전멸 · 자동 재합류')&&field.includes('rosterNote.hidden=!allDown&&extra===0'),
