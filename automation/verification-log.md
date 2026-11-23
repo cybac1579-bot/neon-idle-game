@@ -2202,3 +2202,9 @@
 - Next: check exact-head CI and investigate any new test failure; inspect stage40 all-dead and revived visual cue in portrait browser, then prioritize combat observation quality.
 
 - Follow-up test-only adjustment: stage40 boss can legitimately one-shot freshly revived untrained actors in the same tick, so the fixture now sets training=1000 to isolate the respawn bookkeeping rather than assert survival against boss damage. Final source commit `bb4394f8383da1cd5f18bb620a9c805d32fb5c10`; exact-commit CI still unverified at check.
+
+## 2026-11-23 14:52 KST — full-wipe combat visibility
+- Base shared HEAD `955f7a00`; six exact-base PR workflows SUCCESS (45114538810/811/753/731/747/755). Reviewed automation policy/log/coverage, manual decisions/status/handoff and first-rebirth reactor trial. Protected main remains read-only; no Pages deployment or PR merge.
+- Hypotheses: (A) stage40 wipe/revive engine stalls; (B) engine auto-rejoins but combat view fails to communicate all-fallen waiting. Previous stage40 fixture tests (A), while field view only showed a reserve-count note; (B) is a presentation gap.
+- Changed `site/expedition-field.js` to show a nonpersistent full-wipe notice with the shortest real actor revive timer; it disappears when any fighter returns. Added UI-contract assertions for nonempty/all-down detection and actual timer. Source `a785e03d`, test `ba88f57c`; conditional blob-SHA writes. No engine/balance/save/art changes.
+- Post-change exact-head CI and actual browser/Android render **not yet confirmed**. No claim of passing the new regression. Readiness 92% provisional (+0pp). Next: verify six exact-head CI, test 360/390/412px wipe notice, then improve combat observation without increasing taps.
