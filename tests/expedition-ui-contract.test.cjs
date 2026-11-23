@@ -48,6 +48,11 @@ assert.ok(view.includes('현재 대비 +')&&view.includes('강화 후 누적 +')
  'marginal and cumulative core effects must be separately labelled');
 assert.ok(view.includes('지금 구매 가능')&&view.includes('개 부족'),
  'core preview must disclose whether the next upgrade is affordable');
+// Long core-preview values must wrap without pushing the portrait command deck sideways.
+assert.match(css, /#coreSummary \.statline\s*\{[^}]*grid-template-columns:minmax\(88px,38%\) minmax\(0,1fr\)/,
+ 'core investment preview must reserve a shrinkable value column');
+assert.match(css, /#coreSummary \.statline b\s*\{[^}]*overflow-wrap:anywhere/,
+ 'core preview must wrap long marginal/cumulative/affordability text');
 // Nonvisual metadata must not erase a still-visible combat cue or trail.
 assert.match(field,/if\(!visibleKinds\.has\(evt\.type\)\)return;/,
  'nonvisual events must leave the current combat label intact');
